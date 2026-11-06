@@ -1,0 +1,7 @@
+# Title illustration
+
+Generated using the built-in imagegen tool, then copied into `public/assets/title-art.png`. The illustration is original game concept art. Dinosaur models, terrain, interface iconography and sound are authored procedurally in the source code.
+
+Final prompt:
+
+> Use case: stylized-concept. Asset type: original premium PC videogame title-screen background, wide landscape 16:9. Scene: an ancient dinosaur jungle at twilight with luminous teal mist, enormous prehistoric ferns, a distant smoking volcano and amber sunlight through dense canopy. Subject: a magnificent dark emerald Tyrannosaurus rex with scarred textured skin, amber eye, strong anatomically convincing silhouette, standing on a mossy ridge in the RIGHT HALF of the composition; a tiny cracked dinosaur egg glows warm gold beneath it, suggesting evolution from egg to apex. A very distant dragon-like silhouette flies near the volcano. Rich cinematic painterly 3D game key art, mature premium survival roguelite aesthetic, sophisticated deep forest greens and blue black shadows, restrained gold highlights, atmospheric depth, dramatic volumetric rays, highly detailed vegetation, beautiful and ominous. Composition: quiet dark negative space across left 45 percent for game title and menu, dramatic dinosaur focal point on right, landscape 1536x1024 or wider. No typography, no lettering, no logos, no watermarks, no UI. This is an original dinosaur evolution game called Jurassic Domination, do not copy any existing franchise.

@@ -124,6 +124,20 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 - Place, rotate, and customize up to 80 decorations and house up to 16 companion pets.
 - Feed, bond with, and care for companion animals to earn rare cosmetic crowns, wreaths, and monument recipes.
 
+### 8. Enhanced Realism & World Systems
+- **Top Center HUD & Bloodthirsty Starvation Vignette**: Vitality and Stamina meters are prominently positioned at the top-center of the screen. The conventional hunger bar is replaced with an immersive, full-screen peripheral red vignette that pulses and deepens as your dinosaur hungers. Low hunger triggers a flashing warning banner (*"STARVING · HUNT FOR FLESH"*); prolonged starvation slows your creature and leads to death.
+- **Organic World Presentation**: Geometric circles underneath player and wild dinosaurs have been removed for natural visual immersion.
+- **3D Skeletal Remains**: Meat drops appear as authentic prehistoric carcasses complete with an articulated spine, bone skull, exposed ribcage arches, and pooled blood.
+- **Killable Carnivorous Flora**: Snapjaw pitcher plants can now be bitten and destroyed in combat, wilting upon defeat and rewarding both meat and plant forage.
+- **Aerial Flying Predators**: Winged apex predators (such as *Wyverns*, *Phoenixes*, and *Quetzalcoatls*) soar high overhead. Players must utilize ranged attacks or wait for them to swoop down in talon dives before striking them in melee.
+- **Terrain Demolition**: Colossal dinosaurs (Tier 6+ or high-speed dashes) smash through fallen logs and crush boulders into rubble upon impact.
+- **Volcanic Calderas**: Active volcanoes feature multi-layered boiling magma pools with emissive pulsation, jagged basalt crags, flowing lava rivers, and rising smoke and ember plumes.
+- **Caves & Expansive Water Bodies**: Rocky cavern alcoves with glowing subterranean crystals and sprawling lakes and lagoons with deep-water drag and swimming predators.
+- **Sleeping Dinosaurs & Stealth Ambush**: Wild creatures can be discovered resting or asleep in the wild. Sneaking or stalking up behind them rewards massive 2.2× sneak critical damage.
+- **Unified 3-Tab Prehistoric Compendium**: Bloodline Paths, the Field Journal, and the 3D Dinosaur Encyclopedia are merged into a single sleek, tabbed compendium accessible instantly with `TAB`, `J`, or `L`. The pause menu is decluttered and streamlined.
+- **Dynamic Title Scene**: The home screen features wind-blown foliage and leaves drifting across atmospheric prehistoric lighting.
+- **Audio Voice Pooling & Throttling**: Sound effects use strict cooldown intervals and element pooling, eliminating sound overlap, echoing, or looping storms.
+
 ---
 
 ## Save Architecture & Integrity
@@ -139,7 +153,7 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 Jurassic Domination includes a rigorous testing harness:
 
 ```powershell
-# Run the 202-test deterministic logic and ecology suite:
+# Run the 204-test deterministic logic and ecology suite:
 npm test
 
 # Run the 22 Playwright visual and browser integration checks:

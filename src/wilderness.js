@@ -29,23 +29,26 @@ export function worldFeatures(seed, cx, cy) {
                   : i < 13
                     ? "toxic-bloom"
                     : "carnivore";
+    const subtype = type === "landmark" ? ((cx + cy + i) % 2 === 0 ? "cave" : "monolith") : null;
+    const isLargeWater = (cx + cy + i) % 3 === 0;
     const radius =
       type === "water"
-        ? 12 + random() * 5
+        ? (isLargeWater ? (22 + random() * 10) : (12 + random() * 5))
         : type === "volcano"
-          ? 12
+          ? 14
           : type === "boulder"
             ? 1.8 + random() * 2
             : type === "fallen-log"
               ? 3.5
               : type === "landmark"
-                ? 4
+                ? 4.5
                 : type === "carnivore"
                   ? 2
                   : 1.5;
     items.push({
       id: `${cx},${cy}:${i}`,
       type,
+      subtype,
       x,
       y,
       radius,
@@ -65,14 +68,21 @@ export function worldFeatures(seed, cx, cy) {
       ),
   );
 }
-export function resolveObstacles(actor, size, features) {
+export function resolveObstacles(actor, size, features, onDemolish) {
   for (const f of features) {
-    if (!f.solid) continue;
+    if (!f.solid || f.destroyed) continue;
     const dx = actor.x - f.x,
       dy = actor.y - f.y,
       d = Math.hypot(dx, dy),
       r = f.radius + Math.min(3, size * 0.35);
     if (d < r) {
+      const isMassive = size >= 2.8 || actor?.charging || actor?.dashing;
+      if (isMassive && (f.type === "boulder" || f.type === "fallen-log")) {
+        f.destroyed = true;
+        f.solid = false;
+        if (typeof onDemolish === "function") onDemolish(f, actor);
+        continue;
+      }
       const angle = d > 0.001 ? Math.atan2(dy, dx) : 0;
       actor.x = f.x + Math.cos(angle) * r;
       actor.y = f.y + Math.sin(angle) * r;
@@ -195,7 +205,7 @@ export function updateWildlife(game, dt) {
         f.type === "mushrooms" ? "TOXIC SPORES" : "POISONOUS BLOOM";
       p.poisoned = Math.max(p.poisoned, 4);
     }
-    if (f.type === "carnivore" && d < f.radius + 5) {
+    if (f.type === "carnivore" && !f.dead && d < f.radius + 5) {
       game.hazardHint = "CARNIVOROUS PLANT";
       if (d < f.radius + 3.2 && game._hazardCooldown === 0) {
         game.damagePlayer(

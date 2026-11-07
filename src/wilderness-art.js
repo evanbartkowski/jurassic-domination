@@ -60,16 +60,51 @@ export function createWildFeature(f) {
     }
     mesh(sphere(), 0x6b7b4e, [0, 1.4, 0], [2.6, 0.2, 0.8]);
   } else if (f.type === "landmark") {
-    const prop = createDecoration("ruins");
-    prop.scale.setScalar(2);
-    root.add(prop);
-    root.userData.prop = prop;
-    for (let i = 0; i < 4; i++)
-      mesh(new THREE.BoxGeometry(0.7, 3, 0.7), 0x7e8b7c, [
-        Math.cos((i * Math.PI) / 2) * 3,
-        1.5,
-        Math.sin((i * Math.PI) / 2) * 3,
-      ]);
+    if (f.subtype === "cave") {
+      // Grand prehistoric cave mouth / rocky cavern alcove
+      const caveArch = mesh(
+        new THREE.SphereGeometry(f.radius * 0.75, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        0x2c2d30,
+        [0, 0, 0],
+        [1.4, 0.9, 1.2],
+      );
+      const voidMouth = mesh(
+        new THREE.CircleGeometry(f.radius * 0.55, 24),
+        0x050608,
+        [0, 1.2, 0.4],
+        [1, 0.7, 1],
+      );
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI - Math.PI / 2;
+        mesh(
+          new THREE.DodecahedronGeometry(1.2 + (i % 2) * 0.6),
+          0x3a3b40,
+          [Math.cos(a) * (f.radius * 0.68), 0.8, Math.sin(a) * (f.radius * 0.68)],
+          [1.2, 0.9, 1.1],
+        );
+      }
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI - 0.7;
+        const shroom = mesh(
+          new THREE.SphereGeometry(0.28, 12, 12),
+          i % 2 ? 0x38bdf8 : 0x4ade80,
+          [Math.cos(a) * (f.radius * 0.48), 0.4, Math.sin(a) * (f.radius * 0.48) + 0.3],
+        );
+        shroom.material.emissive.setHex(i % 2 ? 0x0284c7 : 0x16a34a);
+        shroom.material.emissiveIntensity = 2.5;
+      }
+    } else {
+      const prop = createDecoration("ruins");
+      prop.scale.setScalar(2);
+      root.add(prop);
+      root.userData.prop = prop;
+      for (let i = 0; i < 4; i++)
+        mesh(new THREE.BoxGeometry(0.7, 3, 0.7), 0x7e8b7c, [
+          Math.cos((i * Math.PI) / 2) * 3,
+          1.5,
+          Math.sin((i * Math.PI) / 2) * 3,
+        ]);
+    }
   } else if (f.type === "water") {
     const water = mesh(
       new THREE.CircleGeometry(f.radius, 64),
@@ -174,30 +209,70 @@ export function createWildFeature(f) {
       root.userData.swimmers.push(fish);
     }
   } else if (f.type === "volcano") {
+    // Majestic prehistoric obsidian caldera with jagged rim crags
     const mountain = mesh(
-      new THREE.CylinderGeometry(2, f.radius, 8, 48, 8, true),
-      0x4a4642,
-      [0, 4, 0],
+      new THREE.CylinderGeometry(3.5, f.radius, 9.5, 48, 8, true),
+      0x241d1a,
+      [0, 4.75, 0],
     );
+    // Jagged basalt crags encircling the caldera rim
+    for (let i = 0; i < 14; i++) {
+      const a = (i / 14) * Math.PI * 2;
+      const cragHeight = 1.2 + (i % 3) * 0.7;
+      mesh(
+        new THREE.ConeGeometry(0.85, cragHeight, 5),
+        0x191412,
+        [Math.cos(a) * 3.4, 9.5 + cragHeight * 0.45, Math.sin(a) * 3.4],
+        [1, 1, 1],
+        [(i % 2 ? 0.2 : -0.2), a, 0],
+      );
+    }
+    // High-temperature incandescent lava pool
     const lava = mesh(
-      new THREE.CircleGeometry(2.1, 40),
-      0xff6228,
-      [0, 8.05, 0],
+      new THREE.CircleGeometry(3.4, 48),
+      0xff6a00,
+      [0, 9.55, 0],
     );
     lava.rotation.x = -Math.PI / 2;
-    lava.material.emissive.setHex(0xff3f0a);
-    lava.material.emissiveIntensity = 2;
-    for (let i = 0; i < 5; i++) {
-      const a = i * 1.256;
+    lava.material.emissive.setHex(0xff3300);
+    lava.material.emissiveIntensity = 2.8;
+    root.userData.lava = lava;
+
+    // Glowing magma core center
+    const core = mesh(
+      new THREE.CircleGeometry(1.8, 32),
+      0xffdf66,
+      [0, 9.58, 0],
+    );
+    core.rotation.x = -Math.PI / 2;
+    core.material.emissive.setHex(0xffaa22);
+    core.material.emissiveIntensity = 3.5;
+    root.userData.lavaCore = core;
+
+    // Cascading lava rivers down the slopes
+    for (let i = 0; i < 6; i++) {
+      const a = i * 1.047 + 0.3;
       const flow = mesh(
-        new THREE.CylinderGeometry(0.12, 0.5, 12, 12),
-        0xff6228,
-        [Math.cos(a) * 4.8, 3, Math.sin(a) * 4.8],
+        new THREE.CylinderGeometry(0.25, 0.9, 13, 8),
+        0xff4d00,
+        [Math.cos(a) * (f.radius * 0.52), 4.2, Math.sin(a) * (f.radius * 0.52)],
       );
-      flow.rotation.z = Math.sin(a) * 0.65;
-      flow.rotation.x = Math.cos(a) * 0.65;
-      flow.material.emissive.setHex(0xc7350a);
+      flow.rotation.z = Math.sin(a) * 0.78;
+      flow.rotation.x = Math.cos(a) * 0.78;
+      flow.material.emissive.setHex(0xe62e00);
+      flow.material.emissiveIntensity = 2.2;
     }
+
+    // Rising smoke & ember plume column
+    const smoke = mesh(
+      new THREE.CylinderGeometry(1.2, 5.5, 14, 16, 1, true),
+      0x251c19,
+      [0, 16.5, 0],
+    );
+    smoke.material.transparent = true;
+    smoke.material.opacity = 0.35;
+    smoke.material.depthWrite = false;
+    root.userData.smoke = smoke;
   } else if (f.type === "mushrooms") {
     for (let i = 0; i < 9; i++) {
       const a = i * 2.4,
@@ -277,6 +352,26 @@ export function createWildFeature(f) {
       m.scale.setScalar(1 + Math.sin(t * 0.75 + i * 2.1 + f.phase) * 0.025);
       m.material.opacity = 0.1 + (Math.sin(t * 0.65 + i) + 1) * 0.055;
     });
+    if (f.destroyed) {
+      root.scale.set(1.2, 0.18, 1.2);
+      root.position.y = -0.3;
+      return;
+    }
+    if (f.dead && root.userData.jaw) {
+      root.userData.jaw.rotation.z = Math.PI / 2.3;
+      root.userData.jaw.position.y = 0.35;
+      root.userData.jaw.scale.set(0.8, 0.35, 0.8);
+      if (root.userData.prop) root.userData.prop.scale.set(1.2, 0.35, 1.2);
+      return;
+    }
+    if (root.userData.lava) {
+      root.userData.lava.material.emissiveIntensity = 2.4 + Math.sin(t * 3.5 + f.phase) * 0.8;
+      if (root.userData.lavaCore) root.userData.lavaCore.material.emissiveIntensity = 3.2 + Math.cos(t * 4 + f.phase) * 1.1;
+      if (root.userData.smoke) {
+        root.userData.smoke.rotation.y = t * 0.15;
+        root.userData.smoke.material.opacity = 0.28 + Math.sin(t * 1.8) * 0.08;
+      }
+    }
     if (root.userData.jaw) {
       if (f.type === "carnivore") {
         const px = player ? (player.x !== undefined ? player.x : player.position ? player.position.x : 0) : 0;

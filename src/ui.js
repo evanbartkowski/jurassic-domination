@@ -275,12 +275,24 @@ export class UI {
 
   buildHUD() {
     this.hud.innerHTML = `<span id="hud-save-status" class="save-indicator" role="status"></span>
+      <div id="hud-hunger-vignette" class="hunger-vignette" aria-hidden="true"></div>
+      <div id="hud-starving-alert" class="starving-alert" aria-hidden="true" hidden><span class="starving-title">STARVING · HUNT FOR FLESH</span><span class="starving-sub">YOUR BODY WEAKENS · FEED IMMEDIATELY</span></div>
+      <div class="hud-top-center-vitals">
+        <div class="vital hp-vital">
+          <div class="vital-label">${icon("heart")}<span>VITALITY</span><b id="hud-hp-text">100 / 100</b></div>
+          <div class="meter health" role="progressbar" aria-label="Health"><span id="hud-hp"></span></div>
+        </div>
+        <div class="vital stamina-vital">
+          <div class="vital-label">${icon("bolt")}<span>STAMINA</span><b id="hud-stamina-text">100%</b></div>
+          <div class="meter stamina" role="progressbar" aria-label="Stamina"><span id="hud-stamina"></span></div>
+        </div>
+      </div>
       <div class="hud-top"><div class="species-card"><span class="species-emblem" id="hud-emblem">${icon("claw")}</span><div><p class="eyebrow" id="hud-tier">A NEW LIFE</p><h2 id="hud-species">The beginning</h2><span class="small-muted" id="hud-biome">FERN MEADOW</span></div></div>
         <div class="hud-run"><span class="hud-dna" id="hud-dna">0 DNA</span><span class="run-timer" id="hud-time">00:00</span><span class="run-kills">${icon("skull")}<b id="hud-kills">0</b></span><button class="icon-button" id="pause-button" aria-label="Pause game">${icon("pause")}</button></div></div>
       <div class="minimap-wrap"><div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div><canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas><div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div></div>
-      <div class="hud-bottom"><div class="vitals"><div class="vital"><div class="vital-label">${icon("heart")}<span>VITALITY</span><b id="hud-hp-text">100 / 100</b></div><div class="meter health" role="progressbar" aria-label="Health"><span id="hud-hp"></span></div></div><div class="minor-vitals"><div class="vital"><div class="vital-label">${icon("bolt")}<span>STAMINA</span><b id="hud-stamina-text">100%</b></div><div class="meter stamina" role="progressbar" aria-label="Stamina"><span id="hud-stamina"></span></div></div><div class="vital"><div class="vital-label">${icon("leaf")}<span>HUNGER</span><b id="hud-hunger-text">100%</b></div><div class="meter hunger" role="progressbar" aria-label="Hunger"><span id="hud-hunger"></span></div></div></div><p class="hunger-warning" id="hud-warning"></p><span id="hud-diet"></span></div>
+      <div class="hud-bottom"><div class="vital-status-feed"><p class="hunger-warning" id="hud-warning"></p><span id="hud-diet"></span></div></div>
       <div class="abilities"><div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div><div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div><div class="ability-key"><kbd>SHIFT</kbd>${icon("arrow")}<span id="dash-name">DASH</span><b id="hud-dash-cooldown">READY</b></div><div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div></div>
-      <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p><button id="evolve-ready" hidden aria-label="Open evolution choices"><kbd>T</kbd> EVOLUTION READY <span>CHOOSE WHEN YOU ARE READY</span></button><span id="growth-status"></span><button id="bloodline-journal">J - BLOODLINE PATHS</button></div></div>
+      <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p><button id="evolve-ready" hidden aria-label="Open evolution choices"><kbd>T</kbd> EVOLUTION READY <span>CHOOSE WHEN YOU ARE READY</span></button><span id="growth-status"></span><button id="bloodline-journal">J - COMPENDIUM</button></div></div>
       <div class="hud-controls">${small("W A S D", "MOVE")}${small("MOUSE", "AIM")}${small("SPACE", "BITE")}${small("ESC", "PAUSE")}</div>
       <div id="egg-prompt" class="egg-prompt" hidden><p class="eyebrow">A NEW LIFE STIRS</p><h2>Break into the unknown.</h2><p>Every predator was once prey. Your species is decided at birth.</p><button id="hatch-button" class="button primary">CRACK THE SHELL ${icon("arrow")}</button><span class="small-muted">PRESS E OR CLICK TO HATCH</span></div>
     `;
@@ -327,14 +339,28 @@ export class UI {
       `${Math.ceil(p.hp)} / ${Math.round(p.maxHp)}`;
     $("#hud-hp").style.width = `${Math.max(0, (p.hp / p.maxHp) * 100)}%`;
     $("#hud-stamina").style.width = `${Math.max(0, p.stamina)}%`;
-    $("#hud-hunger").style.width = `${Math.max(0, p.hunger)}%`;
     $("#hud-stamina-text").textContent = `${Math.ceil(p.stamina)}%`;
-    $("#hud-hunger-text").textContent = `${Math.ceil(p.hunger)}%`;
-    for (const [id, value, max] of [["hud-hp", p.hp, p.maxHp], ["hud-stamina", p.stamina, 100], ["hud-hunger", p.hunger, 100]]) {
-      const meter = $("#" + id).parentElement;
-      meter.setAttribute("aria-valuenow", Math.round(value));
-      meter.setAttribute("aria-valuemax", Math.round(max));
-      meter.setAttribute("aria-valuemin", "0");
+    const hungerMeter = $("#hud-hunger");
+    if (hungerMeter) {
+      hungerMeter.style.width = `${Math.max(0, p.hunger)}%`;
+      $("#hud-hunger-text").textContent = `${Math.ceil(p.hunger)}%`;
+    }
+    const vignette = $("#hud-hunger-vignette");
+    if (vignette) {
+      const hungerFactor = Math.max(0, Math.min(1, (65 - p.hunger) / 65));
+      vignette.style.opacity = (hungerFactor * 0.92).toFixed(3);
+    }
+    const starvingAlert = $("#hud-starving-alert");
+    if (starvingAlert) {
+      starvingAlert.hidden = p.hunger >= 25 || game.state !== "playing";
+    }
+    for (const [id, value, max] of [["hud-hp", p.hp, p.maxHp], ["hud-stamina", p.stamina, 100]]) {
+      const meter = $("#" + id)?.parentElement;
+      if (meter) {
+        meter.setAttribute("aria-valuenow", Math.round(value));
+        meter.setAttribute("aria-valuemax", Math.round(max));
+        meter.setAttribute("aria-valuemin", "0");
+      }
     }
     if (this.hudSpecies !== s.id) {
       this.hudSpecies = s.id;
@@ -414,47 +440,158 @@ export class UI {
     if (help[2]) help[2].textContent = keyLabel(controls.attack);
   }
 
-  showBloodlines(game) {
-    this.returnView = game ? "pause" : "menu";
-    const eligible = game ? eligibleBloodlines(game) : [],
-      g = game?.lineage;
-    this.screen(
-      "bloodlines",
-      `<div class="wide-panel bloodline-panel">${this.header("THE HIDDEN ANCESTRY", "Bloodline Paths", "Rare conditions belong to this life. Nothing carries over after death.")}<p class="lineage-counters">${g ? `Sunheart fruit: ${g.fruits.sunheart} / Moondrop fruit: ${g.fruits.moondrop} / Lava creatures: ${g.lavaKills} / Guardians: ${g.guardians}` : "Start a life to track these conditions."}</p><div class="bloodline-grid">${BLOODLINES.map(
-        (b) => {
-          const s = species(b.speciesId),
-            used = g?.used.includes(b.id),
-            ready = eligible.some((e) => e.id === b.id);
-          return `<article data-rarity="${s.rarity}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity].color}"><img src="assets/portraits/species-${s.id}.webp" alt=""/><span class="evolution-rarity">${s.rarity.toUpperCase()} - TIER ${b.tier + 1}</span><h2>${s.name}</h2><p>${b.description}</p><strong>${used ? "CLAIMED THIS LIFE" : ready ? "AVAILABLE AT YOUR NEXT EVOLUTION" : "CONDITIONS NOT MET"}</strong></article>`;
-        },
-      ).join(
-        "",
-      )}</div><div class="panel-bottom"><span>Press T when the evolution indicator flashes. Reopening choices does not reroll them.</span><button class="button primary" data-action="back">RETURN</button></div></div>`,
-      "shade-screen",
-    );
-    this.bind("back", () => this.back());
-  }
-  showFieldJournal(game = this.currentGame) {
-    this.returnView = game ? 'pause' : 'menu';
-    this.screen('field-journal', `<div class="wide-panel field-journal">${this.header('THE LIVING RECORD', 'Field journal', 'Discoveries persist in your ancestry. Every new life begins with its own survival story.')}${fieldJournalHTML(game, this.profile)}<div class="panel-bottom"><button class="button primary" data-action="back">RETURN</button></div></div>`, 'shade-screen');
-    this.bind('back', () => this.back());
-  }
   showPause() {
     this.returnView = "pause";
+    const hasMutations = (this.currentGame?.mutations || []).length > 0;
     this.screen(
       "pause",
-      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused. Returning to the title keeps this life.</p><p class="save-status" id="pause-save-status"></p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="bloodlines">BLOODLINE PATHS</button><button class="button secondary" data-action="guide">${icon("book")} ENCYCLOPEDIA</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">SAVE & RETURN TO TITLE</button></div><div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame?.mutations || []).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ") || "No mutations yet."}</p><p>${(this.currentGame?.runSkills || []).map((s) => esc(RUN_SKILLS.find((r) => r.id === s.id)?.name || s.id)).join(" · ") || "Ancient skills await discovery."}</p></div><p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
+      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused. Returning to the title keeps this life.</p><p class="save-status" id="pause-save-status"></p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="compendium">${icon("book")} COMPENDIUM (ENCYCLOPEDIA · JOURNAL · BLOODLINES)</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">SAVE & RETURN TO TITLE</button></div>${hasMutations ? `<div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame.mutations).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ")}</p></div>` : ""}<p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
       "shade-screen",
     );
     this.bind("resume", () => this.callbacks.resume());
-    this.overlay.querySelector('[data-action="bloodlines"]').insertAdjacentHTML('afterend', '<button class="button secondary" data-action="field-journal">FIELD JOURNAL & ANCESTRY</button>');
-    this.bind('field-journal', () => this.showFieldJournal(this.currentGame));
-    this.bind("bloodlines", () => this.showBloodlines(this.currentGame));
+    this.bind("compendium", () => this.showCompendium("encyclopedia", this.currentGame));
+    this.bind("field-journal", () => this.showCompendium("journal", this.currentGame));
+    this.bind("bloodlines", () => this.showCompendium("bloodlines", this.currentGame));
+    this.bind("guide", () => this.showCompendium("encyclopedia", this.currentGame));
     this.bind("settings", () => this.showSettings());
     this.bind("tutorial", () => this.showTutorial());
-    this.bind("guide", () => this.showGuide());
     this.bind("menu", () => this.callbacks.menu());
     this.setSaveStatus(this.saveMessage || "CHECKPOINTS SAVE AUTOMATICALLY", !!this.saveFailed);
+  }
+
+  showCompendium(initialTab = "encyclopedia", game = this.currentGame) {
+    if (["menu", "pause"].includes(this._view)) this.returnView = this._view;
+    this.compendiumTab = initialTab;
+    const unlocked = [
+      ...new Set([
+        ...(this.profile.unlocked || []),
+        ...(this.profile.hunted || []),
+      ]),
+    ];
+    this.guideSelection ||= unlocked.at(-1) || SPECIES[0].id;
+    const eligible = game ? eligibleBloodlines(game) : [],
+      g = game?.lineage;
+
+    const renderTabsNav = () => `
+      <div class="compendium-tabs" role="tablist">
+        <button class="compendium-tab-btn ${this.compendiumTab === "encyclopedia" ? "active" : ""}" data-comp-tab="encyclopedia" role="tab">${icon("book")} DINOSAUR ENCYCLOPEDIA</button>
+        <button class="compendium-tab-btn ${this.compendiumTab === "journal" ? "active" : ""}" data-comp-tab="journal" role="tab">${icon("leaf")} FIELD JOURNAL & SURVIVAL</button>
+        <button class="compendium-tab-btn ${this.compendiumTab === "bloodlines" ? "active" : ""}" data-comp-tab="bloodlines" role="tab">${icon("dna")} BLOODLINE PATHS</button>
+      </div>
+    `;
+
+    const getBodyHTML = () => {
+      if (this.compendiumTab === "journal") {
+        return `<div class="field-journal-wrap">${fieldJournalHTML(game, this.profile)}</div>`;
+      }
+      if (this.compendiumTab === "bloodlines") {
+        return `
+          <div class="bloodlines-wrap">
+            <p class="lineage-counters">${g ? `Sunheart fruit: ${g.fruits.sunheart} / Moondrop fruit: ${g.fruits.moondrop} / Lava creatures: ${g.lavaKills} / Guardians: ${g.guardians}` : "Start a life to track these conditions."}</p>
+            <div class="bloodline-grid">${BLOODLINES.map(
+              (b) => {
+                const s = species(b.speciesId),
+                  used = g?.used.includes(b.id),
+                  ready = eligible.some((e) => e.id === b.id);
+                return `<article data-rarity="${s.rarity}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity].color}"><img src="assets/portraits/species-${s.id}.webp" alt=""/><span class="evolution-rarity">${s.rarity.toUpperCase()} - TIER ${b.tier + 1}</span><h2>${s.name}</h2><p>${b.description}</p><strong>${used ? "CLAIMED THIS LIFE" : ready ? "AVAILABLE AT YOUR NEXT EVOLUTION" : "CONDITIONS NOT MET"}</strong></article>`;
+              },
+            ).join("")}</div>
+          </div>
+        `;
+      }
+      return `
+        <div class="encyclopedia-toolbar"><label>SEARCH<input id="guide-search" type="search" placeholder="Name, habitat or ability…" autocomplete="off"/></label><label>COLLECTION<select id="guide-filter"><option value="all">All potential forms</option><option value="unlocked">Evolved or hunted</option><option value="mythic">Mythological creatures</option>${TIERS.map((name, i) => `<option value="tier:${i}">${i + 1} · ${esc(name)}</option>`).join("")}</select></label></div>
+        <div class="encyclopedia-layout"><section class="specimen-panel"><canvas id="specimen-canvas" aria-label="Rotating 3D dinosaur specimen. Drag to rotate."></canvas><span class="specimen-hint">LIVE 3D SPECIMEN · DRAG TO ROTATE</span><div id="specimen-info"></div></section><div id="guide-results" class="species-grid encyclopedia-results"></div></div>
+      `;
+    };
+
+    this.screen(
+      "guide",
+      `<div class="wide-panel compendium-panel">${this.header("THE LIVING ARCHIVE & COMPENDIUM", "Compendium", `${unlocked.length} evolved or hunted forms recorded · ${SPECIES.length} dinosaur and mythical species`)}
+      ${renderTabsNav()}
+      <div id="compendium-container">${getBodyHTML()}</div>
+      <div class="panel-bottom"><span>Discoveries persist in your ancestry. Press ESC to return.</span><button class="button primary" data-action="back" data-focus>RETURN ${icon("arrow")}</button></div></div>`,
+      "shade-screen",
+    );
+
+    const wireEncyclopedia = () => {
+      const showDetails = (s) => {
+        this.guideSelection = s.id;
+        const kit = creatureKit(s), technique = TECHNIQUES[kit.technique];
+        const info = $("#specimen-info");
+        if (!info) return;
+        info.innerHTML =
+          `<span class="eyebrow">${unlocked.includes(s.id) ? "DISCOVERED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}">${(s.rarity || "regular").toUpperCase()} · ${kit.abilityCount} SPECIES SKILLS</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><dl>${kit.ability ? `<dt>Q · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd>` : ""}${technique ? `<dt>R · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd>` : ""}${SPECIALS[kit.special] ? `<dt>X · ${SPECIALS[kit.special].name}</dt><dd>${SPECIALS[kit.special].description}</dd>` : ""}${kit.abilityCount ? "" : "<dt>Instinct only</dt><dd>This form relies on its bite, movement and innate adaptation. Species skills develop in later evolutions.</dd>"}<dt>Diet</dt><dd>${esc(dietName(s))}</dd><dt>Body size</dt><dd>${s.size.toFixed(2)} · ${s.compactEvolution ? "Rare compact evolution: a smaller, specialized body." : "Grows with evolution and feeding."}</dd><dt>Mobility</dt><dd>${kit.dash ? "Shift: dodge/dash available." : "Heavy form: no dash. Use positioning, sprint and defensive skills."}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
+        $("#guide-results")
+          ?.querySelectorAll("[data-inspect]")
+          .forEach((b) =>
+            b.setAttribute("aria-pressed", String(b.dataset.inspect === s.id)),
+          );
+      };
+      const renderCards = () => {
+        const searchInput = $("#guide-search");
+        const filterInput = $("#guide-filter");
+        if (!searchInput || !filterInput) return;
+        const query = searchInput.value.trim().toLowerCase(),
+          filter = filterInput.value;
+        const found = SPECIES.filter(
+          (s) =>
+            (!query ||
+              `${s.name} ${s.habitat} ${s.ability}`
+                .toLowerCase()
+                .includes(query)) &&
+            (filter === "all" ||
+              (filter === "unlocked" && unlocked.includes(s.id)) ||
+              (filter === "mythic" && s.tier >= 6) ||
+              (filter.startsWith("tier:") && s.tier === Number(filter.slice(5)))),
+        );
+        const results = $("#guide-results");
+        if (!results) return;
+        results.innerHTML = found.length
+          ? found
+              .map(
+                (s) =>
+                  `<button class="species-entry ${unlocked.includes(s.id) ? "discovered" : ""}" data-inspect="${s.id}" data-rarity="${s.rarity || "regular"}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${s.id === this.guideSelection}"><span class="species-tier">${s.tier + 1} / ${esc(tierName(s.tier))} · ${unlocked.includes(s.id) ? "RECORDED" : "UNDISCOVERED"}</span><span class="evolution-rarity">${(s.rarity || "regular").toUpperCase()}</span><div class="creature-art">${portrait(s.id)}</div><h2>${esc(s.name)}</h2><span class="species-ability">${esc(skillSummary(s))}</span></button>`,
+              )
+              .join("")
+          : '<p class="empty-collection">No recorded specimens match. Hatch and evolve to grow your collection, or select All potential forms.</p>';
+        results
+          .querySelectorAll("[data-inspect]")
+          .forEach(
+            (b) => (b.onclick = () => showDetails(species(b.dataset.inspect))),
+          );
+      };
+      const searchInput = $("#guide-search");
+      if (searchInput) searchInput.oninput = renderCards;
+      const filterInput = $("#guide-filter");
+      if (filterInput) filterInput.onchange = renderCards;
+      renderCards();
+      showDetails(species(this.guideSelection));
+    };
+
+    if (this.compendiumTab === "encyclopedia") {
+      wireEncyclopedia();
+    }
+
+    this.overlay.querySelectorAll("[data-comp-tab]").forEach((btn) => {
+      btn.onclick = () => {
+        this.showCompendium(btn.dataset.compTab, game);
+      };
+    });
+
+    this.bind("back", () => this.back());
+  }
+
+  showGuide() {
+    this.showCompendium("encyclopedia");
+  }
+
+  showFieldJournal(game = this.currentGame) {
+    this.showCompendium("journal", game);
+  }
+
+  showBloodlines(game = this.currentGame) {
+    this.showCompendium("bloodlines", game);
   }
 
   showTutorial() {
@@ -475,68 +612,7 @@ export class UI {
     this.bind("back", () => this.back());
   }
 
-  showGuide() {
-    if (["menu", "pause"].includes(this._view)) this.returnView = this._view;
-    const unlocked = [
-      ...new Set([
-        ...(this.profile.unlocked || []),
-        ...(this.profile.hunted || []),
-      ]),
-    ];
-    this.guideSelection ||= unlocked.at(-1) || SPECIES[0].id;
-    this.screen(
-      "guide",
-      `<div class="wide-panel encyclopedia-panel">${this.header("THE LIVING ARCHIVE", "Dinosaur Encyclopedia", `${unlocked.length} evolved or hunted forms recorded · ${SPECIES.length} dinosaur and mythical species · eight tiers`)}
-      <div class="encyclopedia-toolbar"><label>SEARCH<input id="guide-search" type="search" placeholder="Name, habitat or ability…" autocomplete="off"/></label><label>COLLECTION<select id="guide-filter"><option value="all">All potential forms</option><option value="unlocked">Evolved or hunted</option><option value="mythic">Mythological creatures</option>${TIERS.map((name, i) => `<option value="tier:${i}">${i + 1} · ${esc(name)}</option>`).join("")}</select></label></div>
-      <div class="encyclopedia-layout"><section class="specimen-panel"><canvas id="specimen-canvas" aria-label="Rotating 3D dinosaur specimen. Drag to rotate."></canvas><span class="specimen-hint">LIVE 3D SPECIMEN · DRAG TO ROTATE</span><div id="specimen-info"></div></section><div id="guide-results" class="species-grid encyclopedia-results"></div></div>
-      <div class="panel-bottom"><span>Discovery records persist when you hatch or evolve. Unrecorded forms are previews.</span><button class="button primary" data-action="back" data-focus>RETURN ${icon("arrow")}</button></div></div>`,
-      "shade-screen",
-    );
-    const showDetails = (s) => {
-      this.guideSelection = s.id;
-      const kit = creatureKit(s), technique = TECHNIQUES[kit.technique];
-      $("#specimen-info").innerHTML =
-        `<span class="eyebrow">${unlocked.includes(s.id) ? "DISCOVERED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}">${(s.rarity || "regular").toUpperCase()} · ${kit.abilityCount} SPECIES SKILLS</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><dl>${kit.ability ? `<dt>Q · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd>` : ""}${technique ? `<dt>R · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd>` : ""}${SPECIALS[kit.special] ? `<dt>X · ${SPECIALS[kit.special].name}</dt><dd>${SPECIALS[kit.special].description}</dd>` : ""}${kit.abilityCount ? "" : "<dt>Instinct only</dt><dd>This form relies on its bite, movement and innate adaptation. Species skills develop in later evolutions.</dd>"}<dt>Diet</dt><dd>${esc(dietName(s))}</dd><dt>Body size</dt><dd>${s.size.toFixed(2)} · ${s.compactEvolution ? "Rare compact evolution: a smaller, specialized body." : "Grows with evolution and feeding."}</dd><dt>Mobility</dt><dd>${kit.dash ? "Shift: dodge/dash available." : "Heavy form: no dash. Use positioning, sprint and defensive skills."}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
-      $("#guide-results")
-        .querySelectorAll("[data-inspect]")
-        .forEach((b) =>
-          b.setAttribute("aria-pressed", String(b.dataset.inspect === s.id)),
-        );
-    };
-    const renderCards = () => {
-      const query = $("#guide-search").value.trim().toLowerCase(),
-        filter = $("#guide-filter").value;
-      const found = SPECIES.filter(
-        (s) =>
-          (!query ||
-            `${s.name} ${s.habitat} ${s.ability}`
-              .toLowerCase()
-              .includes(query)) &&
-          (filter === "all" ||
-            (filter === "unlocked" && unlocked.includes(s.id)) ||
-            (filter === "mythic" && s.tier >= 6) ||
-            (filter.startsWith("tier:") && s.tier === Number(filter.slice(5)))),
-      );
-      $("#guide-results").innerHTML = found.length
-        ? found
-            .map(
-              (s) =>
-                `<button class="species-entry ${unlocked.includes(s.id) ? "discovered" : ""}" data-inspect="${s.id}" data-rarity="${s.rarity || "regular"}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${s.id === this.guideSelection}"><span class="species-tier">${s.tier + 1} / ${esc(tierName(s.tier))} · ${unlocked.includes(s.id) ? "RECORDED" : "UNDISCOVERED"}</span><span class="evolution-rarity">${(s.rarity || "regular").toUpperCase()}</span><div class="creature-art">${portrait(s.id)}</div><h2>${esc(s.name)}</h2><span class="species-ability">${esc(skillSummary(s))}</span></button>`,
-            )
-            .join("")
-        : '<p class="empty-collection">No recorded specimens match. Hatch and evolve to grow your collection, or select All potential forms.</p>';
-      $("#guide-results")
-        .querySelectorAll("[data-inspect]")
-        .forEach(
-          (b) => (b.onclick = () => showDetails(species(b.dataset.inspect))),
-        );
-    };
-    $("#guide-search").oninput = renderCards;
-    $("#guide-filter").onchange = renderCards;
-    renderCards();
-    showDetails(species(this.guideSelection));
-    this.bind("back", () => this.back());
-  }
+
 
   showWardrobe() {
     this.returnView = "menu";

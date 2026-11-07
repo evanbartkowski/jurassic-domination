@@ -62,7 +62,7 @@ export function firstSolidHit(start, end, features = [], padding = 0, allowEscap
   const minX = Math.min(start.x, end.x) - EPSILON, maxX = Math.max(start.x, end.x) + EPSILON,
     minY = Math.min(start.y, end.y) - EPSILON, maxY = Math.max(start.y, end.y) + EPSILON;
   for (const feature of features) {
-    if (!feature.solid) continue;
+    if (!feature.solid || feature.destroyed) continue;
     const radius = feature.radius + padding;
     // Most active-chunk solids are far from a single footstep or strike. This
     // conservative broad phase preserves swept/tangent contacts without doing

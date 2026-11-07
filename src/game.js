@@ -225,6 +225,10 @@ export class Game {
       !options.juvenile &&
       this.random() < 0.32
     );
+    const idHash = Math.abs(Math.sin((x * 37.1 + y * 17.3 + this._nextId) * 12.7));
+    const isSleeping = !options.boss && !isInjured && options.sleeping === undefined && ((idHash * 5.3) % 1 < 0.12);
+    const isAerial = (/quetzalcoatlus|hatzegopteryx|pteranodon|archaeopteryx|pterodactyl|wyvern|phoenix|thunderbird|quetzalcoatl/.test(s.id) || (s.body === "dragon" && s.tier >= 6)) && s.tier >= 3;
+    const isFlying = isAerial && !options.boss && (options.flying ?? (((idHash * 7.1) % 1) < 0.65));
     const fullMaxHp = grownHp * (options.juvenile ? 0.45 : 1);
     const initialHp = Number.isFinite(options.hp)
       ? Math.max(1, Math.min(fullMaxHp, options.hp))
@@ -246,7 +250,12 @@ export class Game {
       hp: initialHp,
       maxHp: fullMaxHp,
       adultMaxHp: grownHp,
-      injured: isInjured || initialHp < fullMaxHp * 0.85,
+      injured: (isInjured && ((idHash * 2.3) % 1 < 0.35)) || initialHp < fullMaxHp * 0.85,
+      isSleeping: options.sleeping ?? isSleeping,
+      isFlying,
+      altitude: isFlying ? 7.5 : 0,
+      diveState: isFlying ? "cruising" : "grounded",
+      diveTimer: 4 + ((idHash * 4.9) % 6),
       attackCooldown: 1 + this.random(),
       telegraph: 0,
       intent: "wander",
@@ -375,7 +384,8 @@ export class Game {
     else if (length > 0.05) p.angle = Math.atan2(my, mx);
     const sprint = !!input.sprint && p.stamina > 2 && length > 0.05;
     setMovementPosture(this, input);
-    const speed = p.speed * (sprint ? 1.65 : 1) * (p.chilled > 0 ? 0.6 : 1) * survivalSpeed(this);
+    const hungerSlow = p.hunger <= 0 && (p.starvationTimer || 0) > 5 ? 0.85 : 1;
+    const speed = p.speed * (sprint ? 1.65 : 1) * (p.chilled > 0 ? 0.6 : 1) * hungerSlow * survivalSpeed(this);
     // Acceleration and braking remove abrupt starts while preserving precise aim.
     const response = 1 - Math.exp(-dt * (length > 0.05 ? 13 : 19));
     p.vx += (mx * speed - p.vx) * response;
@@ -412,8 +422,13 @@ export class Game {
         p.maxHp,
         p.hp + p.maxHp * 0.009 * dt * (s.body === "equine" ? 1.6 : 1),
       );
-    if (p.hunger <= 0)
-      this.damagePlayer(p.maxHp * 0.035 * dt, "Starvation", true);
+    if (p.hunger <= 0) {
+      p.starvationTimer = (p.starvationTimer || 0) + dt;
+      const rate = p.starvationTimer > 10 ? 0.055 : 0.035;
+      this.damagePlayer(p.maxHp * rate * dt, "Starvation", true);
+    } else {
+      p.starvationTimer = 0;
+    }
     // The far outer ring is volcanic: an explicit warning precedes continuous damage.
     if (radius > WORLD_RADIUS - 35) {
       if (this._warningCooldown === 0) {
@@ -471,6 +486,7 @@ export class Game {
     const reach = 2.8 + this.effectiveSize * 1.45 + (this.effectiveSize >= 3.0 ? (this.effectiveSize - 2.8) * 1.6 : 0);
     this.emit("attack", { x: p.x, y: p.y, angle: p.angle, radius: reach, size: this.effectiveSize });
     for (const e of [...this.entities]) {
+      if (e.isFlying && (e.altitude || 0) > 2.2) continue;
       const target = SPECIES_BY_ID[e.speciesId];
       if (
         distance(p, e) < reach + target.size * 0.45 &&
@@ -519,6 +535,30 @@ export class Game {
               this.emit("kill", { x: fish.x, y: fish.y, speciesId: "tideweaver", water: true });
             }
           }
+        }
+      }
+    }
+    for (const f of (this.worldFeatures || [])) {
+      if (f.type !== "carnivore" || f.dead) continue;
+      const dPlant = Math.hypot(f.x - p.x, f.y - p.y);
+      if (dPlant < reach + f.radius + 1.2 && Math.abs(angleDifference(Math.atan2(f.y - p.y, f.x - p.x), p.angle)) < 1.6) {
+        f.hp = (Number.isFinite(f.hp) ? f.hp : (45 + (f.tier || 0) * 35)) - p.damage;
+        f.hitFlash = 0.3;
+        this.emit("hit", { x: f.x, y: f.y, target: "plant" });
+        if (f.hp <= 0) {
+          f.dead = true;
+          this.gainXP(25 + (f.tier || 0) * 20);
+          p.kills++;
+          p.score += 65 + (f.tier || 0) * 45;
+          this.spawnFood("meat", f.x, f.y, 25 + (f.tier || 0) * 20, {
+            tier: f.tier || 0,
+            homeChunk: f.homeChunk || "0,0",
+          });
+          this.spawnFood("plant", f.x + 1.2, f.y, 18, {
+            tier: f.tier || 0,
+            homeChunk: f.homeChunk || "0,0",
+          });
+          this.emit("kill", { x: f.x, y: f.y, target: "plant" });
         }
       }
     }

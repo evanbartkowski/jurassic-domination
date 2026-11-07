@@ -65,6 +65,8 @@ export class AudioEngine {
     this.currentAmbience = null;
     this.currentAmbienceKey = "";
     this.nextHeartbeat = 0;
+    this.samplePool = new Map();
+    this.sampleCooldowns = new Map();
   }
 
   playSample(key, volume = 1, isMusic = false) {
@@ -76,8 +78,42 @@ export class AudioEngine {
       const busVol = Number(isMusic ? this.settings.music : this.settings.sfx) || 0;
       const finalVol = Math.max(0, Math.min(1, volume * masterVol * busVol));
       if (finalVol <= 0.001) return;
-      const snd = new Audio(path);
+
+      const now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+      const cooldowns = {
+        giantStep: 380,
+        dinoStep: 340,
+        gravelStep: 300,
+        rexRoar: 3200,
+        dinoRoar: 2800,
+        dinoGrowl: 2400,
+        raptorCall: 2500,
+        birdScream: 2500,
+        painRoar: 2200,
+        wolvesFight: 3600,
+        heartbeat: 1400,
+        waterSplash: 650,
+        uiClick: 80,
+        coinCollect: 120,
+        itemCollect: 120,
+        skillReveal: 800,
+        skillCombo: 800,
+        victoryChime: 1500,
+        sniff: 700,
+        seaMonster: 3500,
+      };
+      const minGap = cooldowns[key] ?? 200;
+      const last = this.sampleCooldowns.get(key) || 0;
+      if (now - last < minGap) return;
+      this.sampleCooldowns.set(key, now);
+
+      let snd = this.samplePool.get(key);
+      if (!snd) {
+        snd = new Audio(path);
+        this.samplePool.set(key, snd);
+      }
       snd.volume = finalVol;
+      snd.currentTime = 0;
       snd.play().catch(() => {});
     } catch {
       // Graceful fallback
@@ -89,20 +125,27 @@ export class AudioEngine {
     let targetTrack = "dayAmbience";
     if (isDanger) targetTrack = "tenseAmbience";
     else if (isNearWater) targetTrack = "oceanAmbience";
-    else if (weather?.event === "rain" || weather?.event === "flood") targetTrack = "waterSplash";
+    else if (weather?.event === "rain" || weather?.event === "flood") targetTrack = "tenseAmbience";
     else if (timeOfDay?.name === "night") targetTrack = "nightAmbience";
     else if (timeOfDay?.name === "dusk") targetTrack = "duskAmbience";
     else targetTrack = "dayAmbience";
 
     if (this.currentAmbienceKey !== targetTrack) {
       if (this.currentAmbience) {
-        try { this.currentAmbience.pause(); } catch {}
+        try {
+          this.currentAmbience.pause();
+          this.currentAmbience.currentTime = 0;
+        } catch {}
       }
       this.currentAmbienceKey = targetTrack;
       const path = SAMPLES[targetTrack];
       if (path) {
         try {
-          const snd = new Audio(path);
+          let snd = this.samplePool.get(targetTrack);
+          if (!snd) {
+            snd = new Audio(path);
+            this.samplePool.set(targetTrack, snd);
+          }
           snd.loop = true;
           const masterVol = Number(this.settings.master) || 0;
           const musicVol = Number(this.settings.music) || 0;
@@ -712,6 +755,13 @@ export class AudioEngine {
       try { this.currentAmbience.pause(); } catch {}
       this.currentAmbience = null;
     }
+    if (this.samplePool) {
+      for (const snd of this.samplePool.values()) {
+        try { snd.pause(); snd.currentTime = 0; } catch {}
+      }
+      this.samplePool.clear();
+    }
+    this.sampleCooldowns?.clear();
     for (const node of this.nodes) {
       try {
         node.stop();

@@ -867,12 +867,7 @@ export class WorldRenderer {
           });
         }
         keys.add("player");
-        this.ring.position.set(p.x, 0.065, p.y);
-        this.ring.scale.setScalar(
-          Math.max(1.15, game.effectiveSize * 1.4),
-        );
-        this.ring.visible = true;
-        this.ring.material.opacity = p.invulnerable > 0 ? 0.85 : 0.55;
+        this.ring.visible = false;
       } else this.ring.visible = false;
       for (const e of game.entities) {
         if (Math.hypot(e.x - p.x, e.y - p.y) > 49) {
@@ -899,7 +894,9 @@ export class WorldRenderer {
           'none',
           e.genome,
         );
-        if (e.inTree) {
+        if (e.isFlying) {
+          creature.position.y = (e.altitude || 7.5) + Math.sin(t * 2.5 + e.id) * 0.45;
+        } else if (e.inTree) {
           creature.position.y = e.treeY || 4.8;
         } else if (e.treeDrop > 0) {
           e.treeDrop = Math.max(0, e.treeDrop - dt * 3.5);
@@ -912,7 +909,7 @@ export class WorldRenderer {
             0.16 + Math.sin(t * 1.4 + e.id) * 0.05;
         }
         if (e.intent === "ambush" && !e.inTree) creature.userData.body.position.y -= 0.08;
-        creature.userData.isSleeping = e.sleeping > 0;
+        creature.userData.isSleeping = (e.sleeping > 0) || !!e.isSleeping;
         if (e.poison > 0 && Math.random() < 0.25) {
           this.particles.push({
             x: e.x + (Math.random() - 0.5) * 1.2,
@@ -1133,6 +1130,36 @@ export class WorldRenderer {
     this.scene.fog.color.lerp(destFog, Math.min(1, dt * 1.5));
     this.scene.background.copy(this.scene.fog.color);
 
+    if (menu) {
+      if (Math.random() < 0.65) {
+        const leafColors = [0x5f8a48, 0x82a657, 0xa37b3e, 0xbf984c, 0x476634];
+        this.particles.push({
+          x: -18 + Math.random() * 6,
+          y: 2 + Math.random() * 8,
+          z: -5 + Math.random() * 22,
+          vx: 5.5 + Math.random() * 3.5,
+          vy: -0.4 + (Math.random() - 0.5) * 0.7,
+          vz: -1.2 + (Math.random() - 0.5) * 1.8,
+          life: 4.8 + Math.random() * 2,
+          size: 0.32 + Math.random() * 0.16,
+          color: leafColors[Math.floor(Math.random() * leafColors.length)],
+        });
+      }
+      if (Math.random() < 0.35) {
+        this.particles.push({
+          x: (Math.random() - 0.5) * 26,
+          y: 1.5 + Math.random() * 9,
+          z: (Math.random() - 0.5) * 26,
+          vx: 1.2 + Math.random() * 1.5,
+          vy: 0.3 + (Math.random() - 0.5) * 0.4,
+          vz: 0.5 + Math.random() * 0.8,
+          life: 3.8,
+          size: 0.14,
+          color: 0xffe28a,
+        });
+      }
+    }
+
     if (p && !menu) {
       if (isRain && Math.random() < 0.65) {
         for (let k = 0; k < 3; k++) {
@@ -1252,22 +1279,35 @@ export class WorldRenderer {
                     : food.type === "relic"
                       ? 0xa89bec
                       : 0xb7cb71);
+        const isCarcass = food.type === "meat";
         const geo = ["relic", "essence"].includes(food.type)
           ? new THREE.OctahedronGeometry(1)
           : smoothSphere;
-        piece(
-          mesh,
-          geo,
-          color,
-          [0, food.type === "egg" ? 0.65 : 0.45, 0],
-          food.type === "egg"
-            ? [0.43, 0.6, 0.43]
-            : food.type === "meat"
-              ? [0.65, 0.25, 0.32]
+        if (!isCarcass) {
+          piece(
+            mesh,
+            geo,
+            color,
+            [0, food.type === "egg" ? 0.65 : 0.45, 0],
+            food.type === "egg"
+              ? [0.43, 0.6, 0.43]
               : [0.3, 0.35, 0.3],
-          null,
-          rare || food.type === "essence" ? color : 0,
-        );
+            null,
+            rare || food.type === "essence" ? color : 0,
+          );
+        } else {
+          // Prehistoric dinosaur skeletal carcass with dark blood pool, spine, skull and exposed ribcage
+          piece(mesh, new THREE.CircleGeometry(0.88, 16), 0x3d0c10, [0, 0.02, 0], [1.35, 0.85, 1], [-Math.PI / 2, 0, 0]);
+          piece(mesh, cylinder, 0xe5dfcf, [0, 0.22, 0], [0.07, 1.45, 0.07], [0, 0, Math.PI / 2]);
+          piece(mesh, smoothSphere, 0xd8ceb8, [-0.75, 0.24, 0], [0.24, 0.18, 0.18]);
+          piece(mesh, smoothSphere, 0xd8ceb8, [0.65, 0.22, 0], [0.2, 0.18, 0.22]);
+          piece(mesh, smoothSphere, 0x8a181e, [0.05, 0.18, 0], [0.48, 0.18, 0.28]);
+          piece(mesh, smoothSphere, 0x580f14, [-0.15, 0.14, 0.1], [0.35, 0.14, 0.22]);
+          for (let i = -2; i <= 2; i++) {
+            const rx = i * 0.22;
+            piece(mesh, new THREE.TorusGeometry(0.3, 0.038, 6, 12, Math.PI), 0xe2dcce, [rx, 0.18, 0], [1, 1, 1], [0, 0, 0]);
+          }
+        }
         if (food.type === "dna")
           for (let i = 0; i < 10; i++) {
             const a = i * 0.65;
@@ -1342,15 +1382,6 @@ export class WorldRenderer {
               [0, -a, 0],
             );
           }
-        if (food.type === "meat")
-          for (let i = 0; i < 3; i++)
-            piece(
-              mesh,
-              smoothSphere,
-              0xddd5ba,
-              [(i - 1) * 0.28, 0.56, 0],
-              [0.05, 0.17, 0.3],
-            );
         if (rare) {
           const beam = piece(
             mesh,
@@ -1385,18 +1416,20 @@ export class WorldRenderer {
           );
           halo.material = new THREE.MeshBasicMaterial({ color });
         }
-        const ring = new THREE.Mesh(
-          new THREE.RingGeometry(0.5, 0.55, 16),
-          new THREE.MeshBasicMaterial({
-            color,
-            transparent: true,
-            opacity: 0.4,
-            side: THREE.DoubleSide,
-          }),
-        );
-        ring.rotation.x = -Math.PI / 2;
-        ring.position.y = 0.04;
-        mesh.add(ring);
+        if (food.type !== "meat") {
+          const ring = new THREE.Mesh(
+            new THREE.RingGeometry(0.5, 0.55, 16),
+            new THREE.MeshBasicMaterial({
+              color,
+              transparent: true,
+              opacity: 0.4,
+              side: THREE.DoubleSide,
+            }),
+          );
+          ring.rotation.x = -Math.PI / 2;
+          ring.position.y = 0.04;
+          mesh.add(ring);
+        }
         mesh.position.set(food.x, 0, food.y);
         this.scene.add(mesh);
         this.foodModels.set(food.id, mesh);

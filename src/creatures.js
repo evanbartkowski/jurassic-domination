@@ -895,6 +895,9 @@ export function createDinosaur(
   root.userData = {
     body,
     head,
+    headBaseX: headX,
+    headBaseY: headY,
+    headBaseZ: 0,
     jaw,
     legs,
     arms,
@@ -992,8 +995,10 @@ export function animateCreature(
             : 1.5) +
       Math.max(0, wave) * 0.045 * stride;
   }
-  head.position.x = strike * 0.38;
-  head.position.y = -strike * 0.24;
+  const baseHX = d.headBaseX ?? head.position.x;
+  const baseHY = d.headBaseY ?? head.position.y;
+  head.position.x = baseHX + strike * 0.38;
+  head.position.y = baseHY - strike * 0.24;
   head.rotation.z =
     Math.sin(phase + 0.4) * 0.026 * stride +
     Math.sin(time * 0.9) * 0.025 -

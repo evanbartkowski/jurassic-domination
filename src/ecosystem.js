@@ -749,6 +749,38 @@ export const Ecosystem = {
       "slowed",
     ])
       e[key] = Math.max(0, (e[key] || 0) - dt);
+
+    if (e.isFlying) {
+      e.diveTimer = (e.diveTimer || 5) - dt;
+      if (e.diveState === "cruising") {
+        e.altitude = 7.5 + Math.sin(this.time * 2 + (e.id || 1)) * 0.7;
+        if (e.diveTimer <= 0 && distance < 26) {
+          e.diveState = "diving";
+          e.diveTimer = 1.4;
+          this.audio?.playSample?.("birdScream", 0.75);
+        }
+      } else if (e.diveState === "diving") {
+        e.altitude = Math.max(0.4, (e.altitude || 7.5) - dt * 6.5);
+        if (e.altitude <= 0.6 || distance < 3.2) {
+          e.diveState = "grounded";
+          e.diveTimer = 2.4;
+          if (distance < 3.2 && e.attackCooldown <= 0) {
+            e.telegraph = 0.3;
+          }
+        }
+      } else if (e.diveState === "grounded") {
+        e.altitude = 0.4;
+        if (e.diveTimer <= 0) {
+          e.diveState = "ascending";
+        }
+      } else if (e.diveState === "ascending") {
+        e.altitude = Math.min(7.5, (e.altitude || 0.4) + dt * 5.2);
+        if (e.altitude >= 7.5) {
+          e.diveState = "cruising";
+          e.diveTimer = 5 + (e.id % 5);
+        }
+      }
+    }
     if (e.poison > 0) {
       const elapsed = Math.min(dt, e.poison);
       e.poison = Math.max(0, e.poison - dt);

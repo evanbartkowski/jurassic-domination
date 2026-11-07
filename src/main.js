@@ -1003,10 +1003,11 @@ function updateCreatureLabels() {
       labels.set(e.id, element);
       labelLayer.append(element);
     }
-    element.className = `creature-label${species.tier > game.tier ? " predator" : ""}${e.boss ? " alpha" : ""}`;
+    const isInjured = e.hp < e.maxHp * 0.85;
+    element.className = `creature-label${species.tier > game.tier ? " predator" : ""}${e.boss ? " alpha" : ""}${isInjured ? " injured" : ""}${e.intent === "fight" ? " fighting" : ""}`;
     element.dataset.rarity = species.rarity || "regular";
     element.querySelector("span").textContent =
-      `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${e.intent === "graze" ? " · NEUTRAL" : e.packId ? " · PACK" : ""}`;
+      `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${isInjured ? " · INJURED" : ""}${e.intent === "fight" ? " · CLASHING" : e.intent === "graze" ? " · NEUTRAL" : e.packId ? " · PACK" : ""}`;
     element.querySelector("i").style.transform =
       `scaleX(${Math.max(0, e.hp / e.maxHp)})`;
     const pos = world.project(e.x, e.y, species.size * (e.scaleFactor || 1) * 2 + 1);

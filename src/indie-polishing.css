@@ -738,3 +738,27 @@ body:has(#overlay:not([hidden]):not(.hidden)) #toast {
   text-shadow: 0 0 25px rgba(229, 179, 82, 0.4), 0 4px 12px #000 !important;
   font-family: Georgia, serif !important;
 }
+
+/* ============================================================
+   INJURED & FIGHTING WILD CREATURE INDICATORS
+   ============================================================ */
+.creature-label.injured > span {
+  color: #ff9b85 !important;
+  text-shadow: 0 0 8px rgba(220, 50, 40, 0.7), 0 1px 3px #000 !important;
+}
+
+.creature-label.injured b i {
+  background: linear-gradient(90deg, #d32f2f, #f44336) !important;
+  box-shadow: 0 0 6px rgba(229, 57, 53, 0.8) !important;
+}
+
+.creature-label.fighting > span {
+  color: #ffe082 !important;
+  text-shadow: 0 0 8px rgba(255, 193, 7, 0.8), 0 1px 3px #000 !important;
+  animation: clash-pulse 0.7s ease-in-out infinite alternate !important;
+}
+
+@keyframes clash-pulse {
+  from { transform: scale(1); filter: brightness(1); }
+  to { transform: scale(1.08); filter: brightness(1.3); }
+}

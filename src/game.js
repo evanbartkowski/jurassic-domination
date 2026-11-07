@@ -217,6 +217,20 @@ export class Game {
           : this.random() * 25;
     const growth = growthFromFood(nutrients, s.tier),
       grownHp = maxHp * (1 + growth * 0.4);
+    const isInjured = options.injured === true || (
+      options.injured === undefined &&
+      options.homeChunk &&
+      options.passive === undefined &&
+      !options.boss &&
+      !options.juvenile &&
+      this.random() < 0.32
+    );
+    const fullMaxHp = grownHp * (options.juvenile ? 0.45 : 1);
+    const initialHp = Number.isFinite(options.hp)
+      ? Math.max(1, Math.min(fullMaxHp, options.hp))
+      : isInjured
+        ? Math.max(6, Math.round(fullMaxHp * (0.35 + this.random() * 0.45)))
+        : fullMaxHp;
     const entity = {
       id: this._nextId++,
       x,
@@ -229,9 +243,10 @@ export class Game {
       damage: s.damage * (1 + growth * 0.32),
       hunger: 65 + this.random() * 35,
       feedCooldown: 0,
-      hp: grownHp * (options.juvenile ? 0.45 : 1),
-      maxHp: grownHp * (options.juvenile ? 0.45 : 1),
+      hp: initialHp,
+      maxHp: fullMaxHp,
       adultMaxHp: grownHp,
+      injured: isInjured || initialHp < fullMaxHp * 0.85,
       attackCooldown: 1 + this.random(),
       telegraph: 0,
       intent: "wander",
@@ -241,7 +256,7 @@ export class Game {
       fear: 0,
       poison: 0,
       poisonTick: 0,
-      bleeding: 0,
+      bleeding: (isInjured && initialHp < fullMaxHp * 0.5 && this.random() < 0.25) ? 2.5 : 0,
       bleedTick: 0,
       burning: 0,
       burnTick: 0,
@@ -1023,6 +1038,53 @@ export class Game {
       lairId: e.lairId,
       entityId: e.id,
     });
+  }
+
+  _creatureDamage(victim, attacker, amount, knockback = 0) {
+    if (!this.entities.includes(victim) || victim.hp <= 0) return;
+    victim.sleeping = 0;
+    const resistance = victim.genome ? phenotype(victim.genome).resistance : 0;
+    const actualDamage = Math.max(1, amount * (1 - resistance));
+    victim.hp = Math.max(0, victim.hp - actualDamage);
+    victim.hitFlash = 0.22;
+    recordBlood(this, victim.x, victim.y, victim.id);
+    if (knockback && attacker) {
+      const angle = Math.atan2(victim.y - attacker.y, victim.x - attacker.x);
+      sweepMove(victim, Math.cos(angle) * knockback, Math.sin(angle) * knockback, SPECIES_BY_ID[victim.speciesId].size * (victim.scaleFactor || 1), this.worldFeatures || []);
+    }
+    this.emit("hit", { x: victim.x, y: victim.y, amount: actualDamage, target: victim.id });
+    if (victim.hp > 0) {
+      const victimSpecies = SPECIES_BY_ID[victim.speciesId];
+      if (victimSpecies.temperament === "skittish" || victim.hp < victim.maxHp * 0.22) {
+        victim.fear = 4.5;
+        victim.rivalId = null;
+      } else if (!victim.rivalId || victim.rivalId !== attacker.id) {
+        victim.rivalId = attacker.id;
+      }
+      return;
+    }
+    const s = SPECIES_BY_ID[victim.speciesId];
+    this.entities = this.entities.filter((other) => other !== victim);
+    this.emit("kill", { speciesId: s.id, x: victim.x, y: victim.y, wild: true });
+    const count = victim.boss ? 4 : Math.min(3, Math.max(1, Math.round(s.size * 0.75)));
+    for (let i = 0; i < count; i++) {
+      this.spawnFood(
+        "meat",
+        victim.x + (this.random() - 0.5) * 2,
+        victim.y + (this.random() - 0.5) * 2,
+        14 + s.tier * 12,
+        { tier: s.tier, homeChunk: victim.homeChunk || chunkKey(victim.x, victim.y) },
+      );
+    }
+    if (victim.lairId) {
+      const lair = this.lairs.find((l) => l.id === victim.lairId);
+      if (lair) {
+        lair.defeats++;
+        lair.entityId = null;
+        lair.respawnAt = this.time + lair.respawn;
+      }
+    }
+    if (this.boss?.id === victim.id) this.boss = null;
   }
 
   getResults() {

@@ -185,3 +185,31 @@ test("an actual regional catastrophe can kill wildlife without granting player o
   assert.equal(g.lairs[0].defeats, 0); assert.equal(g.lairs[0].entityId, null); assert.equal(g.lairs[0].respawnAt, 340);
   assert.equal(g.boss, null);
 });
+
+test("injured dinosaurs spawn with partial health and injured status", () => {
+  const g = isolated();
+  const healthy = g.spawnEntity("triceratops", 20, 0, { passive: true, injured: false });
+  assert.equal(healthy.hp, healthy.maxHp);
+  const injured = g.spawnEntity("triceratops", 30, 0, { injured: true });
+  assert(injured.hp < injured.maxHp, "injured dinosaur should have less than max HP");
+  assert.equal(injured.injured, true);
+});
+
+test("wild dinosaurs fight each other and deal damage without granting player score", () => {
+  const g = isolated();
+  g.player.x = 0; g.player.y = 40;
+  const predator = g.spawnEntity("velociraptor", 10, 0, { behavior: "hunter" });
+  const prey = g.spawnEntity("compsognathus", 12, 0, { behavior: "hunter" });
+  predator.rivalId = prey.id;
+  predator.attackCooldown = 0;
+  predator.telegraph = 0;
+  const initialPreyHp = prey.hp;
+  const playerKills = g.player.kills;
+  
+  g._updateEntity(predator, 0.05);
+  predator.telegraph = 0.01;
+  g._updateEntity(predator, 0.05);
+  
+  assert(prey.hp < initialPreyHp, "prey should take damage from rival predator attack");
+  assert.equal(g.player.kills, playerKills, "player kills should not increase from wild dinosaur fights");
+});

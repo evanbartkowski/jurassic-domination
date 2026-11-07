@@ -1042,10 +1042,48 @@ export const Ecosystem = {
       }
     } else if (e.rivalId && this.entities.some((rival) => rival.id === e.rivalId)) {
       const rival = this.entities.find((rival) => rival.id === e.rivalId);
-      e.intent = "defend";
-      targetAngle = Math.atan2(rival.y - e.y, rival.x - e.x);
-      move = 0.55;
-      e.telegraph = 0;
+      const rDist = dist(e, rival);
+      if (rDist > 32 || rival.hp <= 0) {
+        e.rivalId = null;
+      } else {
+        const rivalSpecies = SPECIES_BY_ID[rival.speciesId];
+        const combat = attackProfile({
+          ...s,
+          size: s.size * (1 + (e.growth || 0) * 0.28),
+        });
+        const strikeRange = combat.reach + (rivalSpecies.size * (rival.scaleFactor || 1)) * 0.45;
+        targetAngle = Math.atan2(rival.y - e.y, rival.x - e.x);
+        if (rDist < strikeRange + 0.65 && hasLineOfSight(e, rival, this.worldFeatures || [])) {
+          move = 0;
+          e.intent = "fight";
+          if (e.attackCooldown <= 0 && e.telegraph <= 0) {
+            e.telegraph = combat.windup || 0.25;
+          }
+        } else {
+          e.intent = e.behavior === "neutral" ? "defend" : "fight";
+          move = e.behavior === "neutral" ? 0.55 : 0.82;
+        }
+        if (e.telegraph > 0) {
+          e.telegraph -= dt * (e.slowed > 0 ? 0.4 : 1);
+          move = 0;
+          if (e.telegraph <= 0) {
+            e.attacking = 0.28;
+            this.emit("enemy-strike", { x: e.x, y: e.y, angle: e.angle, radius: strikeRange, speciesId: s.id });
+            e.attackCooldown = combat.cooldown || 1.1;
+            sweepMove(e, Math.cos(targetAngle) * (0.8 + s.size * 0.2), Math.sin(targetAngle) * (0.8 + s.size * 0.2), s.size * (e.scaleFactor || 1), this.worldFeatures || []);
+            if (dist(e, rival) < strikeRange + 0.55 && hasLineOfSight(e, rival, this.worldFeatures || [])) {
+              const dmg = (e.damage || s.damage) * (s.tier === 0 ? 0.9 : 1.0 + s.tier * 0.08);
+              this._creatureDamage(rival, e, dmg, 1.4);
+              if (s.abilityType === "feather" || s.body === "raptor") rival.bleeding = Math.max(rival.bleeding || 0, 3.5);
+              else if (s.abilityType === "venom") rival.poison = Math.max(rival.poison || 0, 3.5);
+              if (rival.hp <= 0) {
+                e.rivalId = null;
+                e.hunger = Math.max(0, e.hunger - 35);
+              }
+            }
+          }
+        }
+      }
     } else if (homeDistance > (nest ? nest.territoryRadius : 50) || (e.boss && homeDistance > 65)) {
       e.intent = "return";
       move = 0.65;
@@ -1064,10 +1102,35 @@ export const Ecosystem = {
       if (e.wanderTime <= 0) {
         e.wanderTime = 2 + this.random() * 5;
         targetAngle = e.angle + (this.random() - 0.5) * 2;
+        if (!e.rivalId && !e.juvenile && (e.behavior === "hunter" || e.behavior === "pack" || e.behavior === "territorial" || s.diet === "carnivore")) {
+          const preyCandidates = this.entities.filter((other) =>
+            other.id !== e.id &&
+            other.hp > 0 &&
+            dist(e, other) < 18 + s.size &&
+            !(e.packId && other.packId === e.packId) &&
+            !(e.nestId && other.nestId === e.nestId) &&
+            !other.boss &&
+            hasLineOfSight(e, other, this.worldFeatures || []) &&
+            (SPECIES_BY_ID[other.speciesId].diet === "herbivore" ||
+             SPECIES_BY_ID[other.speciesId].tier <= s.tier ||
+             other.hp < other.maxHp * 0.75)
+          );
+          if (preyCandidates.length > 0) {
+            preyCandidates.sort((a, b) => dist(e, a) - dist(e, b));
+            const prey = preyCandidates[0];
+            e.rivalId = prey.id;
+            const preySpecies = SPECIES_BY_ID[prey.speciesId];
+            if (preySpecies.temperament === "skittish" || preySpecies.diet === "herbivore") {
+              prey.fear = 3.5;
+            } else if (!prey.rivalId && !prey.aggro) {
+              prey.rivalId = e.id;
+            }
+          }
+        }
       }
       if (e.behavior === "ambusher") move = 0.06;
     }
-    if (!hunt && !afraid && !["track", "follow", "yield", "defend"].includes(e.intent) && e.fear <= 0 && e.hunger < 90) {
+    if (!hunt && !afraid && !["track", "follow", "yield", "defend", "fight"].includes(e.intent) && e.fear <= 0 && e.hunger < 90) {
       const herbivore = speciesDiet(s) === "herbivore";
       let meal=null, nearest=400;
       for (const f of this.foods) {

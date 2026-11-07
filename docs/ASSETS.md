@@ -17,6 +17,11 @@ Any locally bundled fonts must retain their upstream font license and attributio
 alongside the font files. System fonts remain installed operating-system fonts
 and are not redistributed by this project.
 
+Shop and discovered-creature portraits in `public/assets/portraits/` are offline
+WebP renders of the original game meshes. Regenerate them with `npm run art:portraits`
+while the local Vite server is running. Wilderness meshes and animations are
+original procedural work in `src/wilderness-art.js`.
+
 ## Dependencies
 
 The exact dependency versions are locked in `package-lock.json`. Third-party

@@ -21,7 +21,7 @@ published on Steam or integrated with Steamworks.
 
 From a packaged build, launch **Jurassic Domination.exe**. The unpacked version is
 at `release/win-unpacked/Jurassic Domination.exe`; keep that entire folder
-together. The portable build is `release/Jurassic Domination-0.3.0-portable.exe`.
+together. The portable build is `release/Jurassic Domination-0.4.0-portable.exe`.
 An unsigned development build may trigger Windows SmartScreen. Obtain builds
 from the project owner and sign the final commercial release.
 
@@ -76,7 +76,7 @@ supports both survival and evolution.
 - Reach the evolution threshold to select your next species and a mutation for
   the current run. Evolution pauses the action while you choose.
 - Travel farther from the starting area to encounter harsher biomes and stronger
-  creatures. Attacks are telegraphed; positioning and timing matter.
+  creatures. Enemies attack quickly without warning circles; distance and timing matter.
 - Progress across eight evolution tiers, from small dinosaurs through apex
   predators to mythical creatures. Survive at the final tier to keep escalating.
 - Death records the run. Selected achievements and rare discoveries award DNA,
@@ -86,6 +86,52 @@ Three difficulty settings support learning, the intended survival challenge,
 and a harsher extinction run. Species have different statistics, silhouettes,
 and abilities; permanent upgrades and current-run mutations serve different
 purposes.
+
+## Wild & Alive expansion (0.4.0)
+
+The title screen has revised typography, a framed action panel and a live 3D
+scene. Shop cards use locally bundled portraits rendered from the actual models:
+all 18 pets, seven wearable cosmetics, seven skins and 17 decorations. Crowns
+show the wearable itself. Higher-resolution decoration shapes, gems and crown
+trim add detail. Discovered creatures have matching 3D portraits in the archive,
+evolution choices and run history; hunting a species now records discovery too.
+
+**Your island opens in visit mode.** Orbit, zoom, select residents and use
+**FEED & BOND**. Press **ENTER BUILD MODE** to place, rotate, move or store items;
+**FINISH BUILDING** returns to visiting. Selecting a product in the shop prepares
+it for placement after you explicitly enter build mode. Pet care is permanent,
+limited to once per resident per minute of active island time. Pets wander,
+avoid nearby items, graze, look around, rest, breathe and react to care. Coastal
+planting, textured ground, distant islets and moving water frame the sanctuary.
+
+Two sanctuary challenges grant permanent treasures once:
+
+| Challenge | Requirements | Reward |
+| --- | --- | --- |
+| A Living Haven | 3 placed pets including a Rare or better resident, 8 decorations, 9 care interactions, 3 active island minutes | Sovereign Crown + Stone Fountain |
+| Keeper of Legends | 6 placed pets including a Rare or better resident, 20 decorations, 30 care interactions, 15 active island minutes | Astral Diadem + Starfall Obelisk |
+
+The island shows live condition progress. Time only accumulates while the island
+is visible and focused; care and treasure claims persist. Undoing a building edit
+preserves pet bonds and earned treasures. Already owned unique treasure rewards
+follow the existing duplicate-find conversion to DNA.
+
+**Combat and exploration:** the opening has four deliberately placed dinosaurs
+instead of ten; regional populations and replacement spawns are lower. Predators
+strike faster, hit harder and recover sooner. Bites, lunges, sweeps and elemental
+skills have different reach. Long-range enemy fire, frost, venom and electrical
+attacks travel across the world and can be avoided. Carnotaurus has Ember Breath;
+Spinosaurus has the supernatural Stormsail Arc. No predicted red attack zones
+are displayed. Animation, the attack itself and distance communicate danger.
+
+Seeded wilderness features now include blocking boulders and fallen trunks,
+ancient ruins, poisonous flowers, spore-producing mushrooms, biting carnivorous
+plants, active calderas and deep pools. Water slows movement and marine predators
+circle and converge on swimmers; their visible positions govern bite range.
+Poison persists briefly after leaving the source. The immediate 55-unit starting
+area is protected from these environmental features. Features stream with the
+same chunk coordinates as their collision/damage rules; they are reproducible
+for a run's seed. Existing regional landscapes and boss landmarks remain.
 
 ## The Sanctuary Collection expansion (0.3.0)
 
@@ -167,7 +213,8 @@ healing, armored stances, feints, wingstorms, constriction and more.
 - **Enemy ecology:** neutral grazers retaliate when harmed, skittish or outmatched
   creatures flee, ambushers wait, territorial creatures keep to their home range,
   and packs share aggro and flank. Strong enemies use their own abilities.
-  Red ground circles and cones mark the actual threatened area before impact.
+  Enemy warning circles have been removed in v0.4. Attacks have short physical
+  windups, species-specific reach and travelling elemental projectiles.
 - **Boss lairs:** eight named guardians occupy fixed locations shown on the map.
   Defeated guardians respawn after 180–320 seconds and drop region-quality meals
   and rare rewards. Timed roaming alpha hunts remain as additional encounters.
@@ -201,6 +248,7 @@ cleared.
 npm test
 npm run build
 npm run qa:collections # requires the local dev server
+npm run qa:wild        # island care, build mode, portraits and wilderness
 npm run package
 ```
 
@@ -228,6 +276,9 @@ The GitHub workflow validates and builds a Windows artifact for each push to
 | `src/creatures.js`, `src/specimen.js` | Detailed articulated models and the live specimen viewer |
 | `src/terrain.js`, `src/world-data.js` | Streamed terrain, named regions, lairs and regional food rules |
 | `src/ecosystem.js`, `src/content.js` | Creature ecology, loot, powers, techniques and expanded content |
+| `src/combat.js`, `src/wilderness.js`, `src/wilderness-art.js` | Species attack profiles, environmental collision/hazards and corresponding models |
+| `src/sanctuary.js`, `src/island.js` | Pet care, sanctuary challenge rules and visit/build scene |
+| `public/assets/portraits/` | 142 locally rendered creature and collection portraits |
 | `src/ui.js`, `src/style.css` | Menus, tutorial, HUD, and accessibility |
 | `src/audio.js` | Original adaptive procedural soundtrack and sound effects |
 | `electron/` | Sandboxed desktop host and limited window controls |

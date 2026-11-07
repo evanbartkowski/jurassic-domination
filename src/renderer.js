@@ -192,6 +192,12 @@ export class WorldRenderer {
     this.camera.updateProjectionMatrix();
   }
   resetRun() {
+    for (const mesh of this.projectileModels?.values() || []) {
+      this.scene.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+    }
+    this.projectileModels?.clear();
     if (this.companion) {
       this.scene.remove(this.companion);
       this.companion.userData.dispose();
@@ -542,7 +548,7 @@ export class WorldRenderer {
         Math.sin(target - model.rotation.y),
         Math.cos(target - model.rotation.y),
       );
-    model.rotation.y += diff * Math.min(1, dt * 16);
+    model.rotation.y += diff * (1 - Math.exp(-dt * 16));
     this.animateDino(
       model,
       t,
@@ -592,14 +598,14 @@ export class WorldRenderer {
     } else if (p)
       this.cameraTarget.lerp(
         new THREE.Vector3(p.x, 0, p.y),
-        Math.min(1, dt * 6),
+        1 - Math.exp(-dt * 6),
       );
     this.terrain.update(
       menu ? 0 : p?.x || 0,
       menu ? 0 : p?.y || 0,
       menu ? 7281 : game.seed,
     );
-    this.terrain.animate(t);
+    this.terrain.animate(menu ? t : game.time);
     this.terrain.focus(p?.x || 0, p?.y || 0, menu);
     if (p && !menu) {
       this.egg.position.set(p.x, 0, p.y);
@@ -638,7 +644,7 @@ export class WorldRenderer {
           }
           continue;
         }
-        this.syncModel(
+        const creature = this.syncModel(
           e.id,
           e.speciesId,
           e.x,
@@ -652,6 +658,11 @@ export class WorldRenderer {
           "natural",
           e.scaleFactor || 1,
         );
+        if (e.intent === "graze") {
+          creature.userData.head.rotation.z +=
+            0.16 + Math.sin(t * 1.4 + e.id) * 0.05;
+        }
+        if (e.intent === "ambush") creature.userData.body.position.y -= 0.08;
         keys.add(e.id);
       }
       for (const [key, model] of this.models)
@@ -916,75 +927,48 @@ export class WorldRenderer {
       }
   }
   syncWarnings(game, t) {
-    const seen = new Set();
-    for (const e of game.entities) {
-      if (Math.hypot(e.x - game.player.x, e.y - game.player.y) > 60) continue;
-      const s = lookup(e.speciesId),
-        zone =
-          e.cast ||
-          (e.telegraph > 0
-            ? {
-                x: e.x,
-                y: e.y,
-                radius: 2.8 + (s.size + game.species.size) * 0.55,
-                shape: "circle",
-                angle: 0,
-                remaining: e.telegraph,
-                total: 0.65,
-              }
-            : null);
-      if (!zone) continue;
-      seen.add(e.id);
-      let group = this.warnings.get(e.id);
-      if (group && group.userData.shape !== zone.shape) {
-        this.scene.remove(group);
-        group.traverse((m) => {
-          m.geometry?.dispose();
-          m.material?.dispose();
-        });
-        this.warnings.delete(e.id);
-        group = null;
-      }
-      if (!group) {
-        group = new THREE.Group();
-        group.userData.shape = zone.shape;
-        const arc = zone.shape === "cone" ? 1.5 : Math.PI * 2;
-        for (const [inner, outer, opacity] of [
-          [0.01, 1, 0.12],
-          [0.95, 1, 0.82],
-        ]) {
-          const mesh = new THREE.Mesh(
-            new THREE.RingGeometry(inner, outer, 48, 1, -arc / 2, arc),
-            new THREE.MeshBasicMaterial({
-              color: 0xff594e,
-              transparent: true,
-              opacity,
-              side: THREE.DoubleSide,
-              depthWrite: false,
-            }),
-          );
-          mesh.rotation.x = -Math.PI / 2;
-          group.add(mesh);
-        }
-        this.scene.add(group);
-        this.warnings.set(e.id, group);
-      }
-      group.visible = game.state === "playing";
-      group.position.set(zone.x, 0.11, zone.y);
-      group.scale.setScalar(zone.radius);
-      group.rotation.y = -(zone.angle || 0);
-      const progress = 1 - zone.remaining / zone.total;
-      group.children[0].material.opacity = 0.12 + Math.max(0, progress) * 0.22;
-      group.children[1].material.opacity = 0.75 + Math.sin(t * 8) * 0.12;
+    // No predicted attack zones: physical animation and active projectiles communicate danger.
+    for (const group of this.warnings.values()) {
+      this.scene.remove(group);
+      group.traverse((m) => {
+        m.geometry?.dispose();
+        m.material?.dispose();
+      });
     }
-    for (const [id, group] of this.warnings)
+    this.warnings.clear();
+    this.projectileModels ||= new Map();
+    const seen = new Set();
+    for (const shot of game.projectiles || []) {
+      seen.add(shot.id);
+      let mesh = this.projectileModels.get(shot.id);
+      if (!mesh) {
+        mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(1, 12, 8),
+          new THREE.MeshStandardMaterial({
+            color:
+              shot.kind === "flame"
+                ? 0xff9a36
+                : shot.kind === "venom"
+                  ? 0x9dce56
+                  : 0x9ecfed,
+            emissive: shot.kind === "flame" ? 0xff5722 : 0x417e92,
+            emissiveIntensity: 1.5,
+            roughness: 0.3,
+          }),
+        );
+        this.scene.add(mesh);
+        this.projectileModels.set(shot.id, mesh);
+      }
+      mesh.position.set(shot.x, 1.2, shot.y);
+      mesh.scale.set(shot.radius, shot.radius * 0.55, shot.radius * 0.6);
+      mesh.rotation.y = -shot.angle;
+    }
+    for (const [id, mesh] of this.projectileModels)
       if (!seen.has(id)) {
-        this.scene.remove(group);
-        group.traverse((m) => {
-          m.geometry?.dispose();
-          m.material?.dispose();
-        });
-        this.warnings.delete(id);
+        this.scene.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+        this.projectileModels.delete(id);
       }
   }
   syncCompanion(game, dt, t) {

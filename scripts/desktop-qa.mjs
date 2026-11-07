@@ -156,6 +156,7 @@ try {
       await page.locator("[data-equip-pet]").click();
       await page.locator("[data-place-product]").click();
       await page.locator("#island-canvas").waitFor();
+      await page.locator("#build-toggle").click();
       await page.waitForTimeout(700);
       await page.keyboard.press("Enter");
       await page.waitForFunction(
@@ -171,6 +172,7 @@ try {
       await page.screenshot({ path: "artifacts/desktop-island.png" });
       await page.reload();
       await page.getByRole("button", { name: /MY DINOSAUR ISLAND/ }).click();
+      await page.locator("#build-toggle").click();
       await page.locator('[data-island-companion="compy"]').waitFor();
       assert.match(
         await page.locator("#island-inventory").textContent(),

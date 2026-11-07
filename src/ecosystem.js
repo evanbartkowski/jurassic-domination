@@ -1,3 +1,9 @@
+import {
+  worldFeatures,
+  resolveObstacles,
+  updateWildlife,
+} from "./wilderness.js";
+import { attackProfile } from "./combat.js";
 import { SPECIES, SPECIES_BY_ID } from "./data.js";
 import { rollCollectionItem } from "./collection-data.js";
 import {
@@ -49,6 +55,7 @@ export function initializeEcosystem(
   game.runSkills = [];
   game.discoveredRegions = new Set();
   game.earnedDNA = 0;
+  game.projectiles = [];
   game.lairs = LAIRS.map((l) => ({
     ...l,
     entityId: null,
@@ -86,16 +93,16 @@ export const Ecosystem = {
   },
   populateWorld() {
     this._streamWorld(true);
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * Math.PI * 2,
-        r = 12 + this.random() * 17;
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2,
+        r = 24 + this.random() * 17;
       this.spawnEntity(
         this.pick(SPECIES.filter((s) => s.tier === 0)).id,
         Math.cos(a) * r,
         Math.sin(a) * r,
         {
-          passive: i < 5,
-          behavior: i < 5 ? "neutral" : "hunter",
+          passive: i < 2,
+          behavior: i < 2 ? "neutral" : "hunter",
           homeChunk: "0,0",
         },
       );
@@ -161,6 +168,10 @@ export const Ecosystem = {
         } else this._generateChunk(next);
       }
     this.activeChunks = wanted;
+    this.worldFeatures = [...wanted].flatMap((key) => {
+      const [x, y] = key.split(",").map(Number);
+      return worldFeatures(this.seed, x, y);
+    });
   },
   _generateChunk(key) {
     const [cx, cy] = key.split(",").map(Number),
@@ -169,7 +180,7 @@ export const Ecosystem = {
       x: (cx + random()) * CHUNK_SIZE,
       y: (cy + random()) * CHUNK_SIZE,
     });
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 5; i++) {
       const p = point();
       if (Math.hypot(p.x, p.y) > WORLD_RADIUS - 8 || Math.hypot(p.x, p.y) < 10)
         continue;
@@ -193,7 +204,7 @@ export const Ecosystem = {
       const pool = habitat.length ? habitat : candidates,
         s = pool[Math.floor(random() * pool.length)];
       const e = this.spawnEntity(s.id, p.x, p.y, { homeChunk: key });
-      if (s.temperament === "pack" && i < 5) {
+      if (s.temperament === "pack" && i < 3) {
         e.packId = `${key}:${i}`;
         for (let j = 0; j < 2; j++)
           this.spawnEntity(s.id, p.x + 4 + j * 2, p.y - 3 + j * 3, {
@@ -275,11 +286,11 @@ export const Ecosystem = {
     this._streamWorld();
     // Replacement spawns obey the location, never the player's evolution tier.
     if (
-      this.entities.filter((e) => dist(e, this.player) < 100).length < 12 &&
+      this.entities.filter((e) => dist(e, this.player) < 100).length < 6 &&
       this.entities.length < 190
     ) {
       const a = this.random() * Math.PI * 2,
-        r = 30 + this.random() * 45;
+        r = 45 + this.random() * 55;
       const x = this.player.x + Math.cos(a) * r,
         y = this.player.y + Math.sin(a) * r;
       if (Math.hypot(x, y) < WORLD_RADIUS - 12) {
@@ -308,6 +319,22 @@ export const Ecosystem = {
   updateEcosystem(dt, input) {
     const p = this.player;
     this._streamWorld();
+    updateWildlife(this, dt);
+    for (const shot of this.projectiles) {
+      const steps = Math.max(1, Math.ceil((dt * shot.speed) / 1.2));
+      for (let i = 0; i < steps && !shot.hit; i++) {
+        shot.x += (Math.cos(shot.angle) * shot.speed * dt) / steps;
+        shot.y += (Math.sin(shot.angle) * shot.speed * dt) / steps;
+        if (dist(shot, p) < shot.radius + this.species.size * 0.35) {
+          this.damagePlayer(shot.damage, shot.cause);
+          if (shot.kind === "venom") p.poisoned = 5;
+          if (shot.kind === "frost" || shot.kind === "web") p.chilled = 3;
+          shot.hit = true;
+        }
+      }
+      shot.life -= dt;
+    }
+    this.projectiles = this.projectiles.filter((s) => s.life > 0 && !s.hit);
     let expired = false;
     for (const id of Object.keys(this.buffs)) {
       this.buffs[id] = Math.max(0, this.buffs[id] - dt);
@@ -637,7 +664,26 @@ export const Ecosystem = {
         const zone = e.cast;
         e.cast = null;
         e.attacking = 0.55;
-        if (inAttackZone(p, zone)) {
+        const ranged = attackProfile(s);
+        if (ranged.ranged) {
+          this.projectiles.push({
+            id: `${e.id}:${this.time}`,
+            x: e.x,
+            y: e.y,
+            angle: zone.angle,
+            speed: ranged.projectileSpeed,
+            life: ranged.range / ranged.projectileSpeed,
+            radius: s.abilityType === "flame" ? 1.8 : 0.9,
+            kind: s.abilityType,
+            damage:
+              s.damage *
+              (ABILITIES[s.abilityType]?.power || 1.6) *
+              0.75 *
+              this.rules.enemyDamage,
+            cause: `${s.name}: ${s.ability}`,
+          });
+        }
+        if (!ranged.ranged && inAttackZone(p, zone)) {
           this.damagePlayer(
             s.damage *
               (ABILITIES[s.abilityType]?.power || 1.8) *
@@ -700,28 +746,29 @@ export const Ecosystem = {
       const flank = e.packId ? ((e.id % 3) - 1) * 0.6 : 0;
       targetAngle =
         Math.atan2(p.y - e.y, p.x - e.x) + flank * (distance > 7 ? 1 : 0);
-      const range = 1.8 + (s.size + this.species.size) * 0.55;
+      const combat = attackProfile(s),
+        range = combat.reach + this.species.size * 0.4;
       if (
         s.tier >= 1 &&
         e.skillCooldown <= 0 &&
-        distance < 25 &&
+        distance < combat.range &&
         distance > range * 0.65
       ) {
         const a = ABILITIES[s.abilityType],
           shape = a.shape,
-          castRadius = shape === "cone" ? a.radius + s.size : 4.5 + s.size;
+          castRadius = shape === "cone" ? combat.range : 4.5 + s.size;
         e.cast = {
-          x: shape === "cone" ? e.x : p.x,
-          y: shape === "cone" ? e.y : p.y,
+          x: e.x,
+          y: e.y,
           radius: castRadius,
           angle: Math.atan2(p.y - e.y, p.x - e.x),
           shape,
-          remaining: e.boss ? 1.2 : 0.95,
-          total: e.boss ? 1.2 : 0.95,
+          remaining: e.boss ? 0.32 : 0.2,
+          total: e.boss ? 0.32 : 0.2,
           kind: s.abilityType,
         };
         e.skillCooldown =
-          (e.boss && e.hp < e.maxHp * 0.5 ? 7 : 12) + this.random() * 3;
+          (e.boss && e.hp < e.maxHp * 0.5 ? 3.5 : 6) + this.random() * 2;
         e.intent = "casting";
         e.telegraph = 0;
         return;
@@ -729,7 +776,8 @@ export const Ecosystem = {
       if (distance < range + 0.65) {
         move = 0;
         e.intent = "attack";
-        if (e.attackCooldown <= 0 && e.telegraph <= 0) e.telegraph = 0.65;
+        if (e.attackCooldown <= 0 && e.telegraph <= 0)
+          e.telegraph = combat.windup;
       } else {
         e.intent = e.packId ? "flank" : "hunt";
         move = 0.86 + (e.boss ? 0.12 : 0) + Math.min(0.12, this.time / 3600);
@@ -739,11 +787,15 @@ export const Ecosystem = {
         move = 0;
         if (e.telegraph <= 0) {
           e.attacking = 0.28;
-          e.attackCooldown = e.boss ? 1.25 : 1.7;
-          if (dist(e, p) < range + 1.0)
+          e.attackCooldown = combat.cooldown * (e.boss ? 0.8 : 1);
+          if (["pounce", "charge"].includes(s.abilityType)) {
+            e.x += Math.cos(targetAngle) * 1.4;
+            e.y += Math.sin(targetAngle) * 1.4;
+          }
+          if (dist(e, p) < range + 0.35)
             this.damagePlayer(
               s.damage *
-                0.77 *
+                1.02 *
                 this.rules.enemyDamage *
                 (e.boss ? 1.2 : 1) *
                 (1 + this.ascensions * 0.2),
@@ -778,6 +830,7 @@ export const Ecosystem = {
       s.speed * move * (e.slowed > 0 ? 0.35 : 1) * (e.juvenile ? 0.65 : 1);
     e.x += Math.cos(e.angle) * speed * dt;
     e.y += Math.sin(e.angle) * speed * dt;
+    resolveObstacles(e, s.size, this.worldFeatures || []);
     const radius = Math.hypot(e.x, e.y);
     if (radius > WORLD_RADIUS - 5) {
       e.x *= (WORLD_RADIUS - 5) / radius;

@@ -44,6 +44,17 @@ try {
     "place, move, rotate and store pet with undo and redo",
     async () => {
       await page.locator("[data-place-product]").click();
+      await page.locator("#build-toggle").click();
+      await page.waitForFunction(() => window.__JD.island);
+      if (!(await page.evaluate(() => window.__JD.island.buildMode)))
+        await page.locator("#build-toggle").click();
+      await page.waitForFunction(
+        () =>
+          window.__JD.island?.canvas ===
+          document.getElementById("island-canvas"),
+      );
+      if (!(await page.evaluate(() => window.__JD.island.buildMode)))
+        await page.locator("#build-toggle").click();
       await page.waitForFunction(() => window.__JD.island?.tool);
       await page.keyboard.press("Enter");
       await page.waitForFunction(
@@ -113,6 +124,13 @@ try {
       await page.locator("[data-buy]").click();
       await page.locator("[data-buy]").click();
       await page.locator("[data-place-product]").click();
+      await page.waitForFunction(
+        () =>
+          window.__JD.island?.canvas ===
+          document.getElementById("island-canvas"),
+      );
+      if (!(await page.evaluate(() => window.__JD.island.buildMode)))
+        await page.locator("#build-toggle").click();
       await page.waitForFunction(() => window.__JD.island?.tool);
       await page.keyboard.press("Enter");
       assert.equal(

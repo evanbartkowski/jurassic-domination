@@ -1,5 +1,33 @@
 # Local validation - November 7, 2026
 
+## Wild & Alive (0.4.0)
+
+| Scope | Result |
+| --- | --- |
+| Node simulation, assets, collections and migration | 65 passed |
+| Chrome gameplay integration | 22 passed, zero runtime errors |
+| Collection browser integration | 9 passed, zero runtime errors |
+| Visit/build/care/treasure and wilderness browser checks | 7 passed, zero runtime errors |
+| Previously unknown hunt records a portrait discovery | Passed |
+| Packaged Windows desktop | 12 passed, zero runtime errors |
+| Self-extracting Windows portable | 5 passed, zero runtime errors |
+| Production build and Windows portable packaging | Passed |
+
+The new checks verify all 142 bundled portraits, deterministic environmental
+features, safe starting radius, solid collisions, poison, carnivorous bites,
+water slowdown, volcanic heat, differing attack reach, travelling ranged hits
+and expiry, saved pet-care cooldowns and sanctuary conditions. Island checks
+cover visit-by-default, explicit build mode, once-only conditional treasures,
+800 x 600 controls and live terrain rendering. Rare rewards and late-game
+conditions use controlled fixtures, not an unaided full playthrough.
+
+Matching portraits appear after evolving into or killing a species. The source
+uses actual model renders, not generic category icons. Local automation uses
+software graphics and does not establish performance across gaming hardware
+or the balance of the more dangerous ecosystem.
+
+
+
 ## Sanctuary Collection (0.3.0)
 
 | Scope | Result |

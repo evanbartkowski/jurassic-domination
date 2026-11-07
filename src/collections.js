@@ -57,8 +57,22 @@ export function normalizeCollection(raw = {}) {
       placements: [],
       nextId: 1,
       grid: true,
+      visitSeconds: integer(raw.island?.visitSeconds),
+      care: {},
+      lastCare: {},
+      trials: unique(raw.island?.trials, (id) =>
+        ["haven", "keeper"].includes(id),
+      ),
     },
   };
+  for (const pet of PETS) {
+    p.island.care[pet.id] = integer(raw.island?.care?.[pet.id], 100);
+    if (Number.isFinite(raw.island?.lastCare?.[pet.id]))
+      p.island.lastCare[pet.id] = Math.min(
+        p.island.visitSeconds,
+        integer(raw.island.lastCare[pet.id]),
+      );
+  }
   if (p.cosmetics.includes(raw.equippedCosmetic))
     p.equippedCosmetic = raw.equippedCosmetic;
   if (p.pets.includes(raw.activePet)) p.activePet = raw.activePet;

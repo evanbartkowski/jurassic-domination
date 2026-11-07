@@ -17,6 +17,7 @@ import {
   ACHIEVEMENTS,
   RARITIES,
 } from "./collection-data.js";
+import { ISLAND_TRIALS, sanctuaryProgress } from "./sanctuary.js";
 import { ownedCount, availableCount } from "./collections.js";
 
 const $ = (selector, parent = document) => parent.querySelector(selector);
@@ -28,6 +29,10 @@ const esc = (value) =>
         c
       ],
   );
+const modelMood = (p, a) =>
+  `${p.island.care?.[a.itemId] || 0} lasting bonds  -  Safe, curious and at home.`;
+const portrait = (id, kind = "species") =>
+  `<img class="rendered-icon" src="assets/portraits/${kind}-${id}.webp" alt="" loading="lazy" decoding="async"/>`;
 const number = (value = 0) => Math.floor(value).toLocaleString();
 const clock = (seconds = 0) =>
   `${Math.floor(seconds / 60)
@@ -135,9 +140,9 @@ export class UI {
       <div class="menu-shell">
         <header class="menu-top"><span class="brand-mark">${icon("claw")}<span>JURASSIC DOMINATION</span></span><button class="icon-button" data-action="settings" aria-label="Open settings">${icon("settings")}</button></header>
         <div class="menu-main">
-          <div class="menu-copy"><p class="eyebrow"><span class="gold-line"></span> A PREHISTORIC SURVIVAL ROGUELITE</p>
+          <div class="menu-copy"><p class="eyebrow"><span class="gold-line"></span> THE WILD REMEMBERS YOUR BLOODLINE</p>
             <h1 class="game-title"><span>JURASSIC</span><span>DOMINATION<span class="title-dot">.</span></span></h1>
-            <p class="menu-description">Born at the bottom.<br>Built to become the impossible.</p>
+            <p class="menu-description">One fragile egg. An untamed continent.<br>Become a legend. Build a home.</p>
             <div class="menu-actions"><button class="button primary play-button" data-action="start" data-focus><span>${icon("claw")} BEGIN A NEW LIFE</span>${icon("arrow")}</button>
               <div class="secondary-actions"><button class="button quiet" data-action="tutorial">${icon("book")} HOW TO SURVIVE</button><button class="button quiet" data-action="guide">ENCYCLOPEDIA ${icon("arrow")}</button></div>
               <button class="legacy-link" data-action="legacy">${icon("dna")}<span>THE ANCESTRAL LEGACY <b>${number(profile.dna)} DNA</b></span>${icon("arrow")}</button>
@@ -158,7 +163,7 @@ export class UI {
           </div>
           <div class="menu-art-caption"><span class="caption-number">01 / THE FIRST BREATH</span><p>HATCH.<br>HUNT.<br><em>EVOLVE.</em></p><span class="caption-rule"></span><span class="caption-small">THE FOOD CHAIN HAS NO MERCY.</span></div>
         </div>
-        <footer class="menu-footer"><div class="menu-record"><span>BEST RUN <strong>${number(profile.bestScore)}</strong></span><span>LIVES LIVED <strong>${number(profile.runs)}</strong></span><span>SPECIES DISCOVERED <strong>${profile.unlocked?.length || 0} / ${SPECIES.length}</strong></span></div><div class="version-label"><span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.3.0</span><button data-action="quit" class="text-button">QUIT</button></div></footer>
+        <footer class="menu-footer"><div class="menu-record"><span>BEST RUN <strong>${number(profile.bestScore)}</strong></span><span>LIVES LIVED <strong>${number(profile.runs)}</strong></span><span>SPECIES DISCOVERED <strong>${new Set([...(profile.unlocked || []), ...(profile.hunted || [])]).size} / ${SPECIES.length}</strong></span></div><div class="version-label"><span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.4.0</span><button data-action="quit" class="text-button">QUIT</button></div></footer>
       </div>`,
       "menu-screen",
     );
@@ -296,12 +301,17 @@ export class UI {
 
   showGuide() {
     if (["menu", "pause"].includes(this._view)) this.returnView = this._view;
-    const unlocked = this.profile.unlocked || [];
+    const unlocked = [
+      ...new Set([
+        ...(this.profile.unlocked || []),
+        ...(this.profile.hunted || []),
+      ]),
+    ];
     this.guideSelection ||= unlocked.at(-1) || SPECIES[0].id;
     this.screen(
       "guide",
-      `<div class="wide-panel encyclopedia-panel">${this.header("THE LIVING ARCHIVE", "Dinosaur Encyclopedia", `${unlocked.length} evolved forms recorded · ${SPECIES.length} dinosaur and mythical species · eight tiers`)}
-      <div class="encyclopedia-toolbar"><label>SEARCH<input id="guide-search" type="search" placeholder="Name, habitat or ability…" autocomplete="off"/></label><label>COLLECTION<select id="guide-filter"><option value="all">All potential forms</option><option value="unlocked">My evolved species</option><option value="mythic">Mythological creatures</option>${TIERS.map((name, i) => `<option value="tier:${i}">${i + 1} · ${esc(name)}</option>`).join("")}</select></label></div>
+      `<div class="wide-panel encyclopedia-panel">${this.header("THE LIVING ARCHIVE", "Dinosaur Encyclopedia", `${unlocked.length} evolved or hunted forms recorded · ${SPECIES.length} dinosaur and mythical species · eight tiers`)}
+      <div class="encyclopedia-toolbar"><label>SEARCH<input id="guide-search" type="search" placeholder="Name, habitat or ability…" autocomplete="off"/></label><label>COLLECTION<select id="guide-filter"><option value="all">All potential forms</option><option value="unlocked">Evolved or hunted</option><option value="mythic">Mythological creatures</option>${TIERS.map((name, i) => `<option value="tier:${i}">${i + 1} · ${esc(name)}</option>`).join("")}</select></label></div>
       <div class="encyclopedia-layout"><section class="specimen-panel"><canvas id="specimen-canvas" aria-label="Rotating 3D dinosaur specimen. Drag to rotate."></canvas><span class="specimen-hint">LIVE 3D SPECIMEN · DRAG TO ROTATE</span><div id="specimen-info"></div></section><div id="guide-results" class="species-grid encyclopedia-results"></div></div>
       <div class="panel-bottom"><span>Discovery records persist when you hatch or evolve. Unrecorded forms are previews.</span><button class="button primary" data-action="back" data-focus>RETURN ${icon("arrow")}</button></div></div>`,
       "shade-screen",
@@ -310,7 +320,7 @@ export class UI {
       this.guideSelection = s.id;
       const technique = TECHNIQUES[s.technique];
       $("#specimen-info").innerHTML =
-        `<span class="eyebrow">${unlocked.includes(s.id) ? "EVOLVED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><dl><dt>Q · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd><dt>R · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
+        `<span class="eyebrow">${unlocked.includes(s.id) ? "DISCOVERED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><dl><dt>Q · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd><dt>R · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
       $("#guide-results")
         .querySelectorAll("[data-inspect]")
         .forEach((b) =>
@@ -335,7 +345,7 @@ export class UI {
         ? found
             .map(
               (s) =>
-                `<button class="species-entry ${unlocked.includes(s.id) ? "discovered" : ""}" data-inspect="${s.id}" aria-pressed="${s.id === this.guideSelection}"><span class="species-tier">${s.tier + 1} / ${esc(tierName(s.tier))} · ${unlocked.includes(s.id) ? "RECORDED" : "UNDISCOVERED"}</span><div class="creature-art" style="color:#${s.color.toString(16).padStart(6, "0")}">${animal(s)}</div><h2>${esc(s.name)}</h2><span class="species-ability">${esc(s.ability)} · ${esc(TECHNIQUES[s.technique].name)}</span></button>`,
+                `<button class="species-entry ${unlocked.includes(s.id) ? "discovered" : ""}" data-inspect="${s.id}" aria-pressed="${s.id === this.guideSelection}"><span class="species-tier">${s.tier + 1} / ${esc(tierName(s.tier))} · ${unlocked.includes(s.id) ? "RECORDED" : "UNDISCOVERED"}</span><div class="creature-art" style="color:#${s.color.toString(16).padStart(6, "0")}">${unlocked.includes(s.id) ? portrait(s.id) : animal(s)}</div><h2>${esc(s.name)}</h2><span class="species-ability">${esc(s.ability)} · ${esc(TECHNIQUES[s.technique].name)}</span></button>`,
             )
             .join("")
         : '<p class="empty-collection">No recorded specimens match. Hatch and evolve to grow your collection, or select All potential forms.</p>';
@@ -449,7 +459,7 @@ export class UI {
           .map((item) => {
             const count = ownedCount(p, item.sku),
               r = RARITIES[item.rarity];
-            return `<button class="shop-card ${this.shopSelection === item.sku ? "selected" : ""}" data-product="${item.sku}" style="--rarity:${r.color}" aria-pressed="${this.shopSelection === item.sku}"><span class="rarity-label">${r.name}</span><div class="shop-item-art">${item.kind === "pet" ? animal(species(item.speciesId)) : item.kind === "skin" ? animal(species("tyrannosaurus")) : icon(item.kind === "cosmetic" ? "trophy" : "leaf")}</div><h2>${esc(item.name)}</h2><p>${item.kind === "decoration" ? `${count} OWNED` : count ? "PERMANENTLY OWNED" : `${item.price} DNA`}</p><span>${item.kind === "decoration" ? `${item.price} DNA EACH` : count ? "SELECT TO EQUIP" : "FIND OR BUY"}</span></button>`;
+            return `<button class="shop-card ${this.shopSelection === item.sku ? "selected" : ""}" data-product="${item.sku}" style="--rarity:${r.color}" aria-pressed="${this.shopSelection === item.sku}"><span class="rarity-label">${r.name}</span><div class="shop-item-art">${portrait(item.id, item.kind)}</div><h2>${esc(item.name)}</h2><p>${item.kind === "decoration" ? `${count} OWNED` : count ? "PERMANENTLY OWNED" : `${item.price} DNA`}</p><span>${item.kind === "decoration" ? `${item.price} DNA EACH` : count ? "SELECT TO EQUIP" : "FIND OR BUY"}</span></button>`;
           })
           .join("")
       : '<p class="empty-collection">No items in this rarity. Choose another filter.</p>';
@@ -506,10 +516,10 @@ export class UI {
     this.screen(
       "island",
       `<div class="sanctuary-shell"><canvas id="island-canvas" aria-label="Your editable dinosaur island. Drag to orbit, scroll to zoom, right-drag to pan."></canvas>
-      <header class="sanctuary-top"><div><p class="eyebrow">YOUR PERMANENT SANCTUARY</p><label class="island-name-label"><input id="island-name" aria-label="Island name" maxlength="36" value="${esc(profile.island.name)}"/></label></div><div><span>${icon("dna")} <b id="island-wallet">${number(profile.dna)}</b> DNA</span><button class="button compact secondary" data-action="island-shop">SHOP</button><button class="button compact secondary" data-action="back">RETURN TO TITLE</button></div></header>
+      <header class="sanctuary-top"><div><p class="eyebrow">YOUR PERMANENT SANCTUARY</p><label class="island-name-label"><input id="island-name" aria-label="Island name" maxlength="36" value="${esc(profile.island.name)}"/></label></div><div><span>${icon("dna")} <b id="island-wallet">${number(profile.dna)}</b> DNA</span><button class="button compact secondary" data-island-command="build" id="build-toggle">ENTER BUILD MODE</button><button class="button compact secondary" data-action="island-shop">SHOP</button><button class="button compact secondary" data-action="back">RETURN TO TITLE</button></div></header>
       <aside class="island-sidebar"><p class="eyebrow">YOUR COLLECTION</p><h2>Make it yours.</h2><div class="island-tabs"><button data-island-tab="pet">PETS</button><button data-island-tab="decoration">DECORATIONS</button></div><p class="island-inventory-hint">Choose an unplaced item, then click the island. Arrows + Enter also place items.</p><div id="island-inventory"></div><button class="button secondary" data-action="island-shop">FIND MORE IN THE SHOP</button></aside>
       <aside id="island-selection" class="island-selection"></aside>
-      <div class="island-tools"><button data-island-command="undo" aria-label="Undo island change">UNDO</button><button data-island-command="redo" aria-label="Redo island change">REDO</button><button id="island-grid" data-island-command="grid">${profile.island.grid ? "HIDE" : "SHOW"} GRID</button><button data-island-command="cancel">CANCEL PLACEMENT</button></div><div class="island-bottom"><p id="island-status" role="status">A safe home for your permanent companions.</p><span>DRAG: ORBIT · RIGHT-DRAG / WASD: PAN · SCROLL: ZOOM · R: ROTATE · DELETE: STORE · ESC: CANCEL / LEAVE</span></div></div>`,
+      <div class="island-tools"><button data-island-command="undo" aria-label="Undo island change">UNDO</button><button data-island-command="redo" aria-label="Redo island change">REDO</button><button id="island-grid" data-island-command="grid">${profile.island.grid ? "HIDE" : "SHOW"} GRID</button><button data-island-command="cancel">CANCEL PLACEMENT</button></div><div class="island-bottom"><p id="island-status" role="status">A safe home for your permanent companions.</p><span id="island-controls">DRAG: ORBIT · RIGHT-DRAG / WASD: PAN · SCROLL: ZOOM · R: ROTATE · DELETE: STORE · ESC: CANCEL / LEAVE</span></div></div>`,
       "island-screen",
     );
     this.overlay.querySelectorAll("[data-island-tab]").forEach(
@@ -521,6 +531,9 @@ export class UI {
     );
     this.bind("island-shop", () => this.showShop(this.islandTab));
     this.bind("back", () => this.callbacks.menu());
+    $("#island-name").onkeydown = (e) => {
+      if (e.key === "Enter") e.target.blur();
+    };
     $("#island-name").onchange = (e) =>
       this.callbacks.islandAction("rename", { name: e.target.value });
     this.overlay
@@ -593,6 +606,51 @@ export class UI {
           (b.onclick = () =>
             this.callbacks.islandAction(b.dataset.selectionAction, {})),
       );
+    const building = !!this.islandState.buildMode;
+    $(".sanctuary-shell").classList.toggle("building", building);
+    $("#build-toggle").textContent = building
+      ? "FINISH BUILDING"
+      : "ENTER BUILD MODE";
+    $("#build-toggle").setAttribute("aria-pressed", String(building));
+    $("#island-controls").textContent = building
+      ? "DRAG: ORBIT - WASD: PAN - R: ROTATE - DELETE: STORE - ENTER: PLACE"
+      : "DRAG: ORBIT - RIGHT-DRAG / WASD: PAN - SCROLL: ZOOM - CLICK A PET TO INTERACT - ESC: LEAVE";
+    if (!building) {
+      $("#island-selection").innerHTML =
+        placement?.kind === "pet"
+          ? `<p class="eyebrow">YOUR COMPANION</p>${portrait(item.id, "pet")}<h2>${esc(item.name)}</h2><p>${esc(modelMood(profile, placement))}</p><button class="button secondary" data-care>FEED & BOND</button><p>Care once per minute of active island time. Bonds survive every expedition.</p>`
+          : '<p class="eyebrow">SANCTUARY LIFE</p><h2>Slow down. Stay awhile.</h2><p>Click a roaming pet to feed and bond. Orbit, zoom and explore. Enable build mode when you want to decorate.</p>';
+      $("[data-care]")?.addEventListener("click", () =>
+        this.callbacks.islandAction("care", { id: placement.id }),
+      );
+      let trials = $("#sanctuary-trials");
+      if (!trials) {
+        trials = document.createElement("aside");
+        trials.id = "sanctuary-trials";
+        trials.className = "sanctuary-trials";
+        $(".sanctuary-shell").append(trials);
+      }
+      trials.innerHTML =
+        '<p class="eyebrow">SANCTUARY TREASURES</p>' +
+        ISLAND_TRIALS.map((t) => {
+          const g = sanctuaryProgress(p, t),
+            done = p.island.trials.includes(t.id),
+            ready =
+              g.seconds >= t.seconds &&
+              g.pets >= t.pets &&
+              g.decorations >= t.decorations &&
+              g.care >= t.care &&
+              g.rare;
+          return `<article><strong>${t.name}</strong><small>${Math.min(t.pets, g.pets)}/${t.pets} pets  -  ${Math.min(t.decorations, g.decorations)}/${t.decorations} decorations<br>${Math.min(t.care, g.care)}/${t.care} care  -  ${Math.min(Math.floor(g.seconds / 60), t.seconds / 60)}/${t.seconds / 60} island minutes<br>${g.rare ? "READY:" : "NEED:"} Rare or better resident</small><span>${t.rewards.map((sku) => CATALOG[sku].name).join(" + ")}</span><button data-trial="${t.id}" ${!ready || done ? "disabled" : ""}>${done ? "TREASURES CLAIMED" : ready ? "CLAIM TREASURES" : "CONDITIONS NOT MET"}</button></article>`;
+        }).join("");
+      trials.querySelectorAll("[data-trial]").forEach(
+        (b) =>
+          (b.onclick = () =>
+            this.callbacks.islandAction("claim-trial", {
+              id: b.dataset.trial,
+            })),
+      );
+    }
     $("#island-grid").textContent = `${p.island.grid ? "HIDE" : "SHOW"} GRID`;
   }
   islandHint(text) {
@@ -648,7 +706,7 @@ export class UI {
               .slice(0, 5)
               .map(
                 (run) =>
-                  `<div class="hunt-row"><span class="hunt-form">${animal(species(run.speciesId))}<strong>${esc(species(run.speciesId).name)}</strong></span><span>${clock(run.time)} SURVIVED</span><span>${number(run.kills)} KILLS</span><b>${number(run.score)} PTS</b></div>`,
+                  `<div class="hunt-row"><span class="hunt-form">${portrait(species(run.speciesId).id)}<strong>${esc(species(run.speciesId).name)}</strong></span><span>${clock(run.time)} SURVIVED</span><span>${number(run.kills)} KILLS</span><b>${number(run.score)} PTS</b></div>`,
               )
               .join("")}</div></section>`
           : ""
@@ -722,7 +780,7 @@ export class UI {
       <div class="evolution-choices" role="group" aria-label="Choose a species">${speciesChoices
         .map((id, i) => {
           const s = species(id);
-          return `<button class="evolution-card ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" aria-pressed="${i === 0}"><span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span><div class="evolution-creature">${animal(s)}</div><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><span class="species-ability">${icon("bolt")}${esc(typeof s.ability === "object" ? s.ability.name : s.ability)}</span><span class="choice-indicator"></span></button>`;
+          return `<button class="evolution-card ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" aria-pressed="${i === 0}"><span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span><div class="evolution-creature">${this.profile.unlocked.includes(s.id) || this.profile.hunted.includes(s.id) ? portrait(s.id) : animal(s)}</div><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><span class="species-ability">${icon("bolt")}${esc(typeof s.ability === "object" ? s.ability.name : s.ability)}</span><span class="choice-indicator"></span></button>`;
         })
         .join("")}</div>
       <div class="mutation-heading"><span class="eyebrow">ADAPTATION</span><p>One mutation. Every future form.</p></div><div class="mutation-choices" role="group" aria-label="Choose a mutation">${mutations.map((m, i) => `<button class="mutation-card ${i === 0 ? "selected" : ""}" data-mutation="${esc(m.id)}" aria-pressed="${i === 0}">${icon("dna")}<span><strong>${esc(m.name)}</strong><small>${esc(m.description)}</small></span><span class="choice-indicator"></span></button>`).join("")}</div>
@@ -759,7 +817,7 @@ export class UI {
     const best = results.score >= (profile.bestScore || 0) && results.score > 0;
     this.screen(
       "death",
-      `<div class="wide-panel death-panel"><div class="death-left"><span class="death-symbol">${icon("skull")}</span><p class="eyebrow">THE FOOD CHAIN REMEMBERS</p><h1>End of a life.<br><em>Start of a legacy.</em></h1><p class="death-cause">${esc(results.cause || "The wild claimed another survivor.")}</p><div class="final-species">${animal(s)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier) + 1}</span><h2>${esc(s.name)}</h2></div></div></div><div class="death-right"><div class="final-score"><span>${best ? "A NEW PERSONAL BEST" : "YOUR FINAL SCORE"}</span><strong>${number(results.score)}</strong></div><div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION REACHED</span><strong>${esc(tierName(results.tier ?? s.tier))}</strong></div></div><div class="dna-earned">${icon("dna")}<span>RARE DNA BANKED THIS LIFE</span><strong>+${number(results.dna)}</strong></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>ONE MORE LIFE ${icon("arrow")}</button><button class="button secondary" data-action="menu">RETURN TO TITLE</button></div></div></div>`,
+      `<div class="wide-panel death-panel"><div class="death-left"><span class="death-symbol">${icon("skull")}</span><p class="eyebrow">THE FOOD CHAIN REMEMBERS</p><h1>End of a life.<br><em>Start of a legacy.</em></h1><p class="death-cause">${esc(results.cause || "The wild claimed another survivor.")}</p><div class="final-species">${portrait(s.id)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier) + 1}</span><h2>${esc(s.name)}</h2></div></div></div><div class="death-right"><div class="final-score"><span>${best ? "A NEW PERSONAL BEST" : "YOUR FINAL SCORE"}</span><strong>${number(results.score)}</strong></div><div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION REACHED</span><strong>${esc(tierName(results.tier ?? s.tier))}</strong></div></div><div class="dna-earned">${icon("dna")}<span>RARE DNA BANKED THIS LIFE</span><strong>+${number(results.dna)}</strong></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>ONE MORE LIFE ${icon("arrow")}</button><button class="button secondary" data-action="menu">RETURN TO TITLE</button></div></div></div>`,
       "shade-screen death-screen",
     );
     this.bind("restart", () => this.callbacks.restart());

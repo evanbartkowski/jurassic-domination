@@ -905,6 +905,26 @@ export function animateCreature(
       turn * 0.025;
     node.rotation.z = Math.sin(time * 1.3 - i * 0.24) * 0.018;
   });
+  const impact = d.attackBlend;
+  if (species.body === "raptor" || species.body === "bird")
+    body.position.y += Math.sin(impact * Math.PI) * 0.3;
+  if (species.body === "quad") {
+    head.rotation.z -= impact * 0.22;
+    body.rotation.z -= impact * 0.06;
+  }
+  if (species.body === "croc") body.rotation.x += impact * 0.22;
+  if (species.body === "longneck") {
+    head.rotation.z += impact * 0.16;
+    body.position.y -= impact * 0.08;
+  }
+  if (species.body === "serpent")
+    tails.forEach(
+      (n, i) => (n.rotation.y += Math.sin(i * 0.6) * impact * 0.25),
+    );
+  if (["flame", "venom", "frost"].includes(species.abilityType)) {
+    jaw.rotation.z -= impact * 0.22;
+    head.rotation.z -= impact * 0.1;
+  }
   wings.forEach(({ wing, side }) => {
     wing.rotation.x =
       side * (0.12 + Math.sin(time * 2.6 + model.id) * 0.18 + stride * 0.14);

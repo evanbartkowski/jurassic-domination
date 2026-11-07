@@ -4,10 +4,10 @@ import { createDinosaur, animateCreature } from "./creatures.js";
 import { SPECIES_BY_ID } from "./data.js";
 import { COSMETICS, DECORATIONS, PETS } from "./collection-data.js";
 import { SpecimenViewer } from "./specimen.js";
-const ball = new THREE.SphereGeometry(1, 14, 10),
+const ball = new THREE.SphereGeometry(1, 24, 18),
   box = new THREE.BoxGeometry(1, 1, 1),
-  cone = new THREE.ConeGeometry(1, 1, 9),
-  cylinder = new THREE.CylinderGeometry(1, 1, 1, 10);
+  cone = new THREE.ConeGeometry(1, 1, 20),
+  cylinder = new THREE.CylinderGeometry(1, 1, 1, 24);
 const shared = new Set([ball, box, cone, cylinder]),
   materials = new Map();
 function mat(color, glow = false) {
@@ -17,8 +17,14 @@ function mat(color, glow = false) {
       key,
       new THREE.MeshStandardMaterial({
         color,
-        roughness: 0.77,
-        metalness: glow ? 0.16 : 0.02,
+        roughness: [0xe4bb64, 0xe7c875, 0xc9ad65, 0xe1bb67].includes(color)
+          ? 0.25
+          : 0.69,
+        metalness: glow
+          ? 0.38
+          : [0xe4bb64, 0xe7c875, 0xc9ad65, 0xe1bb67].includes(color)
+            ? 0.78
+            : 0.08,
         emissive: glow ? color : 0,
         emissiveIntensity: glow ? 0.4 : 0,
       }),
@@ -76,9 +82,28 @@ export function createCosmetic(id) {
   }
   const c = item.color;
   if (item.style === "crown") {
+    for (const y of [0.07, 0.14])
+      piece(
+        root,
+        new THREE.TorusGeometry(0.32, 0.025, 12, 48),
+        c,
+        [0, y, 0],
+        [1, 1, 1],
+        [Math.PI / 2, 0, 0],
+      );
+    for (let i = 0; i < 16; i++) {
+      const a = (i * Math.PI) / 8;
+      piece(
+        root,
+        new THREE.OctahedronGeometry(0.025),
+        0xf3e3b5,
+        [Math.cos(a) * 0.33, 0.115, Math.sin(a) * 0.33],
+        [1, 1, 1],
+      );
+    }
     piece(
       root,
-      new THREE.TorusGeometry(0.33, 0.045, 6, 24),
+      new THREE.TorusGeometry(0.33, 0.045, 12, 48),
       c,
       [0, 0.12, 0],
       [1, 1, 1],
@@ -96,7 +121,7 @@ export function createCosmetic(id) {
       if (i % 2 === 0)
         piece(
           root,
-          ball,
+          new THREE.OctahedronGeometry(1, 1),
           item.id === "royal-crown" ? 0xa55e64 : 0xe9dfac,
           [Math.cos(a) * 0.3, 0.18, Math.sin(a) * 0.3],
           [0.05, 0.06, 0.05],

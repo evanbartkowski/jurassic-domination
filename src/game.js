@@ -684,6 +684,7 @@ export class Game {
       );
     if (e.boss) this.boss = null;
     this.emit("kill", {
+      speciesId:s.id,
       x: e.x,
       y: e.y,
       text: e.boss ? `${s.name} alpha defeated` : s.name,

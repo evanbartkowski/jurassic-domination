@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { worldFeatures } from "./wilderness.js";
+import { createWildFeature } from "./wilderness-art.js";
 import {
   CHUNK_SIZE,
   WORLD_RADIUS,
@@ -166,6 +168,9 @@ export function createTerrainChunk(cx, cy, seed) {
     rand = seeded(chunkSeed(seed, cx, cy) ^ 0x9148),
     ox = cx * CHUNK_SIZE,
     oy = cy * CHUNK_SIZE;
+  const featureData = worldFeatures(seed, cx, cy),
+    clearFeature = (x, z, margin = 0) =>
+      featureData.some((f) => Math.hypot(f.x - x, f.y - z) < f.radius + margin);
   const region = biomeAt(ox + 80, oy + 80),
     geo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, 32, 32);
   geo.rotateX(-Math.PI / 2);
@@ -211,7 +216,7 @@ export function createTerrainChunk(cx, cy, seed) {
   for (let i = 0; i < treeCount; i++) {
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE;
-    if (Math.hypot(x, z) < 17) continue;
+    if (Math.hypot(x, z) < 17 || clearFeature(x, z, 4)) continue;
     const scale = 0.85 + rand() * 1.35,
       height = (forest ? 5 : 4) * scale;
     trunks.push({
@@ -266,6 +271,7 @@ export function createTerrainChunk(cx, cy, seed) {
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE,
       s = 0.5 + rand() * 2.2;
+    if (clearFeature(x, z, 1)) continue;
     rocks.push({
       position: [x, -0.05, z],
       scale: [s, s * 0.65, s * 0.9],
@@ -279,6 +285,7 @@ export function createTerrainChunk(cx, cy, seed) {
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE,
       s = 0.35 + rand() * 0.85;
+    if (clearFeature(x, z, 0.3)) continue;
     ferns.push({
       position: [x, 0.03, z],
       scale: [s, s, s],
@@ -290,6 +297,7 @@ export function createTerrainChunk(cx, cy, seed) {
   for (let i = 0; i < 45; i++) {
     const x = ox + rand() * 160,
       z = oy + rand() * 160;
+    if (clearFeature(x, z, 0.5)) continue;
     flowers.push({
       position: [x, 0.22, z],
       scale: [0.14, 0.2, 0.14],
@@ -304,34 +312,6 @@ export function createTerrainChunk(cx, cy, seed) {
     flowers,
     false,
   );
-  if (!barren && rand() < 0.65) {
-    const x = ox + 30 + rand() * 100,
-      z = oy + 30 + rand() * 100,
-      sx = 9 + rand() * 14,
-      sz = 8 + rand() * 12;
-    const waterGeo = new THREE.CircleGeometry(1, 48);
-    owned.push(waterGeo);
-    const wm = new THREE.MeshStandardMaterial({
-      color: frost ? 0x81b3bd : 0x367d78,
-      roughness: 0.24,
-      metalness: 0.28,
-      transparent: true,
-      opacity: 0.84,
-    });
-    const surface = new THREE.Mesh(waterGeo, wm);
-    surface.rotation.x = -Math.PI / 2;
-    surface.scale.set(sx, sz, 1);
-    surface.position.set(x, -0.01, z);
-    water.push(surface);
-    group.add(surface);
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * 6.28,
-        o = new THREE.Mesh(rockGeo, material(0x7b8776));
-      o.position.set(x + Math.cos(a) * sx, 0.01, z + Math.sin(a) * sz);
-      o.scale.set(0.8, 0.3, 0.8);
-      group.add(o);
-    }
-  }
   for (const lair of LAIRS)
     if (
       lair.x >= ox &&
@@ -365,9 +345,13 @@ export function createTerrainChunk(cx, cy, seed) {
       ring.rotation.x = Math.PI / 2;
       group.add(ring);
     }
+  const features = featureData.map(createWildFeature);
+  features.forEach((f) => group.add(f));
   group.userData = {
+    features,
     water,
     dispose() {
+      features.forEach((f) => f.userData.dispose());
       owned.forEach((g) => g.dispose());
       terrainMat.dispose();
       water.forEach((w) => w.material.dispose());
@@ -430,10 +414,15 @@ export class Terrain {
   }
   animate(t) {
     for (const g of this.chunks.values())
+      g.userData.features.forEach((f) =>
+        f.userData.animate(t, this.focusPosition),
+      );
+    for (const g of this.chunks.values())
       for (const water of g.userData.water)
         water.material.roughness = 0.24 + Math.sin(t * 0.6) * 0.04;
   }
   focus(x, y, menu = false) {
+    this.focusPosition = menu ? null : { x, y };
     foliageFocus.set(menu ? 1e6 : x, 0.7, menu ? 1e6 : y);
   }
 }

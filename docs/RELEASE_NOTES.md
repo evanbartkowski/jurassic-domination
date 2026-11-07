@@ -1,3 +1,14 @@
+# Wild & Alive ? v0.4.0
+
+- Actual model portraits replace generic shop symbols. Improved crown detail, smoother prop geometry and matching discovered-species portraits.
+- Redesigned title typography and action panel. Island scenery adds coastal foliage, distant islets and animated water.
+- Island defaults to visiting; explicit build-mode button enables editing. Pets wander, avoid objects, graze, rest and respond to feeding.
+- Persistent pet bonds and two conditional, once-only sanctuary treasure challenges. Build undo preserves bonds and claimed rewards.
+- Lower dinosaur density, sharper attacks, different species reach and body animations. Warning circles are removed. Travelling ranged enemy attacks can be avoided.
+- Carnotaurus breathes fire; Spinosaurus channels electricity. Existing creature and myth skills remain.
+- Seeded blocking rocks/logs, ruins, poison blooms, toxic mushrooms, snapping plants, calderas and dangerous water. Marine predators visibly converge and bite within range.
+- Previous saves retain progression, collections and island layouts. Hunted species now count as discovered.
+
 # Sanctuary Collection ? v0.3.0
 
 - Rare DNA replaces automatic death payouts. Selected achievements pay once, map specimens and guardian drops provide small rare rewards, and finds save immediately.

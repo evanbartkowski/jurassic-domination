@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { createDecoration, createPet } from "./collection-art.js";
 import { animateCreature } from "./creatures.js";
 import { CATALOG, PETS } from "./collection-data.js";
+import { seeded } from "./world-data.js";
 import { placementValid } from "./collections.js";
 
 export class IslandScene {
@@ -11,6 +12,7 @@ export class IslandScene {
     this.callbacks = callbacks;
     this.settings = settings;
     this.models = new Map();
+    this.buildMode = false;
     this.selected = null;
     this.tool = null;
     this.time = 0;
@@ -19,7 +21,7 @@ export class IslandScene {
     this.ghostMaterials = [];
     this.azimuth = 0.7;
     this.polar = 0.77;
-    this.distance = 105;
+    this.distance = 91;
     this.target = new THREE.Vector3();
     this.pointer = new THREE.Vector2();
     this.raycaster = new THREE.Raycaster();
@@ -84,33 +86,54 @@ export class IslandScene {
     });
     add(new THREE.CylinderGeometry(40, 36, 2.6, 100), sand, [0, -1.05, 0]);
     add(new THREE.CylinderGeometry(34, 38, 0.45, 100), earth, [0, 0.08, 0]);
-    const groundGeo = new THREE.CircleGeometry(34, 100);
+    const groundGeo = new THREE.CircleGeometry(34, 144);
+    const colors = [];
+    const v = groundGeo.attributes.position;
+    for (let i = 0; i < v.count; i++) {
+      const x = v.getX(i),
+        z = v.getY(i);
+      const c = new THREE.Color(0x64824f).lerp(
+        new THREE.Color(0x9fba70),
+        0.35 + 0.25 * Math.sin(x * 0.17) * Math.cos(z * 0.22),
+      );
+      colors.push(c.r, c.g, c.b);
+    }
+    groundGeo.setAttribute(
+      "color",
+      new THREE.Float32BufferAttribute(colors, 3),
+    );
     this.ground = add(
       groundGeo,
-      new THREE.MeshStandardMaterial({ color: 0x6d8e58, roughness: 1 }),
+      new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        vertexColors: true,
+        roughness: 1,
+      }),
       [0, 0.32, 0],
       [-Math.PI / 2, 0, 0],
     );
     const texture = document.createElement("canvas");
     texture.width = texture.height = 256;
-    const c = texture.getContext("2d");
-    c.fillStyle = "#b1bd9b";
+    const c = texture.getContext("2d"),
+      random = seeded(7459);
+    c.fillStyle = "#c6cbb9";
     c.fillRect(0, 0, 256, 256);
     for (let i = 0; i < 7000; i++) {
-      const x = (i * 73) % 256,
-        y = (i * 179) % 256;
-      c.fillStyle = i % 3 ? "#667b4d22" : "#d7cf9d33";
+      const x = random() * 256,
+        y = random() * 256;
+      c.fillStyle = i % 3 ? "#667b4d15" : "#d7cf9d22";
       c.fillRect(x, y, 1, 2);
     }
     const map = new THREE.CanvasTexture(texture);
     map.wrapS = map.wrapT = THREE.RepeatWrapping;
-    map.repeat.set(18, 18);
+    map.repeat.set(5, 5);
+    map.anisotropy = 8;
     map.colorSpace = THREE.SRGBColorSpace;
     this.ground.material.map = map;
     this.ground.material.needsUpdate = true;
     this.groundMap = map;
     this.ocean = add(
-      new THREE.PlaneGeometry(600, 600, 1, 1),
+      new THREE.PlaneGeometry(600, 600, 48, 48),
       new THREE.MeshStandardMaterial({
         color: 0x4b9da8,
         metalness: 0.23,
@@ -148,6 +171,34 @@ export class IslandScene {
       obj.scale.setScalar(i % 3 ? 0.85 : 1.2);
       this.scene.add(obj);
       this.fixed.push(obj);
+    }
+    // Lush, uneven coastal planting frames a clear usable lawn.
+    for (let i = 0; i < 75; i++) {
+      const a = i * 2.39996,
+        r = 32.5 + (i % 5) * 0.7;
+      const obj = createDecoration(
+        i % 11 === 0
+          ? "tree"
+          : i % 5 === 0
+            ? "palm"
+            : i % 3 === 0
+              ? "flowers"
+              : "fern",
+      );
+      obj.position.set(Math.cos(a) * r, 0.32, Math.sin(a) * r);
+      obj.rotation.y = a;
+      obj.scale.setScalar(0.65 + (i % 4) * 0.18);
+      this.scene.add(obj);
+      this.fixed.push(obj);
+    }
+    for (let i = 0; i < 7; i++) {
+      const a = i * 1.3;
+      const hill = add(
+        new THREE.SphereGeometry(1, 32, 20),
+        new THREE.MeshStandardMaterial({ color: 0x4c7066, roughness: 1 }),
+        [Math.cos(a) * 170, -2, Math.sin(a) * 170],
+      );
+      hill.scale.set(24 + i * 2, 9 + i * 2, 18 + i);
     }
     this.ripples = [];
     for (let i = 0; i < 3; i++) {
@@ -243,6 +294,7 @@ export class IslandScene {
   }
   stateChanged() {
     this.callbacks.state?.({
+      buildMode: this.buildMode,
       selected: this.selected,
       tool: this.tool ? { ...this.tool } : null,
     });
@@ -250,7 +302,7 @@ export class IslandScene {
   sync(profile) {
     this.profile = profile;
     const seen = new Set();
-    this.grid.visible = profile.island.grid;
+    this.grid.visible = this.buildMode && profile.island.grid;
     for (const p of profile.island.placements) {
       seen.add(p.id);
       let model = this.models.get(p.id);
@@ -289,7 +341,21 @@ export class IslandScene {
     this.ghostMaterials.forEach((m) => m.dispose());
     this.ghostMaterials = [];
   }
+  setBuildMode(enabled) {
+    this.buildMode = enabled;
+    this.cancelTool();
+    this.grid.visible = enabled && this.profile.island.grid;
+    this.canvas
+      .closest(".sanctuary-shell")
+      ?.classList.toggle("building", enabled);
+    this.stateChanged();
+  }
+  showAffection() {
+    const model = this.models.get(this.selected);
+    if (model) model.userData.affection = 3;
+  }
   setTool(kind, id, movingId = null) {
+    if (!this.buildMode) return;
     this.cancelTool();
     const item = CATALOG[`${kind}:${id}`];
     if (!item) return;
@@ -409,6 +475,7 @@ export class IslandScene {
     if (p) this.setTool(p.kind, p.itemId, p.id);
   }
   rotate(direction = 1) {
+    if (!this.buildMode) return;
     if (this.tool) {
       this.tool.rotation += (direction * Math.PI) / 4;
       this.updateGhost(false);
@@ -426,6 +493,7 @@ export class IslandScene {
     }
   }
   storeSelected() {
+    if (!this.buildMode) return;
     if (this.selected) this.callbacks.change?.("store", { id: this.selected });
   }
   handleKey(event) {
@@ -480,18 +548,41 @@ export class IslandScene {
         const w = model.userData.wander;
         w.timer -= dt;
         if (w.timer <= 0) {
-          const a = this.time * 0.6 + Number(p.id.slice(1)) * 2.4,
-            r = 1.1;
-          w.x = p.x + Math.cos(a) * r;
-          w.y = p.y + Math.sin(a) * r;
-          w.timer = 3 + (Number(p.id.slice(1)) % 3);
+          const n = Number(p.id.slice(1)),
+            a = this.time * 0.37 + n * 2.4;
+          w.state = ["wander", "graze", "rest", "look"][
+            Math.floor(this.time / 5 + n) % 4
+          ];
+          const radius = 3 + (n % 4);
+          w.x = p.x + Math.cos(a) * radius;
+          w.y = p.y + Math.sin(a) * radius;
+          const r = Math.hypot(w.x, w.y);
+          if (r > 30) {
+            w.x *= 30 / r;
+            w.y *= 30 / r;
+          }
+          w.timer = 3 + (n % 4);
         }
         const dx = w.x - model.position.x,
           dz = w.y - model.position.z,
           d = Math.hypot(dx, dz),
-          speed = d > 0.08 ? 0.65 : 0;
-        if (d > 0.08) {
-          const step = Math.min(d, dt * 0.8);
+          speed = d > 0.12 && w.state === "wander" ? 0.5 : 0;
+        if (speed > 0) {
+          let avoidanceX = 0,
+            avoidanceZ = 0;
+          for (const [id, other] of this.models) {
+            if (id === p.id) continue;
+            const dx = model.position.x - other.position.x,
+              dz = model.position.z - other.position.z,
+              near = Math.hypot(dx, dz);
+            if (near < 2.8 && near > 0.01) {
+              avoidanceX += (dx / near) * (2.8 - near);
+              avoidanceZ += (dz / near) * (2.8 - near);
+            }
+          }
+          model.position.x += avoidanceX * dt * 0.7;
+          model.position.z += avoidanceZ * dt * 0.7;
+          const step = Math.min(d, dt * 1.1);
           model.position.x += (dx / d) * step;
           model.position.z += (dz / d) * step;
           const target = -Math.atan2(dz, dx),
@@ -499,9 +590,24 @@ export class IslandScene {
               Math.sin(target - model.rotation.y),
               Math.cos(target - model.rotation.y),
             );
-          model.rotation.y += diff * Math.min(1, dt * 4);
+          model.rotation.y += diff * (1 - Math.exp(-dt * 4));
         }
         animateCreature(model, dt, this.time, speed);
+        const head = model.userData.head;
+        if (head) {
+          if (w.state === "graze")
+            head.rotation.z += 0.18 + Math.sin(this.time * 2) * 0.06;
+          if (w.state === "look")
+            head.rotation.y = Math.sin(this.time * 0.8) * 0.25;
+        }
+        if (w.state === "rest") {
+          model.userData.head.rotation.z += 0.1;
+          model.userData.body.rotation.z += 0.035;
+        }
+        if ((model.userData.affection || 0) > 0) {
+          model.userData.affection -= dt;
+          model.position.y = 0.34 + Math.abs(Math.sin(this.time * 7)) * 0.18;
+        } else model.position.y = 0.34;
       }
     }
     if (!this.tool && this.selected) {
@@ -520,6 +626,14 @@ export class IslandScene {
       m.material.opacity = 0.16 + Math.sin(this.time * 0.8 + i) * 0.08;
       m.scale.setScalar(1 + Math.sin(this.time * 0.35 + i) * 0.014);
     });
+    const sea = this.ocean.geometry.attributes.position;
+    for (let i = 0; i < sea.count; i++)
+      sea.setZ(
+        i,
+        Math.sin(sea.getX(i) * 0.045 + this.time * 0.5) * 0.12 +
+          Math.cos(sea.getY(i) * 0.07 + this.time * 0.35) * 0.09,
+      );
+    sea.needsUpdate = true;
     this.ocean.material.roughness = 0.28 + Math.sin(this.time * 0.4) * 0.035;
     this.renderer.render(this.scene, this.camera);
   }

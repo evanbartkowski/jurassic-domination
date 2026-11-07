@@ -2,6 +2,8 @@ import "./style.css";
 import "./world-ui.css";
 import "./expansion.css";
 import "./collections.css";
+import "./wild-update.css";
+import { ISLAND_TRIALS, sanctuaryProgress, careForPet } from "./sanctuary.js";
 import { Game } from "./game.js";
 import { SPECIES } from "./data.js";
 import { WorldRenderer } from "./renderer.js";
@@ -70,6 +72,7 @@ let specimen = null;
 let productViewer = null,
   islandScene = null,
   pendingIslandTool = null;
+let pendingIslandBuild = false;
 const islandUndo = [],
   islandRedo = [];
 function settleAchievements(progress = {}) {
@@ -86,7 +89,11 @@ function settleAchievements(progress = {}) {
 }
 function islandState(
   state = islandScene
-    ? { selected: islandScene.selected, tool: islandScene.tool }
+    ? {
+        selected: islandScene.selected,
+        tool: islandScene.tool,
+        buildMode: islandScene.buildMode,
+      }
     : null,
 ) {
   ui?.refreshIslandInventory(profile, state);
@@ -98,16 +105,70 @@ function openIsland(tool = null) {
   pending.clear();
   pointer.down = false;
   pendingIslandTool = tool;
+  pendingIslandBuild = false;
   if (tool) ui.islandTab = tool.kind;
   ui.showIsland(profile);
   audio.setMode("menu");
 }
 function islandAction(action, payload = {}) {
   if (
+    action === "build" &&
+    (!islandScene ||
+      islandScene.canvas !== document.getElementById("island-canvas"))
+  ) {
+    pendingIslandBuild = true;
+    return { ok: true };
+  }
+  if (
     !islandScene &&
     ["tool", "move", "rotate", "store", "cancel"].includes(action)
   )
     return { ok: false, reason: "The island is still loading." };
+  if (action === "build") {
+    islandScene.setBuildMode(!islandScene.buildMode);
+    if (islandScene.buildMode && pendingIslandTool) {
+      islandScene.setTool(pendingIslandTool.kind, pendingIslandTool.id);
+      pendingIslandTool = null;
+    }
+    return { ok: true };
+  }
+  if (action === "care") {
+    const result = careForPet(profile, payload.id || islandScene.selected);
+    if (result.ok) {
+      persist();
+      islandScene.showAffection();
+    }
+    ui.islandHint(
+      result.ok ? "A happy companion. Your bond grows." : result.reason,
+    );
+    islandState();
+    return result;
+  }
+  if (action === "claim-trial") {
+    const trial = ISLAND_TRIALS.find((t) => t.id === payload.id);
+    if (!trial || profile.island.trials.includes(trial.id))
+      return { ok: false };
+    const p = sanctuaryProgress(profile, trial);
+    if (
+      p.seconds < trial.seconds ||
+      p.pets < trial.pets ||
+      p.decorations < trial.decorations ||
+      p.care < trial.care ||
+      !p.rare
+    ) {
+      ui.islandHint(
+        "This sanctuary challenge still needs care and development.",
+      );
+      return { ok: false };
+    }
+    profile.island.trials.push(trial.id);
+    for (const sku of trial.rewards)
+      grantFind(profile, sku, `sanctuary:${trial.id}:${sku}`);
+    persist();
+    islandState();
+    ui.toast(`${trial.name}: permanent sanctuary treasures unlocked!`);
+    return { ok: true };
+  }
   if (action === "tool") {
     islandScene.setTool(payload.kind, payload.id);
     return { ok: true };
@@ -138,7 +199,13 @@ function islandAction(action, payload = {}) {
       return { ok: false };
     }
     to.push(before);
-    profile.island = JSON.parse(from.pop());
+    const persistentCare = {
+      visitSeconds: profile.island.visitSeconds,
+      care: profile.island.care,
+      lastCare: profile.island.lastCare,
+      trials: profile.island.trials,
+    };
+    profile.island = { ...JSON.parse(from.pop()), ...persistentCare };
     result = { ok: true };
     islandScene?.cancelTool();
   } else {
@@ -628,15 +695,24 @@ function updateWorldUI() {
   const nearby = game.foods
     .filter(
       (f) =>
-        ["egg", "rareplant", "relic", "fossil"].includes(f.type) &&
-        Math.hypot(f.x - p0.x, f.y - p0.y) < 7,
+        [
+          "egg",
+          "rareplant",
+          "relic",
+          "fossil",
+          "dna",
+          "pet-egg",
+          "decoration-cache",
+          "cosmetic-cache",
+        ].includes(f.type) && Math.hypot(f.x - p0.x, f.y - p0.y) < 7,
     )
     .sort(
       (a, b) =>
         Math.hypot(a.x - p0.x, a.y - p0.y) - Math.hypot(b.x - p0.x, b.y - p0.y),
     )[0];
   const prompt = document.getElementById("pickup-prompt");
-  prompt.hidden = !nearby;
+  prompt.hidden = !nearby && !game.hazardHint;
+  if (game.hazardHint) prompt.textContent = game.hazardHint;
   if (nearby)
     prompt.textContent =
       nearby.type === "egg"
@@ -645,7 +721,13 @@ function updateWorldUI() {
           ? `E · ${POWERUPS.find((b) => b.id === nearby.powerup)?.name || "Rare plant"} · timed power-up`
           : nearby.type === "relic"
             ? `E · ANCIENT SKILL RELIC · lasts until death`
-            : "E · EXCEPTIONALLY RARE FOSSIL · permanent discovery";
+            : nearby.type === "dna"
+              ? "E - RARE DNA SPECIMEN"
+              : nearby.type === "pet-egg"
+                ? "E - PERMANENT COMPANION EGG"
+                : nearby.type.includes("cache")
+                  ? "E - PERMANENT COLLECTION CACHE"
+                  : "E - EXCEPTIONALLY RARE FOSSIL - permanent discovery";
   const p = game.player,
     near = game.entities
       .filter((e) => Math.hypot(e.x - p.x, e.y - p.y) < 27)
@@ -755,6 +837,14 @@ function events() {
         );
         audio.play("evolve");
       }
+    }
+    if (
+      event.type === "kill" &&
+      event.speciesId &&
+      !profile.hunted.includes(event.speciesId)
+    ) {
+      profile.hunted.push(event.speciesId);
+      persist();
     }
     if (event.type === "kill" && event.lairId) {
       if (
@@ -920,9 +1010,25 @@ function frame(now) {
           },
           settings,
         );
+        if (pendingIslandBuild) {
+          pendingIslandBuild = false;
+          islandAction("build");
+        }
         if (pendingIslandTool) {
-          islandScene.setTool(pendingIslandTool.kind, pendingIslandTool.id);
-          pendingIslandTool = null;
+          if (islandScene.buildMode)
+            islandScene.setTool(pendingIslandTool.kind, pendingIslandTool.id);
+          ui.islandHint(
+            "Press ENTER BUILD MODE to place the item you selected in the shop.",
+          );
+        }
+      }
+      if (!document.hidden && document.hasFocus()) {
+        profile.island.visitSeconds += dt;
+        islandScene.saveClock = (islandScene.saveClock || 0) + dt;
+        if (islandScene.saveClock > 15) {
+          islandScene.saveClock = 0;
+          persist();
+          islandState();
         }
       }
       islandScene.render(dt);

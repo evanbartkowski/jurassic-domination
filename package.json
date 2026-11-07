@@ -1,6 +1,6 @@
 {
   "name": "jurassic-domination",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A dinosaur evolution survival roguelite, from fragile egg to mythic apex.",
   "private": true,
   "type": "module",
@@ -18,7 +18,9 @@
     "desktop": "npm run build && electron .",
     "package": "npm run build && electron-builder --win portable --x64",
     "package:dir": "npm run build && electron-builder --win --dir --x64",
-    "qa:collections": "node scripts/qa-collections.mjs"
+    "qa:collections": "node scripts/qa-collections.mjs",
+    "qa:wild": "node scripts/qa-wild.mjs",
+    "art:portraits": "node scripts/render-portraits.mjs"
   },
   "dependencies": {
     "three": "^0.187.0"

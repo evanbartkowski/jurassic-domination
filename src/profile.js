@@ -21,6 +21,7 @@ export function newProfile() {
     totalKills: 0,
     highestTier: 0,
     unlocked: [],
+    hunted: [],
     skins: ["natural"],
     equippedSkin: "natural",
     modifiers: [],
@@ -39,6 +40,13 @@ export function normalizeProfile(raw) {
   Object.assign(p, normalizeCollection(raw));
   for (const k of ["dna", "bestScore", "runs", "totalKills", "highestTier"])
     p[k] = integer(raw[k], 0, k === "highestTier" ? 7 : 1e9);
+  p.hunted = [
+    ...new Set(
+      (Array.isArray(raw.hunted) ? raw.hunted : []).filter(
+        (id) => typeof id === "string" && id.length < 80,
+      ),
+    ),
+  ].slice(0, 100);
   p.unlocked = Array.isArray(raw.unlocked)
     ? [
         ...new Set(

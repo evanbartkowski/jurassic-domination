@@ -340,7 +340,7 @@ try {
     },
   );
   await check(
-    "enemy skills render red telegraphs before resolving",
+    "enemy skills launch visible projectiles without warning circles",
     async () => {
       await page.evaluate(() => {
         const g = window.__JD.game;
@@ -351,8 +351,14 @@ try {
         });
         e.skillCooldown = 0;
       });
-      await page.waitForFunction(() => window.__JD.world.warnings.size > 0);
-      await page.screenshot({ path: "artifacts/red-telegraph.png" });
+      await page.waitForFunction(
+        () => window.__JD.world.projectileModels?.size > 0,
+      );
+      assert.equal(
+        await page.evaluate(() => window.__JD.world.warnings.size),
+        0,
+      );
+      await page.screenshot({ path: "artifacts/ranged-attack.png" });
     },
   );
   await check(

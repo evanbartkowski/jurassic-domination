@@ -66,6 +66,8 @@ for(const s of SPECIES){
   if(s.id==='iguanodon')s.body='quad';
   if(s.body==='equine'){s.color=s.id==='solar-unicorn'?0xe4d5b2:0xd5ddd6;s.accent=s.id==='unicorn'?0xb6c9dc:0xe7c880;}
   s.technique=TECHNIQUES[s.technique]?s.technique:techniquesByBody[s.body];
+  if(s.id==='carnotaurus'){s.abilityType='flame';s.ability='Ember Breath';s.description+=' A volatile evolution lets this hunter breathe fire.';}
+  if(s.id==='spinosaurus'){s.abilityType='lightning';s.ability='Stormsail Arc';s.description+=' Its charged sail channels a supernatural electrical strike.';}
   s.abilityDescription=ABILITIES[s.abilityType].description;
   s.temperament=['quad','longneck','equine'].includes(s.body)?'territorial':['croc','serpent'].includes(s.body)?'ambusher':s.tier<2?'skittish':'hunter';
   if(/raptor|deinonychus|troodon|albertosaurus|mapusaurus|fenrir/.test(s.id))s.temperament='pack';

@@ -1,0 +1,566 @@
+.menu-screen {
+  background: transparent;
+}
+.menu-screen .menu-art {
+  background-image:
+    linear-gradient(
+      90deg,
+      #0b1813 0%,
+      #0b1813f2 26%,
+      #0b181399 46%,
+      #0b181305 75%
+    ),
+    linear-gradient(
+      0deg,
+      #0b1813 0%,
+      transparent 23%,
+      transparent 80%,
+      #0b181355
+    );
+  animation: none;
+}
+.menu-screen .menu-grain {
+  opacity: 0.035;
+}
+.menu-art-caption {
+  pointer-events: none;
+}
+.menu-art-caption p {
+  font-size: 25px;
+}
+.caption-small {
+  color: #ded7bd;
+}
+.cosmetic-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 9px 2px;
+  background: none;
+  border: 0;
+  color: #c5bd9f;
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-align: left;
+}
+.cosmetic-link span {
+  font-size: 8px;
+  color: #b89acb;
+}
+.cosmetic-link:hover {
+  color: #f4d59c;
+}
+.encyclopedia-panel {
+  max-width: 1220px;
+}
+.encyclopedia-toolbar {
+  display: flex;
+  gap: 18px;
+  padding: 18px 0;
+}
+.encyclopedia-toolbar label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #b5bca5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.encyclopedia-toolbar input,
+.encyclopedia-toolbar select {
+  max-width: 260px;
+  background: #13231b;
+  color: #e5e6d6;
+  border: 1px solid #b4c4a344;
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.encyclopedia-layout {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 22px;
+  height: min(540px, 58vh);
+  min-height: 310px;
+}
+.specimen-panel {
+  border: 1px solid #a9b69424;
+  border-radius: 4px;
+  background: radial-gradient(ellipse at 50% 25%, #99b09b15, transparent 65%);
+  overflow: auto;
+}
+.specimen-panel canvas {
+  display: block;
+  width: 100%;
+  height: 220px;
+  cursor: grab;
+  touch-action: none;
+}
+.specimen-panel canvas:active {
+  cursor: grabbing;
+}
+.specimen-hint {
+  display: block;
+  text-align: center;
+  color: #aaa990;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  margin-top: -8px;
+}
+#specimen-info {
+  padding: 22px;
+}
+#specimen-info .eyebrow {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+#specimen-info h2 {
+  font-family: Georgia, serif;
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 8px 0 12px;
+}
+#specimen-info > p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #acb9a5;
+}
+#specimen-info dl {
+  margin: 20px 0 0;
+}
+#specimen-info dt {
+  font-size: 11px;
+  color: #dfc48c;
+  margin-top: 15px;
+}
+#specimen-info dd {
+  margin: 5px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #a3b49d;
+}
+.encyclopedia-results {
+  overflow: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  margin-top: 0 !important;
+  padding-right: 6px;
+}
+.encyclopedia-results .species-entry {
+  display: block;
+  text-align: left;
+  min-height: 180px;
+  color: #e0e6d5;
+}
+.encyclopedia-results .species-entry[aria-pressed="true"] {
+  border-color: #dbbc78;
+  background: #9a9c5d12;
+}
+.encyclopedia-results .creature-art {
+  height: 72px;
+  margin: 10px 0;
+}
+.encyclopedia-results .species-entry h2 {
+  font-size: 22px;
+}
+.encyclopedia-results .species-ability {
+  font-size: 9px;
+  line-height: 1.7;
+  display: block;
+}
+.empty-collection {
+  grid-column: 1/-1;
+  color: #b5bda9;
+  font-size: 13px;
+  line-height: 1.8;
+  padding: 20px;
+}
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+.skin-card {
+  background: #778f6908;
+  border: 1px solid #a2b58a33;
+  border-radius: 4px;
+  padding: 20px 15px;
+  color: #d9decd;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+.skin-card.equipped {
+  border-color: #d4b373;
+  background: #a19b5314;
+}
+.skin-orb {
+  display: block;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 30% 22%,
+    var(--accent),
+    var(--skin) 48%,
+    #101a18 95%
+  );
+  box-shadow:
+    inset -8px -8px 10px #06100d66,
+    0 8px 25px #0005;
+}
+.skin-card strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.skin-card small {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #b5bba8;
+  min-height: 34px;
+}
+.skin-card > b {
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  color: #dbbf83;
+}
+.relic-heading {
+  margin-top: 30px;
+}
+.modifier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+.modifier-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #a9bd9222;
+  padding: 15px;
+  opacity: 0.55;
+}
+.modifier-card.owned {
+  opacity: 1;
+  border-color: #c6b38666;
+}
+.modifier-card h3 {
+  font-size: 12px;
+  font-weight: 500;
+}
+.modifier-card p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #aab89e;
+  margin-top: 5px;
+}
+.modifier-card > b {
+  font-size: 8px;
+  color: #d6be88;
+  margin-left: auto;
+}
+.run-adaptations {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #a7b49b;
+  margin: 18px 0;
+}
+.run-adaptations strong {
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  color: #dcc28f;
+}
+.run-adaptations p {
+  margin-top: 7px;
+}
+.minimap-wrap {
+  pointer-events: auto;
+}
+#minimap {
+  cursor: crosshair;
+}
+#minimap.expanded {
+  width: min(620px, 74vh, 90vw) !important;
+  height: auto !important;
+  right: 30px;
+  top: 85px;
+  max-height: 75vh;
+  background: #0d2018f7;
+}
+#map-tooltip {
+  position: fixed;
+  right: 35px;
+  top: 65px;
+  z-index: 6;
+  max-width: min(480px, 80vw);
+  padding: 7px 12px;
+  background: #10221de8;
+  border: 1px solid #c5ad6a55;
+  font-size: 10px;
+  color: #e1d7bc;
+  pointer-events: none;
+}
+.expedition-hud {
+  pointer-events: none;
+}
+#region-route {
+  position: absolute;
+  right: 28px;
+  top: 315px;
+  width: 190px;
+  padding: 10px 0;
+  color: #cecbb2;
+  font-size: 10px;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 4px #08150c;
+}
+#active-buffs {
+  position: absolute;
+  left: 30px;
+  top: 115px;
+  max-width: 310px;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #dcdeb1;
+  text-shadow: 0 2px 5px #000;
+  background: #0b1b1266;
+  padding: 3px 9px;
+  border-left: 2px solid #d0b982;
+}
+#active-buffs:empty {
+  display: none;
+}
+#discovered-skills {
+  position: absolute;
+  left: 50%;
+  bottom: 158px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 7px;
+  max-width: 80vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+#discovered-skills > span {
+  font-size: 10px;
+  color: #d9c4ee;
+  padding: 8px;
+  background: #151524bb;
+  border: 1px solid #b79bd755;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+#discovered-skills kbd {
+  font-size: 10px;
+}
+#pickup-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 220px;
+  transform: translateX(-50%);
+  max-width: 75vw;
+  text-align: center;
+  color: #f2dbab;
+  background: #10221ddd;
+  border: 1px solid #d2bb7855;
+  padding: 9px 16px;
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+}
+.technique-key {
+  order: 2;
+}
+.technique-key > span {
+  font-size: 8px;
+  line-height: 1.6;
+  margin: 11px 0 4px;
+}
+.ability-key {
+  width: 68px;
+}
+.creature-label {
+  font-size: 10px;
+}
+.hud-controls .key-help {
+  font-size: 8px;
+}
+@media (max-width: 1100px) {
+  .encyclopedia-layout {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+  .ability-key {
+    width: 54px;
+  }
+  .encyclopedia-results .species-entry {
+    padding: 14px;
+  }
+  .encyclopedia-results .species-entry h2 {
+    font-size: 20px;
+  }
+}
+@media (max-width: 850px) {
+  .encyclopedia-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .encyclopedia-toolbar {
+    gap: 12px;
+  }
+  .encyclopedia-toolbar label {
+    font-size: 8px;
+  }
+  .encyclopedia-toolbar input,
+  .encyclopedia-toolbar select {
+    max-width: 200px;
+    font-size: 11px;
+  }
+  .specimen-panel canvas {
+    height: 170px;
+  }
+  #specimen-info {
+    padding: 15px;
+  }
+  #specimen-info h2 {
+    font-size: 24px;
+  }
+  .encyclopedia-results {
+    grid-template-columns: 1fr;
+  }
+  .skin-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .modifier-card {
+    flex-wrap: wrap;
+  }
+  .modifier-card > b {
+    margin-left: 34px;
+  }
+  .ability-key {
+    width: 45px;
+  }
+  .technique-key > span {
+    font-size: 6px;
+  }
+  #region-route {
+    top: 260px;
+    right: 18px;
+    width: 140px;
+    font-size: 8px;
+  }
+  #active-buffs {
+    left: 18px;
+    top: 92px;
+    max-width: 240px;
+    font-size: 10px;
+  }
+  #discovered-skills {
+    bottom: 150px;
+    max-width: 90vw;
+  }
+  #pickup-prompt {
+    bottom: 210px;
+    font-size: 9px;
+  }
+}
+@media (max-height: 700px) {
+  .encyclopedia-layout {
+    height: 50vh;
+    min-height: 250px;
+  }
+  .encyclopedia-toolbar {
+    padding: 12px 0;
+  }
+  .encyclopedia-panel .panel-bottom {
+    margin-top: 15px;
+  }
+  .cosmetic-link {
+    padding: 7px 2px;
+    margin-top: 4px;
+    font-size: 8px;
+  }
+  .specimen-panel canvas {
+    height: 170px;
+  }
+  .wardrobe-panel .skin-card {
+    padding: 14px;
+  }
+  .skin-orb {
+    width: 48px;
+    height: 48px;
+  }
+  .skin-card small {
+    font-size: 9px;
+  }
+  .pause-panel .stacked-buttons {
+    gap: 6px;
+  }
+  .pause-panel .button {
+    min-height: 40px;
+  }
+  .run-adaptations {
+    margin: 10px 0;
+  }
+}
+@media (max-width: 650px) {
+  .menu-screen .menu-art {
+    background-image: linear-gradient(
+      90deg,
+      #0a1813f2,
+      #0a1813ae 55%,
+      #0a18136b
+    );
+  }
+  .encyclopedia-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .specimen-panel {
+    max-height: 470px;
+  }
+  .encyclopedia-results {
+    grid-template-columns: 1fr 1fr;
+    max-height: 400px;
+  }
+  .encyclopedia-toolbar {
+    flex-direction: column;
+  }
+  .encyclopedia-toolbar label {
+    justify-content: space-between;
+  }
+  .skin-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .modifier-grid {
+    grid-template-columns: 1fr;
+  }
+  .ability-key {
+    width: 42px;
+  }
+  .technique-key {
+    display: none;
+  }
+  #region-route {
+    display: none;
+  }
+  #discovered-skills {
+    bottom: 225px;
+  }
+  #pickup-prompt {
+    bottom: 280px;
+  }
+  #active-buffs {
+    max-width: 190px;
+  }
+  #minimap.expanded {
+    right: 10px;
+    width: min(450px, 95vw) !important;
+  }
+}

@@ -1,3 +1,4 @@
+import { EXTRA_SPECIES, ABILITIES, TECHNIQUES } from './content.js';
 // Evolution is an intentionally fantastical food-chain, not a paleontology claim.
 export const TIERS = ['Hatchling', 'Hunter', 'Predator', 'Dominant', 'Apex', 'Titan', 'Mythic', 'Primordial'];
 
@@ -58,6 +59,19 @@ export const SPECIES = [
   species('phoenix', 'Ashen Phoenix', 7, 'bird', 0xd07646, 0xffd68b, 1230, 202, 11.6, 3.55, 'Solar Inferno', 'flame', 'The last ember refuses extinction and becomes a sun.'),
 ];
 
+SPECIES.push(...EXTRA_SPECIES);
+const techniquesByBody={raptor:'sidestep',rex:'cleave',quad:'guard',longneck:'quake',dragon:'wingstorm',bird:'feather',equine:'cleanse',serpent:'coil',croc:'camouflage',gryphon:'dive'};
+for(const s of SPECIES){
+  if(s.id==='world-serpent'||s.id==='basilisk')s.body='serpent';
+  if(s.id==='iguanodon')s.body='quad';
+  if(s.body==='equine'){s.color=s.id==='solar-unicorn'?0xe4d5b2:0xd5ddd6;s.accent=s.id==='unicorn'?0xb6c9dc:0xe7c880;}
+  s.technique=TECHNIQUES[s.technique]?s.technique:techniquesByBody[s.body];
+  s.abilityDescription=ABILITIES[s.abilityType].description;
+  s.temperament=['quad','longneck','equine'].includes(s.body)?'territorial':['croc','serpent'].includes(s.body)?'ambusher':s.tier<2?'skittish':'hunter';
+  if(/raptor|deinonychus|troodon|albertosaurus|mapusaurus|fenrir/.test(s.id))s.temperament='pack';
+  s.habitat=s.tier===0?'Fernwood Basin':s.tier<3?'Grasslands and wetlands':s.tier<5?'Ancient forests, deserts and frostlands':s.tier===5?'Calderas and elder groves':s.tier===6?'Celestial gardens and dragon peaks':'Primordial frontier';
+  s.passive=s.body==='quad'?'Armored hide: 12% damage resistance.':s.body==='longneck'?'Titanic endurance: food heals more.':s.body==='equine'?'Sacred metabolism: faster natural healing.':s.body==='serpent'?'Toxic fangs: bites can poison.':s.body==='croc'?'Ambush predator: stronger first strike.':s.body==='raptor'?'Combo hunter: consecutive bites grow stronger.':s.body==='bird'?'Light footed: dodges recover sooner.':'Apex resolve: reduced stagger and powerful techniques.';
+}
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 
 export const MUTATIONS = [

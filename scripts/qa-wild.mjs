@@ -114,7 +114,7 @@ try {
   console.log(
     JSON.stringify({
       checks: [
-        "142 model portraits",
+        "149 model portraits",
         "visit by default",
         "explicit build toggle",
         "persistent care and cooldown",

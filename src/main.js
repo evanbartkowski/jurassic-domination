@@ -3,6 +3,8 @@ import "./world-ui.css";
 import "./expansion.css";
 import "./collections.css";
 import "./wild-update.css";
+import "./ancestry.css";
+import { SPECIALS, growthName, BLOODLINES } from "./progression.js";
 import { ISLAND_TRIALS, sanctuaryProgress, careForPet } from "./sanctuary.js";
 import { Game } from "./game.js";
 import { SPECIES } from "./data.js";
@@ -332,6 +334,24 @@ ui = new UI(
     resume,
     pause,
     restart: () => start(difficulty),
+    evolution: () => {
+      if (game?.openEvolution()) {
+        paused = false;
+        keys.clear();
+        pending.clear();
+        pointer.down = false;
+      }
+    },
+    postpone: () => {
+      if (game?.closeEvolution()) {
+        paused = false;
+        keys.clear();
+        pending.clear();
+        ui.showHUD();
+        audio.setMode("playing");
+      }
+    },
+    bloodlines: () => ui.showBloodlines(game),
     menu,
     hatch: () => {
       unlock();
@@ -507,6 +527,10 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
   if (key === "Escape") {
     if (ui.view === "island" && islandScene?.cancelTool()) return;
+    if (ui.view === "evolution") {
+      ui.callbacks.postpone();
+      return;
+    }
     if (ui.view === "hud") pause();
     else if (ui.view === "pause") resume();
     else if (!["evolution", "death", "menu"].includes(ui.view)) ui.back();
@@ -520,6 +544,15 @@ window.addEventListener("keydown", (event) => {
   if (event.target.matches("input,select,textarea")) return;
   if (ui.view === "island") {
     islandScene?.handleKey(event);
+    return;
+  }
+  if (key === "KeyT" && ui.view === "hud" && !event.repeat) {
+    ui.callbacks.evolution();
+    return;
+  }
+  if (key === "KeyJ" && ui.view === "hud" && !event.repeat) {
+    pause();
+    ui.showBloodlines(game);
     return;
   }
   if (key === "KeyM" && ui.view === "hud" && !event.repeat) {
@@ -704,6 +737,7 @@ function updateWorldUI() {
           "pet-egg",
           "decoration-cache",
           "cosmetic-cache",
+          "lineage-fruit",
         ].includes(f.type) && Math.hypot(f.x - p0.x, f.y - p0.y) < 7,
     )
     .sort(
@@ -728,6 +762,8 @@ function updateWorldUI() {
                 : nearby.type.includes("cache")
                   ? "E - PERMANENT COLLECTION CACHE"
                   : "E - EXCEPTIONALLY RARE FOSSIL - permanent discovery";
+  if (nearby?.type === "lineage-fruit")
+    prompt.textContent = `E - ${nearby.fruit === "sunheart" ? "SUNHEART" : "MOONDROP"} FRUIT - rare bloodline ingredient`;
   const p = game.player,
     near = game.entities
       .filter((e) => Math.hypot(e.x - p.x, e.y - p.y) < 27)
@@ -751,7 +787,7 @@ function updateWorldUI() {
     }
     element.className = `creature-label${species.tier > game.tier ? " predator" : ""}${e.boss ? " alpha" : ""}`;
     element.querySelector("span").textContent =
-      `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${e.intent === "graze" ? " · NEUTRAL" : e.packId ? " · PACK" : ""}`;
+      `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${e.intent === "graze" ? " · NEUTRAL" : e.packId ? " · PACK" : ""}`;
     element.querySelector("i").style.transform =
       `scaleX(${Math.max(0, e.hp / e.maxHp)})`;
     const pos = world.project(e.x, e.y, species.size * 2 + 1);
@@ -798,13 +834,14 @@ function events() {
       !Number.isFinite(event.x) ||
       Math.hypot(event.x - game.player.x, event.y - game.player.y) < 70
     )
-      audio.play(sound);
+      audio.creatureEvent({ ...event, type: sound }, game);
     float(event);
     if (
       [
         "warning",
         "boss",
         "evolution-ready",
+        "lineage-progress",
         "hatch",
         "powerup",
         "run-skill",
@@ -919,6 +956,7 @@ function frame(now) {
           aim,
           attack: pointer.down || held("Space") || held("Mouse0"),
           ability: held("KeyQ"),
+          special: held("KeyX"),
           technique: held("KeyR"),
           skill: ["KeyF", "KeyG", "KeyC", "KeyV", "KeyB", "KeyN"].findIndex(
             held,
@@ -1105,6 +1143,9 @@ if (import.meta.env.DEV) {
     },
     get settings() {
       return settings;
+    },
+    get audio() {
+      return audio;
     },
     get fps() {
       return fps;

@@ -1,5 +1,38 @@
 # Local validation - November 7, 2026
 
+## Ancestral Paths (0.5.0)
+
+| Scope | Result |
+| --- | --- |
+| Node simulation, progression, audio and portrait tests | 76 passed |
+| Gameplay browser integration | 22 passed, zero runtime errors |
+| Manual evolution, growth, bloodline and live music checks | 8 passed, zero runtime errors |
+| Packaged Windows game, including X skill and J journal | 13 passed, zero runtime errors |
+| Self-extracting portable Windows build | 5 passed, zero runtime errors |
+| Production build and Windows portable packaging | Passed |
+
+The eight new browser checks exercise a running world while the T indicator
+flashes, voluntary opening and postponement without rerolling, real E fruit
+pickups that unlock a rare form, consumption/reset of the condition, the live
+J journal, heavy-form dash restrictions, defensive/healing X skills, actual
+growth in health and rendered size, and an audio analyser connected specifically
+to the music bus. The 800 x 600 HUD stays within the viewport.
+
+New unit checks cover food-driven NPC variation and real foraging, independent
+skill cooldowns, ranged bolts that cannot hit their caster, once-per-life
+bloodline claims, parent-form requirements and a distribution probe showing
+ordinary offers overwhelmingly remain Regular. All 149 portrait files validate.
+The input-only hunting probe now uses available Q/R/X skills and explicitly
+opens evolution; six seeds still reach evolution within 45 seconds and survive
+the first minute with at least three kills.
+
+Conditional rewards use controlled fixtures for reproducibility; this does not
+establish the natural discovery rate or full-run balance. Audio checks validate
+scheduling, routing, throttling and signal generation, not subjective sound
+quality on every output device.
+
+
+
 ## Wild & Alive (0.4.0)
 
 | Scope | Result |

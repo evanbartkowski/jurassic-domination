@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 
 const exe = path.resolve(
   process.env.JD_PORTABLE_EXE ||
-    "release/Jurassic Domination-0.4.0-portable.exe",
+    "release/Jurassic Domination-0.5.0-portable.exe",
 );
 const profile = await mkdtemp(path.join(os.tmpdir(), "jurassic-portable-qa-"));
 const env = { ...process.env, JD_TEST_USER_DATA: profile };
@@ -98,6 +98,16 @@ try {
         ["KeyR", "hud-technique-cooldown"],
         ["Shift", "hud-dash-cooldown"],
       ]) {
+        if (
+          code === "Shift" &&
+          (await page.locator("#dash-name").textContent()) === "NO DASH"
+        ) {
+          assert.equal(
+            await page.locator("#hud-dash-cooldown").textContent(),
+            "HEAVY FORM",
+          );
+          continue;
+        }
         await page.keyboard.press(code);
         await page.waitForFunction(
           (id) => /\d/.test(document.getElementById(id).textContent),

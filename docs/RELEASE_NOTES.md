@@ -1,3 +1,12 @@
+# Ancestral Paths - v0.5.0
+
+- Evolution no longer opens automatically. A flashing T indicator appears; open or postpone the same choices without rerolling.
+- Meals mature player and wild creatures within a species, changing size, health and damage. Wild creatures forage and consume actual meals; newborns start fresh.
+- Dash availability follows anatomy. X skills add independent extra attacks, defense, healing, cleansing, buffs and an aimed travelling bolt.
+- Seven rare conditional forms bring the roster to 100. Fruit, caldera kills, guardian victories, parent forms and survival milestones unlock one-use bloodline chains during each life.
+- Regular offers dominate. Rare, Epic and Legendary choices display explicit rarity labels. J opens a live condition journal; progress resets on death.
+- Expanded original adaptive background music and creature/size-dependent calls, footsteps and attack effects. Independent audio settings remain.
+
 # Wild & Alive ? v0.4.0
 
 - Actual model portraits replace generic shop symbols. Improved crown detail, smoother prop geometry and matching discovered-species portraits.

@@ -1,6 +1,16 @@
 import { SPECIES, SPECIES_BY_ID, MUTATIONS, DIFFICULTIES } from "./data.js";
 import { rollCollectionItem } from "./collection-data.js";
 import { Ecosystem, initializeEcosystem } from "./ecosystem.js";
+import {
+  newLineage,
+  chooseEvolutions,
+  eligibleBloodlines,
+  creatureKit,
+  SPECIALS,
+  growthFromFood,
+  feedEntity,
+  BLOODLINES,
+} from "./progression.js";
 import { ABILITIES } from "./content.js";
 import {
   WORLD_RADIUS,
@@ -47,6 +57,9 @@ export class Game {
     this.foods = [];
     this.events = [];
     this.mutations = [];
+    this.evolutionReady = false;
+    this.lineage = newLineage();
+    this.formStarted = 0;
     this.evolutionChoices = [];
     this.mutationChoices = [];
     this.boss = null;
@@ -76,6 +89,9 @@ export class Game {
       invulnerable: 0,
       attacking: 0,
       abilityActive: 0,
+      nutrients: 0,
+      growth: 0,
+      specialCooldown: 0,
     };
     initializeEcosystem(this, { modifiers, skinId, knownUnlocks });
     this.refreshStats(true);
@@ -96,6 +112,12 @@ export class Game {
   get species() {
     return SPECIES_BY_ID[this.player.speciesId];
   }
+  get effectiveSize() {
+    return this.species.size * (1 + (this.player.growth || 0) * 0.28);
+  }
+  get kit() {
+    return creatureKit(this.species);
+  }
   get nextThreshold() {
     return Math.round(thresholds[this.tier] * (1 + this.ascensions * 0.38));
   }
@@ -112,6 +134,7 @@ export class Game {
     const ratio = p.hp / Math.max(1, p.maxHp);
     p.maxHp = Math.round(
       s.hp *
+        (1 + (p.growth || 0) * 0.4) *
         (1 +
           this.upgrades.vitality * 0.05 +
           (m.vitality || 0) * 0.18 +
@@ -121,6 +144,7 @@ export class Game {
     p.hp = heal ? p.maxHp : Math.min(p.maxHp, p.maxHp * ratio);
     p.damage =
       s.damage *
+      (1 + (p.growth || 0) * 0.32) *
       (1 +
         this.upgrades.instinct * 0.04 +
         (m.razor || 0) * 0.18 +
@@ -129,6 +153,7 @@ export class Game {
       (this.hasBuff("damage") ? 1.5 : 1);
     p.speed =
       s.speed *
+      (1 - (p.growth || 0) * 0.04) *
       (1 + (m.swift || 0) * 0.1 + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
       (this.hasBuff("speed") ? 1.4 : 1);
     p.armor = Math.min(
@@ -150,15 +175,30 @@ export class Game {
       this.rules.enemyHealth *
       (options.boss ? 2.8 : 1) *
       (1 + this.ascensions * 0.22);
+    const nutrients = Number.isFinite(options.nutrients)
+      ? Math.max(0, options.nutrients)
+      : options.juvenile
+        ? 0
+        : this.random() < 0.15
+          ? (140 + s.tier * 140) * (0.45 + this.random() * 0.55)
+          : this.random() * 25;
+    const growth = growthFromFood(nutrients, s.tier),
+      grownHp = maxHp * (1 + growth * 0.4);
     const entity = {
       id: this._nextId++,
       x,
       y,
       angle: this.random() * TAU,
       speciesId,
-      hp: maxHp * (options.juvenile ? 0.45 : 1),
-      maxHp: maxHp * (options.juvenile ? 0.45 : 1),
-      adultMaxHp: maxHp,
+      nutrients,
+      growth,
+      baseMaxHp: maxHp,
+      damage: s.damage * (1 + growth * 0.32),
+      hunger: 65 + this.random() * 35,
+      feedCooldown: 0,
+      hp: grownHp * (options.juvenile ? 0.45 : 1),
+      maxHp: grownHp * (options.juvenile ? 0.45 : 1),
+      adultMaxHp: grownHp,
       attackCooldown: 1 + this.random(),
       telegraph: 0,
       intent: "wander",
@@ -191,7 +231,7 @@ export class Game {
       roaming: !!options.roaming,
       juvenile: !!options.juvenile,
       age: 0,
-      scaleFactor: options.juvenile ? 0.42 : 1,
+      scaleFactor: (options.juvenile ? 0.42 : 1) * (1 + growth * 0.28),
     };
     this.entities.push(entity);
     return entity;
@@ -239,10 +279,8 @@ export class Game {
       return;
     }
     if (this.state !== "playing" || dt === 0) return;
-    if (this.player.xp >= this.nextThreshold) {
-      this._offerEvolution();
-      return;
-    }
+    this._markEvolutionReady();
+    if (input.evolve && this.openEvolution()) return;
     this.time += dt;
     const p = this.player,
       s = this.species,
@@ -254,6 +292,7 @@ export class Game {
       "invulnerable",
       "attacking",
       "abilityActive",
+      "specialCooldown",
     ])
       p[key] = Math.max(0, p[key] - dt);
     this._eatCooldown = Math.max(0, this._eatCooldown - dt);
@@ -284,6 +323,7 @@ export class Game {
     this._containPlayer();
     if (input.attack) this.attack();
     if (input.ability) this.ability();
+    if (input.special) this.special();
     if (input.eat) this.eat();
 
     this.updateEcosystem(dt, input);
@@ -356,7 +396,7 @@ export class Game {
       ? 0.43
       : 0.52;
     p.attacking = 0.2;
-    const reach = 2.8 + this.species.size * 1.1;
+    const reach = 2.8 + this.effectiveSize * 1.1;
     this.emit("attack", { angle: p.angle, radius: reach });
     for (const e of [...this.entities]) {
       const target = SPECIES_BY_ID[e.speciesId];
@@ -388,10 +428,15 @@ export class Game {
     const p = this.player,
       m = this.mutationCounts;
     const cost = Math.max(10, 28 - (m.adrenaline || 0) * 5);
-    if (this.state !== "playing" || p.dashCooldown > 0 || p.stamina < cost)
+    if (
+      !this.kit.dash ||
+      this.state !== "playing" ||
+      p.dashCooldown > 0 ||
+      p.stamina < cost
+    )
       return false;
     const angle = Math.hypot(mx, my) > 0.05 ? Math.atan2(my, mx) : p.angle;
-    const amount = 5.8 + this.species.size * 0.45;
+    const amount = 5.8 + this.effectiveSize * 0.45;
     p.x += Math.cos(angle) * amount;
     p.y += Math.sin(angle) * amount;
     p.stamina -= cost;
@@ -426,7 +471,7 @@ export class Game {
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.3);
       p.guard = 3;
     }
-    const radius = definition.radius + s.size;
+    const radius = definition.radius + this.effectiveSize;
     this.emit("ability", {
       ability: type,
       angle: p.angle,
@@ -460,7 +505,7 @@ export class Game {
   eat() {
     if (this.state !== "playing" || this._eatCooldown > 0) return false;
     const p = this.player,
-      radius = 3.4 + this.species.size * 0.6;
+      radius = 3.4 + this.effectiveSize * 0.6;
     const available = this.foods
       .filter((f) => distance(p, f) <= radius)
       .sort((a, b) => distance(p, a) - distance(p, b));
@@ -500,6 +545,17 @@ export class Game {
           Math.max(0.12, Math.sqrt(quality)) *
           (this.species.body === "longneck" ? 1.4 : 1),
     );
+    if (food.type === "lineage-fruit") {
+      const fruit = food.fruit;
+      if (Object.hasOwn(this.lineage.fruits, fruit))
+        this.lineage.fruits[fruit]++;
+      this.emit("lineage-progress", {
+        text: `${fruit === "sunheart" ? "Sunheart" : "Moondrop"} Fruit consumed - bloodline progress saved for this life.`,
+      });
+    }
+    this.player.nutrients += Math.max(0, food.value || 0) * quality;
+    this.player.growth = growthFromFood(this.player.nutrients, this.tier);
+    this.refreshStats();
     this.collectSpecial(food);
     this.gainXP(food.value * quality);
     this.emit("eat", {
@@ -520,22 +576,115 @@ export class Game {
       (this.modifiers.has("forager") ? 0.08 : 0);
     this.player.xp += amount * bonus;
     this.player.score += amount * 5 * this.rules.score;
-    if (this.player.xp >= this.nextThreshold) this._offerEvolution();
+    this._markEvolutionReady();
   }
 
-  _offerEvolution() {
+  _markEvolutionReady() {
+    if (
+      this.state === "playing" &&
+      this.player.xp >= this.nextThreshold &&
+      !this.evolutionReady
+    ) {
+      this.evolutionReady = true;
+      this.emit("evolution-ready", {
+        text: "Evolution ready. Press T or the flashing indicator when you choose.",
+      });
+    }
+  }
+  openEvolution() {
+    if (this.state !== "playing" || this.player.xp < this.nextThreshold)
+      return false;
+    if (!this.evolutionChoices.length) {
+      this.evolutionChoices = chooseEvolutions(this);
+      this.mutationChoices = this._sample(MUTATIONS, 3).map((m) => m.id);
+    } else
+      for (const b of eligibleBloodlines(this))
+        if (!this.evolutionChoices.includes(b.speciesId))
+          this.evolutionChoices.push(b.speciesId);
     this.state = "evolution";
-    const candidates = SPECIES.filter(
-      (s) => s.tier === Math.min(7, this.tier + 1),
-    );
-    this.evolutionChoices = this._sample(candidates, 3).map((s) => s.id);
-    this.mutationChoices = this._sample(MUTATIONS, 3).map((m) => m.id);
-    this.emit("evolution-ready", {
-      text:
-        this.tier === 7
-          ? "Ascension awaits. Become something greater."
-          : "Evolution unlocked. Choose your next form.",
+    return true;
+  }
+  closeEvolution() {
+    if (this.state !== "evolution") return false;
+    this.state = "playing";
+    return true;
+  }
+  _offerEvolution() {
+    return this.openEvolution();
+  }
+  special() {
+    const p = this.player,
+      key = this.kit.special,
+      skill = SPECIALS[key];
+    if (
+      this.state !== "playing" ||
+      !skill ||
+      p.specialCooldown > 0 ||
+      p.stamina < skill.stamina
+    )
+      return false;
+    p.stamina -= skill.stamina;
+    p.specialCooldown = skill.cooldown;
+    p.abilityActive = 0.6;
+    if (key === "rage") {
+      this.buffs.damage = Math.max(this.buffs.damage || 0, 7);
+      this.buffs.speed = Math.max(this.buffs.speed || 0, 7);
+      this.refreshStats();
+    } else if (key === "bulwark") {
+      p.guard = 6;
+      p.empowered = 6;
+    } else if (key === "renewal" || key === "shed") {
+      p.hp = Math.min(
+        p.maxHp,
+        p.hp + p.maxHp * (key === "renewal" ? 0.25 : 0.12),
+      );
+      p.poisoned = 0;
+      p.chilled = 0;
+      p.invulnerable = Math.max(p.invulnerable, key === "shed" ? 0.7 : 0);
+    } else if (key === "bolt") {
+      this.projectiles.push({
+        id: "player:" + this.time,
+        owner: "player",
+        x: p.x,
+        y: p.y,
+        angle: p.angle,
+        speed: 27,
+        life: 32 / 27,
+        radius: 1,
+        kind: "lightning",
+        damage: p.damage * 2.2,
+        cause: skill.name,
+      });
+    } else
+      for (const e of [...this.entities]) {
+        const d = distance(p, e),
+          arc = Math.abs(
+            angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle),
+          );
+        if (d < 4 + this.effectiveSize && (key === "deathroll" || arc < 1.1)) {
+          if (key === "rending") {
+            e.poison = 3;
+            e.poisonTick = 0;
+          } else e.stunned = 1.4;
+          this._hitEntity(e, p.damage * (key === "deathroll" ? 2.3 : 1.9), 1);
+        }
+      }
+    this.emit("ability", {
+      ability:
+        key === "renewal" || key === "shed"
+          ? "heal"
+          : key === "bulwark"
+            ? "guard"
+            : key === "bolt"
+              ? "lightning"
+              : key === "rage"
+                ? "roar"
+                : "cleave",
+      radius: 5 + this.effectiveSize,
+      angle: p.angle,
+      text: skill.name,
     });
+    return true;
   }
 
   _sample(array, count) {
@@ -554,9 +703,31 @@ export class Game {
     )
       return false;
     const threshold = this.nextThreshold;
+    if (
+      SPECIES_BY_ID[speciesId].bloodline &&
+      this.lineage.used.includes(SPECIES_BY_ID[speciesId].bloodline)
+    )
+      return false;
     if (this.tier === 7) this.ascensions++;
     else this.tier++;
+    const bloodline = BLOODLINES.find((b) => b.speciesId === speciesId);
+    if (bloodline) {
+      if (this.lineage.used.includes(bloodline.id)) return false;
+      this.lineage.used.push(bloodline.id);
+      if (bloodline.id.startsWith("verdant")) this.lineage.fruits.sunheart = 0;
+      if (bloodline.id === "cinderfang") this.lineage.lavaKills = 0;
+      if (bloodline.id === "eclipse") {
+        this.lineage.fruits.moondrop = 0;
+        this.lineage.guardians = 0;
+      }
+    }
     this.player.speciesId = speciesId;
+    this.player.nutrients = 0;
+    this.player.growth = 0;
+    this.formStarted = this.time;
+    this.lineage.formKills = 0;
+    this.lineage.formGuardians = 0;
+    this.evolutionReady = false;
     this.player.xp = Math.max(0, this.player.xp - threshold);
     this.mutations.push(mutationId);
     this.refreshStats(true);
@@ -564,6 +735,8 @@ export class Game {
     this.player.stamina = 100;
     this.player.invulnerable = 3;
     this.player.abilityCooldown = 0;
+    this.player.specialCooldown = 0;
+    this.player.dashCooldown = 0;
     this.player.score += 250 * (this.tier + this.ascensions) * this.rules.score;
     this.evolutionChoices = [];
     this.mutationChoices = [];
@@ -600,6 +773,7 @@ export class Game {
   }
 
   _hitEntity(e, amount, knockback = 0) {
+    if (!this.entities.includes(e) || e.hp <= 0) return;
     if (!this.entities.includes(e) || e.hp <= 0) return;
     e.hp -= amount;
     e.hitFlash = 0.18;
@@ -683,8 +857,15 @@ export class Game {
           this.player.maxHp * 0.05 * this.mutationCounts.predator,
       );
     if (e.boss) this.boss = null;
+    this.lineage.formKills++;
+    if (biomeAt(e.homeX ?? e.x, e.homeY ?? e.y).id === "volcano")
+      this.lineage.lavaKills++;
+    if (e.lairId) {
+      this.lineage.guardians++;
+      this.lineage.formGuardians++;
+    }
     this.emit("kill", {
-      speciesId:s.id,
+      speciesId: s.id,
       x: e.x,
       y: e.y,
       text: e.boss ? `${s.name} alpha defeated` : s.name,

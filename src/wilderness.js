@@ -104,7 +104,7 @@ export function marinePose(f, time, index, player) {
 export function updateWildlife(game, dt) {
   const p = game.player,
     features = game.worldFeatures || [];
-  resolveObstacles(p, game.species.size, features);
+  resolveObstacles(p, game.effectiveSize || game.species.size, features);
   game._hazardCooldown = Math.max(0, (game._hazardCooldown || 0) - dt);
   game.hazardHint = "";
   for (const f of features) {

@@ -3,6 +3,7 @@ import {
   resolveObstacles,
   updateWildlife,
 } from "./wilderness.js";
+import { feedEntity, growthFromFood } from "./progression.js";
 import { attackProfile } from "./combat.js";
 import { SPECIES, SPECIES_BY_ID } from "./data.js";
 import { rollCollectionItem } from "./collection-data.js";
@@ -190,7 +191,7 @@ export const Ecosystem = {
           0,
           7,
         );
-      const candidates = SPECIES.filter((s) => s.tier === tier),
+      const candidates = SPECIES.filter((s) => s.tier === tier && !s.bloodline),
         habitat =
           region.id === "sky"
             ? candidates.filter((s) =>
@@ -219,9 +220,23 @@ export const Ecosystem = {
       const tier = biomeAt(p.x, p.y).tier;
       this.spawnFood("plant", p.x, p.y, 2 + tier * 4, { tier, homeChunk: key });
     }
+    if (random() < 0.16) {
+      const p = point(),
+        region = biomeAt(p.x, p.y),
+        fruit = region.tier <= 3 ? "sunheart" : "moondrop";
+      if (Math.hypot(p.x, p.y) > 35 && Math.hypot(p.x, p.y) < WORLD_RADIUS - 20)
+        for (let i = 0; i < 3; i++)
+          this.spawnFood(
+            "lineage-fruit",
+            p.x + i * 1.6,
+            p.y,
+            6 + region.tier * 6,
+            { tier: region.tier, fruit, homeChunk: key },
+          );
+    }
     const nest = point(),
       tier = biomeAt(nest.x, nest.y).tier,
-      pool = SPECIES.filter((s) => s.tier === tier);
+      pool = SPECIES.filter((s) => s.tier === tier && !s.bloodline);
     if (Math.hypot(nest.x, nest.y) < WORLD_RADIUS - 12) {
       const s = pool[Math.floor(random() * pool.length)];
       for (let i = 0; i < 2; i++)
@@ -295,7 +310,9 @@ export const Ecosystem = {
         y = this.player.y + Math.sin(a) * r;
       if (Math.hypot(x, y) < WORLD_RADIUS - 12) {
         const region = biomeAt(x, y),
-          s = this.pick(SPECIES.filter((s) => s.tier === region.tier));
+          s = this.pick(
+            SPECIES.filter((s) => s.tier === region.tier && !s.bloodline),
+          );
         this.spawnEntity(s.id, x, y, { homeChunk: chunkKey(x, y) });
       }
     }
@@ -325,7 +342,20 @@ export const Ecosystem = {
       for (let i = 0; i < steps && !shot.hit; i++) {
         shot.x += (Math.cos(shot.angle) * shot.speed * dt) / steps;
         shot.y += (Math.sin(shot.angle) * shot.speed * dt) / steps;
-        if (dist(shot, p) < shot.radius + this.species.size * 0.35) {
+        if (shot.owner === "player") {
+          const target = this.entities.find(
+            (e) =>
+              dist(shot, e) <
+              shot.radius +
+                SPECIES_BY_ID[e.speciesId].size * 0.4 * (e.scaleFactor || 1),
+          );
+          if (target) {
+            this._hitEntity(target, shot.damage, 0.5);
+            shot.hit = true;
+          }
+          continue;
+        }
+        if (dist(shot, p) < shot.radius + this.effectiveSize * 0.35) {
           this.damagePlayer(shot.damage, shot.cause);
           if (shot.kind === "venom") p.poisoned = 5;
           if (shot.kind === "frost" || shot.kind === "web") p.chilled = 3;
@@ -617,16 +647,18 @@ export const Ecosystem = {
     if (e.juvenile) {
       e.age += dt;
       const progress = Math.min(1, e.age / 100);
-      e.scaleFactor = 0.42 + 0.58 * progress;
+      e.scaleFactor = (0.42 + 0.58 * progress) * (1 + (e.growth || 0) * 0.28);
       const hp = e.adultMaxHp * (0.45 + 0.55 * progress);
       e.hp = Math.min(hp, e.hp + Math.max(0, hp - e.maxHp));
       e.maxHp = hp;
       if (e.age >= 100) {
         e.juvenile = false;
-        e.scaleFactor = 1;
+        e.scaleFactor = 1 + (e.growth || 0) * 0.28;
         e.behavior = s.temperament;
       }
     }
+    e.hunger = Math.max(0, (e.hunger ?? 100) - dt * 0.65);
+    e.feedCooldown = Math.max(0, (e.feedCooldown || 0) - dt);
     const distance = dist(e, p);
     if (distance > 130 && !e.boss && !e.cast) return;
     for (const key of [
@@ -676,7 +708,7 @@ export const Ecosystem = {
             radius: s.abilityType === "flame" ? 1.8 : 0.9,
             kind: s.abilityType,
             damage:
-              s.damage *
+              (e.damage || s.damage) *
               (ABILITIES[s.abilityType]?.power || 1.6) *
               0.75 *
               this.rules.enemyDamage,
@@ -685,7 +717,7 @@ export const Ecosystem = {
         }
         if (!ranged.ranged && inAttackZone(p, zone)) {
           this.damagePlayer(
-            s.damage *
+            (e.damage || s.damage) *
               (ABILITIES[s.abilityType]?.power || 1.8) *
               0.66 *
               this.rules.enemyDamage *
@@ -699,6 +731,7 @@ export const Ecosystem = {
         if (s.abilityType === "heal")
           e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.12);
         this.emit("enemy-ability", {
+          speciesId: s.id,
           x: zone.x,
           y: zone.y,
           radius: zone.radius,
@@ -746,8 +779,11 @@ export const Ecosystem = {
       const flank = e.packId ? ((e.id % 3) - 1) * 0.6 : 0;
       targetAngle =
         Math.atan2(p.y - e.y, p.x - e.x) + flank * (distance > 7 ? 1 : 0);
-      const combat = attackProfile(s),
-        range = combat.reach + this.species.size * 0.4;
+      const combat = attackProfile({
+          ...s,
+          size: s.size * (1 + (e.growth || 0) * 0.28),
+        }),
+        range = combat.reach + this.effectiveSize * 0.4;
       if (
         s.tier >= 1 &&
         e.skillCooldown <= 0 &&
@@ -787,6 +823,7 @@ export const Ecosystem = {
         move = 0;
         if (e.telegraph <= 0) {
           e.attacking = 0.28;
+          this.emit("enemy-strike", { x: e.x, y: e.y, speciesId: s.id });
           e.attackCooldown = combat.cooldown * (e.boss ? 0.8 : 1);
           if (["pounce", "charge"].includes(s.abilityType)) {
             e.x += Math.cos(targetAngle) * 1.4;
@@ -794,7 +831,7 @@ export const Ecosystem = {
           }
           if (dist(e, p) < range + 0.35)
             this.damagePlayer(
-              s.damage *
+              (e.damage || s.damage) *
                 1.02 *
                 this.rules.enemyDamage *
                 (e.boss ? 1.2 : 1) *
@@ -824,20 +861,51 @@ export const Ecosystem = {
       }
       if (e.behavior === "ambusher") move = 0.06;
     }
+    if (!hunt && !afraid && e.fear <= 0 && e.hunger < 90) {
+      const herbivore = ["quad", "longneck", "equine"].includes(s.body);
+      const meal = this.foods
+        .filter(
+          (f) =>
+            (herbivore
+              ? f.type === "plant"
+              : ["meat", "essence", "egg"].includes(f.type)) && dist(f, e) < 20,
+        )
+        .sort((a, b) => dist(a, e) - dist(b, e))[0];
+      if (meal) {
+        targetAngle = Math.atan2(meal.y - e.y, meal.x - e.x);
+        move = 0.4;
+        e.intent = "forage";
+        if (dist(meal, e) < 2 + s.size * 0.35 && e.feedCooldown === 0) {
+          this.foods = this.foods.filter((f) => f !== meal);
+          feedEntity(this, e, {
+            ...meal,
+            value: meal.value * foodEfficiency(s.tier, meal.tier || 0),
+          });
+          e.feedCooldown = 3;
+          e.intent = "feed";
+          move = 0;
+        }
+      }
+    }
     const turn = angleDiff(targetAngle, e.angle);
     e.angle += turn * Math.min(1, dt * 7);
     const speed =
       s.speed * move * (e.slowed > 0 ? 0.35 : 1) * (e.juvenile ? 0.65 : 1);
     e.x += Math.cos(e.angle) * speed * dt;
     e.y += Math.sin(e.angle) * speed * dt;
-    resolveObstacles(e, s.size, this.worldFeatures || []);
+    resolveObstacles(
+      e,
+      s.size * (1 + (e.growth || 0) * 0.28),
+      this.worldFeatures || [],
+    );
     const radius = Math.hypot(e.x, e.y);
     if (radius > WORLD_RADIUS - 5) {
       e.x *= (WORLD_RADIUS - 5) / radius;
       e.y *= (WORLD_RADIUS - 5) / radius;
       e.angle += Math.PI;
     }
-    const separation = (s.size + this.species.size) * 0.42;
+    const separation =
+      (s.size * (1 + (e.growth || 0) * 0.28) + this.effectiveSize) * 0.42;
     if (distance < separation && distance > 0.001) {
       e.x += ((e.x - p.x) / distance) * (separation - distance) * 0.25;
       e.y += ((e.y - p.y) / distance) * (separation - distance) * 0.25;

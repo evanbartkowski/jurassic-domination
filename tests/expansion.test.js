@@ -68,9 +68,9 @@ test("continental map is 100 times the original area with distinct regional spaw
     ),
   );
 });
-test("all 93 creatures have valid abilities, techniques, habitats and behaviours", () => {
-  assert.equal(SPECIES.length, 93);
-  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 93);
+test("all 100 creatures have valid abilities, techniques, habitats and behaviours", () => {
+  assert.equal(SPECIES.length, 100);
+  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 100);
   for (const s of SPECIES) {
     assert(ABILITIES[s.abilityType]);
     assert(TECHNIQUES[s.technique]);

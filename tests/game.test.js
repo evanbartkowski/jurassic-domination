@@ -165,6 +165,9 @@ test("evolution requires real offered choices, freezes the simulation, and appli
   const game = emptyGame();
   assert.equal(game.evolve("tyrannosaurus", "vitality"), false);
   game.gainXP(60);
+  assert.equal(game.state, "playing");
+  assert.ok(game.evolutionReady);
+  game.openEvolution();
   assert.equal(game.state, "evolution");
   assert.equal(game.evolutionChoices.length, 3);
   assert.equal(game.mutationChoices.length, 3);
@@ -194,6 +197,7 @@ test("final-tier evolution ascends indefinitely and increases the next threshold
   game.refreshStats(true);
   const previous = game.nextThreshold;
   game.gainXP(previous);
+  game.openEvolution();
   assert.equal(game.state, "evolution");
   assert.equal(
     game.evolve(game.evolutionChoices[0], game.mutationChoices[0]),
@@ -207,9 +211,13 @@ test("final-tier evolution ascends indefinitely and increases the next threshold
 test("evolution preserves excess energy and offers the next form without losing it", () => {
   const game = emptyGame();
   game.gainXP(250);
+  game.openEvolution();
   game.evolve(game.evolutionChoices[0], game.mutationChoices[0]);
   assert.equal(game.player.xp, 190);
   game.update(0.05);
+  assert.equal(game.state, "playing");
+  assert.ok(game.evolutionReady);
+  game.openEvolution();
   assert.equal(game.state, "evolution");
   assert.ok(game.evolutionChoices.every((id) => SPECIES_BY_ID[id].tier === 2));
 });
@@ -235,7 +243,7 @@ test("starvation and volcanic boundary can kill; death is final for that run", (
   assert.equal(game.state, "dead");
   assert.equal(game.cause, "Starvation");
   const results = game.getResults();
-  assert.equal(results.dna,0);
+  assert.equal(results.dna, 0);
   assert.equal(results.cause, "Starvation");
   const x = game.player.x;
   game.update(0.1, { x: 1 });
@@ -284,6 +292,7 @@ test("difficulty and permanent upgrades change actual survivability", () => {
 test("long seeded run stays finite and entity/food collections stay bounded", () => {
   const game = emptyGame();
   for (let i = 0; i < 12000 && game.state !== "dead"; i++) {
+    if (game.evolutionReady && game.state === "playing") game.openEvolution();
     if (game.state === "evolution")
       game.evolve(game.evolutionChoices[0], game.mutationChoices[0]);
     game.player.invulnerable = 1;
@@ -317,6 +326,7 @@ function playHunter(seed, seconds = 65) {
   };
   let firstEvolution = null;
   while (game.time < seconds && game.state !== "dead") {
+    if (game.evolutionReady && game.state === "playing") game.openEvolution();
     if (game.state === "evolution") {
       firstEvolution ??= game.time;
       const species = [...game.evolutionChoices].sort(
@@ -362,7 +372,19 @@ function playHunter(seed, seconds = 65) {
       } else if (distance < reach - 1)
         [x, y] = unit(p.x - prey.x, p.y - prey.y);
     }
-    game.update(0.05, { x, y, aim, dash, attack, ability, eat: true });
+    game.update(0.05, {
+      x,
+      y,
+      aim,
+      dash,
+      attack,
+      ability,
+      technique: ability && p.stamina > 65,
+      special:
+        (ability && p.abilityCooldown > 0 && p.stamina > 55) ||
+        p.hp < p.maxHp * 0.45,
+      eat: true,
+    });
     game.consumeEvents();
   }
   return { game, firstEvolution };
@@ -379,7 +401,10 @@ test("tactical hunting can evolve within 45 seconds and survive the first minute
       game.time >= 60,
       `seed ${seed}: died at ${game.time} to ${game.cause}`,
     );
-    assert.ok(game.player.kills >= 3);
+    assert.ok(
+      game.player.kills >= 3,
+      `seed ${seed}: ${game.player.kills} kills`,
+    );
   }
 });
 

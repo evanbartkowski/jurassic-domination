@@ -60,8 +60,22 @@ export const SPECIES = [
 ];
 
 SPECIES.push(...EXTRA_SPECIES);
+const variants=[
+ ['verdant-psittacosaurus','Verdant Psittacosaurus','psittacosaurus',1,'rare','verdant-seed',0x4a9e6b,'heal','Verdant Bloom'],
+ ['verdant-iguanodon','Verdant Iguanodon','iguanodon',2,'epic','verdant-guard',0x398866,'heal','Elderroot Mending'],
+ ['elderroot-therizinosaurus','Elderroot Sentinel','therizinosaurus',3,'legendary','verdant-elder',0x477d5b,'heal','Forest Heart'],
+ ['cinderfang-carnotaurus','Cinderfang','carnotaurus',4,'epic','cinderfang',0xa54d32,'flame','Cinder Breath'],
+ ['ashborn-tyrannosaurus','Ashborn Tyrant','tyrannosaurus',5,'legendary','ashborn',0x64505a,'flame','Ashborn Inferno'],
+ ['eclipse-wyrm','Eclipse Wyrm','wyvern',6,'legendary','eclipse',0x57517d,'lightning','Eclipse Arc'],
+ ['stormcrown-dragon','Stormcrown Dragon','elder-dragon',7,'legendary','stormcrown',0x53818e,'lightning','Stormcrown Judgment'],
+];
+for(const [id,name,base,tier,rarity,bloodline,color,abilityType,ability] of variants){const original=SPECIES.find(s=>s.id===base),reference=SPECIES.filter(s=>s.tier===tier);SPECIES.push({...original,id,name,tier,rarity,bloodline,color,abilityType,ability,hp:Math.round(reference.reduce((n,s)=>n+s.hp,0)/reference.length*1.08),damage:Math.round(reference.reduce((n,s)=>n+s.damage,0)/reference.length*1.08),size:reference.reduce((n,s)=>n+s.size,0)/reference.length,description:'A conditional bloodline earned during this life. Its ancestral power begins anew after death.'});}
+const rareForms=new Set(['deinonychus','baryonyx','suchomimus','allosaurus','therizinosaurus','sarcosuchus','pachyrhinosaurus','argentinosaurus','unicorn','gryphon','basilisk','quetzalcoatl','titanoboa','thunderbird']);
+const epicForms=new Set(['wyvern','behemoth','solar-unicorn','frost-dragon','phoenix','elder-dragon']);
+const legendaryForms=new Set(['world-serpent','primordial-titan']);
 const techniquesByBody={raptor:'sidestep',rex:'cleave',quad:'guard',longneck:'quake',dragon:'wingstorm',bird:'feather',equine:'cleanse',serpent:'coil',croc:'camouflage',gryphon:'dive'};
 for(const s of SPECIES){
+  s.rarity ||= legendaryForms.has(s.id)?"legendary":epicForms.has(s.id)?"epic":rareForms.has(s.id)?"rare":"regular";
   if(s.id==='world-serpent'||s.id==='basilisk')s.body='serpent';
   if(s.id==='iguanodon')s.body='quad';
   if(s.body==='equine'){s.color=s.id==='solar-unicorn'?0xe4d5b2:0xd5ddd6;s.accent=s.id==='unicorn'?0xb6c9dc:0xe7c880;}

@@ -21,7 +21,7 @@ published on Steam or integrated with Steamworks.
 
 From a packaged build, launch **Jurassic Domination.exe**. The unpacked version is
 at `release/win-unpacked/Jurassic Domination.exe`; keep that entire folder
-together. The portable build is `release/Jurassic Domination-0.4.0-portable.exe`.
+together. The portable build is `release/Jurassic Domination-0.5.0-portable.exe`.
 An unsigned development build may trigger Windows SmartScreen. Obtain builds
 from the project owner and sign the final commercial release.
 
@@ -55,9 +55,12 @@ the first interaction, according to browser autoplay rules.
 | Bite / primary attack | Left mouse button or Space |
 | Species ability | Q |
 | Species technique | R |
+| Anatomy-specific extra skill, when available | X |
+| Open ready evolution / postpone | T / Escape |
+| Bloodline condition journal | J |
 | Sprint | Hold Ctrl |
 | Ancient relic skills, in discovery order | F, G, C, V, B, N |
-| Dodge / dash | Shift |
+| Dodge / dash, for mobile forms | Shift |
 | Eat nearby food | E |
 | Pause / back | Escape |
 | Toggle fullscreen | F11, or the Settings button |
@@ -86,6 +89,62 @@ Three difficulty settings support learning, the intended survival challenge,
 and a harsher extinction run. Species have different statistics, silhouettes,
 and abilities; permanent upgrades and current-run mutations serve different
 purposes.
+
+## Ancestral Paths expansion (0.5.0)
+
+Evolution is optional until you choose it. Reaching the XP threshold leaves the
+world running and flashes **T - EVOLUTION READY**. Press **T** or click it to
+open the choices; **Escape / KEEP GROWING** postpones them. The actual choice
+screen pauses combat. Postponing preserves the same offers and mutations;
+reopening cannot reroll them. Newly earned conditional paths can be added.
+
+Meals now mature your current form: up to **28% larger, 40% more maximum health,
+32% more damage**, with a small 4% speed tradeoff. Growth takes 140 + 140 per
+species tier in quality-adjusted food value. Evolution resets growth for the new
+form, preserving excess evolution XP. The HUD labels Young, Growing, Mature and
+Veteran bodies. Wild creatures have differing food histories; hungry grazers
+forage plants and predators eat nearby meat, essence or eggs. They consume those
+real food objects and become larger and more dangerous. Newly hatched juveniles
+begin with no previous meals. Permanent island pets remain safe companions.
+
+**Creature controls differ.** Most small hunters, birds, equines and winged forms
+can dash with Shift. Heavy quadrupeds, sauropods, crocodilians, serpents and large
+tyrants cannot; the HUD displays NO DASH. Depending on anatomy, **X** activates
+Rending Flurry, Predator Focus, Living Fortress, Ancient Renewal, Astral Bolt,
+Shed Skin or Death Roll. These add second attacks, defense, buffs, healing,
+cleansing and travelling ranged attacks alongside the existing Q/R skills.
+Some forms have no X skill. Each skill has its own stamina cost and cooldown.
+
+There are now **100 forms**, including seven conditional bloodline evolutions.
+Most species and ordinary offers are Regular; Rare, Epic and Legendary choices
+have colored rarity labels. An ordinary slot attempts 8% Rare, 2.5% Epic and
+0.6% Legendary; unavailable or exhausted categories fall back to Regular.
+Conditional bloodlines are earned separately and cannot appear in random offers.
+
+Press **J** or use **Bloodline Paths** in Pause to inspect live conditions:
+
+| Path | Required condition during this life |
+| --- | --- |
+| Verdant Psittacosaurus - Rare, tier 2 | Eat 3 Sunheart Fruits before your first evolution |
+| Verdant Iguanodon - Epic, tier 3 | Evolve from Verdant Psittacosaurus after 2 more Sunheart Fruits |
+| Elderroot Sentinel - Legendary, tier 4 | Survive 180 seconds as Verdant Iguanodon |
+| Cinderfang - Epic, tier 5 | Kill 10 creatures whose home is Ashen Caldera |
+| Ashborn Tyrant - Legendary, tier 6 | Defeat a named guardian as Cinderfang |
+| Eclipse Wyrm - Legendary, tier 7 | Eat 3 Moondrop Fruits and defeat 3 named guardians |
+| Stormcrown Dragon - Legendary, tier 8 | Defeat 15 prey as Eclipse Wyrm |
+
+Rare fruit clusters stream with the world. Sunheart grows in lower-level regions;
+Moondrop appears in higher-level regions. Collect with E. Choosing a conditional
+form consumes its relevant ingredients/counter, and that path can be claimed only
+once in a life. All condition progress and claims reset on death; discovering the
+form does not bypass its requirements in future lives. Mutations and permanent
+collections keep their existing rules.
+
+The original adaptive score now adds regional musical colors. Calls, footfalls,
+bites, dashes and elemental casts vary with creature identity, anatomy, size and
+distance. Healing uses a separate chime texture. Nearby actors are limited and
+sounds are throttled; volume settings and pause behavior remain in effect. All
+music and effects are synthesized locally, without streamed or licensed samples.
 
 ## Wild & Alive expansion (0.4.0)
 
@@ -249,6 +308,7 @@ npm test
 npm run build
 npm run qa:collections # requires the local dev server
 npm run qa:wild        # island care, build mode, portraits and wilderness
+npm run qa:progression # manual evolution, bloodlines, growth, skills and audible music
 npm run package
 ```
 

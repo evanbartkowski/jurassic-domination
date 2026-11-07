@@ -232,7 +232,7 @@ try {
   );
 
   await check(
-    "species ability and dodge expose real HUD cooldowns",
+    "species ability and available dodge expose real HUD cooldowns",
     async () => {
       await page.keyboard.press("KeyQ");
       await page.waitForFunction(() =>
@@ -240,6 +240,13 @@ try {
           document.getElementById("hud-ability-cooldown")?.textContent || "",
         ),
       );
+      if ((await page.locator("#dash-name").textContent()) === "NO DASH") {
+        assert.equal(
+          await page.locator("#hud-dash-cooldown").textContent(),
+          "HEAVY FORM",
+        );
+        return;
+      }
       await page.keyboard.press("Shift");
       await page.waitForFunction(() =>
         /\d/.test(
@@ -260,6 +267,23 @@ try {
     },
   );
 
+  await check(
+    "X skill and J bloodline journal work in the packaged game",
+    async () => {
+      if (await page.locator("#special-key").isVisible()) {
+        await page.waitForTimeout(1200);
+        await page.keyboard.press("KeyX");
+        await page.waitForFunction(() =>
+          /\d/.test(document.getElementById("special-cooldown").textContent),
+        );
+      }
+      await page.keyboard.press("KeyJ");
+      await page.locator(".bloodline-panel").waitFor();
+      assert.equal(await page.locator(".bloodline-grid article").count(), 7);
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("Escape");
+    },
+  );
   await check(
     "pause, settings, and resume preserve the paused world",
     async () => {

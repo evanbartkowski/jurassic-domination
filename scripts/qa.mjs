@@ -47,11 +47,11 @@ try {
     await page.waitForFunction(() => window.__JD.ui.view === "menu");
   });
   await check(
-    "encyclopedia contains all 93 species and a working 3D viewer",
+    "encyclopedia contains all 100 species and a working 3D viewer",
     async () => {
       await page.getByRole("button", { name: /ENCYCLOPEDIA/ }).click();
       await page.waitForFunction(() => window.__JD.specimen);
-      assert.equal(await page.locator("[data-inspect]").count(), 93);
+      assert.equal(await page.locator("[data-inspect]").count(), 100);
       await page.locator("#guide-search").fill("unicorn");
       await page.locator('[data-inspect="unicorn"]').click();
       await page.waitForFunction(
@@ -87,7 +87,7 @@ try {
         }
         return SPECIES.length;
       });
-      assert.equal(count, 93);
+      assert.equal(count, 100);
       await page.keyboard.press("Escape");
     },
   );
@@ -126,6 +126,10 @@ try {
     await page.waitForFunction(
       () => window.__JD.game.player.abilityCooldown > 0,
     );
+    if (!(await page.evaluate(() => window.__JD.game.kit.dash))) {
+      assert.equal(await page.evaluate(() => window.__JD.game.dash()), false);
+      return;
+    }
     await page.keyboard.press("Shift");
     await page.waitForFunction(() => window.__JD.game.player.dashCooldown > 0);
   });
@@ -161,6 +165,8 @@ try {
       await page.evaluate(() =>
         window.__JD.game.gainXP(window.__JD.game.nextThreshold),
       );
+      await page.waitForFunction(() => window.__JD.game.evolutionReady);
+      await page.keyboard.press("KeyT");
       await page.waitForFunction(() => window.__JD.ui.view === "evolution");
       await page.screenshot({ path: "artifacts/evolution.png" });
       await page.locator("[data-species]").first().click();
@@ -267,6 +273,8 @@ try {
         await page.evaluate(() =>
           window.__JD.game.gainXP(window.__JD.game.nextThreshold),
         );
+        await page.waitForFunction(() => window.__JD.game.evolutionReady);
+        await page.keyboard.press("KeyT");
         await page.waitForFunction(() => window.__JD.ui.view === "evolution");
         const dragon = page.locator(
           '[data-species="elder-dragon"], [data-species="wyvern"], [data-species="world-serpent"]',
@@ -286,6 +294,8 @@ try {
       await page.evaluate(() =>
         window.__JD.game.gainXP(window.__JD.game.nextThreshold),
       );
+      await page.waitForFunction(() => window.__JD.game.evolutionReady);
+      await page.keyboard.press("KeyT");
       await page.waitForFunction(() => window.__JD.ui.view === "evolution");
       await page.getByRole("button", { name: /EMBRACE EVOLUTION/ }).click();
       await page.waitForFunction(

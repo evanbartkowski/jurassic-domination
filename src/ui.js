@@ -7,6 +7,14 @@ import {
   POWERUPS,
   RUN_SKILLS,
 } from "./content.js";
+import {
+  BLOODLINES,
+  eligibleBloodlines,
+  EVOLUTION_RARITIES,
+  creatureKit,
+  SPECIALS,
+  growthName,
+} from "./progression.js";
 import { REGIONS } from "./world-data.js";
 import { upgradeCost } from "./profile.js";
 import {
@@ -163,7 +171,7 @@ export class UI {
           </div>
           <div class="menu-art-caption"><span class="caption-number">01 / THE FIRST BREATH</span><p>HATCH.<br>HUNT.<br><em>EVOLVE.</em></p><span class="caption-rule"></span><span class="caption-small">THE FOOD CHAIN HAS NO MERCY.</span></div>
         </div>
-        <footer class="menu-footer"><div class="menu-record"><span>BEST RUN <strong>${number(profile.bestScore)}</strong></span><span>LIVES LIVED <strong>${number(profile.runs)}</strong></span><span>SPECIES DISCOVERED <strong>${new Set([...(profile.unlocked || []), ...(profile.hunted || [])]).size} / ${SPECIES.length}</strong></span></div><div class="version-label"><span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.4.0</span><button data-action="quit" class="text-button">QUIT</button></div></footer>
+        <footer class="menu-footer"><div class="menu-record"><span>BEST RUN <strong>${number(profile.bestScore)}</strong></span><span>LIVES LIVED <strong>${number(profile.runs)}</strong></span><span>SPECIES DISCOVERED <strong>${new Set([...(profile.unlocked || []), ...(profile.hunted || [])]).size} / ${SPECIES.length}</strong></span></div><div class="version-label"><span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.5.0</span><button data-action="quit" class="text-button">QUIT</button></div></footer>
       </div>`,
       "menu-screen",
     );
@@ -198,14 +206,25 @@ export class UI {
         <div class="hud-run"><span class="hud-dna" id="hud-dna">0 DNA</span><span class="run-timer" id="hud-time">00:00</span><span class="run-kills">${icon("skull")}<b id="hud-kills">0</b></span><button class="icon-button" id="pause-button" aria-label="Pause game">${icon("pause")}</button></div></div>
       <div class="minimap-wrap"><div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div><canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas><div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div></div>
       <div class="hud-bottom"><div class="vitals"><div class="vital"><div class="vital-label">${icon("heart")}<span>VITALITY</span><b id="hud-hp-text">100 / 100</b></div><div class="meter health"><span id="hud-hp"></span></div></div><div class="minor-vitals"><div class="vital"><div class="vital-label">${icon("bolt")}<span>STAMINA</span></div><div class="meter stamina"><span id="hud-stamina"></span></div></div><div class="vital"><div class="vital-label">${icon("leaf")}<span>HUNGER</span></div><div class="meter hunger"><span id="hud-hunger"></span></div></div></div><p class="hunger-warning" id="hud-warning"></p></div>
-      <div class="abilities"><div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div><div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div><div class="ability-key"><kbd>SHIFT</kbd>${icon("arrow")}<span>DASH</span><b id="hud-dash-cooldown">READY</b></div><div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div></div>
-      <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p></div></div>
+      <div class="abilities"><div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div><div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div><div class="ability-key"><kbd>SHIFT</kbd>${icon("arrow")}<span id="dash-name">DASH</span><b id="hud-dash-cooldown">READY</b></div><div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div></div>
+      <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p><button id="evolve-ready" hidden aria-label="Open evolution choices"><kbd>T</kbd> EVOLUTION READY <span>CHOOSE WHEN YOU ARE READY</span></button><span id="growth-status"></span><button id="bloodline-journal">J - BLOODLINE PATHS</button></div></div>
       <div class="hud-controls">${small("W A S D", "MOVE")}${small("MOUSE", "AIM")}${small("SPACE", "BITE")}${small("ESC", "PAUSE")}</div>
       <div id="egg-prompt" class="egg-prompt" hidden><p class="eyebrow">A NEW LIFE STIRS</p><h2>Break into the unknown.</h2><p>Every predator was once prey. Your species is decided at birth.</p><button id="hatch-button" class="button primary">CRACK THE SHELL ${icon("arrow")}</button><span class="small-muted">PRESS E OR CLICK TO HATCH</span></div>
     `;
     $("#pause-button").addEventListener("click", () =>
       this.callbacks.pause?.(),
     );
+    $("#evolve-ready").onclick = () => this.callbacks.evolution();
+    $("#bloodline-journal").onclick = () => {
+      this.callbacks.pause();
+      this.callbacks.bloodlines();
+    };
+    const extra = document.createElement("div");
+    extra.className = "ability-key special-key";
+    extra.id = "special-key";
+    extra.innerHTML =
+      '<kbd>X</kbd><span id="special-name"></span><b id="special-cooldown">READY</b>';
+    $(".abilities").append(extra);
     $("#hatch-button").addEventListener("click", () => this.callbacks.hatch());
   }
 
@@ -246,8 +265,27 @@ export class UI {
     ).toUpperCase();
     $("#hud-ability-cooldown").textContent =
       p.abilityCooldown > 0 ? `${p.abilityCooldown.toFixed(1)}s` : "READY";
-    $("#hud-dash-cooldown").textContent =
-      p.dashCooldown > 0 ? `${p.dashCooldown.toFixed(1)}s` : "READY";
+    $("#evolve-ready").hidden =
+      !game.evolutionReady || game.state !== "playing";
+    $("#growth-status").textContent =
+      `${growthName(p.growth || 0).toUpperCase()} - ${Math.round((p.growth || 0) * 100)}% GROWTH - ${Math.round((1 + (p.growth || 0) * 0.28) * 100)}% SIZE`;
+    const kit = creatureKit(s),
+      special = SPECIALS[kit.special];
+    $("#special-key").hidden = !special;
+    if (special) {
+      $("#special-name").textContent = special.name;
+      $("#special-cooldown").textContent =
+        p.specialCooldown > 0 ? `${p.specialCooldown.toFixed(1)}s` : "READY";
+    }
+    $("#dash-name").textContent = kit.dash ? "DASH" : "NO DASH";
+    $("#hud-dash-cooldown")
+      .closest(".ability-key")
+      .classList.toggle("unavailable", !kit.dash);
+    $("#hud-dash-cooldown").textContent = !kit.dash
+      ? "HEAVY FORM"
+      : p.dashCooldown > 0
+        ? `${p.dashCooldown.toFixed(1)}s`
+        : "READY";
     $("#attack-ready").classList.toggle("cooling", p.attackCooldown > 0);
     $("#hud-warning").textContent =
       p.hunger < 15
@@ -267,14 +305,35 @@ export class UI {
     this.hud.classList.toggle("critical", p.hp < p.maxHp * 0.25);
   }
 
+  showBloodlines(game) {
+    this.returnView = game ? "pause" : "menu";
+    const eligible = game ? eligibleBloodlines(game) : [],
+      g = game?.lineage;
+    this.screen(
+      "bloodlines",
+      `<div class="wide-panel bloodline-panel">${this.header("THE HIDDEN ANCESTRY", "Bloodline Paths", "Rare conditions belong to this life. Nothing carries over after death.")}<p class="lineage-counters">${g ? `Sunheart fruit: ${g.fruits.sunheart} / Moondrop fruit: ${g.fruits.moondrop} / Lava creatures: ${g.lavaKills} / Guardians: ${g.guardians}` : "Start a life to track these conditions."}</p><div class="bloodline-grid">${BLOODLINES.map(
+        (b) => {
+          const s = species(b.speciesId),
+            used = g?.used.includes(b.id),
+            ready = eligible.some((e) => e.id === b.id);
+          return `<article style="--lineage-color:${EVOLUTION_RARITIES[s.rarity].color}"><img src="assets/portraits/species-${s.id}.webp" alt=""/><span class="evolution-rarity">${s.rarity.toUpperCase()} - TIER ${b.tier + 1}</span><h2>${s.name}</h2><p>${b.description}</p><strong>${used ? "CLAIMED THIS LIFE" : ready ? "AVAILABLE AT YOUR NEXT EVOLUTION" : "CONDITIONS NOT MET"}</strong></article>`;
+        },
+      ).join(
+        "",
+      )}</div><div class="panel-bottom"><span>Press T when the evolution indicator flashes. Reopening choices does not reroll them.</span><button class="button primary" data-action="back">RETURN</button></div></div>`,
+      "shade-screen",
+    );
+    this.bind("back", () => this.back());
+  }
   showPause() {
     this.returnView = "pause";
     this.screen(
       "pause",
-      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused.</p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="guide">${icon("book")} ENCYCLOPEDIA</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">END RUN & RETURN TO TITLE</button></div><div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame?.mutations || []).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ") || "No mutations yet."}</p><p>${(this.currentGame?.runSkills || []).map((s) => esc(RUN_SKILLS.find((r) => r.id === s.id)?.name || s.id)).join(" · ") || "Ancient skills await discovery."}</p></div><p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
+      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused.</p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="bloodlines">BLOODLINE PATHS</button><button class="button secondary" data-action="guide">${icon("book")} ENCYCLOPEDIA</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">END RUN & RETURN TO TITLE</button></div><div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame?.mutations || []).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ") || "No mutations yet."}</p><p>${(this.currentGame?.runSkills || []).map((s) => esc(RUN_SKILLS.find((r) => r.id === s.id)?.name || s.id)).join(" · ") || "Ancient skills await discovery."}</p></div><p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
       "shade-screen",
     );
     this.bind("resume", () => this.callbacks.resume());
+    this.bind("bloodlines", () => this.showBloodlines(this.currentGame));
     this.bind("settings", () => this.showSettings());
     this.bind("tutorial", () => this.showTutorial());
     this.bind("guide", () => this.showGuide());
@@ -288,8 +347,8 @@ export class UI {
       "tutorial",
       `<div class="wide-panel guide-panel">${this.header("KNOW THE LAW OF THE WILD", "Survive. Adapt. Repeat.", "Your life is temporary. Your lineage is not.")}
       <div class="tutorial-grid"><article class="tutorial-card"><span class="step-number">01</span><div class="tutorial-symbol">${icon("leaf")}</div><h2>Earn your first breath.</h2><p>Hatch into a random beginner species. Explore the meadows and feed on plants while you learn your surroundings. Hold <kbd>E</kbd> near food to eat.</p></article>
-      <article class="tutorial-card"><span class="step-number">02</span><div class="tutorial-symbol">${icon("claw")}</div><h2>Hunt with intention.</h2><p>Aim with the mouse and bite with <kbd>LMB</kbd> or <kbd>SPACE</kbd>. Watch enemy windups. Dash clear, circle back, and eat the remains. Larger predators are deadly.</p></article>
-      <article class="tutorial-card"><span class="step-number">03</span><div class="tutorial-symbol">${icon("dna")}</div><h2>Become something greater.</h2><p>Food fills your evolution bar. At each threshold, choose a new species and a mutation. Branch into armored herbivores, fearsome hunters, and eventually creatures of myth.</p></article>
+      <article class="tutorial-card"><span class="step-number">02</span><div class="tutorial-symbol">${icon("claw")}</div><h2>Hunt with intention.</h2><p>Aim with the mouse and bite with <kbd>LMB</kbd> or <kbd>SPACE</kbd>. Watch enemy movement. Mobile forms can dash with <kbd>SHIFT</kbd>; heavy forms rely on defense or healing. Use <kbd>Q</kbd>, <kbd>R</kbd> and your available <kbd>X</kbd> skill. Circle back and eat the remains. Larger predators are deadly.</p></article>
+      <article class="tutorial-card"><span class="step-number">03</span><div class="tutorial-symbol">${icon("dna")}</div><h2>Become something greater.</h2><p>Food fills your evolution bar. When the indicator flashes, press <kbd>T</kbd> to choose a new species and mutation. You can keep growing or postpone without rerolling. Branch into armored herbivores, fearsome hunters, and eventually creatures of myth.</p></article>
       <article class="tutorial-card"><span class="step-number">04</span><div class="tutorial-symbol">${icon("trophy")}</div><h2>Leave a legacy.</h2><p>DNA is rare: earn it once from selected achievements or find rare DNA clusters. Spend it on permanent skins, crowns, pets, island decorations or lineage upgrades. Permanent finds save immediately and survive death.</p></article></div>
       <div class="control-reference"><h3>YOUR INSTINCTS</h3><div class="controls-grid">${small("W A S D / ARROWS", "Move")}${small("MOUSE", "Aim")}${small("LMB / SPACE", "Bite")}${small("Q", "Species ability")}${small("SHIFT", "Dodge / dash")}${small("E", "Feed / hatch")}${small("TAB", "Field guide")}${small("ESC", "Pause")}${small("M", "Expand map")}${small("F11", "Fullscreen")}</div></div>
       <p class="survival-tip"><strong>A LIVING CONTINENT</strong> Hold <kbd>CTRL</kbd> to sprint. Use <kbd>R</kbd> for your species technique. Find ancient relics to gain <kbd>F / G / C / V / B / N</kbd> skills until death. Rare flowers grant timed damage, speed, magnet, auto-eat, shield or healing effects. Uneaten eggs hatch. Food from weak regions becomes ineffective as you evolve: use <kbd>M</kbd> to plan your journey and click the map to mark a destination. Red circles show enemy strikes before they land.</p>
@@ -320,7 +379,7 @@ export class UI {
       this.guideSelection = s.id;
       const technique = TECHNIQUES[s.technique];
       $("#specimen-info").innerHTML =
-        `<span class="eyebrow">${unlocked.includes(s.id) ? "DISCOVERED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><dl><dt>Q · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd><dt>R · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
+        `<span class="eyebrow">${unlocked.includes(s.id) ? "DISCOVERED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><dl><dt>Q · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd><dt>R · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd>${SPECIALS[creatureKit(s).special] ? `<dt>X - ${SPECIALS[creatureKit(s).special].name}</dt><dd>${SPECIALS[creatureKit(s).special].description}</dd>` : ""}<dt>Mobility</dt><dd>${creatureKit(s).dash ? "Shift: dodge/dash available." : "Heavy form: no dash. Use positioning, sprint and defensive skills."}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
       $("#guide-results")
         .querySelectorAll("[data-inspect]")
         .forEach((b) =>
@@ -734,7 +793,7 @@ export class UI {
       "settings",
       `<div class="wide-panel settings-panel">${this.header("MAKE THE WORLD YOURS", "Settings", "Changes save automatically.")}
       <div class="settings-columns"><section><h2 class="section-label">AUDIO</h2>${range("master", "Master volume", "All game audio")}${range("music", "Music", "Original ambient soundtrack")}${range("sfx", "Sound effects", "Combat, creatures, and the wild")}</section><section><h2 class="section-label">DISPLAY & COMFORT</h2><label class="setting-row" for="setting-quality"><span><strong>Visual quality</strong><small>Shadows and world detail</small></span><select id="setting-quality" data-setting="quality"><option value="low" ${s.quality === "low" ? "selected" : ""}>LOW</option><option value="medium" ${s.quality === "medium" ? "selected" : ""}>MEDIUM</option><option value="high" ${s.quality === "high" ? "selected" : ""}>HIGH</option></select></label>${toggle("shake", "Camera shake", "Impact feedback during combat")}${toggle("showDamage", "Damage numbers", "Show hit values above creatures")}<div class="setting-row"><span><strong>Fullscreen</strong><small>Toggle anytime with F11</small></span><button class="button compact secondary" data-action="fullscreen">TOGGLE</button></div></section></div>
-      <p class="survival-tip">Menus support keyboard navigation. Audio starts after your first interaction. Pause automatically protects your run when the window loses focus.</p><div class="panel-bottom"><span>Stored locally on this device.</span><button class="button primary" data-action="back" data-focus>DONE ${icon("arrow")}</button></div></div>`,
+      <p class="survival-tip">Press J during play for rare bloodline conditions. Meals increase size and strength in your current form. Menus support keyboard navigation. Audio starts after your first interaction. Pause automatically protects your run when the window loses focus.</p><div class="panel-bottom"><span>Stored locally on this device.</span><button class="button primary" data-action="back" data-focus>DONE ${icon("arrow")}</button></div></div>`,
       "shade-screen",
     );
     this.overlay.querySelectorAll("[data-setting]").forEach((input) =>
@@ -780,13 +839,14 @@ export class UI {
       <div class="evolution-choices" role="group" aria-label="Choose a species">${speciesChoices
         .map((id, i) => {
           const s = species(id);
-          return `<button class="evolution-card ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" aria-pressed="${i === 0}"><span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span><div class="evolution-creature">${this.profile.unlocked.includes(s.id) || this.profile.hunted.includes(s.id) ? portrait(s.id) : animal(s)}</div><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><span class="species-ability">${icon("bolt")}${esc(typeof s.ability === "object" ? s.ability.name : s.ability)}</span><span class="choice-indicator"></span></button>`;
+          return `<button class="evolution-card ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${i === 0}"><span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}">${EVOLUTION_RARITIES[s.rarity || "regular"].name.toUpperCase()}${s.bloodline ? " - EARNED BLOODLINE" : ""}</span><div class="evolution-creature">${this.profile.unlocked.includes(s.id) || this.profile.hunted.includes(s.id) ? portrait(s.id) : animal(s)}</div><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b></span><span>ATK <b>${s.damage}</b></span><span>SPD <b>${s.speed}</b></span></div><span class="species-ability">${icon("bolt")}${esc(typeof s.ability === "object" ? s.ability.name : s.ability)}</span><span class="choice-indicator"></span></button>`;
         })
         .join("")}</div>
       <div class="mutation-heading"><span class="eyebrow">ADAPTATION</span><p>One mutation. Every future form.</p></div><div class="mutation-choices" role="group" aria-label="Choose a mutation">${mutations.map((m, i) => `<button class="mutation-card ${i === 0 ? "selected" : ""}" data-mutation="${esc(m.id)}" aria-pressed="${i === 0}">${icon("dna")}<span><strong>${esc(m.name)}</strong><small>${esc(m.description)}</small></span><span class="choice-indicator"></span></button>`).join("")}</div>
-      <div class="panel-bottom"><span>Evolution restores your vitality and hunger.</span><button class="button primary" data-action="evolve" data-focus>EMBRACE EVOLUTION ${icon("arrow")}</button></div></div>`,
+      <div class="panel-bottom"><span>Evolution restores vitality and resets growth for the new form. Postpone to keep hunting.</span><button class="button secondary" data-action="postpone">KEEP GROWING - ESC</button><button class="button primary" data-action="evolve" data-focus>EMBRACE EVOLUTION ${icon("arrow")}</button></div></div>`,
       "shade-screen evolution-screen",
     );
+    this.bind("postpone", () => this.callbacks.postpone());
     this.overlay.querySelectorAll("[data-species]").forEach((button) =>
       button.addEventListener("click", () => {
         this.chosenSpecies = button.dataset.species;

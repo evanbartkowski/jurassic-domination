@@ -624,7 +624,7 @@ export class WorldRenderer {
           p.attacking > 0,
           p.invulnerable > 0,
           game.skinId,
-          1,
+          1 + (p.growth || 0) * 0.28,
           game.cosmeticId || "none",
         );
         keys.add("player");
@@ -747,6 +747,7 @@ export class WorldRenderer {
         const power = POWERUPS.find((b) => b.id === food.powerup),
           rare = [
             "rareplant",
+            "lineage-fruit",
             "relic",
             "fossil",
             "dna",
@@ -756,6 +757,7 @@ export class WorldRenderer {
           ].includes(food.type),
           color =
             {
+              "lineage-fruit": food.fruit === "sunheart" ? 0xf1b758 : 0xa49dea,
               dna: 0xb5a8f0,
               "pet-egg": CATALOG[food.sku]
                 ? RARITIES[CATALOG[food.sku].rarity].color
@@ -809,6 +811,18 @@ export class WorldRenderer {
                 color,
               );
           }
+        if (food.type === "lineage-fruit") {
+          mesh.children[0].scale.set(0.34, 0.4, 0.34);
+          piece(mesh, cylinder, 0x645337, [0, 0.9, 0], [0.035, 0.3, 0.035]);
+          piece(
+            mesh,
+            smoothSphere,
+            0x6e9f5f,
+            [0.18, 0.94, 0],
+            [0.24, 0.04, 0.09],
+            [0, 0, 0.4],
+          );
+        }
         if (food.type === "pet-egg") {
           mesh.children[0].scale.set(0.45, 0.62, 0.45);
           for (let i = 0; i < 3; i++)

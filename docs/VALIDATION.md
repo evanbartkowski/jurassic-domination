@@ -6,7 +6,7 @@
 | --- | --- |
 | Node gameplay, audio, collection transactions and migration | 57 passed |
 | Existing Chrome gameplay integration | 22 passed, zero runtime errors |
-| New collection browser integration | See artifacts/collections-qa.json |
+| New collection browser integration | 9 passed, zero runtime errors |
 | Actual packaged Windows desktop | 12 passed, zero runtime errors |
 | Self-extracting v0.3.0 portable build | 5 passed, zero runtime errors |
 | Production build and Windows portable packaging | Passed |

@@ -1,0 +1,191 @@
+.field-journal {
+  --field-gold: #e6c789;
+  --field-paper: #ecedda;
+  --field-muted: #b0c1ad;
+  width: min(100%, 1120px);
+  min-width: 0;
+  color: var(--field-paper);
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0 auto;
+  overflow-wrap: anywhere;
+}
+.field-journal *, .field-journal *::before, .field-journal *::after { box-sizing: border-box; }
+.field-journal p, .field-journal h2, .field-journal h3 { margin: 0; }
+.field-hero { display: flex; align-items: center; gap: 25px; padding: 24px 0 30px; }
+.field-portrait { width: 154px; height: 154px; flex: 0 0 154px; position: relative; border: 1px solid #d5bf7b55; border-radius: 50%; background: radial-gradient(circle, #adc48b25, #1d312712 65%); }
+.field-portrait::after { content: ""; position: absolute; inset: 9px; border: 1px solid #c9cb9330; border-radius: 50%; pointer-events: none; }
+.field-portrait img { width: 116%; height: 116%; margin: -8%; object-fit: contain; filter: drop-shadow(0 12px 12px #0006); }
+.field-kicker { color: var(--field-gold); font-size: 10px; letter-spacing: .15em; line-height: 1.5; }
+.field-hero h2 { font: 400 clamp(26px, 3.4vw, 42px)/1.14 Georgia, serif; margin: 9px 0 10px; color: #f0eed9; }
+.field-hero-sub { color: var(--field-muted); font-variant-numeric: tabular-nums; }
+.field-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.field-pills span { font-size: 10px; line-height: 1.4; border: 1px solid #abc29a35; background: #b6ca9210; color: #cdd8bc; padding: 5px 9px; border-radius: 3px; text-transform: uppercase; letter-spacing: .06em; }
+.field-page-mark { margin-left: auto; align-self: stretch; padding: 18px 0 0 24px; border-left: 1px solid #c5c19630; color: #bdbd9970; font: 20px/1.15 Georgia, serif; letter-spacing: .08em; }
+.field-page-mark span { display: block; font: 10px/2.5 monospace; letter-spacing: .12em; }
+.field-observation { display: flex; gap: 17px; padding: 18px 21px; background: linear-gradient(100deg, #71b9ae15, #d1c27908); border: 1px solid #9fc3aa38; border-left: 3px solid #8dbda7; }
+.field-observation > span { width: 34px; flex: 0 0 34px; color: #b6d6b4; align-self: center; }
+.field-observation svg { display: block; width: 100%; }
+.field-observation strong { color: #dae7ca; font-size: 14px; font-weight: 600; }
+.field-observation p { color: var(--field-muted); font-size: 13px; margin-top: 3px; }
+.field-section { margin-top: 38px; padding-top: 29px; border-top: 1px solid #bdc59b32; }
+.field-section-heading { display: flex; align-items: center; gap: 15px; margin-bottom: 18px; }
+.field-section-heading > span:first-child { width: 35px; height: 40px; flex: 0 0 35px; color: #d0bc82; }
+.field-section-heading svg { width: 100%; height: 100%; }
+.field-section-heading h2 { font: 400 29px/1.25 Georgia, serif; margin-top: 4px; }
+.field-intro { color: var(--field-muted); max-width: 82ch; font-size: 13px; }
+.field-traits { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 22px; border: 1px solid #a9bb8d25; background: #12241b8c; }
+.field-trait { padding: 16px 13px; min-width: 0; border-right: 1px solid #a9bb8d25; }
+.field-trait:last-child { border-right: 0; }
+.field-trait > span { font-size: 11px; color: #b8c7ae; display: block; }
+.field-trait strong { font-size: 25px; font-weight: 400; font-variant-numeric: tabular-nums; display: block; margin: 4px 0; }
+.field-trait small { color: #9aaf94; font-size: 10px; line-height: 1.5; display: block; }
+.field-up { color: #d2dfad; }
+.field-down { color: #d7b996; }
+.field-note { color: #aebca4; font-size: 12px; margin-top: 16px !important; line-height: 1.8; }
+.field-journal kbd { display: inline-block; min-width: 20px; padding: 0 4px; border: 1px solid #c0ca9d55; background: #d5d7b010; color: #e3d7b4; font: 11px/1.7 monospace; text-align: center; border-radius: 3px; }
+.field-adaptations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; margin-top: 23px; }
+.field-adaptation { padding: 17px; border: 1px solid #a3bf8d30; background: #a8ba8e06; }
+.field-adaptation.earned { border-color: #dbbd7760; background: linear-gradient(125deg, #bdaa5912, #9bac7405); }
+.field-adaptation > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.field-adaptation h3 { font: 400 20px/1.3 Georgia, serif; }
+.field-adaptation > div > span { font-size: 8px; letter-spacing: .09em; color: #c3ba8c; }
+.field-adaptation p { font-size: 12px; color: #aebeaa; margin-top: 8px; }
+.field-journal progress { appearance: none; -webkit-appearance: none; border: 0; background: #c5cbaa18; color: #c5bd82; accent-color: #c5bd82; height: 5px; border-radius: 0; display: block; width: 100%; }
+.field-journal progress::-webkit-progress-bar { background: #c5cbaa18; }
+.field-journal progress::-webkit-progress-value { background: linear-gradient(90deg, #719f85, #d8c388); }
+.field-journal progress::-moz-progress-bar { background: linear-gradient(90deg, #719f85, #d8c388); }
+.field-adaptation progress { margin-top: 16px; }
+.field-adaptation footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px; margin-top: 8px; font-size: 10px; color: #a8b99e; }
+.field-adaptation footer strong { font-weight: 500; color: #d1d4b1; font-variant-numeric: tabular-nums; }
+.field-genetic-find { margin-top: 19px; padding: 18px; border: 1px solid #c5a3e56b; background: radial-gradient(ellipse at top right, #a67ce21a, transparent 80%); }
+.field-genetic-find > strong { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #cfb6eb; }
+.field-genetic-find h3 { font: 23px/1.3 Georgia, serif; margin: 7px 0 4px; }
+.field-genetic-find p { font-size: 12px; color: #bcb8cf; }
+.field-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin: 20px 0; }
+.field-stat { min-width: 0; border-bottom: 1px solid #b6c19835; padding: 12px 0 15px; }
+.field-stat > span { display: block; font-size: 10px; color: #aabda1; text-transform: uppercase; letter-spacing: .06em; }
+.field-stat strong { display: block; font: 400 23px/1.25 Georgia, serif; color: #e3d7b4; margin: 6px 0; }
+.field-stat small { color: #a2b199; font-size: 10px; display: block; line-height: 1.6; }
+.field-survival-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 27px; margin-top: 20px; }
+.field-survival-grid h3 { font-size: 14px; font-weight: 500; color: #d9dfc7; }
+.field-survival-grid h3 kbd { margin-right: 5px; }
+.field-survival-grid p { margin-top: 7px; font-size: 12px; color: #adbea5; line-height: 1.8; }
+.field-count { margin-left: auto; font: 10px/1.6 monospace; letter-spacing: .04em; color: #d4c38e; white-space: nowrap; }
+.field-map-progress { display: flex; align-items: center; gap: 15px; margin: 21px 0; font-size: 11px; color: #b9c7ac; }
+.field-map-progress > span { flex: 0 0 auto; }
+.field-map-progress strong { min-width: 30px; font-weight: 400; text-align: right; color: #d5d6ae; }
+.field-sites { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.field-site { display: flex; gap: 13px; align-items: flex-start; padding: 18px 15px; background: #92ab7e04; border: 1px solid #a2b8912b; }
+.field-site.discovered { background: linear-gradient(110deg, color-mix(in srgb, var(--site-color) 8%, transparent), transparent); border-color: color-mix(in srgb, var(--site-color) 38%, transparent); }
+.field-site-number { color: #b1c39a65; flex: 0 0 28px; font: 22px/1.3 Georgia, serif; white-space: nowrap; }
+.field-site.discovered .field-site-number { color: var(--site-color); }
+.field-site-meta { display: flex; gap: 6px; justify-content: space-between; flex-wrap: wrap; font-size: 8px; line-height: 1.5; letter-spacing: .04em; text-transform: uppercase; color: #9db391; }
+.field-site-meta b { font-weight: 400; color: #d4c593; }
+.field-site h3 { font: 400 21px/1.3 Georgia, serif; margin: 7px 0; color: #dbe2c8; }
+.field-site p { color: #a8bca1; font-size: 12px; line-height: 1.8; }
+.field-site small { display: block; color: #a8b894; font-size: 9px; margin-top: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.field-ancestry { margin-top: 20px; border: 1px solid #b1bd8e35; }
+.field-ancestry summary { padding: 15px 18px; cursor: pointer; color: #dbd5b3; font-size: 13px; }
+.field-ancestry summary span { float: right; color: #a3b59a; font-size: 10px; margin-left: 10px; }
+.field-ancestry summary:focus-visible { outline: 2px solid #dfc480; outline-offset: 3px; }
+.field-ancestry ol { list-style: none; margin: 0; padding: 0 18px; max-height: 440px; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: #8f9c73 #17251c; }
+.field-ancestry li { display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid #aabc8b25; }
+.field-generation { flex: 0 0 33px; color: #d1bb83; font: 25px/1.25 Georgia, serif; }
+.field-ancestry h3 { font: 20px/1.3 Georgia, serif; color: #d5ddc1; }
+.field-ancestry p { font-size: 11px; color: #a6b89c; margin-top: 4px; }
+.field-ancestry small { display: block; font-size: 10px; color: #c0bd8d; margin-top: 6px; }
+.field-empty { margin-top: 20px !important; padding: 20px; border: 1px dashed #a5b98d40; color: #adbe9f; font-size: 13px; }
+.field-footer { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; margin-top: 35px; padding: 20px 0 4px; border-top: 1px solid #b2c19230; color: #a0b295; font-size: 11px; }
+@media (max-width: 900px) {
+  .field-traits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .field-trait { border-bottom: 1px solid #a9bb8d25; }
+  .field-page-mark { display: none; }
+  .field-journal { font-size: 13px; }
+}
+@media (max-width: 600px) {
+  .field-hero { gap: 15px; padding-top: 14px; align-items: flex-start; }
+  .field-portrait { width: 85px; height: 85px; flex-basis: 85px; margin-top: 8px; }
+  .field-kicker { font-size: 8px; letter-spacing: .1em; }
+  .field-hero h2 { font-size: 26px; }
+  .field-hero-sub { font-size: 11px; }
+  .field-pills { gap: 5px; margin-top: 10px; }
+  .field-pills span { font-size: 8px; padding: 4px 6px; }
+  .field-observation { gap: 11px; padding: 14px 12px; }
+  .field-observation > span { width: 26px; flex-basis: 26px; }
+  .field-observation p { font-size: 12px; }
+  .field-section { margin-top: 29px; padding-top: 23px; }
+  .field-section-heading { gap: 10px; flex-wrap: wrap; }
+  .field-section-heading h2 { font-size: 25px; }
+  .field-section-heading > span:first-child { width: 28px; flex-basis: 28px; }
+  .field-count { width: 100%; margin-left: 38px; }
+  .field-traits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field-trait { padding: 14px 10px; }
+  .field-trait strong { font-size: 24px; }
+  .field-adaptations, .field-survival-grid, .field-sites { grid-template-columns: minmax(0, 1fr); }
+  .field-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .field-stat strong { font-size: 21px; }
+  .field-ancestry summary span { float: none; display: block; margin: 5px 0 0 15px; }
+  .field-map-progress { gap: 8px; }
+}
+.environment-panel { position:absolute; right:226px; top:104px; display:grid; gap:5px; width:310px; max-width:calc(100% - 260px); padding:14px 16px; border:1px solid #8dbdb455; border-radius:7px; background:linear-gradient(125deg,#0b2425ed,#0a191bea); box-shadow:0 8px 30px #0005,inset 3px 0 #76bfb8; color:#c7ddd1; font-size:11px; line-height:1.5; pointer-events:none; }
+.environment-panel strong { color:#9ae0c5; font-size:11px; letter-spacing:.04em; }
+.environment-panel strong.exposed { color:#ffc18c; }
+.field-journal-button { padding:0 0 6px; border:0; border-bottom:1px solid #9bbcad33; background:none; color:#eed6a3; text-align:left; font:700 12px inherit; letter-spacing:.12em; cursor:pointer; pointer-events:auto; }
+.field-journal-button:focus-visible { outline:2px solid #dbe3ac; outline-offset:4px; }
+@media(max-width:1100px) { .environment-panel { top:126px; right:194px; width:220px; padding:10px 12px; font-size:10px; } .environment-panel strong { font-size:10px; } }
+@media(max-width:760px), (max-height:650px) { .environment-panel { top:126px; right:194px; width:220px; padding:8px 10px; gap:3px; } #environment-discovery { display:none; } }
+@media(max-width:650px) { .environment-panel { top:110px; left:12px; right:auto; width:calc(100% - 148px); max-width:240px; font-size:9px; } .environment-panel strong { font-size:9px; } .field-journal-button { font-size:10px; } }
+
+/* The HUD's logical width shrinks when the player enlarges the interface.
+   Container queries preserve the same spacing at 125% without shrinking text. */
+#hud { container-type:inline-size; }
+@container (max-width:700px) {
+  .hud-top { top:12px; left:12px; right:12px; gap:8px; }
+  .species-card { padding:8px; gap:6px; max-width:calc(100% - 96px); }
+  .species-card h2 { font-size:19px; }
+  .species-card .eyebrow,.species-card .small-muted { font-size:8px; letter-spacing:.05em; }
+  .species-emblem { width:42px; height:48px; }
+  .species-emblem .rendered-icon { width:62px; }
+  .hud-run { gap:8px; padding:7px; }
+  .hud-dna,.run-kills { display:none; }
+  .run-timer { font-size:15px; letter-spacing:0; }
+  .hud-run .icon-button { width:30px; height:34px; }
+  .minimap-wrap { top:103px; right:12px; width:112px; padding:8px; }
+  .minimap-wrap canvas { width:94px; height:94px; }
+  .map-header,.map-footer { font-size:7px; }
+  .environment-panel { top:110px; left:12px; right:auto; width:calc(100% - 148px); max-width:240px; padding:6px 8px; gap:2px; font-size:9px; line-height:1.25; }
+  .environment-panel strong { font-size:9px; line-height:1.25; }
+  .field-journal-button { padding-bottom:3px; font-size:9px; line-height:1.25; }
+  #environment-discovery,#region-route { display:none; }
+  .hud-bottom { left:10px; right:10px; bottom:36px; gap:8px; align-items:stretch; }
+  .vitals { width:53%; padding:10px; border-left-width:3px; }
+  .evolution-progress { width:calc(47% - 8px); padding:10px; }
+  .vital-label { font-size:9px; gap:4px; }
+  .vital-label b { font-size:10px; }
+  .minor-vitals { gap:8px; }
+  .minor-vitals .icon { display:none; }
+  .minor-vitals .vital-label { font-size:7px; flex-wrap:wrap; }
+  .minor-vitals .vital-label b { font-size:8px; }
+  .meter.health { height:15px; }
+  .meter { height:8px; }
+  #hud-diet,#growth-status,#bloodline-journal { font-size:8px; }
+  .hunger-warning { font-size:9px; }
+  .evolution-heading { font-size:8px; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+  .evolution-heading b { font-size:10px; }
+  #evolve-ready { font-size:9px; padding:9px 4px; }
+  #evolve-ready>span { font-size:7px; }
+  .abilities { left:0; right:auto; bottom:calc(100% + 24px); width:min(100%,350px); transform:none; justify-content:center; gap:5px !important; }
+  .ability-key { flex:1; width:54px; min-width:0 !important; min-height:80px; padding:13px 4px 8px !important; }
+  .ability-key>span,.special-key span { font-size:8px; }
+  .ability-key>b,.ability-key>kbd { font-size:9px; }
+  .eat-key { display:none; }
+  .hud-controls { bottom:10px; left:12px; gap:10px; }
+  .hud-controls .key-help,.hud-controls kbd { font-size:8px; }
+  @media (max-height:650px) and (min-width:651px) {
+    .species-card { max-width:190px; }
+    .environment-panel { top:12px; left:210px; width:240px; }
+    .map-footer { display:none; }
+  }
+}

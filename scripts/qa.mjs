@@ -47,11 +47,11 @@ try {
     await page.waitForFunction(() => window.__JD.ui.view === "menu");
   });
   await check(
-    "encyclopedia contains all 100 species and a working 3D viewer",
+    "encyclopedia contains all 102 species and a working 3D viewer",
     async () => {
       await page.getByRole("button", { name: /ENCYCLOPEDIA/ }).click();
       await page.waitForFunction(() => window.__JD.specimen);
-      assert.equal(await page.locator("[data-inspect]").count(), 100);
+      assert.equal(await page.locator("[data-inspect]").count(), 102);
       await page.locator("#guide-search").fill("unicorn");
       await page.locator('[data-inspect="unicorn"]').click();
       await page.waitForFunction(
@@ -87,7 +87,7 @@ try {
         }
         return SPECIES.length;
       });
-      assert.equal(count, 100);
+      assert.equal(count, 102);
       await page.keyboard.press("Escape");
     },
   );
@@ -122,6 +122,14 @@ try {
     await page.screenshot({ path: "artifacts/gameplay.png" });
   });
   await check("Q ability and Shift dodge consume real cooldowns", async () => {
+    await page.evaluate(() => {
+      const g = window.__JD.game;
+      g.qaStarter = g.player.speciesId;
+      g.player.speciesId = "velociraptor";
+      g.tier = g.species.tier;
+      g.player.stamina = 100;
+      g.refreshStats(true);
+    });
     await page.keyboard.press("KeyQ");
     await page.waitForFunction(
       () => window.__JD.game.player.abilityCooldown > 0,
@@ -136,7 +144,13 @@ try {
   await check(
     "R technique has its own cooldown and visible HUD control",
     async () => {
-      await page.evaluate(() => (window.__JD.game.player.stamina = 100));
+      await page.evaluate(() => {
+        const g = window.__JD.game;
+        g.player.speciesId = "ankylosaurus";
+        g.tier = g.species.tier;
+        g.player.stamina = 100;
+        g.refreshStats(true);
+      });
       await page.keyboard.press("KeyR");
       await page.waitForFunction(
         () => window.__JD.game.player.techniqueCooldown > 0,
@@ -145,6 +159,12 @@ try {
         await page.locator("#hud-technique-cooldown").textContent(),
         "READY",
       );
+      await page.evaluate(() => {
+        const g = window.__JD.game;
+        g.player.speciesId = g.qaStarter;
+        g.tier = 0;
+        g.refreshStats(true);
+      });
     },
   );
   await check("escape pauses and settings preserve pause", async () => {
@@ -172,7 +192,7 @@ try {
       await page.locator("[data-species]").first().click();
       await page.locator("[data-mutation]").first().click();
       await page
-        .getByRole("button", { name: /EVOLVE|EMBRACE|BECOME|ADAPT/ })
+        .getByRole("button", { name: /^EMBRACE EVOLUTION/ })
         .click();
       await page.waitForFunction(
         () => window.__JD.game.tier === 1 && window.__JD.ui.view === "hud",

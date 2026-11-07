@@ -1,6 +1,11 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { SKINS } from "./content.js";
+import { phenotype } from './genetics.js';
+export function genomeAppearanceKey(genome) {
+  const p = phenotype(genome);
+  return `${Math.round(p.hue / .0225)}:${p.markings === 'speckled' ? 'speckled' : p.markings === 'banded' ? 'banded' : 'skin'}`;
+}
 
 const sphere = new THREE.SphereGeometry(1, 20, 14);
 const cone = new THREE.ConeGeometry(1, 1, 10);
@@ -11,59 +16,115 @@ function skinTexture(kind) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 512;
   const c = canvas.getContext("2d");
-  c.fillStyle = "#c1bca9";
+  c.fillStyle = "#c5c0ad";
   c.fillRect(0, 0, 512, 512);
-  for (let row = 0; row < 36; row++)
-    for (let col = 0; col < 28; col++) {
-      const x = col * 19 + (row % 2) * 9.5,
-        y = row * 15;
-      const value = 205 + ((row * 37 + col * 19) % 26);
-      c.fillStyle = `rgb(${value},${value + 3},${value - 4})`;
-      c.strokeStyle = "#998e7722";
-      c.lineWidth = 0.65;
+
+  // Reptilian polygonal scale matrix with deep recessed crevices
+  for (let row = 0; row < 38; row++) {
+    for (let col = 0; col < 30; col++) {
+      const x = col * 18 + (row % 2) * 9,
+        y = row * 14;
+      const value = 195 + ((row * 31 + col * 17) % 36);
+      
+      // Crevice shadow border
+      c.fillStyle = "rgba(42,46,38,0.22)";
       c.beginPath();
       c.ellipse(
         x,
         y,
-        kind === "feather" ? 4.8 : 8.5,
-        kind === "feather" ? 12 : 6,
-        kind === "feather" ? -0.3 : 0,
+        kind === "feather" ? 5.2 : 9.5,
+        kind === "feather" ? 13 : 7.2,
+        kind === "feather" ? -0.32 : 0,
         0,
         Math.PI * 2,
       );
       c.fill();
-      c.stroke();
+
+      // Scale dorsal plate highlight
+      c.fillStyle = `rgb(${value},${value + 4},${value - 3})`;
+      c.beginPath();
+      c.ellipse(
+        x - 0.7,
+        y - 0.7,
+        kind === "feather" ? 4.4 : 8.2,
+        kind === "feather" ? 11.5 : 5.8,
+        kind === "feather" ? -0.32 : 0,
+        0,
+        Math.PI * 2,
+      );
+      c.fill();
     }
-  // Broad dorsal markings sit over the small scale pattern.
-  for (let i = 0; i < 10; i++) {
-    c.fillStyle = "#3c423c18";
-    c.beginPath();
-    c.ellipse(i * 57, 245 + Math.sin(i) * 65, 15, 180, 0.35, 0, 6.28);
-    c.fill();
   }
+
+  // Broad organic pigment markings and predator camouflage
+  if (kind === "speckled") {
+    // Predatory rosette spots and dappled camouflage
+    for (let i = 0; i < 65; i++) {
+      const sx = (i * 73) % 512, sy = (i * 109) % 512;
+      c.fillStyle = "rgba(35, 42, 34, 0.35)";
+      c.beginPath();
+      c.arc(sx, sy, 7 + (i % 7), 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = "rgba(180, 140, 75, 0.25)";
+      c.beginPath();
+      c.arc(sx, sy, 3.5 + (i % 4), 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (kind === "banded") {
+    // Striated predator tiger-stripes across flank
+    for (let i = 0; i < 16; i++) {
+      const bx = i * 34, by = 250 + Math.sin(i * 1.2) * 80;
+      c.fillStyle = "rgba(28, 34, 28, 0.40)";
+      c.beginPath();
+      c.ellipse(bx, by, 16, 210, 0.28, 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (kind === "feather") {
+    // Directional plumulaceous shafts
+    for (let i = 0; i < 45; i++) {
+      const fx = (i * 59) % 512, fy = (i * 97) % 512;
+      c.fillStyle = "rgba(220, 205, 165, 0.32)";
+      c.beginPath();
+      c.ellipse(fx, fy, 4, 22, -0.35, 0, Math.PI * 2);
+      c.fill();
+    }
+  } else {
+    // Subtle dorsal spine counter-shading
+    for (let i = 0; i < 18; i++) {
+      c.fillStyle = "rgba(38, 44, 38, 0.18)";
+      c.beginPath();
+      c.ellipse(i * 30, 240 + Math.sin(i * 0.8) * 45, 18, 160, 0.15, 0, Math.PI * 2);
+      c.fill();
+    }
+  }
+
   const map = new THREE.CanvasTexture(canvas);
   map.wrapS = map.wrapT = THREE.RepeatWrapping;
   map.repeat.set(2.5, 1.5);
   map.colorSpace = THREE.SRGBColorSpace;
-  map.anisotropy = 4;
+  map.anisotropy = 8;
   textureCache.set(kind, map);
   return map;
 }
+
 function mat(color, kind = "skin", glow = false) {
   const key = `${color}:${kind}:${glow}`;
   if (!materialCache.has(key)) {
+    const isEye = kind === "eye";
+    const isHorn = kind === "horn";
     const m = new THREE.MeshStandardMaterial({
       color,
-      roughness: kind === "eye" ? 0.2 : 0.77,
-      metalness: kind === "horn" ? 0.04 : 0,
-      map: ["skin", "feather"].includes(kind) ? skinTexture(kind) : null,
-      bumpMap: ["skin", "feather"].includes(kind) ? skinTexture(kind) : null,
-      bumpScale: 0.024,
-      emissive: glow ? color : 0,
-      emissiveIntensity: glow ? 0.3 : 0,
+      roughness: isEye ? 0.08 : isHorn ? 0.38 : 0.64,
+      metalness: isHorn ? 0.08 : isEye ? 0.02 : 0.03,
+      map: ["skin", "feather", "speckled", "banded"].includes(kind) ? skinTexture(kind) : null,
+      bumpMap: ["skin", "feather", "speckled", "banded"].includes(kind) ? skinTexture(kind) : null,
+      bumpScale: 0.052,
+      emissive: glow ? color : isEye ? 0x1f1808 : 0,
+      emissiveIntensity: glow ? 0.38 : isEye ? 0.15 : 0,
       side: kind === "membrane" ? THREE.DoubleSide : THREE.FrontSide,
     });
     m.userData.shared = true;
+    m.userData.surface = kind;
     materialCache.set(key, m);
   }
   return materialCache.get(key);
@@ -206,12 +267,13 @@ export function createDinosaur(
   species,
   decorative = false,
   skinId = "natural",
+  genome = null,
 ) {
   const root = new THREE.Group(),
     body = new THREE.Group();
   root.add(body);
-  const skin = SKINS.find((s) => s.id === skinId) || SKINS[0],
-    c = skin.color ?? species.color,
+  const skin = SKINS.find((s) => s.id === skinId) || SKINS[0], pigment = Number(genomeAppearanceKey(genome).split(':')[0]) * .0225,
+    c = skinId === 'natural' ? new THREE.Color(species.color).offsetHSL(pigment, 0, 0).getHex() : skin.color ?? species.color,
     accent = skin.accent ?? species.accent;
   const dark = new THREE.Color(c).multiplyScalar(0.62).getHex(),
     light = new THREE.Color(c).lerp(new THREE.Color(0xd8cdb3), 0.42).getHex();
@@ -219,11 +281,14 @@ export function createDinosaur(
     owned = new Set(),
     legs = [],
     wings = [],
+    flippers = [],
     tails = [],
-    eyes = [];
+    eyes = [],
+    arms = [];
   const type = species.body,
     name = species.id;
-  const serpent = type === "serpent",
+  const marine = type === "marine", longSwimmer = species.anatomy === "plesiosaur",
+    serpent = type === "serpent",
     croc = type === "croc",
     horse = type === "equine",
     dragon = type === "dragon",
@@ -237,9 +302,9 @@ export function createDinosaur(
     "dragon",
     "gryphon",
   ].includes(type);
-  const h = serpent ? 0.95 : croc ? 0.6 : horse ? 1.5 : quadruped ? 1.15 : 1.65;
-  const bodyLength = sauropod ? 1.7 : horse ? 1.4 : 1.35,
-    thickness = croc
+  const h = marine ? 0.75 : serpent ? 0.95 : croc ? 0.6 : horse ? 1.5 : quadruped ? 1.15 : 1.65;
+  const bodyLength = marine ? 1.65 : sauropod ? 1.7 : horse ? 1.4 : 1.35,
+    thickness = marine ? (longSwimmer ? .52 : .72) : croc
       ? 0.36
       : horse
         ? 0.59
@@ -287,24 +352,25 @@ export function createDinosaur(
     headX = 0.95;
     headY = 1.28;
   }
+  if (marine) { headX = longSwimmer ? 3.25 : 1.65; headY = longSwimmer ? 1.13 : .88; }
   const neckGeo = tube(
     [
       [0.55, h + 0.08, 0],
-      [0.92, h + (horse ? 0.64 : 0.35), 0],
+      [marine && longSwimmer ? 1.9 : 0.92, h + (marine ? .26 : horse ? 0.64 : 0.35), 0],
       [headX - 0.12, headY - 0.22, 0],
     ],
     [
-      horse ? 0.42 : 0.46,
-      sauropod ? 0.36 : horse ? 0.31 : 0.36,
-      sauropod ? 0.23 : horse ? 0.23 : 0.29,
+      marine ? .37 : horse ? 0.42 : 0.46,
+      marine ? (longSwimmer ? .22 : .4) : sauropod ? 0.36 : horse ? 0.31 : 0.36,
+      marine ? (longSwimmer ? .18 : .34) : sauropod ? 0.23 : horse ? 0.23 : 0.29,
     ],
   );
   owned.add(neckGeo);
   add(body, neckGeo, mat(c, horse ? "fur" : "skin"), [0, 0, 0], [1, 1, 1]);
   head.position.set(headX, headY, 0);
   body.add(head);
-  const rex = type === "rex" || dragon,
-    headLength = croc ? 1.18 : rex ? 0.84 : horse ? 0.62 : 0.55;
+  const rex = type === "rex" || dragon || (marine && !longSwimmer),
+    headLength = marine ? (longSwimmer ? .52 : 1.16) : croc ? 1.18 : rex ? 0.84 : horse ? 0.62 : 0.55;
   if (horse) {
     organic(head, c, [0.07, 0.05, 0], [0.26, 0.42, 0.23], [0, 0, 0.3], "fur");
     organic(head, c, [0.44, -0.26, 0], [0.45, 0.23, 0.21], [0, 0, -0.4], "fur");
@@ -399,7 +465,17 @@ export function createDinosaur(
         [0, 0, -Math.PI / 2 - 0.2],
       );
   }
-  if (!serpent)
+  if (marine) for (const side of [-1, 1]) for (const front of [false, true]) {
+    const fin = new THREE.Group();
+    fin.position.set(front ? .6 : -1.02, .58, side * .48);
+    body.add(fin);
+    organic(fin, c, [-.22, -.06, side * .68], [.44, .1, longSwimmer ? 1.02 : 1.26], [0, side * .36, side * .08]);
+    organic(fin, light, [-.28, -.13, side * .7], [.32, .035, longSwimmer ? .86 : 1.1], [0, side * .36, 0]);
+    mergeStatic(fin, owned); flippers.push({ fin, side, front });
+  }
+  if (marine && !longSwimmer) for (let i = 0; i < 7; i++)
+    horn(body, accent, [-1.1 + i * .32, 1.28 + Math.sin(i / 6 * Math.PI) * .1, 0], [.1, .18 + (i % 2) * .08, .09], [0, 0, .3]);
+  if (!serpent && !marine)
     for (const side of [-1, 1]) {
       const positions = quadruped ? [-0.88, 0.82] : [-0.6];
       for (const hip of positions) {
@@ -470,6 +546,7 @@ export function createDinosaur(
         const arm = new THREE.Group();
         arm.position.set(0.72, h + 0.15, side * 0.42);
         body.add(arm);
+        arms.push({ arm, side });
         organic(
           arm,
           c,
@@ -493,7 +570,7 @@ export function createDinosaur(
     }
   // Continuous articulated tails bend from the pelvis rather than swinging rigidly.
   let tailParent = body;
-  const tailCount = horse ? 1 : serpent ? 15 : 7;
+  const tailCount = horse ? 1 : marine ? 5 : serpent ? 15 : 7;
   for (let i = 0; i < tailCount; i++) {
     const node = new THREE.Group();
     node.position.set(
@@ -820,7 +897,9 @@ export function createDinosaur(
     head,
     jaw,
     legs,
+    arms,
     wings,
+    flippers,
     tails,
     species,
     baseScale: scale,
@@ -835,6 +914,14 @@ export function createDinosaur(
       owned.forEach((g) => g.dispose());
     },
   };
+  root.userData.genomeKey = genomeAppearanceKey(genome);
+  if (skinId === 'natural') {
+    const pattern = root.userData.genomeKey.split(':')[1];
+    if (pattern !== 'skin') root.traverse(obj => {
+      const surface = material => material?.userData.surface === 'skin' ? mat(material.color.getHex(), pattern) : material;
+      if (obj.material) obj.material = Array.isArray(obj.material) ? obj.material.map(surface) : surface(obj.material);
+    });
+  }
   return root;
 }
 
@@ -848,9 +935,14 @@ export function animateCreature(
 ) {
   const d = model.userData,
     { body, head, jaw, legs, wings, tails, species } = d;
+  const isJuv = d.isJuvenile || ((model.scale.x || 1) / (d.baseScale || 1)) < 0.68;
+  const headScale = isJuv ? 1.32 : 1.0;
+  head.scale.setScalar(headScale);
+  jaw.scale.setScalar(headScale);
+  const strideRate = isJuv ? 1.5 : 1.0;
   d.speed = THREE.MathUtils.damp(d.speed, Math.min(1.6, speed), 8, dt);
   d.phase +=
-    (dt * (2 + d.speed * 8.5)) / Math.sqrt(Math.max(0.7, species.size));
+    (dt * (2 + d.speed * 8.5) * strideRate) / Math.sqrt(Math.max(0.7, species.size));
   d.attackBlend = THREE.MathUtils.damp(
     d.attackBlend,
     attacking ? 1 : 0,
@@ -860,11 +952,20 @@ export function animateCreature(
   const phase = d.phase,
     stride = d.speed,
     quad = legs.length === 4;
+  const breathSpeed = isJuv ? 3.2 : 2.0;
+  const breathCycle = Math.sin(time * breathSpeed + (model.id || 0));
+  body.scale.set(1 + breathCycle * 0.022, 1 + breathCycle * 0.034, 1 + breathCycle * 0.02);
+  const breath = breathCycle * 0.024;
+  const strike = d.attackBlend;
+
+  body.position.x = strike * 0.42 * Math.min(2.5, species.size);
   body.position.y =
     Math.sin(phase * 2) * 0.028 * stride +
-    Math.sin(time * 1.9 + model.id) * 0.018;
+    Math.sin(time * 1.9 + model.id) * 0.018 +
+    breath * 0.4 -
+    strike * 0.12;
   body.rotation.x = THREE.MathUtils.damp(body.rotation.x, -turn * 0.09, 7, dt);
-  body.rotation.z = Math.sin(phase) * 0.018 * stride - d.attackBlend * 0.055;
+  body.rotation.z = Math.sin(phase) * 0.018 * stride - strike * 0.28;
   for (const leg of legs) {
     const offset = quad
       ? leg.front
@@ -891,21 +992,69 @@ export function animateCreature(
             : 1.5) +
       Math.max(0, wave) * 0.045 * stride;
   }
+  head.position.x = strike * 0.38;
+  head.position.y = -strike * 0.24;
   head.rotation.z =
     Math.sin(phase + 0.4) * 0.026 * stride +
     Math.sin(time * 0.9) * 0.025 -
-    d.attackBlend * 0.05;
-  head.rotation.y = THREE.MathUtils.damp(head.rotation.y, turn * 0.18, 8, dt);
-  jaw.rotation.z = -d.attackBlend * 0.42 + Math.sin(time * 2) * 0.014;
+    strike * 0.72;
+  head.rotation.y = THREE.MathUtils.damp(head.rotation.y, turn * 0.18 + Math.sin(strike * Math.PI) * 0.22, 8, dt);
+  jaw.rotation.z = -strike * 0.88 + Math.sin(time * 2) * 0.014;
+
+  if (stride < 0.4 && strike < 0.2) {
+    const lookSeed = (model.id || 1) * 31.7;
+    head.rotation.y += Math.sin(time * 0.45 + lookSeed * 1.6) * 0.22;
+    head.rotation.x = Math.sin(time * 0.8 + lookSeed) * 0.12;
+  }
+  if (isJuv) {
+    head.rotation.z += Math.sin(time * 3.8 + (model.id || 0)) * 0.05;
+    head.rotation.y += Math.sin(time * 2.4 + (model.id || 0)) * 0.07;
+  }
+  if (stride < 0.18 && ["quad", "longneck"].includes(species.body) && strike < 0.1) {
+    const graze = Math.max(0, Math.sin(time * 0.42 + (model.id || 0) * 11.0) - 0.35) * 1.5;
+    head.position.y -= graze * 0.35;
+    head.rotation.z += graze * 0.4;
+    jaw.rotation.z -= Math.sin(time * 6.5) * graze * 0.08;
+  }
+  if (stride < 0.18 && ["rex", "raptor", "serpent", "croc"].includes(species.body) && strike < 0.1) {
+    const sniff = Math.max(0, Math.sin(time * 0.5 + (model.id || 0) * 17.0) - 0.45) * 1.5;
+    head.position.y += sniff * 0.16;
+    head.rotation.z -= sniff * 0.14;
+    head.rotation.x += Math.sin(time * 9.0) * sniff * 0.06;
+  }
+  if (d.isSleeping) {
+    head.position.y -= 0.58;
+    head.rotation.z += 0.45;
+  }
+
+  for (const { arm, side } of d.arms || []) {
+    arm.rotation.z = -strike * 0.95;
+    arm.rotation.x = side * strike * 0.45;
+  }
+  for (const { wing, side } of wings || []) {
+    wing.rotation.y = side * strike * 0.75;
+    wing.rotation.z = -strike * 0.55;
+  }
   tails.forEach((node, i) => {
     node.rotation.y =
       Math.sin(phase * 0.6 - i * 0.47) *
         (species.body === "serpent" ? 0.18 : 0.075) *
         (1 + stride * 0.5) +
-      turn * 0.025;
+      Math.sin(time * 1.6 - i * 0.45 + (model.id || 0)) * 0.09 * Math.max(0, 1 - stride) +
+      turn * 0.025 +
+      Math.sin(strike * Math.PI) * (species.body === "longneck" ? 0.85 : 0.42);
     node.rotation.z = Math.sin(time * 1.3 - i * 0.24) * 0.018;
   });
-  const impact = d.attackBlend;
+  const impact = strike;
+  if (species.body === "marine") {
+    body.rotation.x = Math.sin(phase * .65) * .05 * stride;
+    body.position.y += Math.sin(phase * .6) * .04;
+    for (const { fin, side, front } of d.flippers || []) {
+      const row = Math.sin(phase * .85 + (front ? 0 : 1.7));
+      fin.rotation.x = side * (.12 + row * (.12 + stride * .25));
+      fin.rotation.y = side * row * .18 * stride;
+    }
+  }
   if (species.body === "raptor" || species.body === "bird")
     body.position.y += Math.sin(impact * Math.PI) * 0.3;
   if (species.body === "quad") {

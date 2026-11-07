@@ -17,6 +17,7 @@ import {
   chunkKey,
 } from "../src/world-data.js";
 import { inAttackZone } from "../src/ecosystem.js";
+import { phenotype } from "../src/genetics.js";
 import {
   newProfile,
   normalizeProfile,
@@ -68,9 +69,9 @@ test("continental map is 100 times the original area with distinct regional spaw
     ),
   );
 });
-test("all 100 creatures have valid abilities, techniques, habitats and behaviours", () => {
-  assert.equal(SPECIES.length, 100);
-  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 100);
+test("all 102 creatures have valid abilities, techniques, habitats and behaviours", () => {
+  assert.equal(SPECIES.length, 102);
+  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 102);
   for (const s of SPECIES) {
     assert(ABILITIES[s.abilityType]);
     assert(TECHNIQUES[s.technique]);
@@ -132,7 +133,7 @@ test("uneaten eggs hatch as juveniles and mature into their real species", () =>
   baby.age = 100;
   g.update(0.05, {});
   assert.equal(baby.juvenile, false);
-  assert.equal(baby.scaleFactor, 1);
+  assert.equal(baby.scaleFactor, phenotype(baby.genome).size);
   assert.equal(baby.maxHp, baby.adultMaxHp);
 });
 test("eating an egg prevents its hatching and grants its region-quality meal", () => {
@@ -165,7 +166,7 @@ test("magnet attracts food and auto-eat consumes it without E input", () => {
   g.buffs.magnet = 10;
   g.buffs.autoeat = 10;
   g.player.hunger = 35;
-  g.spawnFood("plant", 12, 0, 1);
+  g.spawnFood("plant", 12, 0, 1, {plantKind:"berry"});
   step(g, 2);
   assert.equal(g.foods.length, 0);
   assert(g.player.hunger > 40);

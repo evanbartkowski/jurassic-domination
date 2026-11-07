@@ -143,11 +143,14 @@ function claim(p, receipt) {
     typeof receipt !== "string" ||
     !receipt ||
     receipt.length > 160 ||
-    p.claimedFinds.includes(receipt)
+    p.claimedFinds.includes(receipt) ||
+    p.activeFindClaims?.includes(receipt)
   )
     return false;
   p.claimedFinds.push(receipt);
   p.claimedFinds = p.claimedFinds.slice(-2048);
+  p.activeFindClaims ||= [];
+  p.activeFindClaims.push(receipt);
   return true;
 }
 export function awardRareDNA(p, receipt, amount) {

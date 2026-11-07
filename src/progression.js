@@ -1,4 +1,6 @@
 ﻿import { SPECIES, SPECIES_BY_ID } from "./data.js";
+import { phenotype, exposureProgress } from "./genetics.js";
+import { hasDiscovery } from './discoveries.js';
 export const EVOLUTION_RARITIES = {
   regular: { name: "Regular", color: "#b9cbb0", weight: 1 },
   rare: { name: "Rare", color: "#77bced", weight: 0.08 },
@@ -6,6 +8,16 @@ export const EVOLUTION_RARITIES = {
   legendary: { name: "Legendary", color: "#f2c76d", weight: 0.006 },
 };
 export const BLOODLINES = [
+  {
+    id: 'tidal-memory', speciesId: 'tideweaver', name: 'Memory of the Tides', tier: 2,
+    description: 'Find the Tidal Archive and swim while healthy for 25 seconds this life (15 with inherited water affinity).',
+    test: g => hasDiscovery(g, 'tidal-archive') && exposureProgress(g.player.adaptations, 'water') >= (phenotype(g.player.genome).adaptations.includes('water') ? 15 : 25),
+  },
+  {
+    id: 'abyssal-dynasty', speciesId: 'abyssal-kronosaur', name: 'The Drowned Dynasty', tier: 4,
+    description: 'Remember Tideweaver in this life, defeat a named guardian and discover the Abyssal Tooth.',
+    test: g => (g.formHistory || []).includes('tideweaver') && (g.guardianKills || 0) >= 1 && hasDiscovery(g, 'abyssal-tooth'),
+  },
   {
     id: "verdant-seed",
     speciesId: "verdant-psittacosaurus",
@@ -169,7 +181,10 @@ export const SPECIALS = {
     type: "attack",
   },
 };
+const kitCache = new WeakMap();
 export function creatureKit(s) {
+  const cached = kitCache.get(s);
+  if (cached) return cached;
   const special = {
     raptor: "rending",
     rex: "rage",
@@ -178,15 +193,34 @@ export function creatureKit(s) {
     dragon: "bolt",
     serpent: "shed",
     croc: "deathroll",
+    marine: "deathroll",
     gryphon: "rending",
     equine: "renewal",
+    bird: s.tier >= 6 ? "bolt" : "rending",
   }[s.body];
-  return {
+  const identity=[...s.id].reduce((n,c)=>n+c.charCodeAt(0),0);
+  // Anatomy determines the move; age and individual lineage determine how
+  // many moves it learns. A bite is always available, even to skill-free forms.
+  const count=s.tier===0 ? (identity%3===0 ? 1 : 0)
+    : s.tier===1 ? (identity%4===0 ? 0 : 1)
+      : s.tier===2 ? (identity%3===0 ? 2 : 1)
+        : s.tier===3 ? (identity%3===0 ? 1 : 2)
+          : s.tier===4 ? (identity%3===0 ? 3 : 2)
+            : 3;
+  const ability=count>=1?s.abilityType:null,
+    technique=count>=2?s.technique:null,
+    extra=count>=3?special:null;
+  const kit = {
     dash:
       ["raptor", "bird", "equine", "gryphon", "dragon"].includes(s.body) ||
       (s.body === "rex" && s.size < 2),
-    special: special || null,
+    ability,
+    technique,
+    special: extra || null,
+    abilityCount: Number(!!ability)+Number(!!technique)+Number(!!extra),
   };
+  kitCache.set(s,kit);
+  return kit;
 }
 export function growthFromFood(nutrients, tier) {
   return Math.max(
@@ -205,16 +239,18 @@ export function growthName(growth) {
 }
 export function feedEntity(game, e, food) {
   const s = SPECIES_BY_ID[e.speciesId];
+  const genetic = phenotype(e.genome);
+  const maturity = Math.min(1, (e.age || 0) / Math.max(1, e.maturitySeconds || 100));
   e.nutrients = (e.nutrients || 0) + Math.max(0, food.value || 0);
   e.growth = growthFromFood(e.nutrients, s.tier);
   const ratio = e.hp / Math.max(1, e.maxHp);
   e.adultMaxHp = e.baseMaxHp * (1 + e.growth * 0.4);
   e.maxHp =
-    e.adultMaxHp * (e.juvenile ? 0.45 + 0.55 * Math.min(1, e.age / 100) : 1);
+    e.adultMaxHp * (e.juvenile ? 0.45 + 0.55 * maturity : 1);
   e.hp = Math.min(e.maxHp, e.maxHp * ratio + e.maxHp * 0.06);
   e.damage = s.damage * (1 + e.growth * 0.32);
   e.scaleFactor =
-    (e.juvenile ? 0.42 + 0.58 * Math.min(1, e.age / 100) : 1) *
-    (1 + e.growth * 0.28);
+    (e.juvenile ? 0.42 + 0.58 * maturity : 1) *
+    (1 + e.growth * 0.28) * genetic.size;
   e.hunger = Math.min(100, (e.hunger || 0) + 35);
 }

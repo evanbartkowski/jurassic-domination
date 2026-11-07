@@ -7,12 +7,17 @@ import assert from "node:assert/strict";
 
 const exe = path.resolve(
   process.env.JD_PORTABLE_EXE ||
-    "release/Jurassic Domination-0.5.0-portable.exe",
+    "release/Jurassic Domination-0.8.0-portable.exe",
 );
 const profile = await mkdtemp(path.join(os.tmpdir(), "jurassic-portable-qa-"));
 const env = { ...process.env, JD_TEST_USER_DATA: profile };
 delete env.ELECTRON_RUN_AS_NODE;
-const child = spawn(
+let browser,
+  page,
+  exitCode = null,
+  launchError = null;
+function spawnPortable() {
+  const process = spawn(
   exe,
   [
     `--user-data-dir=${profile}`,
@@ -22,13 +27,12 @@ const child = spawn(
     "--use-angle=swiftshader",
   ],
   { env, stdio: "ignore", windowsHide: true },
-);
-let browser,
-  page,
-  exitCode = null,
-  launchError = null;
-child.on("error", (e) => (launchError = e));
-child.on("exit", (code) => (exitCode = code));
+  );
+  process.on("error", (e) => (launchError = e));
+  process.on("exit", (code) => (exitCode = code));
+  return process;
+}
+let child = spawnPortable();
 const errors = [],
   external = [],
   checks = [];
@@ -98,6 +102,11 @@ try {
         ["KeyR", "hud-technique-cooldown"],
         ["Shift", "hud-dash-cooldown"],
       ]) {
+        if (code !== "Shift" && !(await page.locator(`#${id}`).isVisible())) {
+          await page.keyboard.press(code);
+          assert.equal(await page.locator(`#${id}`).textContent(), "READY");
+          continue;
+        }
         if (
           code === "Shift" &&
           (await page.locator("#dash-name").textContent()) === "NO DASH"
@@ -158,9 +167,17 @@ try {
       assert.deepEqual(errors, []);
     },
   );
+  let expectedCheckpoint;
   await check(
     "portable quit closes its extracted child and launcher cleanly",
     async () => {
+      if (!(await page.locator('#overlay [data-action="resume"]').isVisible())) await page.keyboard.press("Escape");
+      await page.locator('#overlay [data-action="resume"]').waitFor();
+      expectedCheckpoint = await page.evaluate(() => {
+        const head = JSON.parse(localStorage.getItem("jurassic-domination.save.head.v1"));
+        const data = JSON.parse(localStorage.getItem(["jurassic-domination.save.a.v1", "jurassic-domination.save.b.v1"][head.slot])).data;
+        return { runId: data.run.runId, player: data.run.game.player, time: data.run.game.time };
+      });
       const closed = page.waitForEvent("close");
       await page
         .evaluate(() => window.desktop.quit())
@@ -173,6 +190,45 @@ try {
       assert.equal(exitCode, 0);
     },
   );
+  await check("a second portable extraction resumes the same life from its isolated disk profile", async () => {
+    await browser.close().catch(() => {}); browser = null;
+    await rm(path.join(profile, "DevToolsActivePort"), { force: true });
+    exitCode = null; launchError = null; child = spawnPortable();
+    const deadline = Date.now() + 55000;
+    while (!browser && Date.now() < deadline) {
+      if (launchError) throw launchError;
+      try {
+        const port = (await readFile(path.join(profile, "DevToolsActivePort"), "utf8")).split("\n")[0];
+        if (port) browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`, { timeout: 2000 });
+      } catch {}
+      if (!browser) await sleep(250);
+    }
+    assert.ok(browser, "Restarted portable child did not expose its debugging endpoint");
+    const context = browser.contexts()[0];
+    page = context.pages()[0] || await context.waitForEvent("page");
+    page.setDefaultTimeout(20000);
+    page.on("pageerror", (e) => errors.push(e.message));
+    page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+    page.on("request", (r) => { if (/^https?:/i.test(r.url())) external.push(r.url()); });
+    await page.bringToFront();
+    await page.locator('[data-action="continue"]').click();
+    await page.locator('#overlay [data-action="resume"]').waitFor();
+    assert.match(await page.locator("#pause-save-status").textContent(), /RESTORED/);
+    const actual = await page.evaluate(() => {
+      const head = JSON.parse(localStorage.getItem("jurassic-domination.save.head.v1"));
+      const data = JSON.parse(localStorage.getItem(["jurassic-domination.save.a.v1", "jurassic-domination.save.b.v1"][head.slot])).data;
+      return { runId: data.run.runId, player: data.run.game.player, time: data.run.game.time };
+    });
+    assert.deepEqual(actual, expectedCheckpoint);
+    assert.deepEqual(errors, []); assert.deepEqual(external, []);
+    await page.screenshot({ path: "artifacts/portable-restored-life.png" });
+    const closed = page.waitForEvent("close");
+    await page.evaluate(() => window.desktop.quit()).catch((e) => { if (!/closed|destroyed/i.test(e.message)) throw e; });
+    await closed;
+    const exitDeadline = Date.now() + 12000;
+    while (exitCode === null && Date.now() < exitDeadline) await sleep(200);
+    assert.equal(exitCode, 0);
+  });
   await writeFile(
     "artifacts/portable-qa-report.json",
     JSON.stringify(

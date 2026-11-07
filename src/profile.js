@@ -1,6 +1,9 @@
 import { SKINS, PERMANENT_MODIFIERS } from "./content.js";
 import { normalizeCollection, checkAchievements } from "./collections.js";
+import { normalizeBindings } from "./controls.js";
+import { newAncestry, normalizeAncestry, recordAncestryRun } from "./ancestry.js";
 export const PROFILE_KEY = "jurassic-domination.profile.v1";
+export const PROFILE_VERSION = 4;
 export const SETTINGS_KEY = "jurassic-domination.settings.v1";
 export const DEFAULT_SETTINGS = {
   master: 0.7,
@@ -10,11 +13,15 @@ export const DEFAULT_SETTINGS = {
   shake: true,
   showDamage: true,
   fullscreen: false,
+  controls: normalizeBindings(),
+  uiScale: 1,
+  reducedMotion: false,
+  gamepad: true,
 };
 export const UPGRADE_IDS = ["vitality", "instinct", "metabolism"];
 export function newProfile() {
   return {
-    version: 3,
+    version: PROFILE_VERSION,
     dna: 0,
     bestScore: 0,
     runs: 0,
@@ -28,7 +35,10 @@ export function newProfile() {
     regions: [],
     upgrades: { vitality: 0, instinct: 0, metabolism: 0 },
     history: [],
+    completedRuns: [],
+    activeFindClaims: [],
     achievements: [],
+    ancestry: newAncestry(),
     ...normalizeCollection(),
   };
 }
@@ -46,13 +56,13 @@ export function normalizeProfile(raw) {
         (id) => typeof id === "string" && id.length < 80,
       ),
     ),
-  ].slice(0, 100);
+  ].slice(0, 512);
   p.unlocked = Array.isArray(raw.unlocked)
     ? [
         ...new Set(
           raw.unlocked.filter((s) => typeof s === "string" && s.length < 80),
         ),
-      ].slice(0, 100)
+      ].slice(0, 512)
     : [];
   p.achievements = Array.isArray(raw.achievements)
     ? [
@@ -102,15 +112,28 @@ export function normalizeProfile(raw) {
           date: typeof r.date === "string" ? r.date : "",
         }))
     : [];
+  p.completedRuns = [...new Set((Array.isArray(raw.completedRuns) ? raw.completedRuns : []).filter(
+    (id) => typeof id === "string" && id.length > 0 && id.length <= 160,
+  ))].slice(-8192);
+  // This ledger lasts for one living expedition. SaveStore rejects oversized
+  // imports before normalization; never silently evict a valid live receipt.
+  p.activeFindClaims = [...new Set((Array.isArray(raw.activeFindClaims) ? raw.activeFindClaims : []).filter(
+    (id) => typeof id === "string" && id.length > 0 && id.length <= 160,
+  ))];
+  p.ancestry = normalizeAncestry(raw.ancestry);
   return p;
 }
 export function normalizeSettings(raw) {
-  const s = { ...DEFAULT_SETTINGS };
+  const s = { ...DEFAULT_SETTINGS, controls: normalizeBindings() };
   if (!raw || typeof raw !== "object") return s;
   for (const k of ["master", "music", "sfx"])
     if (Number.isFinite(raw[k])) s[k] = Math.max(0, Math.min(1, raw[k]));
   if (["low", "medium", "high"].includes(raw.quality)) s.quality = raw.quality;
   for (const k of ["shake", "showDamage"])
+    if (typeof raw[k] === "boolean") s[k] = raw[k];
+  s.controls = normalizeBindings(raw.controls);
+  if (Number.isFinite(raw.uiScale)) s.uiScale = Math.max(0.85, Math.min(1.25, raw.uiScale));
+  for (const k of ["reducedMotion", "gamepad"])
     if (typeof raw[k] === "boolean") s[k] = raw[k];
   return s;
 }
@@ -174,6 +197,14 @@ export function purchaseUpgrade(profile, id) {
   return true;
 }
 export function recordRun(profile, results, date = new Date().toISOString()) {
+  // A durable run identity makes a repeated terminal event idempotent after
+  // a checkpoint recovery. Legacy callers without an id keep their old API.
+  if (typeof results.runId === "string" && results.runId.length > 0 && results.runId.length <= 160) {
+    profile.completedRuns ||= [];
+    if (profile.completedRuns.includes(results.runId)) return [];
+    profile.completedRuns.push(results.runId);
+    profile.completedRuns = profile.completedRuns.slice(-8192);
+  }
   profile.runs++;
   profile.bestScore = Math.max(profile.bestScore, integer(results.score));
   profile.totalKills += integer(results.kills);
@@ -185,6 +216,7 @@ export function recordRun(profile, results, date = new Date().toISOString()) {
     profile.unlocked.push(results.speciesId);
   profile.history.unshift({ ...results, date });
   profile.history = profile.history.slice(0, 10);
+  recordAncestryRun(profile, results, date);
   return checkAchievements(profile, {
     tier: results.tier,
     time: results.time,

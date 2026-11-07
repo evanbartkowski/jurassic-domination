@@ -324,3 +324,80 @@ test("creature soundscape stops movement effects when paused and throttles dense
   assert.equal(engine.stepClock, stepClock);
   engine.dispose();
 });
+
+test("food, marine bites and rarity stingers retain their event context and sound different", async (t) => {
+  installContext(t);
+  const engine = new AudioEngine();
+  await engine.unlock();
+  function signature(event) {
+    engine.context.currentTime += 2;
+    const before = engine.context.created.length;
+    engine.creatureEvent(event);
+    return engine.context.created.slice(before)
+      .filter((node) => node.started.length)
+      .map((node) => node.frequency.changes.map((change) => change.value));
+  }
+  const plant = signature({ type: "eat", food: "plant" });
+  const meat = signature({ type: "eat", food: "meat" });
+  const fruit = signature({ type: "eat", food: "lineage-fruit" });
+  assert.notDeepEqual(plant, meat);
+  assert.notDeepEqual(plant, fruit);
+  assert.ok(signature({ type: "water-bite" }).length >= 4);
+  const common = signature({ type: "evolve", rarity: "regular" });
+  const legendary = signature({ type: "evolve", rarity: "legendary" });
+  assert.ok(legendary.length > common.length, "legendary evolution has an additional harmonic fanfare");
+  engine.dispose();
+});
+
+test("audio storms obey separate effect and total voice budgets and return capacity after release", async (t) => {
+  installContext(t);
+  const engine = new AudioEngine();
+  await engine.unlock();
+  for (let i = 0; i < 300; i++)
+    engine.tone(200, 0, 1, 0.1, "sine", null, engine.sfx);
+  assert.equal(engine.effectVoices, 44);
+  assert.equal(engine.nodes.size, 44);
+  for (let i = 0; i < 300; i++) engine.tone(220, 0, 1);
+  assert.equal(engine.nodes.size, 112);
+  const source = engine.nodes.values().next().value;
+  const before = engine.context.created.length;
+  engine.tone(300, 0, 1);
+  assert.equal(engine.context.created.length, before);
+  source.onended();
+  source.onended();
+  assert.equal(engine.effectVoices, 43, "duplicate completion cannot release capacity twice");
+  engine.tone(300, 0, 1, 0.1, "sine", null, engine.sfx);
+  assert.equal(engine.effectVoices, 44);
+  assert.equal(engine.nodes.size, 112);
+  const context = engine.context;
+  engine.dispose();
+  assert.equal(engine.effectVoices, 0);
+  assert.equal(engine.cleanups.size, 0);
+  assert.ok(context.created.every((node) => node.disconnected), "sources, envelopes, filters and output buses all disconnect");
+});
+
+test("regional scores have distinct melodies, slow pad envelopes, and quieter pause arrangements", () => {
+  const engine = new AudioEngine();
+  const tones = [], textures = [];
+  engine.tone = (...args) => tones.push(args);
+  engine.rustle = (...args) => textures.push(args);
+  engine.mode = "playing";
+  function render(region, mode = "playing") {
+    engine.biomeTheme = region;
+    engine.mode = mode;
+    tones.length = 0;
+    textures.length = 0;
+    for (let beat = 0; beat < 16; beat++) engine.scheduleBeat(beat * 0.4, beat);
+    return { tones: structuredClone(tones), textures: structuredClone(textures) };
+  }
+  const fernwood = render("fernwood");
+  const frost = render("frost");
+  const volcano = render("volcano");
+  assert.notDeepEqual(fernwood.tones, frost.tones);
+  assert.notDeepEqual(frost.tones, volcano.tones);
+  assert.ok(fernwood.tones.some((tone) => tone[7] === "pad"));
+  const paused = render("fernwood", "paused");
+  assert.equal(paused.textures.length, 0);
+  assert.ok(paused.tones.length < fernwood.tones.length);
+  assert.ok(paused.tones.every((tone) => tone[7] === "pad"));
+});

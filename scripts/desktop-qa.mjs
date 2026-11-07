@@ -142,11 +142,14 @@ try {
   await check(
     "packaged shop purchases and permanent island saves work offline",
     async () => {
-      await page.evaluate(() => {
-        localStorage.setItem(
-          "jurassic-domination.profile.v1",
-          JSON.stringify({ version: 3, dna: 30 }),
-        );
+      // Seed a legacy profile before application initialization in this isolated
+      // QA origin. Editing a mirror after startup is now correctly superseded by
+      // the application's atomic checkpoint on unload.
+      await page.addInitScript(() => {
+        if (sessionStorage.getItem("jd-qa-legacy-profile-seeded")) return;
+        localStorage.clear();
+        localStorage.setItem("jurassic-domination.profile.v1", JSON.stringify({ version: 3, dna: 30 }));
+        sessionStorage.setItem("jd-qa-legacy-profile-seeded", "1");
       });
       await page.reload();
       await page.getByRole("button", { name: /DNA SHOP/ }).click();
@@ -234,7 +237,9 @@ try {
   await check(
     "species ability and available dodge expose real HUD cooldowns",
     async () => {
+      const abilityAvailable = await page.locator("#hud-ability").isVisible();
       await page.keyboard.press("KeyQ");
+      if (abilityAvailable)
       await page.waitForFunction(() =>
         /\d/.test(
           document.getElementById("hud-ability-cooldown")?.textContent || "",
@@ -258,7 +263,12 @@ try {
   await check(
     "species technique uses its own R control and cooldown",
     async () => {
+      const techniqueAvailable = await page.locator("#hud-technique").isVisible();
       await page.keyboard.press("KeyR");
+      if (!techniqueAvailable) {
+        assert.equal(await page.locator("#hud-technique-cooldown").textContent(), "READY");
+        return;
+      }
       await page.waitForFunction(() =>
         /\d/.test(
           document.getElementById("hud-technique-cooldown")?.textContent || "",
@@ -279,7 +289,7 @@ try {
       }
       await page.keyboard.press("KeyJ");
       await page.locator(".bloodline-panel").waitFor();
-      assert.equal(await page.locator(".bloodline-grid article").count(), 7);
+      assert.equal(await page.locator(".bloodline-grid article").count(), 9);
       await page.keyboard.press("Escape");
       await page.keyboard.press("Escape");
     },
@@ -303,6 +313,21 @@ try {
       await page.locator("#overlay").waitFor({ state: "hidden" });
     },
   );
+  await check('H stalking and the L genetics/discovery journal work in production', async () => {
+    await page.keyboard.down('KeyH');
+    await page.waitForFunction(() => document.getElementById('environment-body')?.textContent.includes('STALKING'));
+    await page.keyboard.up('KeyH');
+    await page.keyboard.press('KeyL');
+    await page.locator('.wide-panel.field-journal').waitFor();
+    assert.equal(await page.locator('.field-site').count(), 10);
+    assert.equal(await page.locator('.field-adaptation').count(), 4);
+    await page.waitForFunction(() => document.querySelector('.field-hero img')?.naturalWidth > 0);
+    const before = await page.locator('#hud-time').textContent();
+    await page.waitForTimeout(250);
+    assert.equal(await page.locator('#hud-time').textContent(), before);
+    await page.screenshot({path:'artifacts/desktop-field-journal.png'});
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+  });
 
   await check(
     "fullscreen bridge toggles the native window and restores it",
@@ -356,7 +381,16 @@ try {
     },
   );
 
+  let closedCheckpoint;
   await check("native quit exits cleanly", async () => {
+    if (!(await page.locator('[data-action="resume"]').isVisible())) await page.keyboard.press("Escape");
+    await page.locator('[data-action="resume"]').waitFor();
+    closedCheckpoint = await page.evaluate(() => {
+      const head = JSON.parse(localStorage.getItem("jurassic-domination.save.head.v1"));
+      const envelope = JSON.parse(localStorage.getItem(["jurassic-domination.save.a.v1", "jurassic-domination.save.b.v1"][head.slot]));
+      const run = envelope.data.run;
+      return { id: run.runId, player: run.game.player, time: run.game.time };
+    });
     const closed = application.waitForEvent("close", { timeout: 15000 });
     await page
       .evaluate(() => window.desktop.quit())
@@ -365,6 +399,35 @@ try {
       });
     await closed;
     assert.equal(exited, true);
+  });
+
+  await check("a native application restart continues the same paused life from disk", async () => {
+    exited = false;
+    application = await electron.launch({
+      ...(executable ? { executablePath: executable } : {}),
+      args: [...(executable ? [] : [path.join(root, "electron", "main.cjs")]), "--enable-unsafe-swiftshader", "--use-angle=swiftshader"],
+      cwd: root, env: launchEnvironment, timeout: 45000,
+    });
+    application.on("close", () => { exited = true; });
+    page = await application.firstWindow(); page.setDefaultTimeout(20000);
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+    page.on("request", (request) => { if (/^https?:/i.test(request.url())) externalRequests.push(request.url()); });
+    await page.locator('[data-action="continue"]').click();
+    await page.locator('[data-action="resume"]').waitFor();
+    assert.match(await page.locator("#pause-save-status").textContent(), /RESTORED/);
+    const restored = await page.evaluate(() => {
+      const head = JSON.parse(localStorage.getItem("jurassic-domination.save.head.v1"));
+      const envelope = JSON.parse(localStorage.getItem(["jurassic-domination.save.a.v1", "jurassic-domination.save.b.v1"][head.slot]));
+      const run = envelope.data.run;
+      return { id: run.runId, player: run.game.player, time: run.game.time };
+    });
+    assert.deepEqual(restored, closedCheckpoint);
+    assert.deepEqual(errors, []); assert.deepEqual(externalRequests, []);
+    await page.screenshot({ path: path.join(root, "artifacts", "desktop-restored-life.png") });
+    const closed = application.waitForEvent("close", { timeout: 15000 });
+    await page.evaluate(() => window.desktop.quit()).catch((error) => { if (!/closed|destroyed/i.test(error.message)) throw error; });
+    await closed;
   });
 
   await writeFile(

@@ -1,4 +1,5 @@
 import { EXTRA_SPECIES, ABILITIES, TECHNIQUES } from './content.js';
+import { speciesDiet } from './forage.js';
 // Evolution is an intentionally fantastical food-chain, not a paleontology claim.
 export const TIERS = ['Hatchling', 'Hunter', 'Predator', 'Dominant', 'Apex', 'Titan', 'Mythic', 'Primordial'];
 
@@ -45,21 +46,27 @@ export const SPECIES = [
 
   species('giganotosaurus', 'Giganotosaurus', 5, 'rex', 0x9a665e, 0xf0c698, 590, 105, 9.7, 2.64, 'Giant’s Roar', 'roar', 'A southern giant that looks even tyrants in the eye.'),
   species('carcharodontosaurus', 'Carcharodontosaurus', 5, 'rex', 0xb17d4c, 0xe9c79b, 570, 112, 9.9, 2.6, 'Shark-Tooth Charge', 'charge', 'Serrated teeth turn every attack into a devastating wound.'),
-  species('brachiosaurus', 'Brachiosaurus', 5, 'longneck', 0x73987b, 0xe1d6ac, 810, 87, 8.1, 2.9, 'Titan Stomp', 'stomp', 'A walking canopy. The earth trembles beneath its feet.'),
-  species('dreadnoughtus', 'Dreadnoughtus', 5, 'longneck', 0x9b895c, 0xd9cfa5, 900, 83, 7.8, 3.0, 'Dreadquake', 'stomp', 'Fearing nothing, this colossus redraws the food chain.'),
+  species('brachiosaurus', 'Brachiosaurus', 5, 'longneck', 0x73987b, 0xe1d6ac, 810, 87, 8.1, 4.2, 'Titan Stomp', 'stomp', 'A walking canopy. The earth trembles beneath its feet.'),
+  species('dreadnoughtus', 'Dreadnoughtus', 5, 'longneck', 0x9b895c, 0xd9cfa5, 900, 83, 7.8, 4.4, 'Dreadquake', 'stomp', 'Fearing nothing, this colossus redraws the food chain.'),
 
-  species('wyvern', 'Ember Wyvern', 6, 'dragon', 0xaa5140, 0xf3bb63, 870, 146, 10.2, 3.1, 'Ember Breath', 'flame', 'Evolution breaks its ancient laws. Fire takes flight.'),
-  species('basilisk', 'Jade Basilisk', 6, 'dragon', 0x62a58c, 0xd5e78f, 920, 133, 10.5, 3.0, 'Basilisk Venom', 'venom', 'Its venom carries the memory of a forgotten world.'),
-  species('behemoth', 'Obsidian Behemoth', 6, 'quad', 0x696a82, 0xf0a56d, 1240, 120, 8.3, 3.25, 'Worldbreaker', 'stomp', 'A mountain of armor born from the island’s buried heart.'),
-  species('quetzalcoatl', 'Quetzalcoatl', 6, 'dragon', 0x55a89b, 0xf1cd72, 850, 142, 11.0, 3.1, 'Serpent Storm', 'roar', 'The feathered serpent descends on a world of predators.'),
+  species('wyvern', 'Ember Wyvern', 6, 'dragon', 0xaa5140, 0xf3bb63, 870, 146, 10.2, 3.4, 'Ember Breath', 'flame', 'Evolution breaks its ancient laws. Fire takes flight.'),
+  species('basilisk', 'Jade Basilisk', 6, 'dragon', 0x62a58c, 0xd5e78f, 920, 133, 10.5, 3.2, 'Basilisk Venom', 'venom', 'Its venom carries the memory of a forgotten world.'),
+  species('behemoth', 'Obsidian Behemoth', 6, 'quad', 0x696a82, 0xf0a56d, 1240, 120, 8.3, 4.6, 'Worldbreaker', 'stomp', 'A mountain of armor born from the island’s buried heart.'),
+  species('quetzalcoatl', 'Quetzalcoatl', 6, 'dragon', 0x55a89b, 0xf1cd72, 850, 142, 11.0, 3.4, 'Serpent Storm', 'roar', 'The feathered serpent descends on a world of predators.'),
 
-  species('elder-dragon', 'Elder Dragon', 7, 'dragon', 0x754b92, 0xf0b76a, 1360, 192, 10.2, 3.7, 'Primordial Flame', 'flame', 'The old fire returns. Every roar is an extinction event.'),
-  species('world-serpent', 'World Serpent', 7, 'dragon', 0x4b9395, 0xc5f1b3, 1460, 184, 10.6, 3.8, 'Endless Venom', 'venom', 'An impossible serpent whose hunger has no horizon.'),
-  species('primordial-titan', 'Primordial Titan', 7, 'longneck', 0x8c828f, 0xf2cd87, 1900, 162, 8.5, 4.0, 'Continental Rupture', 'stomp', 'More landscape than creature, older than the island itself.'),
-  species('phoenix', 'Ashen Phoenix', 7, 'bird', 0xd07646, 0xffd68b, 1230, 202, 11.6, 3.55, 'Solar Inferno', 'flame', 'The last ember refuses extinction and becomes a sun.'),
+  species('elder-dragon', 'Elder Dragon', 7, 'dragon', 0x754b92, 0xf0b76a, 1360, 192, 10.2, 5.0, 'Primordial Flame', 'flame', 'The old fire returns. Every roar is an extinction event.'),
+  species('world-serpent', 'World Serpent', 7, 'dragon', 0x4b9395, 0xc5f1b3, 1460, 184, 10.6, 5.2, 'Endless Venom', 'venom', 'An impossible serpent whose hunger has no horizon.'),
+  species('primordial-titan', 'Primordial Titan', 7, 'longneck', 0x8c828f, 0xf2cd87, 1900, 162, 8.5, 5.8, 'Continental Rupture', 'stomp', 'More landscape than creature, older than the island itself.'),
+  species('phoenix', 'Ashen Phoenix', 7, 'bird', 0xd07646, 0xffd68b, 1230, 202, 11.6, 4.2, 'Solar Inferno', 'flame', 'The last ember refuses extinction and becomes a sun.'),
 ];
 
 SPECIES.push(...EXTRA_SPECIES);
+// Two earned marine anatomies. These are excluded from ordinary offers and
+// regional random spawning; their discoveries are deliberate exploration paths.
+SPECIES.push(
+  { ...species('tideweaver', 'Tideweaver Plesiosaur', 2, 'marine', 0x4d929d, 0xc1e7d3, 170, 33, 10.4, 1.42, 'Brine Ambush', 'ambush', 'A long-necked marine hunter with four rowing flippers. Follow the drowned carvings and learn to survive deep water.'), rarity:'rare', bloodline:'tidal-memory', technique:'camouflage', anatomy:'plesiosaur' },
+  { ...species('abyssal-kronosaur', 'Abyssal Kronosaur', 4, 'marine', 0x3c6476, 0x9cdbd8, 380, 70, 10.0, 3.6, 'Abyssal Rend', 'blood', 'An immense short-necked marine predator. Its heavy skull, broad paddles and scarred dorsal ridge remember a drowned dynasty.'), rarity:'legendary', bloodline:'abyssal-dynasty', technique:'cleave', anatomy:'pliosaur' },
+);
 const variants=[
  ['verdant-psittacosaurus','Verdant Psittacosaurus','psittacosaurus',1,'rare','verdant-seed',0x4a9e6b,'heal','Verdant Bloom'],
  ['verdant-iguanodon','Verdant Iguanodon','iguanodon',2,'epic','verdant-guard',0x398866,'heal','Elderroot Mending'],
@@ -73,7 +80,7 @@ for(const [id,name,base,tier,rarity,bloodline,color,abilityType,ability] of vari
 const rareForms=new Set(['deinonychus','baryonyx','suchomimus','allosaurus','therizinosaurus','sarcosuchus','pachyrhinosaurus','argentinosaurus','unicorn','gryphon','basilisk','quetzalcoatl','titanoboa','thunderbird']);
 const epicForms=new Set(['wyvern','behemoth','solar-unicorn','frost-dragon','phoenix','elder-dragon']);
 const legendaryForms=new Set(['world-serpent','primordial-titan']);
-const techniquesByBody={raptor:'sidestep',rex:'cleave',quad:'guard',longneck:'quake',dragon:'wingstorm',bird:'feather',equine:'cleanse',serpent:'coil',croc:'camouflage',gryphon:'dive'};
+const techniquesByBody={raptor:'sidestep',rex:'cleave',quad:'guard',longneck:'quake',dragon:'wingstorm',bird:'feather',equine:'cleanse',serpent:'coil',croc:'camouflage',gryphon:'dive',marine:'camouflage'};
 for(const s of SPECIES){
   s.rarity ||= legendaryForms.has(s.id)?"legendary":epicForms.has(s.id)?"epic":rareForms.has(s.id)?"rare":"regular";
   if(s.id==='world-serpent'||s.id==='basilisk')s.body='serpent';
@@ -83,10 +90,32 @@ for(const s of SPECIES){
   if(s.id==='carnotaurus'){s.abilityType='flame';s.ability='Ember Breath';s.description+=' A volatile evolution lets this hunter breathe fire.';}
   if(s.id==='spinosaurus'){s.abilityType='lightning';s.ability='Stormsail Arc';s.description+=' Its charged sail channels a supernatural electrical strike.';}
   s.abilityDescription=ABILITIES[s.abilityType].description;
-  s.temperament=['quad','longneck','equine'].includes(s.body)?'territorial':['croc','serpent'].includes(s.body)?'ambusher':s.tier<2?'skittish':'hunter';
+  s.temperament=['quad','longneck','equine'].includes(s.body)?'territorial':['croc','serpent','marine'].includes(s.body)?'ambusher':s.tier<2?'skittish':'hunter';
   if(/raptor|deinonychus|troodon|albertosaurus|mapusaurus|fenrir/.test(s.id))s.temperament='pack';
   s.habitat=s.tier===0?'Fernwood Basin':s.tier<3?'Grasslands and wetlands':s.tier<5?'Ancient forests, deserts and frostlands':s.tier===5?'Calderas and elder groves':s.tier===6?'Celestial gardens and dragon peaks':'Primordial frontier';
   s.passive=s.body==='quad'?'Armored hide: 12% damage resistance.':s.body==='longneck'?'Titanic endurance: food heals more.':s.body==='equine'?'Sacred metabolism: faster natural healing.':s.body==='serpent'?'Toxic fangs: bites can poison.':s.body==='croc'?'Ambush predator: stronger first strike.':s.body==='raptor'?'Combo hunter: consecutive bites grow stronger.':s.body==='bird'?'Light footed: dodges recover sooner.':'Apex resolve: reduced stagger and powerful techniques.';
+}
+// Clear tier silhouettes and a stronger reward for each step up the food chain.
+const sizeBands = [[.70,.83],[1.10,1.24],[1.48,1.67],[1.98,2.23],[2.56,2.89],[3.18,3.57],[3.92,4.40],[4.82,5.42]];
+const compactForms = new Set(['deinonychus','basilisk','unicorn']);
+for (let tier=0;tier<8;tier++) {
+  const forms=SPECIES.filter(s=>s.tier===tier), min=Math.min(...forms.map(s=>s.size)), max=Math.max(...forms.map(s=>s.size));
+  for (const s of forms) {
+    const [small,large]=sizeBands[tier], variation=max>min?(s.size-min)/(max-min):.5;
+    s.size=Number((small+(large-small)*variation).toFixed(3));
+    s.compactEvolution=compactForms.has(s.id) && s.rarity==='rare';
+    if (s.compactEvolution) s.size=Number((s.size*.74).toFixed(3));
+    s.hp=Math.round(s.hp*(1+tier*.06));
+    s.damage=Math.round(s.damage*(1+tier*.065));
+    const identity=[...s.id].reduce((n,c)=>n+c.charCodeAt(0),0);
+    if ((tier===0 && identity%3!==0) || (tier===1 && identity%4===0)) {
+      s.hp=Math.round(s.hp*1.18);
+      s.damage=Math.round(s.damage*1.22);
+      s.passive+=' Instinctive survivor: stronger natural health and bites in place of active skills.';
+    }
+    s.diet=speciesDiet(s);
+    if (s.body === 'marine') { s.habitat='Deep pools, tidal archives and drowned ruins'; s.passive='Aquatic anatomy: faster swimming, strong marine resistance and quiet diving; slower on dry land.'; }
+  }
 }
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 

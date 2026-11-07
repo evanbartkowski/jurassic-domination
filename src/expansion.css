@@ -378,10 +378,14 @@
 .technique-key {
   order: 2;
 }
-.technique-key > span {
+.technique-key > span,
+.roar-key > span {
   font-size: 8px;
   line-height: 1.6;
   margin: 11px 0 4px;
+}
+.roar-key {
+  order: 4;
 }
 .ability-key {
   width: 68px;

@@ -20,8 +20,9 @@ Steam App ID. Those features are future integration work, not existing promises.
 - Test on actual minimum-spec and recommended-spec Windows hardware, including
   integrated graphics. Establish requirements from measurements, not guesses.
 - Review color contrast, readable text, keyboard navigation, motion settings,
-  volume controls, and tutorial clarity. Controller support, remappable controls,
-  localization, and broader accessibility testing are worthwhile extensions.
+  volume controls, and tutorial clarity. Validate remapped controls, UI scaling,
+  reduced motion and the standard-controller gameplay adapter on physical devices;
+  controller menu navigation, localization and broader accessibility work remain.
 - Test saves across application updates and corrupted storage. Back up existing
   profiles before changing storage formats.
 

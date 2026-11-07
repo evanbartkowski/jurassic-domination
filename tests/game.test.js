@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { Game, WORLD_RADIUS } from "../src/game.js";
 import { SPECIES, SPECIES_BY_ID, MUTATIONS } from "../src/data.js";
 import { ABILITIES } from "../src/content.js";
+import { canEatFood } from "../src/forage.js";
 
 function emptyGame(options = {}) {
   const game = new Game({ seed: 42, ...options });
@@ -343,7 +344,7 @@ function playHunter(seed, seconds = 65) {
       .filter((e) => SPECIES_BY_ID[e.speciesId].tier <= game.tier && !e.boss)
       .sort((a, b) => dist(p, a) - dist(p, b))[0];
     const food = game.foods
-      .filter((f) => f.type !== "plant" || dist(p, f) < 5)
+      .filter((f) => canEatFood(game.species,f) && (f.type !== "plant" || dist(p, f) < 5))
       .sort((a, b) => dist(p, a) - dist(p, b))[0];
     const target =
       food && (!prey || dist(p, food) < dist(p, prey) + 3) ? food : prey;
@@ -415,7 +416,7 @@ test("nearby vegetation supports survival without granting instant evolution", (
     for (let step = 0; step < 200; step++) {
       const p = game.player;
       const target = game.foods
-        .filter((f) => f.type === "plant")
+        .filter((f) => f.type === "plant" && canEatFood(game.species,f))
         .sort(
           (a, b) =>
             Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y),

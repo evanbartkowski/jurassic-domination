@@ -3,9 +3,13 @@ import {
   resolveObstacles,
   updateWildlife,
 } from "./wilderness.js";
-import { feedEntity, growthFromFood } from "./progression.js";
-import { attackProfile } from "./combat.js";
+import { feedEntity, growthFromFood, creatureKit } from "./progression.js";
+import { canEatFood, speciesDiet, plantDefinition } from "./forage.js";
+import { attackProfile, firstSolidHit, segmentCircleHit, hasLineOfSight, attackLineClear, sweepMove } from "./combat.js";
 import { SPECIES, SPECIES_BY_ID } from "./data.js";
+import { initializeSenses, updateSenses, perceivePlayer } from "./senses.js";
+import { createNest, initializeLifeEntity, matureEntity, hatchEgg, updateLifeCycle, notifyNestTheft } from "./life-cycle.js";
+import { conditionsAt } from "./world-events.js";
 import { rollCollectionItem } from "./collection-data.js";
 import {
   ABILITIES,
@@ -57,6 +61,9 @@ export function initializeEcosystem(
   game.discoveredRegions = new Set();
   game.earnedDNA = 0;
   game.projectiles = [];
+  game.nests = [];
+  game._nextSocialAt = 0;
+  initializeSenses(game);
   game.lairs = LAIRS.map((l) => ({
     ...l,
     entityId: null,
@@ -69,11 +76,15 @@ export function initializeEcosystem(
     vx: 0,
     vy: 0,
     techniqueCooldown: 0,
+    roarCooldown: 0,
     guard: 0,
     empowered: 0,
     camouflage: 0,
     chilled: 0,
     poisoned: 0,
+    bleeding: 0,
+    burning: 0,
+    sleeping: 0,
     combo: 0,
     comboTime: 0,
   });
@@ -89,6 +100,9 @@ export function initializeEcosystem(
 }
 
 export const Ecosystem = {
+  onFoodConsumed(food, consumer = this.player) {
+    notifyNestTheft(this, food, consumer);
+  },
   hasBuff(id) {
     return (this.buffs[id] || 0) > 0;
   },
@@ -108,8 +122,8 @@ export const Ecosystem = {
         },
       );
     }
-    this.spawnFood("plant", 3, 1, 2, { tier: 0, homeChunk: "0,0" });
-    this.spawnFood("plant", -3, -2, 2, { tier: 0, homeChunk: "-1,-1" });
+    this.spawnFood("plant", 3, 1, 2, { tier: 0, plantKind: "berry", homeChunk: "0,0" });
+    this.spawnFood("plant", -3, -2, 2, { tier: 0, plantKind: "fig", homeChunk: "-1,-1" });
     this.spawnFood("egg", 14, -6, 14, {
       tier: 0,
       speciesId: "coelophysis",
@@ -150,7 +164,9 @@ export const Ecosystem = {
             (e) => e.homeChunk === old && !e.boss,
           ),
           foods = this.foods.filter((f) => f.homeChunk === old);
-        this.chunks.set(old, { entities, foods, savedAt: this.time });
+        const nests = this.nests.filter((nest) => nest.homeChunk === old);
+        this.chunks.set(old, { entities, foods, nests, savedAt: this.time });
+        this.nests = this.nests.filter((nest) => nest.homeChunk !== old);
         this.entities = this.entities.filter(
           (e) => e.homeChunk !== old || e.boss,
         );
@@ -165,6 +181,7 @@ export const Ecosystem = {
           for (const e of saved.entities) if (e.juvenile) e.age += elapsed;
           this.entities.push(...saved.entities);
           this.foods.push(...saved.foods);
+          this.nests.push(...(saved.nests || []));
           this.chunks.delete(next);
         } else this._generateChunk(next);
       }
@@ -173,6 +190,12 @@ export const Ecosystem = {
       const [x, y] = key.split(",").map(Number);
       return worldFeatures(this.seed, x, y);
     });
+    // Streaming may also run at a paused checkpoint boundary. Retire departed
+    // pools here without advancing wildlife or applying environmental damage.
+    if (this.marineState) {
+      const pools = new Set(this.worldFeatures.filter((feature) => feature.type === "water").map((feature) => feature.id));
+      for (const id of this.marineState.keys()) if (!pools.has(id)) this.marineState.delete(id);
+    }
   },
   _generateChunk(key) {
     const [cx, cy] = key.split(",").map(Number),
@@ -204,14 +227,38 @@ export const Ecosystem = {
               : candidates;
       const pool = habitat.length ? habitat : candidates,
         s = pool[Math.floor(random() * pool.length)];
-      const e = this.spawnEntity(s.id, p.x, p.y, { homeChunk: key });
+      const spawnHash = (Math.imul((this._nextId || 1), 0x45d9f3b) >>> 0) / 4294967296;
+      const isJuvenile = i >= 2 && spawnHash > 0.62 && ["quad", "longneck", "raptor", "bird", "equine", "croc"].includes(s.body);
+      const e = this.spawnEntity(s.id, p.x, p.y, {
+        homeChunk: key,
+        juvenile: isJuvenile,
+        passive: isJuvenile ? true : undefined,
+      });
+      const hash = (Math.imul(e.id, 0x45d9f3b) >>> 0) / 4294967296;
+      if (isJuvenile) {
+        e.groupRole = "juvenile";
+        e.intent = "follow";
+      } else if (
+        ["fernwood", "redwood", "grove", "fen"].includes(region.id) &&
+        (["raptor", "bird"].includes(s.body) || s.behavior === "ambusher") &&
+        hash < 0.45
+      ) {
+        e.inTree = true;
+        e.treeY = 4.8 + ((hash * 10) % 1.5);
+        e.treeDrop = 0;
+        e.intent = "ambush";
+      }
       if (s.temperament === "pack" && i < 3) {
         e.packId = `${key}:${i}`;
-        for (let j = 0; j < 2; j++)
-          this.spawnEntity(s.id, p.x + 4 + j * 2, p.y - 3 + j * 3, {
+        e.groupRole = "leader";
+        for (let j = 0; j < 2; j++) {
+          const flankDino = this.spawnEntity(s.id, p.x + 4 + j * 2, p.y - 3 + j * 3, {
             homeChunk: key,
             packId: e.packId,
+            groupRole: "flanker",
           });
+          if (flankDino) flankDino.roleSign = j % 2 === 0 ? 1 : -1;
+        }
       }
     }
     for (let i = 0; i < 18; i++) {
@@ -238,14 +285,13 @@ export const Ecosystem = {
       tier = biomeAt(nest.x, nest.y).tier,
       pool = SPECIES.filter((s) => s.tier === tier && !s.bloodline);
     if (Math.hypot(nest.x, nest.y) < WORLD_RADIUS - 12) {
-      const s = pool[Math.floor(random() * pool.length)];
-      for (let i = 0; i < 2; i++)
-        this.spawnFood("egg", nest.x + i * 1.5, nest.y, 14 + tier * 12, {
-          tier,
-          speciesId: s.id,
-          hatchAfter: 55 + random() * 65,
-          homeChunk: key,
-        });
+      const s = pool[Math.floor(random() * pool.length)],
+        // Nests belong to an animal already living here. Reusing a seeded
+        // resident avoids adding another adult to every streamed chunk.
+        resident = this.entities.filter((e) => e.homeChunk === key && !e.juvenile && !e.boss)
+          .sort((a, b) => (dist(a, nest) - (a.speciesId === s.id ? 40 : 0)) -
+            (dist(b, nest) - (b.speciesId === s.id ? 40 : 0)))[0];
+      if (resident) createNest(this, key, SPECIES_BY_ID[resident.speciesId], resident.x + 4, resident.y + 2, random);
     }
     if (random() < 0.42) {
       const p = point();
@@ -327,7 +373,7 @@ export const Ecosystem = {
         y = this.player.y + Math.sin(a) * r,
         tier = biomeAt(x, y).tier;
       if (Math.hypot(x, y) < WORLD_RADIUS - 5)
-        this.spawnFood("plant", x, y, 2 + tier * 4, {
+        if (this.random() < conditionsAt(this, x, y).foodGrowthMultiplier) this.spawnFood("plant", x, y, 2 + tier * 4, {
           tier,
           homeChunk: chunkKey(x, y),
         });
@@ -337,31 +383,34 @@ export const Ecosystem = {
     const p = this.player;
     this._streamWorld();
     updateWildlife(this, dt);
+    updateSenses(this, dt, input);
     for (const shot of this.projectiles) {
-      const steps = Math.max(1, Math.ceil((dt * shot.speed) / 1.2));
-      for (let i = 0; i < steps && !shot.hit; i++) {
-        shot.x += (Math.cos(shot.angle) * shot.speed * dt) / steps;
-        shot.y += (Math.sin(shot.angle) * shot.speed * dt) / steps;
-        if (shot.owner === "player") {
-          const target = this.entities.find(
-            (e) =>
-              dist(shot, e) <
-              shot.radius +
-                SPECIES_BY_ID[e.speciesId].size * 0.4 * (e.scaleFactor || 1),
-          );
-          if (target) {
-            this._hitEntity(target, shot.damage, 0.5);
-            shot.hit = true;
-          }
-          continue;
+      if (shot.hit || shot.life <= 0) { shot.life = 0; continue; }
+      const travel = Math.min(dt, Math.max(0, shot.life)),
+        start = { x: shot.x, y: shot.y },
+        end = { x: shot.x + Math.cos(shot.angle) * shot.speed * travel, y: shot.y + Math.sin(shot.angle) * shot.speed * travel },
+        block = firstSolidHit(start, end, this.worldFeatures || [], shot.radius, true);
+      let contact = block?.t ?? Infinity, target = null;
+      if (shot.owner === "player") {
+        for (const entity of this.entities) {
+          const t = segmentCircleHit(start, end, entity, shot.radius + SPECIES_BY_ID[entity.speciesId].size * 0.4 * (entity.scaleFactor || 1));
+          if (t !== null && t < contact) { contact = t; target = entity; }
         }
-        if (dist(shot, p) < shot.radius + this.effectiveSize * 0.35) {
-          this.damagePlayer(shot.damage, shot.cause);
-          if (shot.kind === "venom") p.poisoned = 5;
-          if (shot.kind === "frost" || shot.kind === "web") p.chilled = 3;
-          shot.hit = true;
-        }
+      } else {
+        const t = segmentCircleHit(start, end, p, shot.radius + this.effectiveSize * 0.35);
+        if (t !== null && t < contact) { contact = t; target = p; }
       }
+      const fraction = Number.isFinite(contact) ? contact : 1;
+      shot.x = start.x + (end.x - start.x) * fraction;
+      shot.y = start.y + (end.y - start.y) * fraction;
+      if (target && shot.owner === "player") this._hitEntity(target, shot.damage, 0.5);
+      else if (target && this.damagePlayer(shot.damage, shot.cause)) {
+        if (shot.kind === "venom") p.poisoned = 5;
+        if (shot.kind === "flame") p.burning = 4;
+        if (shot.kind === "blood") p.bleeding = 4;
+        if (shot.kind === "frost" || shot.kind === "web") p.chilled = 3;
+      }
+      if (Number.isFinite(contact)) shot.hit = true;
       shot.life -= dt;
     }
     this.projectiles = this.projectiles.filter((s) => s.life > 0 && !s.hit);
@@ -376,11 +425,15 @@ export const Ecosystem = {
     if (expired) this.refreshStats();
     for (const key of [
       "techniqueCooldown",
+      "roarCooldown",
       "guard",
       "empowered",
       "camouflage",
       "chilled",
       "poisoned",
+      "bleeding",
+      "burning",
+      "sleeping",
       "comboTime",
       "venomFang",
     ])
@@ -391,7 +444,21 @@ export const Ecosystem = {
     if (this.hasBuff("regen"))
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.025 * dt);
     if (p.poisoned > 0) this.damagePlayer(p.maxHp * 0.008 * dt, "Venom", true);
+    if (p.bleeding > 0) {
+      const pMoving = Math.hypot(input.dx || 0, input.dy || 0) > 0.15;
+      this.damagePlayer(p.maxHp * (pMoving ? 0.016 : 0.007) * dt, "Hemorrhage", true);
+    }
+    if (p.burning > 0) this.damagePlayer(p.maxHp * 0.012 * dt, "Flame", true);
+    if (p.sleeping > 0) {
+      input.dx = 0;
+      input.dy = 0;
+      input.attack = false;
+      input.ability = false;
+      input.technique = false;
+      input.roar = false;
+    }
     if (input.technique) this.technique();
+    if (input.roar) this.roar();
     if (Number.isInteger(input.skill)) this.useRunSkill(input.skill);
     const region = biomeAt(p.x, p.y);
     this.region = region;
@@ -408,12 +475,7 @@ export const Ecosystem = {
         if (this.entities.length >= 230) continue;
         this.foods = this.foods.filter((f) => f !== food);
         if (this.entities.length < 230) {
-          const e = this.spawnEntity(food.speciesId, food.x, food.y, {
-            juvenile: true,
-            homeChunk: food.homeChunk,
-            passive: true,
-          });
-          e.age = Math.max(0, food.age - food.hatchAfter);
+          hatchEgg(this, food);
         }
         this.emit("egg-hatch", {
           x: food.x,
@@ -430,6 +492,7 @@ export const Ecosystem = {
     }
     if (this.hasBuff("autoeat")) this.eat();
     this._updateLairs();
+    updateLifeCycle(this);
   },
   collectSpecial(food) {
     if (food.type === "dna")
@@ -464,7 +527,7 @@ export const Ecosystem = {
       if (!this.runSkills.some((s) => s.id === skill.id)) {
         this.runSkills.push({ id: skill.id, cooldown: 0 });
         this.emit("run-skill", {
-          text: `${skill.name} discovered! Press ${["F", "G", "C", "V", "B", "N"][this.runSkills.length - 1]} · lasts until death.`,
+          text: `${skill.name} discovered! Press ${["F", "G", "Z", "V", "B", "N"][this.runSkills.length - 1]} · lasts until death.`,
           skillId: skill.id,
         });
       } else {
@@ -510,9 +573,10 @@ export const Ecosystem = {
   technique() {
     const p = this.player,
       s = this.species,
-      tech = TECHNIQUES[s.technique];
+      tech = TECHNIQUES[this.kit.technique];
     if (
       this.state !== "playing" ||
+      !tech ||
       p.techniqueCooldown > 0 ||
       p.stamina < tech.stamina
     )
@@ -524,8 +588,7 @@ export const Ecosystem = {
     if (type === "guard") p.guard = 4;
     else if (type === "evade" || type === "camouflage") {
       const a = p.angle + (type === "evade" ? Math.PI / 2 : 0);
-      p.x += Math.cos(a) * 5;
-      p.y += Math.sin(a) * 5;
+      sweepMove(p, Math.cos(a) * 5, Math.sin(a) * 5, this.effectiveSize, this.worldFeatures || []);
       p.invulnerable = 1;
       p.empowered = 5;
       if (type === "camouflage") p.camouflage = 3;
@@ -544,8 +607,7 @@ export const Ecosystem = {
     } else if (type === "venomfang") p.venomFang = 6;
     else {
       if (type === "dive") {
-        p.x += Math.cos(p.angle) * 8;
-        p.y += Math.sin(p.angle) * 8;
+        sweepMove(p, Math.cos(p.angle) * 8, Math.sin(p.angle) * 8, this.effectiveSize, this.worldFeatures || []);
         p.invulnerable = 0.8;
       }
       if (type === "wind") {
@@ -564,15 +626,23 @@ export const Ecosystem = {
             : "circle",
         };
       for (const e of [...this.entities])
-        if (inAttackZone(e, zone)) {
+        if (inAttackZone(e, zone) && attackLineClear(p, e, this.worldFeatures || [], type)) {
           if (type === "coil") {
             e.slowed = 5;
             e.stunned = 1;
-          } else if (type === "quake") e.stunned = 1.8;
+          } else if (type === "quake") {
+            e.stunned = 1.8;
+          } else if (type === "cleave") {
+            e.bleeding = 6;
+            e.bleedTick = 0;
+          } else if (type === "feather") {
+            e.bleeding = 4;
+            e.bleedTick = 0;
+          }
           this._hitEntity(
             e,
             p.damage * (type === "cleave" ? 2.2 : 1.4),
-            type === "wind" ? 4 : 1.5,
+            type === "wind" ? 4.8 : type === "quake" ? 2.8 : 1.5,
           );
         }
     }
@@ -644,26 +714,33 @@ export const Ecosystem = {
     if (this.state !== "playing" || !this.entities.includes(e)) return;
     const p = this.player,
       s = SPECIES_BY_ID[e.speciesId];
-    if (e.juvenile) {
-      e.age += dt;
-      const progress = Math.min(1, e.age / 100);
-      e.scaleFactor = (0.42 + 0.58 * progress) * (1 + (e.growth || 0) * 0.28);
-      const hp = e.adultMaxHp * (0.45 + 0.55 * progress);
-      e.hp = Math.min(hp, e.hp + Math.max(0, hp - e.maxHp));
-      e.maxHp = hp;
-      if (e.age >= 100) {
-        e.juvenile = false;
-        e.scaleFactor = 1 + (e.growth || 0) * 0.28;
-        e.behavior = s.temperament;
-      }
-    }
+    initializeLifeEntity(this, e);
+    matureEntity(e, s, dt);
     e.hunger = Math.max(0, (e.hunger ?? 100) - dt * 0.65);
     e.feedCooldown = Math.max(0, (e.feedCooldown || 0) - dt);
     const distance = dist(e, p);
     if (distance > 130 && !e.boss && !e.cast) return;
+    const weather = conditionsAt(this, e.x, e.y);
+    if (weather.hazardDamagePerSecond > 0) {
+      e.hp = Math.max(0, e.hp - weather.hazardDamagePerSecond * dt);
+      if (e.hp <= 0) {
+        // Environmental deaths replenish the food chain, never player score,
+        // guardian accomplishments, rare boss rewards or kill statistics.
+        this.entities = this.entities.filter((other) => other !== e);
+        if (this.foods.length < 350) this.spawnFood("meat", e.x, e.y, 16 + s.tier * 16, {
+          tier: s.tier, homeChunk: e.homeChunk || chunkKey(e.x, e.y),
+        });
+        const lair = e.lairId && this.lairs.find((record) => record.id === e.lairId);
+        if (lair) { lair.entityId = null; lair.respawnAt = this.time + lair.respawn; }
+        if (this.boss?.id === e.id) this.boss = null;
+        this.emit("wildlife-loss", { x: e.x, y: e.y, speciesId: s.id, cause: weather.hazardCause });
+        return;
+      }
+    }
     for (const key of [
       "attackCooldown",
       "skillCooldown",
+      "chargeCooldown",
       "stunned",
       "fear",
       "hitFlash",
@@ -681,6 +758,34 @@ export const Ecosystem = {
         e.poisonTick = 0;
       }
       if (e.hp <= 0) return;
+    }
+    if (e.bleeding > 0) {
+      const elapsed = Math.min(dt, e.bleeding);
+      e.bleeding = Math.max(0, e.bleeding - dt);
+      e.bleedTick = (e.bleedTick || 0) + elapsed;
+      if (e.bleedTick >= 0.35 || e.bleeding === 0) {
+        const moveMult = (e.speed || 0) > 0.4 ? 2.2 : 1.0;
+        this._hitEntity(e, p.damage * 0.16 * moveMult * e.bleedTick);
+        e.bleedTick = 0;
+      }
+      if (e.hp <= 0) return;
+    }
+    if (e.burning > 0) {
+      const elapsed = Math.min(dt, e.burning);
+      e.burning = Math.max(0, e.burning - dt);
+      e.burnTick = (e.burnTick || 0) + elapsed;
+      if (e.burnTick >= 0.28 || e.burning === 0) {
+        this._hitEntity(e, p.damage * 0.22 * e.burnTick);
+        e.burnTick = 0;
+      }
+      if (e.hp <= 0) return;
+    }
+    if (e.sleeping > 0) {
+      e.sleeping = Math.max(0, e.sleeping - dt);
+      e.intent = "sleeping";
+      e.telegraph = 0;
+      e.cast = null;
+      return;
     }
     if (e.stunned > 0) {
       e.intent = "stunned";
@@ -715,7 +820,7 @@ export const Ecosystem = {
             cause: `${s.name}: ${s.ability}`,
           });
         }
-        if (!ranged.ranged && inAttackZone(p, zone)) {
+        if (!ranged.ranged && inAttackZone(p, zone) && attackLineClear(e, p, this.worldFeatures || [], s.abilityType)) {
           this.damagePlayer(
             (e.damage || s.damage) *
               (ABILITIES[s.abilityType]?.power || 1.8) *
@@ -727,6 +832,12 @@ export const Ecosystem = {
           if (s.abilityType === "frost" || s.abilityType === "web")
             p.chilled = 3;
           if (s.abilityType === "venom") p.poisoned = 4;
+          if (s.abilityType === "flame") p.burning = 4;
+          if (s.abilityType === "blood" || s.abilityType === "pounce") p.bleeding = 4;
+          if (s.abilityType === "stomp" || s.abilityType === "tailspin") {
+            const kbAngle = Math.atan2(p.y - e.y, p.x - e.x);
+            sweepMove(p, Math.cos(kbAngle) * 3.5, Math.sin(kbAngle) * 3.5, this.effectiveSize, this.worldFeatures || []);
+          }
         }
         if (s.abilityType === "heal")
           e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.12);
@@ -741,10 +852,16 @@ export const Ecosystem = {
       }
       return;
     }
+    const sensory = perceivePlayer(this, e),
+      nest = e.nestId ? this.nests.find((n) => n.id === e.nestId) : null,
+      defendingNest = nest && nest.parentIds.includes(e.id) && sensory.detected &&
+        Math.hypot(sensory.x - nest.x, sensory.y - nest.y) < nest.territoryRadius &&
+        Math.hypot(sensory.x, sensory.y) > 55;
     const aggressive =
       e.behavior === "hunter" ||
       e.behavior === "ambusher" ||
       e.behavior === "pack" ||
+      defendingNest ||
       e.aggro > 0 ||
       e.boss;
     const pack = e.packId
@@ -753,30 +870,47 @@ export const Ecosystem = {
     const afraid =
       !e.boss &&
       e.aggro <= 0 &&
+      sensory.detected &&
       (s.tier < this.tier - 1 ||
         e.hp < e.maxHp * 0.22 ||
+        (e.juvenile && distance < 16) ||
         (e.behavior === "skittish" && distance < 15) ||
         (e.behavior === "pack" && s.tier < this.tier && pack.length < 3));
-    const homeDistance = Math.hypot(e.x - e.homeX, e.y - e.homeY),
-      detect = e.boss ? 110 : e.behavior === "ambusher" ? 12 : 22 + s.size * 2;
+    const homeDistance = Math.hypot(e.x - e.homeX, e.y - e.homeY);
     const hunt =
       aggressive &&
       !afraid &&
-      distance < detect &&
-      p.camouflage <= 0 &&
+      (sensory.visible || defendingNest) &&
       (!e.juvenile || e.aggro > 0) &&
       (!e.lairId || homeDistance < 85 || distance < 8);
+    if (e.inTree) {
+      if (distance < 11 || (sensory.detected && distance < 13)) {
+        e.inTree = false;
+        e.treeDrop = 1.0;
+        e.aggro = 10;
+        e.attacking = 0.45;
+        this.emit("ambush-leap", { x: e.x, y: e.y, speciesId: s.id });
+        sweepMove(e, Math.cos(Math.atan2(p.y - e.y, p.x - e.x)) * 3.2, Math.sin(Math.atan2(p.y - e.y, p.x - e.x)) * 3.2, s.size * (e.scaleFactor || 1), this.worldFeatures || []);
+      } else {
+        e.intent = "ambush";
+        return;
+      }
+    }
+    if (e.packId && e.aggro > 0 && pack.length > 0) {
+      for (const m of pack) m.aggro = Math.max(m.aggro, e.aggro);
+    }
     let move = 0.2,
       targetAngle = e.angle;
     if (e.fear > 0 || afraid) {
       e.intent = "flee";
-      targetAngle = Math.atan2(e.y - p.y, e.x - p.x);
+      targetAngle = Math.atan2(e.y - (sensory.detected ? sensory.y : p.y), e.x - (sensory.detected ? sensory.x : p.x));
       move = 0.9;
       e.telegraph = 0;
     } else if (hunt) {
       this._threatCount++;
       e.aggro = Math.max(e.aggro, 1);
-      const flank = e.packId ? ((e.id % 3) - 1) * 0.6 : 0;
+      const flank = e.packId
+        ? (e.groupRole === "leader" ? 0 : e.roleSign * (e.groupRole === "flanker" ? 0.75 : 0.35)) : 0;
       targetAngle =
         Math.atan2(p.y - e.y, p.x - e.x) + flank * (distance > 7 ? 1 : 0);
       const combat = attackProfile({
@@ -784,11 +918,51 @@ export const Ecosystem = {
           size: s.size * (1 + (e.growth || 0) * 0.28),
         }),
         range = combat.reach + this.effectiveSize * 0.4;
+      if (s.tier >= 1 && combat.ranged && !e.boss && distance < 14) {
+        if (distance < 6.5) {
+          targetAngle = Math.atan2(e.y - p.y, e.x - p.x);
+          move = 0.95;
+        } else if (distance < 12) {
+          targetAngle = Math.atan2(p.y - e.y, p.x - e.x) + 1.25 * (e.roleSign || 1);
+          move = 0.72;
+        }
+      }
+      const isCharger = s.tier >= 1 && (["charge", "pounce"].includes(s.abilityType) || ["triceratops", "pachycephalosaurus", "carnotaurus"].includes(s.id));
+      if (e.charging > 0) {
+        e.charging -= dt;
+        move = 2.4;
+        targetAngle = e.chargeAngle;
+        e.intent = "charge";
+        if (dist(e, p) < range + 1.2 && hasLineOfSight(e, p, this.worldFeatures || [])) {
+          this.damagePlayer(
+            (e.damage || s.damage) * 1.55 * this.rules.enemyDamage * (e.boss ? 1.35 : 1),
+            `${e.boss ? "Alpha " : ""}${s.name} Trample Charge`,
+          );
+          p.vx += Math.cos(targetAngle) * 12;
+          p.vy += Math.sin(targetAngle) * 12;
+          this.emit("hit", { target: "player", x: p.x, y: p.y });
+          e.charging = 0;
+          e.chargeCooldown = 5.5;
+        }
+        if (e.charging <= 0) e.chargeCooldown = 5.5;
+      } else if (!e.chargeWindup && (e.chargeCooldown || 0) <= 0 && isCharger && distance >= 7.5 && distance <= 15 && hasLineOfSight(e, p, this.worldFeatures || [])) {
+        e.chargeWindup = 0.38;
+        e.chargeAngle = Math.atan2(p.y - e.y, p.x - e.x);
+      } else if (e.chargeWindup > 0) {
+        e.chargeWindup -= dt;
+        move = 0;
+        targetAngle = e.chargeAngle;
+        e.intent = "charge";
+        if (e.chargeWindup <= 0) {
+          e.charging = 0.75;
+        }
+      }
       if (
-        s.tier >= 1 &&
+        creatureKit(s).ability &&
         e.skillCooldown <= 0 &&
         distance < combat.range &&
-        distance > range * 0.65
+        distance > range * 0.65 &&
+        attackLineClear(e, p, this.worldFeatures || [], combat.ranged ? null : s.abilityType)
       ) {
         const a = ABILITIES[s.abilityType],
           shape = a.shape,
@@ -809,7 +983,7 @@ export const Ecosystem = {
         e.telegraph = 0;
         return;
       }
-      if (distance < range + 0.65) {
+      if (distance < range + 0.65 && hasLineOfSight(e, p, this.worldFeatures || [])) {
         move = 0;
         e.intent = "attack";
         if (e.attackCooldown <= 0 && e.telegraph <= 0)
@@ -823,24 +997,56 @@ export const Ecosystem = {
         move = 0;
         if (e.telegraph <= 0) {
           e.attacking = 0.28;
-          this.emit("enemy-strike", { x: e.x, y: e.y, speciesId: s.id });
+          this.emit("enemy-strike", { x: e.x, y: e.y, angle: e.angle, radius: range, speciesId: s.id });
           e.attackCooldown = combat.cooldown * (e.boss ? 0.8 : 1);
+          if (s.tier >= 1) sweepMove(e, Math.cos(targetAngle) * (0.8 + s.size * 0.22), Math.sin(targetAngle) * (0.8 + s.size * 0.22), s.size * (e.scaleFactor || 1), this.worldFeatures || []);
           if (["pounce", "charge"].includes(s.abilityType)) {
-            e.x += Math.cos(targetAngle) * 1.4;
-            e.y += Math.sin(targetAngle) * 1.4;
+            sweepMove(e, Math.cos(targetAngle) * 1.4, Math.sin(targetAngle) * 1.4, s.size * (e.scaleFactor || 1), this.worldFeatures || []);
           }
-          if (dist(e, p) < range + 0.35)
+          if (dist(e, p) < range + 0.35 && hasLineOfSight(e, p, this.worldFeatures || []))
             this.damagePlayer(
               (e.damage || s.damage) *
-                1.02 *
+                (s.tier === 0 ? 1.02 : 1.15 + s.tier * 0.05) *
                 this.rules.enemyDamage *
-                (e.boss ? 1.2 : 1) *
+                (e.boss ? 1.25 : 1) *
                 (1 + this.ascensions * 0.2),
               `${e.boss ? "Alpha " : ""}${s.name}`,
             );
         }
       }
-    } else if (homeDistance > 50 || (e.boss && homeDistance > 65)) {
+    } else if (sensory.detected && !sensory.visible && !e.juvenile &&
+      (!nest || homeDistance < nest.territoryRadius + 18)) {
+      if (aggressive && !afraid) {
+        e.intent = "track";
+        targetAngle = Math.atan2(sensory.y - e.y, sensory.x - e.x);
+        move = e.behavior === "ambusher" ? 0.35 : 0.55;
+        e.telegraph = 0;
+      } else {
+        e.intent = "alert";
+        targetAngle = Math.atan2(sensory.y - e.y, sensory.x - e.x);
+        move = 0.08;
+        e.telegraph = 0;
+      }
+    } else if (e.territoryRetreat?.until > this.time) {
+      e.intent = "yield";
+      targetAngle = Math.atan2(e.y - e.territoryRetreat.y, e.x - e.territoryRetreat.x);
+      move = 0.7;
+      e.telegraph = 0;
+    } else if (e.juvenile && e.parentIds.length) {
+      const parent = e.parentIds.map((id) => this.entities.find((m) => m.id === id)).find(Boolean);
+      if (parent) {
+        e.intent = "follow";
+        targetAngle = Math.atan2(parent.y - e.y, parent.x - e.x);
+        move = dist(e, parent) > 5 + s.size ? 0.7 : 0.12;
+        e.telegraph = 0;
+      }
+    } else if (e.rivalId && this.entities.some((rival) => rival.id === e.rivalId)) {
+      const rival = this.entities.find((rival) => rival.id === e.rivalId);
+      e.intent = "defend";
+      targetAngle = Math.atan2(rival.y - e.y, rival.x - e.x);
+      move = 0.55;
+      e.telegraph = 0;
+    } else if (homeDistance > (nest ? nest.territoryRadius : 50) || (e.boss && homeDistance > 65)) {
       e.intent = "return";
       move = 0.65;
       targetAngle = Math.atan2(e.homeY - e.y, e.homeX - e.x);
@@ -861,25 +1067,25 @@ export const Ecosystem = {
       }
       if (e.behavior === "ambusher") move = 0.06;
     }
-    if (!hunt && !afraid && e.fear <= 0 && e.hunger < 90) {
-      const herbivore = ["quad", "longneck", "equine"].includes(s.body);
-      const meal = this.foods
-        .filter(
-          (f) =>
-            (herbivore
-              ? f.type === "plant"
-              : ["meat", "essence", "egg"].includes(f.type)) && dist(f, e) < 20,
-        )
-        .sort((a, b) => dist(a, e) - dist(b, e))[0];
+    if (!hunt && !afraid && !["track", "follow", "yield", "defend"].includes(e.intent) && e.fear <= 0 && e.hunger < 90) {
+      const herbivore = speciesDiet(s) === "herbivore";
+      let meal=null, nearest=400;
+      for (const f of this.foods) {
+        if (f.nestId && f.nestId === e.nestId) continue;
+        if (!(f.type === "plant" || (!herbivore && ["meat", "essence", "egg"].includes(f.type))) || !canEatFood(s,f)) continue;
+        const d=(f.x-e.x)**2+(f.y-e.y)**2;
+        if (d<nearest) { meal=f; nearest=d; }
+      }
       if (meal) {
         targetAngle = Math.atan2(meal.y - e.y, meal.x - e.x);
         move = 0.4;
         e.intent = "forage";
         if (dist(meal, e) < 2 + s.size * 0.35 && e.feedCooldown === 0) {
+          this.onFoodConsumed(meal, e);
           this.foods = this.foods.filter((f) => f !== meal);
           feedEntity(this, e, {
             ...meal,
-            value: meal.value * foodEfficiency(s.tier, meal.tier || 0),
+            value: meal.value * foodEfficiency(s.tier, meal.tier || 0) * (meal.type === "plant" ? plantDefinition(meal).nutrition : 1),
           });
           e.feedCooldown = 3;
           e.intent = "feed";
@@ -887,12 +1093,22 @@ export const Ecosystem = {
         }
       }
     }
+    // Steer around a nearby solid rather than endlessly biting its far side.
+    if (move > 0) {
+      const probe = { x: e.x + Math.cos(targetAngle) * 5, y: e.y + Math.sin(targetAngle) * 5 },
+        block = firstSolidHit(e, probe, this.worldFeatures || [], Math.min(3, s.size * (e.scaleFactor || 1) * 0.35), true);
+      if (block) {
+        const outward = Math.atan2(e.y - block.feature.y, e.x - block.feature.x),
+          side = Math.sin(targetAngle - outward) >= 0 ? 1 : -1;
+        targetAngle = outward + side * Math.PI / 2;
+      }
+    }
     const turn = angleDiff(targetAngle, e.angle);
     e.angle += turn * Math.min(1, dt * 7);
     const speed =
-      s.speed * move * (e.slowed > 0 ? 0.35 : 1) * (e.juvenile ? 0.65 : 1);
-    e.x += Math.cos(e.angle) * speed * dt;
-    e.y += Math.sin(e.angle) * speed * dt;
+      s.speed * (e.geneticSpeed || 1) * move * (e.slowed > 0 ? 0.35 : 1) * (e.juvenile ? 0.65 : 1)
+        * weather.movementMultiplier;
+    sweepMove(e, Math.cos(e.angle) * speed * dt, Math.sin(e.angle) * speed * dt, s.size * (e.scaleFactor || 1), this.worldFeatures || []);
     resolveObstacles(
       e,
       s.size * (1 + (e.growth || 0) * 0.28),
@@ -907,8 +1123,8 @@ export const Ecosystem = {
     const separation =
       (s.size * (1 + (e.growth || 0) * 0.28) + this.effectiveSize) * 0.42;
     if (distance < separation && distance > 0.001) {
-      e.x += ((e.x - p.x) / distance) * (separation - distance) * 0.25;
-      e.y += ((e.y - p.y) / distance) * (separation - distance) * 0.25;
+      sweepMove(e, ((e.x - p.x) / distance) * (separation - distance) * 0.25,
+        ((e.y - p.y) / distance) * (separation - distance) * 0.25, s.size * (e.scaleFactor || 1), this.worldFeatures || []);
     }
     if (this.boss?.id === e.id) this.boss.hp = e.hp;
   },

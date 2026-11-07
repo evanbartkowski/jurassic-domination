@@ -79,27 +79,75 @@ export function resolveObstacles(actor, size, features) {
     }
   }
 }
-export function marinePose(f, time, index, player) {
+export const MARINE_SWIMMERS = 3;
+export function marineSpeed(f, index, hunting = false) {
+  return (hunting ? 5.2 : 3.2) + Math.min(7, f.tier || 0) * 0.25 + index * 0.24;
+}
+// Rendering only reads this state. Aggro changes a swimmer's destination, never its position.
+export function marinePose(f, time, index, _player, marineState) {
+  const swimmer = marineState?.get(f.id)?.swimmers[index];
+  if (swimmer) return swimmer;
   const a = time * (0.3 + index * 0.07) + index * 2.1 + f.phase,
     r = f.radius * (0.45 + index * 0.12);
-  const inside =
-    player && Math.hypot(player.x - f.x, player.y - f.y) < f.radius;
-  const blend = inside
-    ? 0.72 + 0.22 * Math.sin(time * 1.8 + f.phase + index)
-    : 0;
-  const x =
-      f.x +
-      Math.cos(a) * r * (1 - blend) +
-      (inside ? (player.x - f.x) * blend : 0),
-    y =
-      f.y +
-      Math.sin(a) * r * (1 - blend) +
-      (inside ? (player.y - f.y) * blend : 0);
   return {
-    x,
-    y,
-    angle: inside ? Math.atan2(player.y - y, player.x - x) : a + Math.PI / 2,
+    x: f.x + Math.cos(a) * r,
+    y: f.y + Math.sin(a) * r,
+    angle: a + Math.PI / 2,
+    hunting: false,
   };
+}
+function swim(f, game, dt) {
+  const states = (game.marineState ||= new Map());
+  let state = states.get(f.id);
+  if (!state) {
+    state = {
+      swimmers: Array.from({ length: MARINE_SWIMMERS }, (_, i) =>
+        marinePose(f, Math.max(0, game.time - dt), i),
+      ),
+    };
+    states.set(f.id, state);
+  }
+  const p = game.player,
+    hunting = Math.hypot(p.x - f.x, p.y - f.y) < f.radius;
+  for (let i = 0; i < state.swimmers.length; i++) {
+    const fish = state.swimmers[i];
+    if (fish.dead) {
+      if (game.time >= (fish.respawnAt || 0)) {
+        fish.dead = false;
+        fish.hp = 40 + (f.tier || 0) * 35;
+      } else {
+        continue;
+      }
+    }
+    const patrol = marinePose(f, game.time, i),
+      target = hunting ? p : patrol;
+    let tx = target.x - f.x,
+      ty = target.y - f.y;
+    // Keep the entire predator in its pool, including while pursuing shorelines.
+    const targetRadius = Math.hypot(tx, ty),
+      limit = Math.max(1, f.radius - 2.3);
+    if (targetRadius > limit) {
+      tx *= limit / targetRadius;
+      ty *= limit / targetRadius;
+    }
+    const dx = f.x + tx - fish.x,
+      dy = f.y + ty - fish.y,
+      distance = Math.hypot(dx, dy),
+      desired = Math.atan2(dy, dx),
+      turn = Math.atan2(Math.sin(desired - fish.angle), Math.cos(desired - fish.angle)),
+      maxTurn = dt * (hunting ? 2.8 : 1.9);
+    fish.angle += Math.max(-maxTurn, Math.min(maxTurn, turn));
+    const step = Math.min(distance, marineSpeed(f, i, hunting) * dt),
+      nx = fish.x + Math.cos(fish.angle) * step,
+      ny = fish.y + Math.sin(fish.angle) * step;
+    // Reject an outward step instead of snapping back to the water boundary.
+    if (Math.hypot(nx - f.x, ny - f.y) <= limit) {
+      fish.x = nx;
+      fish.y = ny;
+    }
+    fish.hunting = hunting;
+  }
+  return state;
 }
 export function updateWildlife(game, dt) {
   const p = game.player,
@@ -107,28 +155,38 @@ export function updateWildlife(game, dt) {
   resolveObstacles(p, game.effectiveSize || game.species.size, features);
   game._hazardCooldown = Math.max(0, (game._hazardCooldown || 0) - dt);
   game.hazardHint = "";
+  const activePools = new Set();
   for (const f of features) {
+    if (f.type === "water") {
+      activePools.add(f.id);
+      swim(f, game, Math.max(0, Math.min(0.1, dt)));
+    }
     const d = Math.hypot(p.x - f.x, p.y - f.y);
     if (d > f.radius + 8) continue;
     if (f.type === "water" && d < f.radius) {
-      p.vx *= Math.exp(-dt * 2.7);
-      p.vy *= Math.exp(-dt * 2.7);
-      game.hazardHint = "DEEP WATER · MARINE PREDATORS";
+      const aquatic = game.species.body === 'marine', amphibious = game.species.body === 'croc';
+      const drag = aquatic ? .2 : amphibious ? .7 : 2.7;
+      p.vx *= Math.exp(-dt * drag);
+      p.vy *= Math.exp(-dt * drag);
+      game.hazardHint = p.submerged ? 'SUBMERGED · QUIET MOVEMENT' : "DEEP WATER · MARINE PREDATORS";
       if (
         game._hazardCooldown === 0 &&
         [0, 1, 2].some((i) => {
-          const fish = marinePose(f, game.time, i, p);
+          const fish = marinePose(f, game.time, i, p, game.marineState);
+          if (!fish || fish.dead) return false;
           return (
-            Math.hypot(fish.x - p.x, fish.y - p.y) <
-            2.7 + game.species.size * 0.3
+            Math.hypot(
+              fish.x + Math.cos(fish.angle) * 1.6 - p.x,
+              fish.y + Math.sin(fish.angle) * 1.6 - p.y,
+            ) < 1.35 + (game.effectiveSize || game.species.size) * 0.3
           );
         })
       ) {
         game.damagePlayer(
-          (9 + f.tier * 5) * game.rules.enemyDamage,
-          "Marine ambush",
+          (11 + f.tier * 6) * game.rules.enemyDamage * (aquatic ? p.submerged ? .25 : .5 : amphibious ? .7 : 1),
+          "Marine predator bite",
         );
-        game._hazardCooldown = 1.2;
+        game._hazardCooldown = 1.0;
         game.emit("water-bite", { x: p.x, y: p.y });
       }
     }
@@ -139,13 +197,14 @@ export function updateWildlife(game, dt) {
     }
     if (f.type === "carnivore" && d < f.radius + 5) {
       game.hazardHint = "CARNIVOROUS PLANT";
-      if (d < f.radius + 2.8 && game._hazardCooldown === 0) {
+      if (d < f.radius + 3.2 && game._hazardCooldown === 0) {
         game.damagePlayer(
-          (7 + f.tier * 4) * game.rules.enemyDamage,
+          (9 + f.tier * 5) * game.rules.enemyDamage,
           "Snapjaw pitcher",
         );
-        p.poisoned = 2;
+        p.poisoned = 3;
         game._hazardCooldown = 0.85;
+        f.lastStrike = game.time;
         game.emit("plant-bite", { x: f.x, y: f.y });
       }
     }
@@ -157,4 +216,8 @@ export function updateWildlife(game, dt) {
       }
     }
   }
+  // Streamed pools cannot accumulate simulation state throughout an entire expedition.
+  if (game.marineState)
+    for (const id of game.marineState.keys())
+      if (!activePools.has(id)) game.marineState.delete(id);
 }

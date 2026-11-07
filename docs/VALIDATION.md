@@ -1,5 +1,48 @@
 # Local validation - November 7, 2026
 
+## Living generations (0.8.0)
+
+| Scope | Result |
+| --- | --- |
+| Full Node suite, including inherited traits, life cycles, senses, save migrations, ancestry backups, weather, discoveries, survival and both earned marine paths | 202 passed |
+| General browser integration | 22 passed, zero runtime errors |
+| Save recovery, backups, remapping, controller, 125% UI and permadeath browser checks | 14 passed, zero errors |
+| Integrated stalking, field journal, fog and exact immersion checkpoint resume | 5 passed |
+| Living-world graphics/portraits and progression browser suites | 18 and 8 passed |
+| Collection browser suite | 9 passed |
+| Responsive HUD, 100%/125% and reduced motion | Six layouts passed at 1440x900, 800x600 and 390x844; no overlaps or clipped panels |
+| Intent-driven simulation, unmodified rules | 50 seeds x 120 seconds and six seeds x 600 seconds, zero state-budget or checkpoint-roundtrip failures |
+| Ten-minute simulations | Reached tier 8; peak 98 active creatures, 202 meals; largest final snapshot 926,729 bytes |
+| Local analytics | Actual nearby boss encounters, observed kills and discovered sites recorded; all six long attempts were time-limit censored, so mean completed-life survival remains unknown |
+| Production build | Approximately 352 kB gameplay, 581 kB Three.js, 93 kB CSS |
+
+The longer simulation's sampled renderer-free tick cost was 0.31 ms mean and
+0.65 ms p95 on this machine. These are local CPU observations under concurrent
+tools, not GPU FPS, target hardware requirements, human difficulty measurements
+or evidence that endgame balance is finished. Use the current long-run report
+for encounter analytics; earlier short-run reports preceded the nearby-encounter
+counting correction. Reports and screenshots remain in ignored `artifacts/`.
+
+Full vertical exploration and networking are not implemented or certified by
+these tests. Physical controllers still require device testing.
+
+## Foundations (0.7.0)
+
+| Scope | Result |
+| --- | --- |
+| Automated simulation, storage fault/recovery, controls, collision, rendering and existing gameplay tests | 135 passed |
+| Existing general gameplay browser integration | 22 passed, zero runtime errors |
+| Real save/continue/reload, backups, failed-save protection, pending evolution, remapping, controller adapters, 125% UI and title layouts | 14 passed, zero runtime errors |
+| Reproducible, unmodified-rule bot attempts | 100 seeds x 60 seconds, zero invariant/checkpoint failures |
+| Rendering budget, moving food, streaming queue, resource return and disposal assertions | Passed |
+| Offline production Electron host | 14 passed, including native close/relaunch and the same paused life from disk |
+| Actual packaged portable executable | 6 passed, including a second extraction restoring the same saved life |
+| Production build / portable package / bundled asset hashes | Passed |
+
+Windows and browser checks used disposable profiles; existing player data was not altered. Controller input was exercised through standard-mapping mocks, not a physical controller certification. Software-rendered Chrome measurements establish workload and functional behavior, not hardware 60 FPS or minimum system requirements.
+
+Reports are generated in artifacts/foundation-qa.json, desktop-qa-report.json, portable-qa-report.json, render-benchmark.json, simulation-100-seeds.json and simulation-performance-comparison.json. See OVERHAUL_STATUS.md for measured CPU costs, geometry savings and remaining limitations. The final portable SHA-256 is recorded in release/SHA256SUMS.txt.
+
 ## Ancestral Paths (0.5.0)
 
 | Scope | Result |

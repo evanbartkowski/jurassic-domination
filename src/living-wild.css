@@ -1,0 +1,233 @@
+/* Living Wild: a readable expedition HUD and a shared rarity treatment. */
+:root { --hud-glass: linear-gradient(135deg, #112a27f2, #091914ee); --mint: #93efb4; }
+.menu-screen { overflow-y: auto; }
+.menu-art { filter: saturate(1.16) contrast(1.04); }
+.menu-shell { min-height: 760px; }
+.menu-top { padding-bottom: 18px; }
+.brand-mark { font-size: 11px; }
+.menu-copy { width: min(600px, 54vw); }
+.menu-actions { width: 395px; border-color: #d8b16a45; background: linear-gradient(125deg,#132d26ed,#0c1a15ba); box-shadow: 0 20px 70px #0006; }
+.menu-description { color: #d2dfcf !important; }
+.menu-chapter { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 20px; font-size: 10px; letter-spacing: .12em; }
+.menu-chapter span { color: #a2edbc; border: 1px solid #8ed4a94d; border-radius: 3px; padding: 6px 9px; background: #244d392e; }
+.menu-chapter b { color: #bbcab7; font-size: 9px; font-weight: 500; }
+.play-button { min-height: 62px; font-size: 12px; box-shadow: 0 3px 22px #d8b16a22; }
+.secondary-actions .button, .legacy-link>span, .cosmetic-link, .collection-entrances button { font-size: 10px; }
+.difficulty-picker>button, .difficulty-picker>span, .difficulty-description { font-size: 11px; }
+.menu-art-caption { opacity: 1; padding: 24px; border-left: 2px solid #e2c27b; background: linear-gradient(90deg,#10241fbd,transparent); width: 245px; }
+.caption-number, .caption-small { font-size: 10px; }
+.menu-footer { padding-top: 18px; }
+.menu-record>span, .version-label { font-size: 10px; }
+.menu-record strong { font-size: 20px; }
+.wide-panel,.modal-panel { border-color: #c4d6bb3d; border-radius: 12px; background: radial-gradient(ellipse at 15% 0,#28493688,transparent 65%),linear-gradient(140deg,#112820fa,#0b1a16fa); box-shadow: 0 30px 100px #0009,inset 0 1px #e3edce10; }
+.panel-header h1 { font-size: clamp(28px,3.2vw,44px); }
+.panel-subtitle,.panel-bottom>span { font-size: 13px; }
+.eyebrow,.section-label { font-size: 11px; }
+.button { border-radius: 5px; }
+.tutorial-card p,.survival-tip { font-size: 13px; }
+.controls-grid .key-help { font-size: 12px; }
+.setting-row>div>span,.setting-row label { line-height: 1.6; }
+.evolution-title>p:last-child { color: #c2d2c0; font-size: 14px; }
+.evolution-orbit { display: none; }
+.evolution-title h1 { font-size: 34px; margin: 8px 0; }
+.evolution-title { margin-bottom: 20px; }
+.evolution-choices { display: grid; gap: 16px; align-items: stretch; }
+.evolution-card { border-radius: 10px; border: 1px solid #94ae8e55; padding: 18px; background: linear-gradient(150deg,#243d30b3,#10231eed); max-width: none; }
+.evolution-card.selected { outline: 2px solid var(--lineage-color); outline-offset: 3px; background-color: #314c37; }
+.evolution-card .evolution-creature { position: relative; height: 110px; width: 100%; margin: 8px auto 12px; color: inherit; filter: none; }
+.evolution-card .evolution-creature:before { content: ''; position: absolute; inset: 15% 8% 0; background: radial-gradient(ellipse,var(--lineage-color),transparent 65%); opacity: .12; }
+.evolution-creature img { position: relative; }
+.evolution-card h2 { font-size: 27px; }
+.evolution-card>p { font-size: 12px; line-height: 1.7; }
+.evolution-card .species-stats { justify-content: center; font-size: 10px; gap: 20px; }
+.evolution-card .species-stats b { font-size: 17px; display: inline; margin: 0 0 0 4px; }
+.species-stats small { display: block; color: #a0e4b5; font-size: 11px; }
+.evolution-body { display: block; margin: 16px 0 10px; color: #d3dfc4; font-size: 9px; letter-spacing: .06em; }
+.evolution-card .species-ability { font-size: 11px; line-height: 1.6; justify-content: center; }
+.evolution-panel>.panel-bottom { position: sticky; bottom: -36px; z-index: 2; padding: 18px 0 24px; margin-bottom: -36px; background: #11251ff5; box-shadow: 0 -12px 24px #11251fe6; }
+.evolution-rarity { width: fit-content; margin: 9px auto; padding: 5px 9px; border: 1px solid color-mix(in srgb,var(--lineage-color) 50%,transparent); border-radius: 4px; font-size: 10px; background: color-mix(in srgb,var(--lineage-color) 9%,transparent); font-weight: 700; }
+.species-entry .evolution-rarity { margin: 8px 0; }
+.creature-art { filter: none; }
+.species-entry { border-radius: 8px; }
+.species-entry .species-ability { line-height: 1.7; font-size: 11px; }
+.species-entry h2 { font-size: 24px; }
+.species-tier { font-size: 9px; }
+.mutation-card { border-radius: 6px; }
+.mutation-heading { margin: 14px 0 10px; }
+.mutation-card strong { font-size: 13px; }
+.mutation-card small { font-size: 11px; line-height: 1.6; }
+/* A blue edge, violet aura and gold double frame identify rare finds at a glance. */
+[data-rarity="rare"] { --rarity-glow: #54b5ff; }
+[data-rarity="epic"] { --rarity-glow: #bc7dff; }
+[data-rarity="legendary"] { --rarity-glow: #ffc65b; }
+:is(.evolution-card,.species-entry,.shop-card,.island-inventory-item,.bloodline-grid article)[data-rarity="rare"] { border-color: #5cb5ecb3; box-shadow: inset 0 0 25px #278dd511,0 0 16px #369de725; }
+:is(.evolution-card,.species-entry,.shop-card,.island-inventory-item,.bloodline-grid article)[data-rarity="epic"] { border-color: #bb88f6d4; box-shadow: inset 0 0 30px #9b53d41a,0 0 24px #b56ff638; background-image: linear-gradient(145deg,#533a6238,transparent 75%); }
+:is(.evolution-card,.species-entry,.shop-card,.island-inventory-item,.bloodline-grid article)[data-rarity="legendary"] { border: 3px double #f6c76ad9; box-shadow: inset 0 0 30px #d9a63220,0 0 30px #efb34345; background-image: radial-gradient(ellipse at 50% 0,#f5b73226,transparent 70%); }
+.evolution-card[data-rarity="legendary"] .evolution-rarity:before { content: '✦ '; }
+.evolution-card[data-rarity="epic"] .evolution-rarity:before { content: '◆ '; }
+.shop-card:hover,.species-entry:hover { transform: translateY(-2px); border-color: var(--rarity-glow,var(--gold)); }
+/* Survival instruments. Keep their solid backing readable over every biome. */
+.hud-top { top: 22px; left: 24px; right: 24px; gap: 16px; }
+.species-card { gap: 14px; padding: 10px 18px 10px 10px; background: var(--hud-glass); border: 1px solid #aad3b73b; border-radius: 12px; box-shadow: 0 5px 24px #0004; }
+.species-emblem { width: 72px; height: 64px; clip-path: none; background: radial-gradient(ellipse,#85b66a33,transparent); border: 0; overflow: visible; }
+.species-emblem .rendered-icon { width: 94px; max-width: none; }
+.species-card h2 { font: 26px/1.15 Georgia,serif; margin: 4px 0; }
+.species-card .eyebrow { font-size: 10px; }
+.species-card .small-muted { font-size: 10px; }
+.hud-run { gap: 20px; border: 1px solid #adcca433; border-radius: 10px; padding: 12px 14px; background: var(--hud-glass); }
+.run-timer { font-size: 28px; }
+.run-kills b { font-size: 17px; }
+.hud-dna { font-size: 12px; color: #e3ca88; }
+.hud-run .icon-button { width: 42px; height: 42px; }
+.minimap-wrap { right: 24px; top: 120px; width: 180px; padding: 12px; border: 1px solid #aecfb238; border-radius: 10px; background: #0c201be6; box-shadow: 0 5px 24px #0004; }
+.minimap-wrap canvas { width: 154px; height: 154px; border-radius: 50%; border-color: #b3cb916e; }
+.map-header,.map-footer { font-size: 9px; line-height: 1.5; }
+.hud-bottom { left: 24px; right: 24px; bottom: 50px; gap: 20px; }
+.vitals { width: 310px; padding: 18px; border: 1px solid #97caa361; border-left: 4px solid #90e8ab; border-radius: 10px; background: var(--hud-glass); box-shadow: 0 7px 30px #0007; }
+.vital-label { font-size: 11px; letter-spacing: .06em; margin-bottom: 9px; color: #e4eddf; }
+.vital-label .icon { width: 17px; height: 17px; }
+.vital-label b { font-size: 12px; color: #fff4d9; }
+.meter { height: 10px; border: 1px solid #cee4c421; border-radius: 3px; background: #030e0c; }
+.meter.health { height: 19px; }
+.meter.health>span { background: linear-gradient(90deg,#33a971,#a1f5ad); box-shadow: 0 0 13px #65dc8b5c; }
+.meter.stamina>span { background: linear-gradient(90deg,#4086c0,#97d7fb); }
+.meter.hunger>span { background: linear-gradient(90deg,#c28639,#f5d087); }
+.minor-vitals { gap: 18px; margin-top: 14px; }
+.minor-vitals .vital-label { font-size: 9px; gap: 4px; }
+.minor-vitals .vital-label b { font-size: 10px; }
+.minor-vitals .icon { width: 13px; }
+.hunger-warning { font-size: 11px; min-height: 14px; line-height: 1.4; color: #ffb48d; margin-top: 11px; }
+#hud-diet { display: block; font-size: 10px; line-height: 1.5; color: #b9cfb9; }
+.abilities { bottom: 0; gap: 7px !important; align-items: stretch; }
+.ability-key { width: 72px; min-height: 93px; padding: 17px 6px 9px; border-radius: 8px; background: var(--hud-glass); border-color: #e6cd8d65; box-shadow: 0 5px 20px #0005; }
+.ability-key>kbd { top: -12px; font-size: 10px; background: #dec17f; color: #152c23; box-shadow: 0 2px 8px #0006; border: 1px solid #f0dba9; }
+.ability-key>span,.special-key span { font-size: 9px; max-width: 100%; color: #eceddb; }
+.ability-key>b { font-size: 10px; color: #a0ebaf; margin-top: 9px; }
+.ability-key>.icon { width: 25px; height: 25px; }
+.ability-key.unavailable { opacity: .55; border-color: #9bada34a; }
+.ability-key.cooling { border-color: #d3a76355; background: linear-gradient(140deg,#2f3026ed,#101e19ed); }
+.ability-key.cooling>b { color: #eac18b; }
+.hungry .meter.hunger>span { background: linear-gradient(90deg,#b55c32,#ffc482); }
+#hud[data-rarity="rare"] .species-card { border-color: #5cb5ec99; box-shadow: 0 0 20px #369de72a; }
+#hud[data-rarity="epic"] .species-card { border-color: #bb88f6b3; box-shadow: 0 0 24px #b56ff638; }
+#hud[data-rarity="legendary"] .species-card { border: 3px double #e5bb6b; box-shadow: 0 0 26px #efb34344; }
+.creature-label[data-rarity="rare"]>span { color: #9ed4ff; }
+.creature-label[data-rarity="epic"]>span { color: #d6b5ff; }
+.creature-label[data-rarity="legendary"]>span { color: #ffe0a0; text-shadow: 0 0 8px #e0ab38,0 2px 4px #000; }
+.ability-key i { width: 24px; height: 4px; background: #94e9ab; }
+.evolution-progress { width: 272px; padding: 18px; border: 1px solid #d2b97578; border-radius: 10px; background: var(--hud-glass); box-shadow: 0 6px 30px #0006; }
+.evolution-heading { font-size: 10px; margin-bottom: 12px; }
+.evolution-heading b { font-size: 12px; }
+.meter.xp { height: 12px; }
+.evolution-progress>p { font-size: 10px; }
+#growth-status { font-size: 10px; margin-top: 8px; line-height: 1.7; }
+#bloodline-journal { font-size: 10px; padding: 9px 0 0; }
+#evolve-ready { border-radius: 5px; font-size: 12px; }
+#evolve-ready>span { font-size: 9px; }
+.hud-controls { bottom: 16px; left: 26px; gap: 18px; opacity: 1; }
+.hud-controls .key-help,.hud-controls kbd { font-size: 10px; }
+.creature-label { font-size: 11px; width: 128px; margin-left: -64px; }
+.creature-label b { height: 6px; margin: 5px 16px 0; }
+#alpha-boss { top: 25px; width: 340px; border: 1px solid #ed9c7155; border-radius: 8px; background: #1f1c1beb; }
+#alpha-boss strong { font-size: 20px; }
+#alpha-boss b { height: 10px; }
+#alpha-boss>span,#alpha-boss small { font-size: 10px; }
+.expedition-hud { position: absolute; inset: 0; }
+#region-route { top: 355px; right: 24px; width: 180px; font-size: 11px; line-height: 1.7; text-shadow: 0 2px 4px #000; }
+#active-buffs { top: 127px; left: 24px; font-size: 11px; }
+#discovered-skills { bottom: 175px; font-size: 11px; }
+#pickup-prompt { bottom: 262px; font-size: 12px; padding: 12px 16px; border-radius: 5px; color: #fff0c4; border: 1px solid #d8bd8277; background: #102a23f2; line-height: 1.6; }
+#pickup-prompt[hidden] { display: none; }
+.critical .meter.health>span { background: linear-gradient(90deg,#cc5044,#ffac7e); }
+@media(max-width: 1200px) {
+  .hud-bottom { bottom: 48px; }
+  .abilities { bottom: 220px; left: 0; transform: none; }
+  .vitals { width: 310px; }
+  .evolution-progress { width: 280px; }
+  #alpha-boss { top: 135px; width: 280px; }
+  #region-route { left: 24px; right: auto; top: 126px; width: 300px; }
+  #active-buffs { top: 182px; }
+  #pickup-prompt { bottom: 378px; }
+  #discovered-skills { bottom: 337px; }
+}
+@media(max-height: 760px) and (min-width: 651px) {
+  .menu-shell { min-height: 650px; }
+  .game-title { font-size: clamp(42px,6vw,72px) !important; }
+  .menu-copy { padding: 12px 20px 12px 0; }
+  .menu-chapter { margin-top: 10px; }
+  .menu-actions { margin-top: 15px; }
+  .menu-description { font-size: 13px !important; line-height: 1.5 !important; }
+  .menu-art-caption { margin-bottom: 25px; }
+  .evolution-card .evolution-creature { height: 112px; }
+  .evolution-card { padding: 16px; }
+  .evolution-card h2 { font-size: 24px; }
+  .evolution-title { margin-bottom: 20px; }
+  .evolution-panel>.panel-bottom { bottom: -25px; margin-bottom: -25px; }
+  .minimap-wrap { top: 110px; width: 150px; }
+  .minimap-wrap canvas { width: 124px; height: 124px; }
+}
+@media(max-width: 650px) {
+  .menu-shell { min-height: 790px; padding: 20px; }
+  .menu-copy { width: 100%; padding-right: 0; }
+  .menu-actions { width: 100%; max-width: 400px; }
+  .menu-footer { flex-wrap: wrap; }
+  .menu-record { gap: 20px; }
+  .menu-record>span { font-size: 8px; }
+  .menu-record strong { font-size: 17px; }
+  .brand-mark { font-size: 9px; }
+  .game-title { font-size: clamp(41px,10vw,63px) !important; }
+  .wide-panel { padding: 22px 16px; }
+  .evolution-panel>.panel-bottom { bottom: -22px; margin-bottom: -22px; }
+  .evolution-card { padding: 22px 16px; min-height: 0; text-align: center; }
+  .evolution-card .evolution-creature { position: relative; left: auto; top: auto; height: 140px; }
+  .evolution-choices { display: grid; grid-template-columns: 1fr !important; }
+  .species-grid { grid-template-columns: 1fr; }
+  .hud-top { top: 12px; left: 12px; right: 12px; gap: 8px; }
+  .species-card { padding: 8px; gap: 6px; max-width: calc(100% - 96px); }
+  .species-emblem { width: 42px; height: 48px; }
+  .species-emblem .rendered-icon { width: 62px; }
+  .species-card h2 { font-size: 19px; }
+  .species-card .eyebrow,.species-card .small-muted { font-size: 8px; letter-spacing: .05em; }
+  .hud-run { gap: 8px; padding: 7px; }
+  .hud-dna { display: none; }
+  .run-timer { font-size: 15px; letter-spacing: 0; }
+  .hud-run .icon-button { width: 30px; height: 34px; }
+  .minimap-wrap { right: 12px; top: 103px; width: 112px; padding: 8px; }
+  .minimap-wrap canvas { width: 94px; height: 94px; }
+  .map-header,.map-footer { font-size: 7px; }
+  .hud-bottom { left: 10px; right: 10px; bottom: 36px; gap: 8px; align-items: stretch; }
+  .vitals { width: 53%; padding: 10px; border-left-width: 3px; }
+  .evolution-progress { width: calc(47% - 8px); padding: 10px; }
+  .vital-label { font-size: 9px; gap: 4px; }
+  .vital-label b { font-size: 10px; }
+  .minor-vitals { gap: 8px; }
+  .minor-vitals .icon { display: none; }
+  .minor-vitals .vital-label { font-size: 7px; flex-wrap: wrap; }
+  .minor-vitals .vital-label b { font-size: 8px; }
+  .meter.health { height: 15px; }
+  .meter { height: 8px; }
+  #hud-diet { font-size: 8px; }
+  .hunger-warning { font-size: 9px; }
+  .evolution-heading { font-size: 8px; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .evolution-heading b { font-size: 10px; }
+  .abilities { bottom: 222px; width: 100%; justify-content: center; gap: 5px !important; }
+  .ability-key { width: 54px; min-width: 0 !important; min-height: 80px; padding: 13px 4px 8px !important; }
+  .ability-key>span,.special-key span { font-size: 8px; }
+  .ability-key>b { font-size: 9px; }
+  .ability-key>kbd { font-size: 9px; }
+  .eat-key { display: none; }
+  #growth-status { font-size: 8px; }
+  #evolve-ready { font-size: 9px; padding: 9px 4px; }
+  #evolve-ready>span { font-size: 7px; }
+  #bloodline-journal { font-size: 8px; }
+  .hud-controls { bottom: 10px; left: 12px; gap: 10px; }
+  .hud-controls .key-help,.hud-controls kbd { font-size: 8px; }
+  #region-route { left: auto; right: 12px; top: 265px; width: 112px; font-size: 9px; }
+  #active-buffs { left: 13px; top: 110px; max-width: calc(100vw - 145px); font-size: 9px; }
+  #discovered-skills { bottom: 325px; width: 95vw; max-width: 95vw; font-size: 9px; }
+  #discovered-skills>span { font-size: 8px; padding: 5px; }
+  #pickup-prompt { bottom: 380px; max-width: 90vw; width: max-content; font-size: 10px; padding: 8px; }
+  #alpha-boss { top: 255px; width: min(270px,85vw); }
+  #alpha-boss strong { font-size: 16px; }
+}
+@media(prefers-reduced-motion:reduce) { .shop-card:hover,.species-entry:hover { transform: none; } }

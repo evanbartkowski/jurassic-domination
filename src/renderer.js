@@ -1,6 +1,10 @@
 import * as THREE from "three";
-import { SPECIES } from "./data.js";
-import { createDinosaur, animateCreature } from "./creatures.js";
+import { SPECIES, SPECIES_BY_ID } from "./data.js";
+import { createForageModel } from "./forage-art.js";
+import { createDinosaur, animateCreature, genomeAppearanceKey } from "./creatures.js";
+import { LANDMARKS, isExplored, hasDiscovery } from './discoveries.js';
+import { getTimeOfDay, conditionsAt } from './world-events.js';
+import { createEcologyArt } from './ecology-art.js';
 import { Terrain } from "./terrain.js";
 import { biomeAt, REGIONS, LAIRS, WORLD_RADIUS } from "./world-data.js";
 import { POWERUPS, SKINS } from "./content.js";
@@ -8,7 +12,7 @@ import { applyCosmetic, createPet } from "./collection-art.js";
 import { CATALOG, RARITIES } from "./collection-data.js";
 export { createDinosaur };
 
-const lookup = (id) => SPECIES.find((s) => s.id === id) || SPECIES[0];
+const lookup = (id) => SPECIES_BY_ID[id] || SPECIES[0];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function random(seed = 7281) {
   return () => {
@@ -24,8 +28,52 @@ const smoothSphere = new THREE.SphereGeometry(1, 12, 8);
 const cone = new THREE.ConeGeometry(1, 1, 7);
 const cylinder = new THREE.CylinderGeometry(1, 1, 1, 7);
 const box = new THREE.BoxGeometry(1, 1, 1);
+const sharedGeometry = new Set([sphere, smoothSphere, cone, cylinder, box]);
 const materialCache = new Map();
+const sharedMaterials = new Set();
 let surfaceTexture;
+function skyDomeTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 16;
+  canvas.height = 256;
+  const c = canvas.getContext("2d");
+  const grad = c.createLinearGradient ? c.createLinearGradient(0, 0, 0, 256) : null;
+  if (grad && typeof grad.addColorStop === "function") {
+    grad.addColorStop(0, "#091a1b");
+    grad.addColorStop(0.38, "#13312e");
+    grad.addColorStop(0.70, "#2c3e2e");
+    grad.addColorStop(0.88, "#54492f");
+    grad.addColorStop(1, "#17231a");
+    c.fillStyle = grad;
+  } else {
+    c.fillStyle = "#13312e";
+  }
+  c.fillRect(0, 0, 16, 256);
+  const map = new THREE.CanvasTexture(canvas);
+  return map;
+}
+
+function mistTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 256;
+  const c = canvas.getContext("2d");
+  const grad = c.createRadialGradient ? c.createRadialGradient(128, 128, 0, 128, 128, 128) : null;
+  if (grad && typeof grad.addColorStop === "function") {
+    grad.addColorStop(0, "rgba(190, 225, 215, 0.22)");
+    grad.addColorStop(0.35, "rgba(165, 210, 198, 0.14)");
+    grad.addColorStop(0.7, "rgba(135, 185, 175, 0.05)");
+    grad.addColorStop(1, "rgba(120, 165, 155, 0)");
+    c.fillStyle = grad;
+  } else {
+    c.fillStyle = "rgba(165, 210, 198, 0.12)";
+  }
+  c.beginPath();
+  c.arc(128, 128, 128, 0, Math.PI * 2);
+  c.fill();
+  const map = new THREE.CanvasTexture(canvas);
+  return map;
+}
+
 function mottledTexture() {
   if (surfaceTexture) return surfaceTexture;
   const canvas = document.createElement("canvas");
@@ -69,7 +117,9 @@ function material(color, emissive = 0) {
         emissiveIntensity: emissive ? 0.6 : 0,
       }),
     );
-  return materialCache.get(key);
+  const result = materialCache.get(key);
+  sharedMaterials.add(result);
+  return result;
 }
 function piece(parent, geo, color, pos, scale, rotation, emissive = 0) {
   const mesh = new THREE.Mesh(geo, material(color, emissive));
@@ -93,6 +143,14 @@ export class WorldRenderer {
     this.elapsed = 0;
     this.effects = [];
     this.cameraTarget = new THREE.Vector3();
+    this.cameraDesired = new THREE.Vector3();
+    this.projectedPosition = new THREE.Vector3();
+    this.pointerPosition = new THREE.Vector2();
+    this.fogColor = new THREE.Color();
+    this.targetFogColor = new THREE.Color();
+    this.targetSunColor = new THREE.Color();
+    this.targetHemiSky = new THREE.Color();
+    this.targetHemiGround = new THREE.Color();
     this.aimPoint = new THREE.Vector3();
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -104,16 +162,18 @@ export class WorldRenderer {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMappingExposure = 1.16;
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x163d37);
-    this.scene.fog = new THREE.FogExp2(0x163d37, 0.012);
-    this.camera = new THREE.PerspectiveCamera(43, 1, 0.2, 350);
-    this.scene.add(new THREE.HemisphereLight(0xb1e0d1, 0x273529, 1.65));
-    this.sun = new THREE.DirectionalLight(0xffd7a0, 3.6);
-    this.sun.position.set(-30, 60, -20);
+    this.scene.background = new THREE.Color(0x112825);
+    this.scene.fog = new THREE.FogExp2(0x112825, 0.010);
+    this.camera = new THREE.PerspectiveCamera(43, 1, 0.2, 380);
+    this.hemiLight = new THREE.HemisphereLight(0x9fe0d2, 0x243222, 1.75);
+    this.scene.add(this.hemiLight);
+    this.sun = new THREE.DirectionalLight(0xffe2b5, 3.8);
+    this.sun.position.set(-36, 48, -26);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.shadow.radius = 2.0;
     Object.assign(this.sun.shadow.camera, {
       left: -42,
       right: 42,
@@ -126,9 +186,12 @@ export class WorldRenderer {
     this.sun.shadow.normalBias = 0.08;
     this.scene.add(this.sun);
     this.scene.add(this.sun.target);
-    const rim = new THREE.DirectionalLight(0x66c6c5, 0.85);
-    rim.position.set(20, 15, 35);
-    this.scene.add(rim);
+    this.rimLight = new THREE.DirectionalLight(0x7fe3d7, 1.15);
+    this.rimLight.position.set(28, 22, 34);
+    this.scene.add(this.rimLight);
+    this.bounceLight = new THREE.DirectionalLight(0x564929, 0.45);
+    this.bounceLight.position.set(0, -15, 20);
+    this.scene.add(this.bounceLight);
     this.raycaster = new THREE.Raycaster();
     this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.generateWorld();
@@ -163,18 +226,40 @@ export class WorldRenderer {
       opacity: 0,
       side: THREE.DoubleSide,
     });
-    canvas.addEventListener("webglcontextlost", (e) => {
+    this.roarRing = piece(
+      this.scene,
+      new THREE.RingGeometry(0.88, 1.0, 48),
+      0xf6ecd8,
+      [0, 0.08, 0],
+      [1, 1, 1],
+      [-Math.PI / 2, 0, 0],
+    );
+    this.roarRing.material = new THREE.MeshBasicMaterial({
+      color: 0xf6ecd8,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+    });
+    this.roarProgress = 0;
+    this.roarX = 0;
+    this.roarY = 0;
+    this.roarRadius = 20;
+    this.onContextLost = (e) => {
       e.preventDefault();
+      if (this.disposed) return;
       onFailure?.(
         "The graphics device was interrupted. Your profile is safe. Restart the game to restore rendering.",
       );
-    });
+    };
+    canvas.addEventListener("webglcontextlost", this.onContextLost);
     this.configure(settings);
     this.resize();
   }
   configure(settings) {
+    if (this.disposed) return;
     this.settings = settings;
     const quality = settings.quality || "high";
+    this.terrain.setQuality(quality);
     this.renderer.setPixelRatio(
       Math.min(
         devicePixelRatio,
@@ -182,6 +267,12 @@ export class WorldRenderer {
       ),
     );
     this.renderer.shadowMap.enabled = quality !== "low";
+    const shadowSize = quality === "medium" ? 1024 : 2048;
+    if (this.sun.shadow.mapSize.x !== shadowSize) {
+      this.sun.shadow.mapSize.set(shadowSize, shadowSize);
+      this.sun.shadow.map?.dispose();
+      this.sun.shadow.map = null;
+    }
     this.resize();
   }
   resize() {
@@ -245,26 +336,65 @@ export class WorldRenderer {
     this.terrain = new Terrain(this.scene);
     this.terrain.update(0, 0);
     this.water = [];
+
+    // Prehistoric atmospheric sky dome
+    this.skyDome = new THREE.Mesh(
+      new THREE.SphereGeometry(260, 24, 12),
+      new THREE.MeshBasicMaterial({
+        map: skyDomeTexture(),
+        side: THREE.BackSide,
+        depthWrite: false,
+        fog: false,
+      }),
+    );
+    this.scene.add(this.skyDome);
+
+    // Drifting ground mist layers
+    this.groundMist = new THREE.Group();
+    this.scene.add(this.groundMist);
+    const mistGeo = new THREE.PlaneGeometry(42, 42);
+    mistGeo.rotateX(-Math.PI / 2);
+    const mistMat = new THREE.MeshBasicMaterial({
+      map: mistTexture(),
+      transparent: true,
+      opacity: 0.85,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+    });
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * 6.283;
+      const r = 9 + (i % 3) * 12;
+      const m = new THREE.Mesh(mistGeo, mistMat);
+      m.position.set(Math.cos(a) * r, 0.45 + (i % 3) * 0.22, Math.sin(a) * r);
+      m.scale.setScalar(0.85 + (i % 3) * 0.35);
+      this.groundMist.add(m);
+    }
+
+    // Realistic prehistoric nursery nest
     this.nest = new THREE.Group();
     this.scene.add(this.nest);
-    piece(
-      this.nest,
-      new THREE.TorusGeometry(2.3, 0.22, 8, 32),
-      0x7c6844,
-      [0, 0.06, 0],
-      [1, 1, 1],
-      [Math.PI / 2, 0, 0],
-    );
-    for (let i = 0; i < 15; i++) {
-      const a = (i / 15) * 6.28;
+    piece(this.nest, cylinder, 0x34291c, [0, 0.04, 0], [2.7, 0.08, 2.7]);
+    piece(this.nest, smoothSphere, 0x546237, [0, 0.08, 0], [2.1, 0.12, 2.1]);
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * 6.283,
+        r = 2.05 + (i % 3) * 0.18,
+        col = i % 2 ? 0x5a462f : 0x765c3b;
       piece(
         this.nest,
-        box,
-        0x8b7750,
-        [Math.cos(a) * 2, 0.1, Math.sin(a) * 2],
-        [1.3, 0.1, 0.1],
-        [0, -a + 0.5, 0],
+        cylinder,
+        col,
+        [Math.cos(a) * r, 0.12 + (i % 4) * 0.035, Math.sin(a) * r],
+        [0.12, 1.35 + (i % 3) * 0.3, 0.12],
+        [1.37, 0, -a + 0.7 + (i % 2) * 0.35],
       );
+    }
+    const clutch = [
+      [1.1, 0.22, 0.6, 0.32, 0.44, 0.32, 0.3, 0.4],
+      [-0.9, 0.20, 0.8, 0.30, 0.42, 0.30, -0.2, -0.3],
+      [0.2, 0.21, -1.2, 0.34, 0.46, 0.34, 0.4, -0.2],
+    ];
+    for (const [cx, cy, cz, sx, sy, sz, rx, rz] of clutch) {
+      piece(this.nest, smoothSphere, 0xdcd2b4, [cx, cy, cz], [sx, sy, sz], [rx, 0, rz]);
     }
   }
   createEgg() {
@@ -273,32 +403,32 @@ export class WorldRenderer {
     const shell = piece(
       this.egg,
       smoothSphere,
-      0xe5d7ad,
+      0xe8ddbe,
       [0, 1.2, 0],
       [0.86, 1.16, 0.86],
     );
-    for (let i = 0; i < 19; i++) {
-      const a = i * 2.4,
-        h = 0.3 + (i % 5) * 0.32,
-        r = 0.8 * Math.sqrt(Math.max(0, 1 - ((h - 1.2) / 1.2) ** 2));
+    for (let i = 0; i < 24; i++) {
+      const a = i * 2.35,
+        h = 0.25 + (i % 6) * 0.28,
+        r = 0.82 * Math.sqrt(Math.max(0, 1 - ((h - 1.2) / 1.2) ** 2));
       piece(
         this.egg,
         sphere,
-        0x9a946e,
+        0x9c8e6a,
         [Math.cos(a) * r, h, Math.sin(a) * r],
-        [0.1, 0.14, 0.03],
+        [0.11, 0.15, 0.035],
         [0, -a, 0],
       );
     }
-    this.eggGlow = new THREE.PointLight(0xffd28b, 7, 10);
-    this.eggGlow.position.y = 2;
+    this.eggGlow = new THREE.PointLight(0xffbe58, 8, 12);
+    this.eggGlow.position.y = 1.8;
     this.egg.add(this.eggGlow);
     this.menuDino = createDinosaur(
       SPECIES.find((s) => s.id === "tyrannosaurus"),
       true,
     );
-    this.menuDino.position.set(6.6, 0, -1);
-    this.menuDino.scale.setScalar(2.4);
+    this.menuDino.position.set(6.2, 0, -0.8);
+    this.menuDino.scale.setScalar(2.45);
     this.menuDino.rotation.y = -0.65;
     this.scene.add(this.menuDino);
   }
@@ -367,22 +497,46 @@ export class WorldRenderer {
         "dna-find",
         "collection-find",
       ].includes(event.type)
-    )
-      this.burst(
-        event.x || 0,
-        event.y || 0,
-        event.type === "hit"
-          ? 0xe98866
-          : event.type === "eat"
-            ? 0x9ce3a5
-            : 0xf4d48a,
-        event.type === "evolve" ? 65 : 12,
-      );
+    ) {
+      let particleColor = 0xf4d48a;
+      let particleCount = 14;
+      if (event.type === "hit") {
+        particleColor = event.target === "player" ? 0xcc2222 : 0xfbbf24;
+        particleCount = 20;
+      } else if (event.type === "kill") {
+        particleColor = 0xff4433;
+        particleCount = 30;
+      } else if (event.type === "eat") {
+        particleColor = 0x84cc16;
+        particleCount = 14;
+      } else if (event.type === "dash") {
+        particleColor = 0x8a927a;
+        particleCount = 12;
+      } else if (event.type === "evolve") {
+        particleColor = 0xf59e0b;
+        particleCount = 75;
+      }
+      this.burst(event.x || 0, event.y || 0, particleColor, particleCount);
+    }
+    if (event.type === "roar") {
+      this.shake = Math.max(this.shake, 0.42);
+      this.roarProgress = 1.0;
+      this.roarX = event.x;
+      this.roarY = event.y;
+      this.roarRadius = event.radius || 20;
+      this.burst(event.x || 0, event.y || 0, 0xf6ecd8, 32);
+    }
     if (event.type === "hit" || event.type === "ability")
-      this.shake = Math.max(this.shake, event.type === "ability" ? 0.4 : 0.2);
-    if (["attack", "ability", "enemy-ability", "evolve"].includes(event.type)) {
+      this.shake = Math.max(
+        this.shake,
+        event.type === "ability" ? 0.45 : event.target === "player" ? 0.35 : 0.22,
+      );
+    if (["attack", "enemy-strike", "ability", "enemy-ability", "evolve"].includes(event.type)) {
+      const isPlayerAttack = event.type === "attack";
+      const isEnemyStrike = event.type === "enemy-strike";
       const directional =
-        event.type === "attack" ||
+        isPlayerAttack ||
+        isEnemyStrike ||
         [
           "flame",
           "frost",
@@ -396,24 +550,28 @@ export class WorldRenderer {
           "feather",
           "dive",
         ].includes(event.ability);
-      const color =
-        {
-          venom: 0xa3db77,
-          flame: 0xffa34a,
-          frost: 0xa3e2f5,
-          lightning: 0xc7e5ff,
-          nova: 0xc5a3ec,
-          heal: 0xa8e2b5,
-          blood: 0xea8a9b,
-          petrify: 0xb7b2c8,
-          web: 0xe3ddd2,
-          wind: 0xaedacf,
-        }[event.ability] || 0xf4dca4;
-      this.burst(event.x || 0, event.y || 0, color, 18);
+      const color = isEnemyStrike
+        ? 0xff3b20
+        : isPlayerAttack
+          ? 0xffdd88
+          : {
+              venom: 0xa3db77,
+              flame: 0xffa34a,
+              frost: 0xa3e2f5,
+              lightning: 0xc7e5ff,
+              nova: 0xc5a3ec,
+              heal: 0xa8e2b5,
+              blood: 0xea8a9b,
+              petrify: 0xb7b2c8,
+              web: 0xe3ddd2,
+              wind: 0xaedacf,
+            }[event.ability] || 0xf4dca4;
+      this.burst(event.x || 0, event.y || 0, color, isPlayerAttack && (event.size >= 3) ? 36 : 18);
       const radius = event.radius || 3,
-        arc = directional ? 1.4 : Math.PI * 2;
+        arc = directional ? 1.55 : Math.PI * 2;
+      const innerR = Math.max(0.35, radius * (isPlayerAttack || isEnemyStrike ? 0.62 : 0.7));
       const geo = new THREE.RingGeometry(
-        radius * 0.7,
+        innerR,
         radius,
         48,
         1,
@@ -423,13 +581,15 @@ export class WorldRenderer {
       const mat = new THREE.MeshBasicMaterial({
         color,
         transparent: true,
-        opacity: 0.6,
+        opacity: isEnemyStrike ? 0.8 : isPlayerAttack ? 0.75 : 0.6,
         side: THREE.DoubleSide,
         depthWrite: false,
+        blending: isPlayerAttack || isEnemyStrike ? THREE.AdditiveBlending : THREE.NormalBlending,
       });
       const mesh = new THREE.Mesh(geo, mat),
         group = new THREE.Group();
-      mesh.rotation.x = -Math.PI / 2;
+      mesh.rotation.x = -Math.PI / 2 + (isPlayerAttack || isEnemyStrike ? 0.16 : 0);
+      mesh.position.y = isPlayerAttack ? 0.35 + Math.min(2.0, (event.size || 1) * 0.18) : 0.35;
       group.add(mesh);
       group.position.set(event.x || 0, 0.12, event.y || 0);
       group.rotation.y = -(event.angle || 0);
@@ -437,9 +597,21 @@ export class WorldRenderer {
       this.effects.push({
         group,
         mesh,
-        life: event.type === "attack" ? 0.2 : 0.65,
-        max: event.type === "attack" ? 0.2 : 0.65,
+        life: (isPlayerAttack || isEnemyStrike) ? 0.22 : 0.65,
+        max: (isPlayerAttack || isEnemyStrike) ? 0.22 : 0.65,
       });
+      if (isPlayerAttack && (event.size >= 3.0)) {
+        this.shake = Math.max(this.shake, 0.38);
+        for (let i = -3; i <= 3; i++) {
+          const a = (event.angle || 0) + (i / 4) * 0.7;
+          this.burst(
+            (event.x || 0) + Math.cos(a) * (radius * 0.88),
+            (event.y || 0) + Math.sin(a) * (radius * 0.88),
+            0xb09e80,
+            6,
+          );
+        }
+      }
       if (["flame", "frost", "venom"].includes(event.ability))
         for (let i = 1; i < 7; i++) {
           const distance = (i * radius) / 7;
@@ -493,7 +665,7 @@ export class WorldRenderer {
   }
   aim(clientX, clientY, player) {
     this.raycaster.setFromCamera(
-      new THREE.Vector2(
+      this.pointerPosition.set(
         (clientX / innerWidth) * 2 - 1,
         (-clientY / innerHeight) * 2 + 1,
       ),
@@ -519,16 +691,17 @@ export class WorldRenderer {
     skinId = "natural",
     scaleFactor = 1,
     cosmeticId = "none",
+    genome = null,
   ) {
     let model = this.models.get(key);
     if (
       !model ||
       model.userData.species.id !== id ||
       model.userData.skinId !== skinId ||
-      model.userData.cosmeticId !== cosmeticId
+      model.userData.cosmeticId !== cosmeticId || model.userData.genomeKey !== genomeAppearanceKey(genome)
     ) {
       if (model) this.removeModel(model);
-      model = createDinosaur(lookup(id), false, skinId);
+      model = createDinosaur(lookup(id), false, skinId, genome);
       applyCosmetic(model, cosmeticId);
       model.position.set(x, 0, z);
       model.rotation.y = -angle;
@@ -562,6 +735,7 @@ export class WorldRenderer {
     model.visible =
       Math.hypot(x - this.cameraTarget.x, z - this.cameraTarget.z) < 68;
     model.userData.body.visible = true;
+    model.userData.isJuvenile = scaleFactor < 0.68;
     model.scale.setScalar(model.userData.baseScale * scaleFactor);
     return model;
   }
@@ -574,18 +748,21 @@ export class WorldRenderer {
     model.traverse((obj) => {
       if (
         obj.geometry &&
-        ![sphere, smoothSphere, cone, cylinder, box].includes(obj.geometry)
+        !sharedGeometry.has(obj.geometry)
       )
         obj.geometry.dispose();
       if (
         obj.material &&
-        !Array.from(materialCache.values()).includes(obj.material)
+        !sharedMaterials.has(obj.material)
       )
         obj.material.dispose();
     });
   }
   render(game, dt, menu = false) {
+    if (this.disposed) return;
     this.currentGame = game;
+    this.ecologyArt ||= createEcologyArt(this.scene);
+    this.ecologyArt.update(menu ? null : game, dt, this.terrain.quality || 'high');
     this.elapsed += dt;
     const t = this.elapsed,
       p = game?.player;
@@ -594,10 +771,10 @@ export class WorldRenderer {
     if (menu) {
       this.animateDino(this.menuDino, t, 0, false, dt);
       this.menuDino.rotation.y = -0.65 + Math.sin(t * 0.16) * 0.22;
-      this.cameraTarget.lerp(new THREE.Vector3(0, 0, 0), Math.min(1, dt * 3));
+      this.cameraTarget.lerp(this.cameraDesired.set(0, 0, 0), Math.min(1, dt * 3));
     } else if (p)
       this.cameraTarget.lerp(
-        new THREE.Vector3(p.x, 0, p.y),
+        this.cameraDesired.set(p.x, 0, p.y),
         1 - Math.exp(-dt * 6),
       );
     this.terrain.update(
@@ -605,8 +782,8 @@ export class WorldRenderer {
       menu ? 0 : p?.y || 0,
       menu ? 7281 : game.seed,
     );
-    this.terrain.animate(menu ? t : game.time);
     this.terrain.focus(p?.x || 0, p?.y || 0, menu);
+    this.terrain.animate(menu ? t : game.time, menu ? null : game.marineState);
     if (p && !menu) {
       this.egg.position.set(p.x, 0, p.y);
       this.egg.rotation.z = Math.sin(t * 8) * 0.035;
@@ -624,13 +801,75 @@ export class WorldRenderer {
           p.attacking > 0,
           p.invulnerable > 0,
           game.skinId,
-          1 + (p.growth || 0) * 0.28,
+          game.effectiveSize / game.species.size,
           game.cosmeticId || "none",
+          p.genome,
         );
+        player.position.y = p.submerged ? -.5 : p.crouching ? -.15 : 0;
+        player.userData.isSleeping = p.sleeping > 0;
+        if (p.poisoned > 0 && Math.random() < 0.35) {
+          this.particles.push({
+            x: p.x + (Math.random() - 0.5) * 1.3,
+            y: 0.4 + Math.random() * 1.4,
+            z: p.y + (Math.random() - 0.5) * 1.3,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: 1.8 + Math.random(),
+            vz: (Math.random() - 0.5) * 0.5,
+            floating: true,
+            buoyancy: 0.8,
+            life: 0.6,
+            size: 0.2,
+            color: 0x33ff44,
+          });
+        }
+        if (p.bleeding > 0 && Math.random() < 0.45) {
+          this.particles.push({
+            x: p.x + (Math.random() - 0.5) * 1.1,
+            y: 0.7 + Math.random() * 1.0,
+            z: p.y + (Math.random() - 0.5) * 1.1,
+            vx: (Math.random() - 0.5) * 0.6,
+            vy: -2.0,
+            vz: (Math.random() - 0.5) * 0.6,
+            floating: false,
+            life: 0.35,
+            size: 0.17,
+            color: 0x8b0000,
+          });
+        }
+        if (p.burning > 0 && Math.random() < 0.5) {
+          this.particles.push({
+            x: p.x + (Math.random() - 0.5) * 1.2,
+            y: 0.5 + Math.random() * 1.5,
+            z: p.y + (Math.random() - 0.5) * 1.2,
+            vx: (Math.random() - 0.5) * 0.9,
+            vy: 2.4 + Math.random() * 1.6,
+            vz: (Math.random() - 0.5) * 0.9,
+            floating: true,
+            buoyancy: 1.1,
+            life: 0.5,
+            size: 0.22,
+            color: Math.random() < 0.6 ? 0xff4500 : 0xffcc00,
+          });
+        }
+        if (p.sleeping > 0 && Math.random() < 0.25) {
+          this.particles.push({
+            x: p.x + (Math.random() - 0.5) * 0.7,
+            y: 0.9 + Math.random() * 0.9,
+            z: p.y + (Math.random() - 0.5) * 0.7,
+            vx: 0.28 * Math.sin(t * 3),
+            vy: 1.0,
+            vz: 0.28 * Math.cos(t * 3),
+            floating: true,
+            buoyancy: 0.2,
+            life: 1.0,
+            size: 0.24,
+            color: 0x80d8ff,
+          });
+        }
         keys.add("player");
         this.ring.position.set(p.x, 0.065, p.y);
         this.ring.scale.setScalar(
-          Math.max(1.15, player.userData.baseScale * 1.4),
+          Math.max(1.15, game.effectiveSize * 1.4),
         );
         this.ring.visible = true;
         this.ring.material.opacity = p.invulnerable > 0 ? 0.85 : 0.55;
@@ -657,12 +896,82 @@ export class WorldRenderer {
           false,
           "natural",
           e.scaleFactor || 1,
+          'none',
+          e.genome,
         );
+        if (e.inTree) {
+          creature.position.y = e.treeY || 4.8;
+        } else if (e.treeDrop > 0) {
+          e.treeDrop = Math.max(0, e.treeDrop - dt * 3.5);
+          creature.position.y = e.treeDrop * (e.treeY || 4.8);
+        } else if (creature.position.y > 0.05) {
+          creature.position.y = Math.max(0, creature.position.y - dt * 10);
+        }
         if (e.intent === "graze") {
           creature.userData.head.rotation.z +=
             0.16 + Math.sin(t * 1.4 + e.id) * 0.05;
         }
-        if (e.intent === "ambush") creature.userData.body.position.y -= 0.08;
+        if (e.intent === "ambush" && !e.inTree) creature.userData.body.position.y -= 0.08;
+        creature.userData.isSleeping = e.sleeping > 0;
+        if (e.poison > 0 && Math.random() < 0.25) {
+          this.particles.push({
+            x: e.x + (Math.random() - 0.5) * 1.2,
+            y: 0.4 + Math.random() * 1.2,
+            z: e.y + (Math.random() - 0.5) * 1.2,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: 1.6 + Math.random(),
+            vz: (Math.random() - 0.5) * 0.4,
+            floating: true,
+            buoyancy: 0.6,
+            life: 0.5,
+            size: 0.18,
+            color: 0x33ff44,
+          });
+        }
+        if (e.bleeding > 0 && Math.random() < 0.35) {
+          this.particles.push({
+            x: e.x + (Math.random() - 0.5) * 1.1,
+            y: 0.6 + Math.random() * 1.0,
+            z: e.y + (Math.random() - 0.5) * 1.1,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: -2.0,
+            vz: (Math.random() - 0.5) * 0.5,
+            floating: false,
+            life: 0.35,
+            size: 0.16,
+            color: 0x8b0000,
+          });
+        }
+        if (e.burning > 0 && Math.random() < 0.4) {
+          this.particles.push({
+            x: e.x + (Math.random() - 0.5) * 1.2,
+            y: 0.5 + Math.random() * 1.4,
+            z: e.y + (Math.random() - 0.5) * 1.2,
+            vx: (Math.random() - 0.5) * 0.8,
+            vy: 2.2 + Math.random() * 1.5,
+            vz: (Math.random() - 0.5) * 0.8,
+            floating: true,
+            buoyancy: 1.0,
+            life: 0.5,
+            size: 0.22,
+            color: Math.random() < 0.6 ? 0xff4500 : 0xffcc00,
+          });
+        }
+        if (e.sleeping > 0 && Math.random() < 0.2) {
+          this.particles.push({
+            x: e.x + (Math.random() - 0.5) * 0.6,
+            y: 0.7 + Math.random() * 0.8,
+            z: e.y + (Math.random() - 0.5) * 0.6,
+            vx: 0.25 * Math.sin(t * 3),
+            vy: 0.9,
+            vz: 0.25 * Math.cos(t * 3),
+            floating: true,
+            buoyancy: 0.2,
+            life: 1.0,
+            size: 0.22,
+            color: 0x80d8ff,
+          });
+        }
         keys.add(e.id);
       }
       for (const [key, model] of this.models)
@@ -674,6 +983,31 @@ export class WorldRenderer {
       this.syncCompanion(game, dt, t);
       this.dangerRing.visible = false;
       this.syncWarnings(game, t);
+      if (this.roarProgress > 0) {
+        this.roarProgress = Math.max(0, this.roarProgress - dt * 2.0);
+        const prog = 1 - this.roarProgress;
+        this.roarRing.position.set(this.roarX, 0.08, this.roarY);
+        this.roarRing.scale.setScalar(Math.max(1, prog * this.roarRadius));
+        this.roarRing.material.opacity = (1 - prog) * 0.75;
+        this.roarRing.visible = true;
+      } else {
+        this.roarRing.visible = false;
+      }
+      if (Math.random() < 0.22) {
+        this.particles.push({
+          x: p.x + (Math.random() - 0.5) * 36,
+          y: 0.6 + Math.random() * 4.5,
+          z: p.y + (Math.random() - 0.5) * 36,
+          vx: 0.5 + Math.sin(t * 0.4) * 0.5,
+          vy: -0.15,
+          vz: Math.cos(t * 0.3) * 0.4,
+          floating: true,
+          buoyancy: -0.05,
+          life: 3.2,
+          size: 0.11,
+          color: Math.random() < 0.5 ? 0x9be282 : 0xd8c886,
+        });
+      }
       this.dust.position.set(p.x, 0, p.y);
     } else {
       if (this.companion) this.companion.visible = false;
@@ -686,10 +1020,10 @@ export class WorldRenderer {
     this.shake = Math.max(0, this.shake - dt * 1.5);
     const shake = this.settings.shake ? this.shake : 0;
     const zoom =
-      p && !menu ? clamp((lookup(p.speciesId)?.size || 1) - 1, 0, 7) * 1.65 : 0;
+      p && !menu ? clamp(game.effectiveSize - 1, 0, 14) * 2.2 : 0;
     if (menu) {
-      this.camera.position.set(Math.sin(t * 0.08) * 0.45, 8.5, 23);
-      this.camera.lookAt(0, 2, 0);
+      this.camera.position.set(Math.sin(t * 0.08) * 0.45, 8.2, 22.5);
+      this.camera.lookAt(1.2, 2.2, 0);
     } else {
       this.camera.position.set(
         this.cameraTarget.x + Math.sin(t * 84) * shake,
@@ -698,20 +1032,154 @@ export class WorldRenderer {
       );
       this.camera.lookAt(this.cameraTarget.x, 0, this.cameraTarget.z - 1);
     }
+
+    const tod = game && !menu ? getTimeOfDay(game.time) : { name: "day", progress: 0.35, ambientIntensity: 1 };
+    const weather = game && !menu ? conditionsAt(game, p?.x || 0, p?.y || 0) : null;
+    const isRain = weather?.event === "rain" || weather?.event === "flood";
+    const isAsh = weather?.event === "ashfall" || weather?.event === "eruption" || weather?.event === "fire";
+    const isFrost = weather?.event === "frost";
+
+    let sunOffsetX = -36, sunOffsetY = 48, sunOffsetZ = -24;
+    let targetSunIntensity = menu ? 3.8 : 3.6;
+    let targetSunColor = 0xfffaee;
+    let targetSkyColor = 0x9fe0d2;
+    let targetGroundColor = 0x243222;
+    let baseFogDensity = 0.010;
+
+    if (tod.name === "dawn") {
+      sunOffsetX = -48; sunOffsetY = 28; sunOffsetZ = -18;
+      targetSunColor = 0xffad78;
+      targetSkyColor = 0xffbe94;
+      targetGroundColor = 0x253022;
+      targetSunIntensity = 2.7;
+      baseFogDensity = 0.012;
+    } else if (tod.name === "day") {
+      sunOffsetX = -36; sunOffsetY = 50; sunOffsetZ = -26;
+      targetSunColor = 0xfffaee;
+      targetSkyColor = 0x9fe0d2;
+      targetGroundColor = 0x243222;
+      targetSunIntensity = 3.8;
+      baseFogDensity = 0.010;
+    } else if (tod.name === "dusk") {
+      sunOffsetX = 44; sunOffsetY = 24; sunOffsetZ = 26;
+      targetSunColor = 0xff5c26;
+      targetSkyColor = 0xd95a38;
+      targetGroundColor = 0x241510;
+      targetSunIntensity = 2.6;
+      baseFogDensity = 0.012;
+    } else {
+      sunOffsetX = -24; sunOffsetY = 42; sunOffsetZ = -28;
+      targetSunColor = 0x4a78d0;
+      targetSkyColor = 0x1e3452;
+      targetGroundColor = 0x0c1612;
+      targetSunIntensity = 0.88;
+      baseFogDensity = 0.015;
+    }
+
+    if (isRain) {
+      targetSunIntensity *= 0.65;
+      baseFogDensity += 0.006;
+    } else if (isAsh) {
+      targetSunColor = 0xff4818;
+      targetSunIntensity *= 0.75;
+      baseFogDensity += 0.007;
+    } else if (isFrost) {
+      targetSunColor = 0xb4e2ff;
+      baseFogDensity += 0.005;
+    }
+
     this.sun.position.set(
-      this.cameraTarget.x - 30,
-      60,
-      this.cameraTarget.z - 20,
+      this.cameraTarget.x + sunOffsetX,
+      sunOffsetY,
+      this.cameraTarget.z + sunOffsetZ,
     );
     this.sun.target.position.copy(this.cameraTarget);
-    const night =
-      game && !menu ? (0.5 - 0.5 * Math.cos(game.time / 110)) * 0.42 : 0;
-    this.sun.intensity = 3.6 - night * 3;
-    this.scene.fog.density = 0.012 + night * 0.005;
-    const region = game && !menu ? biomeAt(p.x, p.y) : REGIONS[0],
-      fogColor = new THREE.Color(region.color).multiplyScalar(0.52);
-    this.scene.fog.color.lerp(fogColor, Math.min(1, dt * 1.5));
+    (this.targetSunColor ||= new THREE.Color()).setHex(targetSunColor);
+    this.sun.color.lerp(this.targetSunColor, Math.min(1, dt * 2));
+    this.sun.intensity = THREE.MathUtils.damp(this.sun.intensity, targetSunIntensity, 3, dt);
+
+    (this.targetHemiSky ||= new THREE.Color()).setHex(targetSkyColor);
+    (this.targetHemiGround ||= new THREE.Color()).setHex(targetGroundColor);
+    this.hemiLight.color.lerp(this.targetHemiSky, Math.min(1, dt * 2));
+    this.hemiLight.groundColor.lerp(this.targetHemiGround, Math.min(1, dt * 2));
+    this.hemiLight.intensity = THREE.MathUtils.damp(this.hemiLight.intensity, (menu ? 1.75 : tod.ambientIntensity * 1.6), 3, dt);
+
+    if (this.skyDome) this.skyDome.position.copy(this.cameraTarget);
+    if (this.groundMist) {
+      this.groundMist.position.x = this.cameraTarget.x;
+      this.groundMist.position.z = this.cameraTarget.z;
+      this.groundMist.rotation.y = t * 0.015;
+    }
+    if (this.rimLight) {
+      this.rimLight.position.set(this.cameraTarget.x + 28, 22, this.cameraTarget.z + 34);
+      this.rimLight.intensity = menu ? 1.35 : 1.05;
+    }
+    if (this.bounceLight) {
+      this.bounceLight.position.set(this.cameraTarget.x, -15, this.cameraTarget.z + 20);
+    }
+    if (this.egg && this.egg.visible && this.eggGlow) {
+      this.eggGlow.intensity = 6 + Math.sin(t * 4.5) * 2.5;
+    }
+
+    this.scene.fog.density = THREE.MathUtils.damp(this.scene.fog.density, baseFogDensity, 3, dt);
+    const region = game && !menu ? biomeAt(p.x, p.y) : REGIONS[0];
+    let destFog = (this.targetFogColor ||= new THREE.Color()).set(region.color).multiplyScalar(0.48);
+    if (tod.name === "dawn") destFog.lerp(this.fogColor.setHex(0x452818), 0.35);
+    else if (tod.name === "dusk") destFog.lerp(this.fogColor.setHex(0x522216), 0.45);
+    else if (tod.name === "night") destFog.lerp(this.fogColor.setHex(0x0c1a26), 0.7);
+    if (isRain) destFog.lerp(this.fogColor.setHex(0x223540), 0.5);
+    else if (isAsh) destFog.lerp(this.fogColor.setHex(0x381812), 0.6);
+    else if (isFrost) destFog.lerp(this.fogColor.setHex(0x182c38), 0.5);
+    this.scene.fog.color.lerp(destFog, Math.min(1, dt * 1.5));
     this.scene.background.copy(this.scene.fog.color);
+
+    if (p && !menu) {
+      if (isRain && Math.random() < 0.65) {
+        for (let k = 0; k < 3; k++) {
+          this.particles.push({
+            x: p.x + (Math.random() - 0.5) * 36,
+            y: 14 + Math.random() * 4,
+            z: p.y + (Math.random() - 0.5) * 36,
+            vx: -3 + Math.random(),
+            vy: -32,
+            vz: 1.5,
+            life: 0.5,
+            size: 0.12,
+            color: 0x88c4ee,
+          });
+        }
+      }
+      if (isAsh && Math.random() < 0.5) {
+        for (let k = 0; k < 2; k++) {
+          this.particles.push({
+            x: p.x + (Math.random() - 0.5) * 32,
+            y: Math.random() * 6,
+            z: p.y + (Math.random() - 0.5) * 32,
+            vx: (Math.random() - 0.5) * 2.5,
+            vy: 1.2 + Math.random() * 1.8,
+            vz: (Math.random() - 0.5) * 2.5,
+            life: 1.4,
+            size: 0.16,
+            color: Math.random() < 0.6 ? 0xff5511 : 0x5a3e35,
+          });
+        }
+      }
+      if (isFrost && Math.random() < 0.5) {
+        for (let k = 0; k < 2; k++) {
+          this.particles.push({
+            x: p.x + (Math.random() - 0.5) * 32,
+            y: 8 + Math.random() * 4,
+            z: p.y + (Math.random() - 0.5) * 32,
+            vx: (Math.random() - 0.5) * 3,
+            vy: -3.5,
+            vz: (Math.random() - 0.5) * 3,
+            life: 1.6,
+            size: 0.14,
+            color: 0xdff2ff,
+          });
+        }
+      }
+    }
     for (const water of this.water)
       water.material.color.setHSL(0.49, 0.38, 0.29 + Math.sin(t * 0.7) * 0.02);
     this.dust.rotation.y = t * 0.008;
@@ -737,12 +1205,19 @@ export class WorldRenderer {
     for (const food of foods) {
       if (
         Math.hypot(food.x - this.cameraTarget.x, food.y - this.cameraTarget.z) >
-        55
+        (this.foodModels.has(food.id) ? 70 : 55)
       )
         continue;
       keys.add(food.id);
       let mesh = this.foodModels.get(food.id);
       if (!mesh) {
+        if (food.type === "plant") {
+          mesh = createForageModel(food);
+          mesh.position.set(food.x, 0, food.y);
+          this.scene.add(mesh);
+          this.foodModels.set(food.id, mesh);
+          continue;
+        }
         mesh = new THREE.Group();
         const power = POWERUPS.find((b) => b.id === food.powerup),
           rare = [
@@ -926,10 +1401,14 @@ export class WorldRenderer {
         this.scene.add(mesh);
         this.foodModels.set(food.id, mesh);
       }
+      // Magnets change the simulation coordinates without changing the food id.
+      mesh.position.set(food.x, 0, food.y);
       mesh.visible =
         Math.hypot(food.x - this.cameraTarget.x, food.y - this.cameraTarget.z) <
         60;
-      if (food.type !== "egg" && food.type !== "meat")
+      if (food.type === "plant")
+        mesh.rotation.z = Math.sin(t * 1.5 + mesh.id) * 0.025;
+      else if (food.type !== "egg" && food.type !== "meat")
         mesh.children[0].position.y = 0.45 + Math.sin(t * 2 + mesh.id) * 0.07;
       if (food.type === "relic" || food.type === "essence")
         mesh.children[0].rotation.y = t * 0.6;
@@ -1027,77 +1506,135 @@ export class WorldRenderer {
     animateCreature(m, dt, t, Math.min(1, d * 0.4));
   }
   drawParticles(dt) {
-    this.particles = this.particles.filter((p) => p.life > 0);
-    const dummy = this.particleDummy;
-    for (let i = 0; i < 220; i++) {
+    const dummy = this.particleDummy,
+      color = (this.particleColor ||= new THREE.Color());
+    let active = 0;
+    for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
-      if (p) {
-        p.life -= dt;
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.z += p.vz * dt;
-        p.vy -= 8 * dt;
-        dummy.position.set(p.x, Math.max(0.04, p.y), p.z);
-        dummy.scale.setScalar(p.size * clamp(p.life * 3, 0, 1));
-        this.particleMesh.setColorAt(i, new THREE.Color(p.color));
-      } else dummy.scale.setScalar(0);
+      p.life -= dt;
+      if (p.life <= 0) continue;
+      this.particles[active] = p;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
+      if (!p.floating) p.vy -= 8 * dt;
+      else p.vy += (p.buoyancy || 0.4) * dt;
+      dummy.position.set(p.x, Math.max(0.04, p.y), p.z);
+      dummy.scale.setScalar(p.size * clamp(p.life * 3, 0, 1));
+      this.particleMesh.setColorAt(active, color.set(p.color));
       dummy.updateMatrix();
-      this.particleMesh.setMatrixAt(i, dummy.matrix);
+      this.particleMesh.setMatrixAt(active++, dummy.matrix);
     }
-    this.particleMesh.instanceMatrix.needsUpdate = true;
-    if (this.particleMesh.instanceColor)
-      this.particleMesh.instanceColor.needsUpdate = true;
+    this.particles.length = active;
+    this.particleMesh.count = active;
+    if (active) {
+      this.particleMesh.instanceMatrix.clearUpdateRanges();
+      this.particleMesh.instanceMatrix.addUpdateRange(0, active * 16);
+      this.particleMesh.instanceMatrix.needsUpdate = true;
+      if (this.particleMesh.instanceColor) {
+        this.particleMesh.instanceColor.clearUpdateRanges();
+        this.particleMesh.instanceColor.addUpdateRange(0, active * 3);
+        this.particleMesh.instanceColor.needsUpdate = true;
+      }
+    }
   }
   project(x, y, height = 2) {
-    const v = new THREE.Vector3(x, height, y).project(this.camera);
+    const v = this.projectedPosition.set(x, height, y).project(this.camera);
     return {
       x: (v.x * 0.5 + 0.5) * innerWidth,
       y: (-v.y * 0.5 + 0.5) * innerHeight,
       visible: v.z < 1,
     };
   }
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.canvas.removeEventListener("webglcontextlost", this.onContextLost);
+    this.resetRun();
+    this.terrain.dispose();
+    this.ecologyArt?.dispose();
+    this.removeModel(this.menuDino);
+    const geometries = new Set(), materials = new Set();
+    this.scene.traverse((object) => {
+      if (object.isInstancedMesh) object.dispose();
+      if (object.geometry && !sharedGeometry.has(object.geometry) && !object.geometry.userData.shared)
+        geometries.add(object.geometry);
+      for (const material of object.material ? (Array.isArray(object.material) ? object.material : [object.material]) : [])
+        if (!sharedMaterials.has(material) && !material.userData.shared) materials.add(material);
+    });
+    geometries.forEach((geometry) => geometry.dispose());
+    materials.forEach((material) => material.dispose());
+    this.sun.shadow.dispose();
+    this.minimapBackdrops?.clear();
+    this.scene.clear();
+    this.renderer.dispose();
+    this.renderer.forceContextLoss();
+  }
   minimap(canvas, game, expanded = false) {
     if (!canvas || !game) return;
     const ctx = canvas.getContext("2d"),
-      w = (canvas.width = expanded ? 480 : 180),
-      h = (canvas.height = w),
+      w = expanded ? 480 : 180,
+      h = w,
       c = w / 2,
       r = w * 0.46,
       p = game.player;
+    if (!ctx) return;
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
     const range = expanded ? WORLD_RADIUS : 245,
       cx = expanded ? 0 : Math.round(p.x / 200) * 200,
       cy = expanded ? 0 : Math.round(p.y / 200) * 200,
       scale = r / range;
     canvas.mapView = { cx, cy, range, r, w };
+    const cache = (this.minimapBackdrops ||= new Map()),
+      key = `${w}:${cx}:${cy}:${scale}`;
+    let backdrop = cache.get(key);
+    if (!backdrop) {
+      backdrop = canvas.ownerDocument.createElement("canvas");
+      backdrop.width = w;
+      backdrop.height = h;
+      const background = backdrop.getContext("2d");
+      background.fillStyle = "#15251f";
+      background.fillRect(0, 0, w, h);
+      background.globalAlpha = 0.65;
+      for (let x = 0; x < w; x += 8)
+        for (let y = 0; y < h; y += 8) {
+          const wx = cx + (x - c) / scale,
+            wy = cy + (y - c) / scale;
+          if (Math.hypot(wx, wy) > WORLD_RADIUS) continue;
+          const biome = biomeAt(wx, wy);
+          background.fillStyle = `#${biome.color.toString(16).padStart(6, "0")}`;
+          background.fillRect(x, y, 8, 8);
+        }
+      background.globalAlpha = 1;
+      background.strokeStyle = "#87a38c22";
+      background.lineWidth = 1;
+      for (let i = 0; i < 5; i++) {
+        background.beginPath();
+        background.moveTo((i * w) / 4, 0);
+        background.lineTo((i * w) / 4, h);
+        background.moveTo(0, (i * h) / 4);
+        background.lineTo(w, (i * h) / 4);
+        background.stroke();
+      }
+    }
+    cache.delete(key);
+    cache.set(key, backdrop);
+    if (cache.size > 8) cache.delete(cache.keys().next().value);
     ctx.clearRect(0, 0, w, h);
     ctx.save();
     ctx.beginPath();
     ctx.arc(c, c, r, 0, 6.28);
     ctx.clip();
-    ctx.fillStyle = "#15251f";
-    ctx.fillRect(0, 0, w, h);
-    for (let x = 0; x < w; x += 8)
-      for (let y = 0; y < h; y += 8) {
-        const wx = cx + (x - c) / scale,
-          wy = cy + (y - c) / scale;
-        if (Math.hypot(wx, wy) > WORLD_RADIUS) continue;
-        const biome = biomeAt(wx, wy);
-        ctx.fillStyle = `#${biome.color.toString(16).padStart(6, "0")}`;
-        ctx.globalAlpha = 0.65;
-        ctx.fillRect(x, y, 8, 8);
-      }
     ctx.globalAlpha = 1;
-    ctx.strokeStyle = "#87a38c22";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.moveTo((i * w) / 4, 0);
-      ctx.lineTo((i * w) / 4, h);
-      ctx.moveTo(0, (i * h) / 4);
-      ctx.lineTo(w, (i * h) / 4);
-      ctx.stroke();
+    ctx.drawImage(backdrop, 0, 0);
+    // Fixed grid fog reveals terrain only through actual travel, retained in saves.
+    ctx.fillStyle = '#07110ff2';
+    for (let x = 0; x < w; x += 8) for (let y = 0; y < h; y += 8) {
+      if (!isExplored(game, cx + (x - c) / scale, cy + (y - c) / scale)) ctx.fillRect(x, y, 8, 8);
     }
     for (const e of game.entities) {
+      if (!isExplored(game, e.x, e.y) || Math.hypot(e.x-p.x,e.y-p.y)>65) continue;
       ctx.fillStyle = e.boss
         ? "#e6a6fc"
         : lookup(e.speciesId).tier > game.tier
@@ -1114,6 +1651,7 @@ export class WorldRenderer {
       ctx.fill();
     }
     for (const [lairIndex, lair] of game.lairs.entries()) {
+      if (!isExplored(game, lair.x, lair.y)) continue;
       ctx.fillStyle = lair.entityId ? "#e2a7f0" : "#777683";
       const x = c + (lair.x - cx) * scale,
         y = c + (lair.y - cy) * scale;
@@ -1162,6 +1700,7 @@ export class WorldRenderer {
                   : -0.5;
         const x = Math.cos(angle) * radius,
           y = Math.sin(angle) * radius;
+        if (!isExplored(game, x, y)) continue;
         ctx.fillStyle = "#e5e4cf";
         ctx.fillText(
           `${region.name} · ${region.tier + 1}`,
@@ -1169,6 +1708,11 @@ export class WorldRenderer {
           c + y * scale,
         );
       }
+    }
+    for (const site of LANDMARKS) if (hasDiscovery(game, site.id)) {
+      const x = c + (site.x-cx)*scale, y = c + (site.y-cy)*scale;
+      ctx.fillStyle = '#8de0d9'; ctx.fillRect(x-2,y-2,4,4);
+      if (expanded) { ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.fillText(site.name,x,y-6); }
     }
     if (game.waypoint) {
       const x = c + (game.waypoint.x - cx) * scale,

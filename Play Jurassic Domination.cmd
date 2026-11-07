@@ -1,8 +1,8 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-if exist "release\Jurassic Domination-0.5.0-portable.exe" (
-  start "" "release\Jurassic Domination-0.5.0-portable.exe"
+if exist "release\Jurassic Domination-0.8.0-portable.exe" (
+  start "" "release\Jurassic Domination-0.8.0-portable.exe"
   exit /b
 )
 if exist "release\win-unpacked\Jurassic Domination.exe" (

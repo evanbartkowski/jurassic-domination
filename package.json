@@ -1,6 +1,6 @@
 {
   "name": "jurassic-domination",
-  "version": "0.5.0",
+  "version": "0.8.0",
   "description": "A dinosaur evolution survival roguelite, from fragile egg to mythic apex.",
   "private": true,
   "type": "module",
@@ -21,7 +21,14 @@
     "qa:collections": "node scripts/qa-collections.mjs",
     "qa:wild": "node scripts/qa-wild.mjs",
     "art:portraits": "node scripts/render-portraits.mjs",
-    "qa:progression": "node scripts/qa-progression.mjs"
+    "qa:progression": "node scripts/qa-progression.mjs",
+    "qa:living": "node scripts/qa-living-wild.mjs",
+    "qa:foundation": "node scripts/qa-foundation.mjs",
+    "benchmark:render": "node scripts/benchmark-render.mjs",
+    "simulate": "node scripts/simulate.mjs",
+    "analyze:balance": "node scripts/analyze-balance.mjs",
+    "qa:immersion": "node scripts/qa-immersion.mjs",
+    "qa:journal": "node scripts/qa-field-journal.mjs"
   },
   "dependencies": {
     "three": "^0.187.0"

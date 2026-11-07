@@ -75,17 +75,8 @@ try {
         await p.evaluate((i) => {
           const g = window.__JD.game;
           g._eatCooldown = 0;
-          g.foods = [
-            {
-              id: "fruit-" + i,
-              type: "lineage-fruit",
-              fruit: "sunheart",
-              x: g.player.x,
-              y: g.player.y,
-              tier: 0,
-              value: 1,
-            },
-          ];
+          g.foods = [];
+          g.spawnFood("lineage-fruit", g.player.x, g.player.y, 1, { fruit: "sunheart", tier: 0 });
         }, i);
         await p.keyboard.down("KeyE");
         await p.waitForFunction(
@@ -119,7 +110,7 @@ try {
     async () => {
       await p.keyboard.press("KeyJ");
       await p.locator(".bloodline-panel").waitFor();
-      assert.equal(await p.locator(".bloodline-grid article").count(), 7);
+    assert.equal(await p.locator(".bloodline-grid article").count(), 9);
       assert.match(
         await p.locator(".bloodline-grid").textContent(),
         /CLAIMED THIS LIFE/,
@@ -173,16 +164,8 @@ try {
       await p.evaluate(() => {
         const g = window.__JD.game;
         g._eatCooldown = 0;
-        g.foods = [
-          {
-            id: "growth-meal",
-            type: "meat",
-            tier: 5,
-            value: 2000,
-            x: g.player.x,
-            y: g.player.y,
-          },
-        ];
+        g.foods = [];
+        g.spawnFood("plant", g.player.x, g.player.y, 2000, { tier: 5, plantKind: "horsetail" });
       });
       await p.keyboard.down("KeyE");
       await p.waitForFunction(() => window.__JD.game.player.growth === 1);

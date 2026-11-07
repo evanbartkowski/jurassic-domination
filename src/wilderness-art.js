@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { marinePose } from "./wilderness.js";
 import { createDecoration } from "./collection-art.js";
 export function createWildFeature(f) {
@@ -72,44 +73,103 @@ export function createWildFeature(f) {
   } else if (f.type === "water") {
     const water = mesh(
       new THREE.CircleGeometry(f.radius, 64),
-      0x255b63,
+      0x246c78,
       [0, 0.1, 0],
     );
     water.rotation.x = -Math.PI / 2;
     water.material.metalness = 0.4;
-    water.material.roughness = 0.2;
+    water.material.roughness = 0.26;
+    const deep = mesh(
+      new THREE.CircleGeometry(f.radius * 0.74, 48),
+      0x153d50,
+      [0, 0.115, 0],
+    );
+    deep.rotation.x = -Math.PI / 2;
+    deep.material.roughness = 0.32;
     const shore = mesh(
       new THREE.RingGeometry(f.radius, f.radius + 1.1, 64),
       0x827e58,
       [0, 0.08, 0],
     );
     shore.rotation.x = -Math.PI / 2;
+    shore.material.roughness = 1;
+    root.userData.ripples = [];
+    for (let i = 0; i < 3; i++) {
+      const ripple = mesh(
+        new THREE.RingGeometry(f.radius * (0.5 + i * 0.17), f.radius * (0.5 + i * 0.17) + 0.045, 48),
+        0x78c5c3,
+        [0, 0.13 + i * 0.002, 0],
+      );
+      ripple.rotation.x = -Math.PI / 2;
+      ripple.material.transparent = true;
+      ripple.material.opacity = 0.18;
+      ripple.material.depthWrite = false;
+      ripple.castShadow = false;
+      root.userData.ripples.push(ripple);
+    }
+    // A small palette of real silhouettes: reef shark, armored gar and long sea eel.
+    // Static body parts are merged by material to keep the swimming schools inexpensive.
     root.userData.swimmers = [];
     for (let i = 0; i < 3; i++) {
-      const fish = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 20, 12),
-        new THREE.MeshStandardMaterial({ color: 0x34505a, roughness: 0.5 }),
-      );
-      owned.push(body.geometry);
-      materials.push(body.material);
-      body.scale.set(2, 0.23, 0.48);
-      fish.add(body);
-      const fin = new THREE.Mesh(
-        new THREE.ConeGeometry(0.38, 0.9, 3),
-        body.material,
-      );
-      owned.push(fin.geometry);
-      fin.position.set(-0.2, 0.45, 0);
-      fish.add(fin);
-      const tail = new THREE.Mesh(
-        new THREE.ConeGeometry(0.65, 1, 3),
-        body.material,
-      );
-      owned.push(tail.geometry);
-      tail.position.x = -2;
-      tail.rotation.z = Math.PI / 2;
+      const fish = new THREE.Group(),
+        type = (i + (f.tier || 0)) % 3,
+        long = type === 2,
+        bodyMaterial = new THREE.MeshStandardMaterial({
+          color: [0x406c7c, 0x687e72, 0x38535f][type],
+          roughness: 0.4,
+          metalness: 0.17,
+        }),
+        bellyMaterial = new THREE.MeshStandardMaterial({ color: 0xb9c9b6, roughness: 0.54 }),
+        eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xf5cd70, emissive: 0xdb8e2a, emissiveIntensity: 0.6 });
+      materials.push(bodyMaterial, bellyMaterial, eyeMaterial);
+      const shape = (geo, pos, scale, rotation = [0, 0, 0]) => {
+        geo.scale(...scale);
+        geo.rotateX(rotation[0]);
+        geo.rotateY(rotation[1]);
+        geo.rotateZ(rotation[2]);
+        geo.translate(...pos);
+        return geo;
+      };
+      const ellipsoid = (pos, scale) => shape(new THREE.SphereGeometry(1, 16, 10), pos, scale),
+        fin = (pos, scale, rotation = [0, 0, 0]) =>
+          shape(new THREE.ConeGeometry(1, 1, 3), pos, scale, rotation),
+        addMerged = (parts, mat, parent = fish) => {
+          const geo = mergeGeometries(parts);
+          parts.forEach((g) => g.dispose());
+          owned.push(geo);
+          const m = new THREE.Mesh(geo, mat);
+          m.castShadow = false;
+          parent.add(m);
+          return m;
+        };
+      const main = [
+        ellipsoid([0, 0, 0], [long ? 2.25 : 1.65, long ? 0.26 : 0.4, long ? 0.35 : 0.58]),
+        ellipsoid([1.35, 0.03, 0], [type === 1 ? 1.0 : 0.72, 0.24, type === 1 ? 0.25 : 0.4]),
+      ];
+      if (!long) {
+        main.push(fin([-0.25, 0.63, 0], [0.5, 1.05, 0.08], [0, 0, -0.22]));
+        for (const side of [-1, 1])
+          main.push(fin([0.25, -0.02, side * 0.68], [0.38, 1.2, 0.07], [side * Math.PI / 2, 0, -0.45]));
+      } else {
+        for (let n = 0; n < 4; n++)
+          main.push(fin([-1.3 + n * 0.65, 0.3, 0], [0.24, 0.42, 0.05]));
+      }
+      addMerged(main, bodyMaterial);
+      addMerged([
+        ellipsoid([0.3, -0.18, 0], [1.45, 0.17, long ? 0.28 : 0.49]),
+        ellipsoid([1.5, -0.08, 0], [0.54, 0.065, 0.32]),
+      ], bellyMaterial);
+      addMerged([-1, 1].map((side) => ellipsoid([1.5, 0.14, side * (type === 1 ? 0.22 : 0.33)], [0.08, 0.08, 0.055])), eyeMaterial);
+      const tail = new THREE.Group();
+      tail.position.x = long ? -1.85 : -1.45;
       fish.add(tail);
+      addMerged([
+        ellipsoid([-0.38, 0, 0], [0.78, 0.18, 0.2]),
+        fin([-0.9, 0, 0], [0.62, long ? 1.05 : 1.5, 0.07], [0, 0, -0.25]),
+      ], bodyMaterial, tail);
+      fish.userData.tail = tail;
+      fish.userData.eyes = eyeMaterial;
+      fish.userData.kind = type;
       root.add(fish);
       root.userData.swimmers.push(fish);
     }
@@ -198,15 +258,48 @@ export function createWildFeature(f) {
       }
     }
   }
-  root.userData.animate = (t, player) => {
+  root.userData.animate = (t, player, marineState) => {
     root.userData.swimmers?.forEach((m, i) => {
-      const pose = marinePose(f, t, i, player);
-      m.position.set(pose.x - f.x, 0.18, pose.y - f.y);
+      const pose = marinePose(f, t, i, player, marineState);
+      if (pose.dead) {
+        m.position.set(pose.x - f.x, -0.65, pose.y - f.y);
+        m.rotation.z = Math.PI * 0.9;
+        m.userData.eyes.emissiveIntensity = 0;
+        return;
+      }
+      m.position.set(pose.x - f.x, 0.22 + Math.sin(t * 2 + i) * 0.055, pose.y - f.y);
       m.rotation.y = -pose.angle;
+      m.rotation.z = Math.sin(t * 2.2 + i) * 0.035;
+      m.userData.tail.rotation.y = Math.sin(t * (pose.hunting ? 9 : 5) + i * 2.1) * 0.38;
+      m.userData.eyes.emissiveIntensity = pose.hunting ? 1.5 : 0.55;
     });
-    if (root.userData.jaw)
-      root.userData.jaw.rotation.z =
-        Math.sin(t * (f.type === "carnivore" ? 3 : 1) + f.phase) * 0.17;
+    root.userData.ripples?.forEach((m, i) => {
+      m.scale.setScalar(1 + Math.sin(t * 0.75 + i * 2.1 + f.phase) * 0.025);
+      m.material.opacity = 0.1 + (Math.sin(t * 0.65 + i) + 1) * 0.055;
+    });
+    if (root.userData.jaw) {
+      if (f.type === "carnivore") {
+        const px = player ? (player.x !== undefined ? player.x : player.position ? player.position.x : 0) : 0;
+        const pz = player ? (player.y !== undefined ? player.y : player.z !== undefined ? player.z : player.position ? player.position.z : 0) : 0;
+        const dPlayer = Math.hypot(px - f.x, pz - f.y);
+        const near = dPlayer < f.radius + 4.5;
+        const striking = f.lastStrike && (t - f.lastStrike) < 0.45;
+        const strikeProg = striking ? 1 - (t - f.lastStrike) / 0.45 : 0;
+        const aimAngle = near ? Math.atan2(pz - f.y, px - f.x) : f.phase;
+        
+        root.userData.jaw.rotation.y = THREE.MathUtils.damp(root.userData.jaw.rotation.y, -aimAngle, 6, 1/60);
+        const lunge = striking ? Math.sin(strikeProg * Math.PI) * 1.4 : near ? 0.35 : 0;
+        root.userData.jaw.position.x = Math.cos(aimAngle) * lunge;
+        root.userData.jaw.position.z = Math.sin(aimAngle) * lunge;
+        root.userData.jaw.rotation.z = striking
+          ? Math.sin(strikeProg * Math.PI) * 0.8
+          : near
+            ? Math.sin(t * 7) * 0.25 - 0.2
+            : Math.sin(t * 2 + f.phase) * 0.12;
+      } else {
+        root.userData.jaw.rotation.z = Math.sin(t + f.phase) * 0.17;
+      }
+    }
     if (root.userData.spore)
       root.userData.spore.position.y = 1 + Math.sin(t * 0.8 + f.phase) * 0.3;
   };

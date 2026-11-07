@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { newProfile, normalizeProfile, recordRun } from "../src/profile.js";
+import { newProfile, normalizeProfile, recordRun, PROFILE_VERSION } from "../src/profile.js";
 import { SHOP_ITEMS, PETS, DECORATIONS } from "../src/collection-data.js";
 import {
   purchaseItem,
@@ -86,7 +86,7 @@ test("v2 saves preserve currency, progression and claimed milestones", () => {
   assert.equal(p.dna, 37);
   assert.equal(p.upgrades.vitality, 2);
   assert.ok(p.claimedAchievements.includes("first-evolution"));
-  assert.equal(p.version, 3);
+  assert.equal(p.version, PROFILE_VERSION);
 });
 test("island validates owned copies, collisions, finite coordinates and shores", () => {
   const p = newProfile();

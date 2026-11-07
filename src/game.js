@@ -12,6 +12,14 @@ import {
   BLOODLINES,
 } from "./progression.js";
 import { ABILITIES } from "./content.js";
+import { canEatFood, forageForRegion, plantDefinition } from "./forage.js";
+import { sweepMove, hasLineOfSight, attackLineClear } from "./combat.js";
+import { makeGenome, normalizeGenome, phenotype, newAdaptationState } from './genetics.js';
+import { initializeLifeEntity } from './life-cycle.js';
+import { initializeWorldState, updateWorldEvents } from './world-events.js';
+import { initializeDiscoveryState, recordExploration } from './discoveries.js';
+import { newSurvivalState, updateSurvival, survivalSpeed, setMovementPosture } from './survival.js';
+import { recordNoise, recordBlood } from './senses.js';
 import {
   WORLD_RADIUS,
   biomeAt,
@@ -35,8 +43,15 @@ export class Game {
     modifiers = [],
     skinId = "natural",
     knownUnlocks = [],
+    ancestorGenome = null,
+    generation,
+    runId,
   } = {}) {
     this.seed = Number(seed) >>> 0;
+    this.runId = typeof runId === "string" && /^[a-zA-Z0-9:_-]{1,96}$/.test(runId)
+      ? runId : (globalThis.crypto?.randomUUID?.() || `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
+    this.tick = 0;
+    this.commandSequence = 0;
     this._randomState = this.seed;
     this.difficulty = DIFFICULTIES[difficulty] ? difficulty : "survival";
     this.rules = DIFFICULTIES[this.difficulty];
@@ -91,8 +106,19 @@ export class Game {
       abilityActive: 0,
       nutrients: 0,
       growth: 0,
+      formScale: 1,
       specialCooldown: 0,
+      genome: makeGenome(`${this.seed}:player`, this._starter, ancestorGenome),
+      adaptations: newAdaptationState(),
+      crouching: false,
+      submerged: false,
     };
+    this.formHistory = [this._starter.id];
+    if (Number.isInteger(generation) && generation >= 1 && generation <= 1000000) this.player.genome.generation = generation;
+    this.guardianKills = 0;
+    this.survival = newSurvivalState();
+    initializeWorldState(this);
+    initializeDiscoveryState(this);
     initializeEcosystem(this, { modifiers, skinId, knownUnlocks });
     this.refreshStats(true);
     this._populate();
@@ -113,7 +139,14 @@ export class Game {
     return SPECIES_BY_ID[this.player.speciesId];
   }
   get effectiveSize() {
-    return this.species.size * (1 + (this.player.growth || 0) * 0.28);
+    return this.species.size * (this.player.formScale || 1) * (1 + (this.player.growth || 0) * 0.28) * this.geneticTraits.size;
+  }
+  get geneticTraits() {
+    if (!this._phenotype || this._genomeRef !== this.player.genome) {
+      this._genomeRef = this.player.genome;
+      this._phenotype = phenotype(this.player.genome);
+    }
+    return this._phenotype;
   }
   get kit() {
     return creatureKit(this.species);
@@ -152,7 +185,7 @@ export class Game {
       (1 + this.ascensions * 0.14) *
       (this.hasBuff("damage") ? 1.5 : 1);
     p.speed =
-      s.speed *
+      s.speed * this.geneticTraits.speed *
       (1 - (p.growth || 0) * 0.04) *
       (1 + (m.swift || 0) * 0.1 + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
       (this.hasBuff("speed") ? 1.4 : 1);
@@ -208,6 +241,11 @@ export class Game {
       fear: 0,
       poison: 0,
       poisonTick: 0,
+      bleeding: 0,
+      bleedTick: 0,
+      burning: 0,
+      burnTick: 0,
+      sleeping: 0,
       hitFlash: 0,
       wanderTime: this.random() * 4,
       aggro: 0,
@@ -233,11 +271,22 @@ export class Game {
       age: 0,
       scaleFactor: (options.juvenile ? 0.42 : 1) * (1 + growth * 0.28),
     };
+    entity.genome = options.genome ? normalizeGenome(options.genome, `${this.seed}:creature:${entity.id}`, s) : makeGenome(`${this.seed}:creature:${entity.id}`, s, options.parentGenome);
+    const traits = phenotype(entity.genome);
+    entity.geneticSpeed = traits.speed;
+    entity.scaleFactor *= traits.size;
+    initializeLifeEntity(this, entity, options);
     this.entities.push(entity);
     return entity;
   }
 
   spawnFood(type, x, y, value = 12, options = {}) {
+    const plant = type === "plant" ? (options.plantKind
+      ? plantDefinition(options)
+      : forageForRegion(biomeAt(x, y), () => {
+        const hash=Math.sin(x*12.9898+y*78.233+this.seed*.017)*43758.5453;
+        return hash-Math.floor(hash);
+      })) : null;
     const food = {
       id: this._nextId++,
       type,
@@ -246,6 +295,7 @@ export class Game {
       value,
       age: 0,
       tier: biomeAt(x, y).tier,
+      ...(plant ? { plantKind: plant.id, name: plant.name, color: plant.color } : {}),
       ...options,
     };
     this.foods.push(food);
@@ -282,9 +332,11 @@ export class Game {
     this._markEvolutionReady();
     if (input.evolve && this.openEvolution()) return;
     this.time += dt;
+    updateWorldEvents(this, dt);
     const p = this.player,
       s = this.species,
       m = this.mutationCounts;
+    const previousX = p.x, previousY = p.y;
     for (const key of [
       "abilityCooldown",
       "dashCooldown",
@@ -307,7 +359,8 @@ export class Game {
     if (Number.isFinite(input.aim)) p.angle = input.aim;
     else if (length > 0.05) p.angle = Math.atan2(my, mx);
     const sprint = !!input.sprint && p.stamina > 2 && length > 0.05;
-    const speed = p.speed * (sprint ? 1.65 : 1) * (p.chilled > 0 ? 0.6 : 1);
+    setMovementPosture(this, input);
+    const speed = p.speed * (sprint ? 1.65 : 1) * (p.chilled > 0 ? 0.6 : 1) * survivalSpeed(this);
     // Acceleration and braking remove abrupt starts while preserving precise aim.
     const response = 1 - Math.exp(-dt * (length > 0.05 ? 13 : 19));
     p.vx += (mx * speed - p.vx) * response;
@@ -315,7 +368,7 @@ export class Game {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.stamina = clamp(
-      p.stamina + (sprint ? -20 : 24 + (m.swift || 0) * 5) * dt,
+      p.stamina + (sprint ? -20 * this.geneticTraits.staminaCost : (24 + (m.swift || 0) * 5) * this.geneticTraits.staminaRecovery * (1 - this.survival.fatigue * .001)) * dt,
       0,
       100,
     );
@@ -328,6 +381,9 @@ export class Game {
 
     this.updateEcosystem(dt, input);
     if (this.state !== "playing") return;
+    updateSurvival(this, dt, input, Math.hypot(p.x-previousX,p.y-previousY) > dt * .3);
+    if (this.state !== 'playing') return;
+    recordExploration(this);
     const radius = Math.hypot(p.x, p.y);
     const hungerDrain =
       0.39 *
@@ -392,18 +448,19 @@ export class Game {
   attack() {
     const p = this.player;
     if (this.state !== "playing" || p.attackCooldown > 0) return false;
+    recordNoise(this, p.x, p.y, 1);
     p.attackCooldown = ["raptor", "bird"].includes(this.species.body)
       ? 0.43
       : 0.52;
-    p.attacking = 0.2;
-    const reach = 2.8 + this.effectiveSize * 1.1;
-    this.emit("attack", { angle: p.angle, radius: reach });
+    p.attacking = 0.28;
+    const reach = 2.8 + this.effectiveSize * 1.45 + (this.effectiveSize >= 3.0 ? (this.effectiveSize - 2.8) * 1.6 : 0);
+    this.emit("attack", { x: p.x, y: p.y, angle: p.angle, radius: reach, size: this.effectiveSize });
     for (const e of [...this.entities]) {
       const target = SPECIES_BY_ID[e.speciesId];
       if (
         distance(p, e) < reach + target.size * 0.45 &&
         Math.abs(angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle)) <
-          1.25
+          1.25 && hasLineOfSight(p, e, this.worldFeatures || [])
       ) {
         const multiplier =
           (p.empowered > 0 ? 1.65 : 1) *
@@ -416,6 +473,38 @@ export class Game {
           e.poisonTick = 0;
         }
         this._hitEntity(e, p.damage * multiplier, 0.65);
+      }
+    }
+    if (this.marineState) {
+      for (const [poolId, poolState] of this.marineState.entries()) {
+        const f = (this.worldFeatures || []).find((feat) => feat.id === poolId);
+        if (!f || Math.hypot(p.x - f.x, p.y - f.y) > f.radius + reach + 6) continue;
+        for (let i = 0; i < (poolState.swimmers || []).length; i++) {
+          const fish = poolState.swimmers[i];
+          if (!fish || fish.dead) continue;
+          const dFish = Math.hypot(fish.x - p.x, fish.y - p.y);
+          if (
+            dFish < reach + 1.8 &&
+            Math.abs(angleDifference(Math.atan2(fish.y - p.y, fish.x - p.x), p.angle)) < 1.45
+          ) {
+            const multiplier = (p.empowered > 0 ? 1.65 : 1) * (this.species.body === "croc" ? 1.5 : 1);
+            const damage = p.damage * multiplier;
+            fish.hp = (Number.isFinite(fish.hp) ? fish.hp : (40 + (f.tier || 0) * 35)) - damage;
+            this.emit("hit", { x: fish.x, y: fish.y, target: "marine", speciesId: "tideweaver" });
+            if (fish.hp <= 0) {
+              fish.dead = true;
+              fish.respawnAt = this.time + 35;
+              this.gainXP(35 + (f.tier || 0) * 25);
+              p.kills++;
+              p.score += 85 + (f.tier || 0) * 55;
+              this.spawnFood("meat", fish.x, fish.y, 30 + (f.tier || 0) * 25, {
+                tier: f.tier || 0,
+                homeChunk: f.homeChunk || "0,0",
+              });
+              this.emit("kill", { x: fish.x, y: fish.y, speciesId: "tideweaver", water: true });
+            }
+          }
+        }
       }
     }
     p.empowered = 0;
@@ -437,8 +526,7 @@ export class Game {
       return false;
     const angle = Math.hypot(mx, my) > 0.05 ? Math.atan2(my, mx) : p.angle;
     const amount = 5.8 + this.effectiveSize * 0.45;
-    p.x += Math.cos(angle) * amount;
-    p.y += Math.sin(angle) * amount;
+    sweepMove(p, Math.cos(angle) * amount, Math.sin(angle) * amount, this.effectiveSize, this.worldFeatures || []);
     p.stamina -= cost;
     p.dashCooldown = this.species.body === "bird" ? 1.2 : 1.6;
     p.invulnerable = Math.max(p.invulnerable, 0.32);
@@ -451,7 +539,7 @@ export class Game {
     const p = this.player,
       s = this.species,
       m = this.mutationCounts;
-    if (this.state !== "playing" || p.abilityCooldown > 0) return false;
+    if (this.state !== "playing" || !this.kit.ability || p.abilityCooldown > 0) return false;
     const type = s.abilityType,
       definition = ABILITIES[type];
     if (p.stamina < definition.stamina) return false;
@@ -462,8 +550,7 @@ export class Game {
     p.stamina -= definition.stamina;
     p.abilityActive = 0.8;
     if (type === "pounce" || type === "charge" || type === "ambush") {
-      p.x += Math.cos(p.angle) * (4 + s.size);
-      p.y += Math.sin(p.angle) * (4 + s.size);
+      sweepMove(p, Math.cos(p.angle) * (4 + s.size), Math.sin(p.angle) * (4 + s.size), this.effectiveSize, this.worldFeatures || []);
       this._containPlayer();
       p.invulnerable = Math.max(p.invulnerable, 0.6);
     }
@@ -485,19 +572,63 @@ export class Game {
       );
       if (
         dist > radius + SPECIES_BY_ID[e.speciesId].size * 0.4 ||
-        (definition.shape === "cone" && angle > 0.9)
+        (definition.shape === "cone" && angle > 0.9) ||
+        !attackLineClear(p, e, this.worldFeatures || [], type)
       )
         continue;
       if (type === "venom") {
         e.poison = 5;
         e.poisonTick = 0;
       }
-      if (type === "roar") e.fear = 3;
+      if (type === "flame") {
+        e.burning = 5;
+        e.burnTick = 0;
+      }
+      if (type === "blood" || type === "ambush") {
+        e.bleeding = 5;
+        e.bleedTick = 0;
+      }
+      if (type === "roar") e.fear = 4;
       if (type === "frost" || type === "web") e.slowed = 6;
       e.stunned = ["stomp", "petrify", "lightning"].includes(type) ? 1.4 : 0.4;
+      const knockbackForce = type === "tailspin" ? 4.5 : type === "stomp" ? 3.2 : type === "charge" ? 3.6 : 1.4;
       const damage = p.damage * definition.power;
-      this._hitEntity(e, damage, 1.4);
+      this._hitEntity(e, damage, knockbackForce);
       if (type === "blood") p.hp = Math.min(p.maxHp, p.hp + damage * 0.2);
+    }
+    return true;
+  }
+
+  roar() {
+    const p = this.player,
+      s = this.species;
+    if (this.state !== "playing" || (p.roarCooldown || 0) > 0 || p.stamina < 14) return false;
+    p.roarCooldown = 6.0;
+    p.stamina -= 14;
+    p.abilityActive = 0.7;
+    recordNoise(this, p.x, p.y, 3.8);
+    const roarRadius = 18 + this.effectiveSize * 3.5;
+    const playerPower = this.tier * 10 + s.size;
+    this.emit("roar", {
+      speciesId: s.id,
+      x: p.x,
+      y: p.y,
+      radius: roarRadius,
+      power: playerPower,
+    });
+    for (const e of [...this.entities]) {
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d > roarRadius) continue;
+      const s2 = SPECIES_BY_ID[e.speciesId];
+      const entityPower = s2.tier * 10 + s2.size * (e.scaleFactor || 1);
+      if (entityPower < playerPower - 2 || e.juvenile || s2.temperament === "skittish") {
+        e.fear = 7.0;
+        e.aggro = 0;
+        e.intent = "flee";
+      } else {
+        e.aggro = 14.0;
+        e.intent = "hunt";
+      }
     }
     return true;
   }
@@ -506,12 +637,16 @@ export class Game {
     if (this.state !== "playing" || this._eatCooldown > 0) return false;
     const p = this.player,
       radius = 3.4 + this.effectiveSize * 0.6;
-    const available = this.foods
-      .filter((f) => distance(p, f) <= radius)
-      .sort((a, b) => distance(p, a) - distance(p, b));
-    const food = available[0];
+    let food=null, nearest=radius*radius;
+    for (const candidate of this.foods) {
+      if (!canEatFood(this.species,candidate)) continue;
+      const d=(candidate.x-p.x)**2+(candidate.y-p.y)**2;
+      if (d<=nearest) { food=candidate; nearest=d; }
+    }
     if (!food) return false;
+    this.onFoodConsumed(food);
     this.foods = this.foods.filter((f) => f.id !== food.id);
+    if (this.survival) this.survival.strain = Math.max(0, this.survival.strain - 3);
     this._eatCooldown = 0.17;
     if (
       ["dna", "pet-egg", "decoration-cache", "cosmetic-cache"].includes(
@@ -533,7 +668,7 @@ export class Game {
             ? 40
             : food.type === "egg"
               ? 30
-              : 12) *
+              : food.type === "plant" ? plantDefinition(food).hunger : 12) *
           (1 + (m.metabolism || 0) * 0.15) *
           Math.max(0.08, Math.sqrt(quality)),
     );
@@ -541,7 +676,7 @@ export class Game {
       p.maxHp,
       p.hp +
         p.maxHp *
-          (food.type === "plant" ? 0.025 : 0.075) *
+          (food.type === "plant" ? plantDefinition(food).healing : 0.075) *
           Math.max(0.12, Math.sqrt(quality)) *
           (this.species.body === "longneck" ? 1.4 : 1),
     );
@@ -553,7 +688,7 @@ export class Game {
         text: `${fruit === "sunheart" ? "Sunheart" : "Moondrop"} Fruit consumed - bloodline progress saved for this life.`,
       });
     }
-    this.player.nutrients += Math.max(0, food.value || 0) * quality;
+    this.player.nutrients += Math.max(0, food.value || 0) * quality * (food.type === "plant" ? plantDefinition(food).nutrition : 1);
     this.player.growth = growthFromFood(this.player.nutrients, this.tier);
     this.refreshStats();
     this.collectSpecial(food);
@@ -563,6 +698,7 @@ export class Game {
       y: food.y,
       amount: food.value,
       food: food.type,
+      plantKind: food.plantKind,
     });
     return true;
   }
@@ -661,7 +797,7 @@ export class Game {
           arc = Math.abs(
             angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle),
           );
-        if (d < 4 + this.effectiveSize && (key === "deathroll" || arc < 1.1)) {
+        if (d < 4 + this.effectiveSize && (key === "deathroll" || arc < 1.1) && hasLineOfSight(p, e, this.worldFeatures || [])) {
           if (key === "rending") {
             e.poison = 3;
             e.poisonTick = 0;
@@ -696,8 +832,12 @@ export class Game {
   }
 
   evolve(speciesId, mutationId) {
+    const offeredSpecies = SPECIES_BY_ID[speciesId];
     if (
       this.state !== "evolution" ||
+      !offeredSpecies || !MUTATIONS.some((mutation) => mutation.id === mutationId) ||
+      this.player.xp < this.nextThreshold || offeredSpecies.tier !== Math.min(7, this.tier + 1) ||
+      (offeredSpecies.bloodline && !eligibleBloodlines(this).some((path) => path.speciesId === speciesId)) ||
       !this.evolutionChoices.includes(speciesId) ||
       !this.mutationChoices.includes(mutationId)
     )
@@ -721,7 +861,11 @@ export class Game {
         this.lineage.guardians = 0;
       }
     }
+    const previousSize=this.effectiveSize,
+      nextSpecies=SPECIES_BY_ID[speciesId];
     this.player.speciesId = speciesId;
+    this.formHistory = [...(this.formHistory || []), speciesId].slice(-64);
+    this.player.formScale=nextSpecies.compactEvolution?1:Math.max(1,previousSize*1.06/(nextSpecies.size*this.geneticTraits.size));
     this.player.nutrients = 0;
     this.player.growth = 0;
     this.formStarted = this.time;
@@ -736,6 +880,7 @@ export class Game {
     this.player.invulnerable = 3;
     this.player.abilityCooldown = 0;
     this.player.specialCooldown = 0;
+    this.player.techniqueCooldown = 0;
     this.player.dashCooldown = 0;
     this.player.score += 250 * (this.tier + this.ascensions) * this.rules.score;
     this.evolutionChoices = [];
@@ -757,10 +902,14 @@ export class Game {
     const damage =
       amount *
       (1 - p.armor) *
+      (1 - this.geneticTraits.resistance) *
       (p.guard > 0 ? 0.35 : 1) *
       (this.hasBuff("shield") ? 0.6 : 1);
     p.hp = Math.max(0, p.hp - damage);
+    p.sleeping = 0;
     if (!bypass) {
+      recordBlood(this, p.x, p.y);
+      if (damage > p.maxHp * .22 && this.survival) this.survival.strain = 12;
       p.invulnerable = 0.38;
       this.emit("hit", { amount: damage, target: "player", cause });
     }
@@ -774,17 +923,17 @@ export class Game {
 
   _hitEntity(e, amount, knockback = 0) {
     if (!this.entities.includes(e) || e.hp <= 0) return;
-    if (!this.entities.includes(e) || e.hp <= 0) return;
-    e.hp -= amount;
+    e.sleeping = 0;
+    e.hp -= amount * (1 - phenotype(e.genome).resistance);
     e.hitFlash = 0.18;
     e.aggro = 10;
+    recordBlood(this, e.x, e.y, e.id);
     if (e.packId)
       for (const mate of this.entities)
         if (mate.packId === e.packId && distance(mate, e) < 45) mate.aggro = 12;
     if (knockback) {
       const angle = Math.atan2(e.y - this.player.y, e.x - this.player.x);
-      e.x += Math.cos(angle) * knockback;
-      e.y += Math.sin(angle) * knockback;
+      sweepMove(e, Math.cos(angle) * knockback, Math.sin(angle) * knockback, SPECIES_BY_ID[e.speciesId].size * (e.scaleFactor || 1), this.worldFeatures || []);
     }
     this.emit("hit", { x: e.x, y: e.y, amount, target: e.id });
     if (e.hp > 0) return;
@@ -799,7 +948,7 @@ export class Game {
         e.boss ? "essence" : "meat",
         e.x + (this.random() - 0.5) * 2,
         e.y + (this.random() - 0.5) * 2,
-        (14 + s.tier * 14) * (e.boss ? 1.7 : 1),
+        (16 + s.tier * 16) * (e.boss ? 1.7 : 1),
         { tier: s.tier, homeChunk: e.homeChunk || chunkKey(e.x, e.y) },
       );
     if (e.lairId) {
@@ -862,6 +1011,7 @@ export class Game {
       this.lineage.lavaKills++;
     if (e.lairId) {
       this.lineage.guardians++;
+      this.guardianKills++;
       this.lineage.formGuardians++;
     }
     this.emit("kill", {
@@ -877,6 +1027,7 @@ export class Game {
 
   getResults() {
     return {
+      runId: this.runId,
       speciesId: this.player.speciesId,
       tier: this.tier,
       kills: this.player.kills,
@@ -888,6 +1039,11 @@ export class Game {
       seed: this.seed,
       difficulty: this.difficulty,
       mutations: [...this.mutations],
+      genome: structuredClone(this.player.genome),
+      adaptations: { ...this.player.adaptations },
+      guardians: this.guardianKills,
+      discoveries: (this.exploration?.discoveries || []).map(d => ({ ...d })),
+      regionId: biomeAt(this.player.x, this.player.y).id,
     };
   }
 }

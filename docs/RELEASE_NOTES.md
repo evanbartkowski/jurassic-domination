@@ -1,3 +1,27 @@
+# Living generations - v0.8.0
+
+- Deterministic inherited genes give creatures small individual size, appearance, movement, endurance and resistance tradeoffs. Completed lives leave permanent ancestry records without accumulating unchecked power.
+- Nests, eggs, inherited juveniles, protective parents, population replacement and pack roles interact with sight, noise, scent, wind, cover and real tracking trails. Hold H to stalk or dive with aquatic anatomy.
+- Regional weather changes movement, forage and hunting. Fires, eruptions and meteors warn before damaging fixed areas; aftermath survives saves. Recoverable fatigue, strain and temperature exposure add survival decisions.
+- Ten guaranteed lore sites, saved map fog and a larger field journal (L, title or pause) connect exploration to two earned marine branches: Tideweaver Plesiosaur and Abyssal Kronosaur. Both have native animated anatomy and actual model portraits, bringing the roster to 102.
+- Snapshot v2 migrates v1 lives with neutral genes and a fair new weather window; old health, growth, offers and RNG are retained. Ancestry survives older backup imports.
+- Local analytics distinguish actual deaths from time-limited simulations, track picks, tiers, discoveries, boss encounters and CPU population bands, and send no telemetry.
+
+Offline single player. Eight evolution tiers, fourteen regions and the existing world size remain. Full vertical ocean/flight/burrowing, general migrations, environmental puzzles and multiplayer are future work; the private authoritative co-op plan is in IMMERSION_SYSTEMS.md.
+
+# Foundations - v0.7.0
+
+- Active lives now save and resume with deterministic random state, streamed world data, marine positions, growth, cooldowns and the same evolution offers. Resume opens paused; death remains permanent.
+- Two verified checkpoint slots commit profile/settings/run together. Recovery, terminal-run records, duplicate reward prevention and legacy migration are covered by fault tests. Settings provides downloadable backups, reviewed import and emergency export from memory.
+- Gameplay uses fixed 60 Hz validated intents with sequence checks, replay history and interest-filtered snapshots. This is implemented offline architecture, not online multiplayer.
+- Added remappable keyboard controls, standard-controller gameplay adapters, adjustable UI size and reduced motion.
+- Physical cover blocks bites and directional attacks. Swept projectiles and lunges stop at solids and detect crossed targets. Radial magic keeps explicit area behavior.
+- Fixed magnet food models, stale marine pool state after paused streaming, restored evolution remaining paused, failed-save state loss and retry floods.
+- Terrain streams center-first with at most one new chunk per frame. Medium/Low shared geometry reduces measured triangles approximately 46%/80%; synchronous construction/shader spikes still exist.
+- The current roster/map remain 100 forms, eight tiers and radius 1,600. Large new content, endgame boss arc and actual networking are future milestones; see OVERHAUL_STATUS.md.
+
+Validation: 135 automated tests, 22 general browser checks, 14 foundation browser checks, 14 offline Electron checks, six actual portable checks and 100 seeded 60-second intent-driven runs passed. The Windows build was tested across native restart and a fresh portable extraction using isolated save data.
+
 # Ancestral Paths - v0.5.0
 
 - Evolution no longer opens automatically. A flashing T indicator appears; open or postpone the same choices without rerolling.

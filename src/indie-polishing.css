@@ -1,0 +1,740 @@
+/* Jurassic Domination - Indie Polishing Stylesheet */
+
+:root {
+  --slate-texture: url('/assets/slate-texture.webp');
+  --compass-bezel: url('/assets/compass-bezel.webp');
+  --game-emblem: url('/assets/game-emblem.webp');
+  
+  --primal-gold: #e5b352;
+  --primal-gold-bright: #f5d688;
+  --primal-gold-dim: #94712e;
+  --primal-amber: #d97706;
+  --primal-red: #dc2626;
+  --primal-red-glow: rgba(220, 38, 38, 0.45);
+  --primal-cyan: #0284c7;
+  --primal-emerald: #10b981;
+  
+  --stone-dark: #0a1310;
+  --stone-mid: #121e19;
+  --stone-light: #1b2c24;
+  --stone-border: rgba(180, 205, 175, 0.22);
+  --stone-border-gold: rgba(229, 179, 82, 0.45);
+}
+
+/* Atmospheric Vignette */
+#vignette {
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(5, 12, 9, 0.45) 80%, rgba(2, 6, 4, 0.75) 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+/* Base Panel & Button Upgrades */
+.modal-panel, .wide-panel, .pause-panel, .death-panel, .egg-prompt {
+  background: 
+    linear-gradient(135deg, rgba(16, 28, 22, 0.95), rgba(8, 16, 12, 0.98)),
+    var(--slate-texture) center/512px repeat !important;
+  border: 1px solid var(--stone-border) !important;
+  box-shadow: 
+    0 24px 80px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+}
+
+.panel-header {
+  border-bottom: 1px solid rgba(229, 179, 82, 0.2) !important;
+}
+
+.panel-header h1 {
+  color: #f7f5ea !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Primary Amber Button */
+.button.primary {
+  color: #121c15 !important;
+  background: linear-gradient(180deg, #f3cf7a 0%, #d8a846 60%, #b88528 100%) !important;
+  border: 1px solid #ffe199 !important;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(229, 179, 82, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  border-radius: 4px !important;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.button.primary:hover {
+  background: linear-gradient(180deg, #fbe3a0 0%, #e5b955 60%, #c99330 100%) !important;
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.6),
+    0 0 32px rgba(229, 179, 82, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  transform: translateY(-1px) !important;
+}
+
+.button.secondary {
+  background: linear-gradient(180deg, rgba(28, 44, 34, 0.8), rgba(16, 26, 20, 0.8)) !important;
+  border: 1px solid rgba(180, 205, 175, 0.3) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  color: #e5ecd8 !important;
+  border-radius: 4px !important;
+}
+
+.button.secondary:hover {
+  border-color: var(--primal-gold) !important;
+  color: #fff !important;
+  background: linear-gradient(180deg, rgba(40, 60, 48, 0.85), rgba(22, 36, 28, 0.85)) !important;
+}
+
+/* ============================================================
+   TITLE SCREEN OVERHAUL
+   ============================================================ */
+
+.menu-shell {
+  padding: 24px 4.5vw 20px !important;
+}
+
+.brand-mark {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.22em !important;
+  color: #e8eee2 !important;
+  font-weight: 600 !important;
+}
+
+.brand-mark svg.icon {
+  width: 42px !important;
+  height: 42px !important;
+  background: var(--game-emblem) center/contain no-repeat !important;
+  filter: drop-shadow(0 0 12px rgba(229, 179, 82, 0.45)) !important;
+  stroke: transparent !important;
+  fill: transparent !important;
+}
+
+.menu-copy {
+  padding: 6px 0 !important;
+  max-width: 480px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+.game-title {
+  font-family: Georgia, 'Times New Roman', serif !important;
+  letter-spacing: -0.04em !important;
+  font-size: clamp(38px, 5.4vw, 78px) !important;
+  line-height: 0.96 !important;
+  margin: 12px 0 16px !important;
+  filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.85)) !important;
+}
+
+.game-title > span:first-child {
+  color: #f7f4ea !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 30px rgba(235, 215, 170, 0.15) !important;
+}
+
+.game-title > span:nth-child(2) {
+  color: var(--primal-gold-bright) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 40px rgba(229, 179, 82, 0.35) !important;
+}
+
+.menu-description {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  margin-bottom: 12px !important;
+}
+
+.menu-chapter {
+  background: rgba(14, 25, 20, 0.7) !important;
+  border-left: 2px solid var(--primal-gold) !important;
+  padding: 5px 12px !important;
+  margin-bottom: 10px !important;
+  border-radius: 0 4px 4px 0 !important;
+  font-size: 8px !important;
+}
+
+.menu-actions {
+  background: rgba(10, 18, 14, 0.72) !important;
+  padding: 12px 14px !important;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  border: 1px solid rgba(180, 205, 175, 0.16) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+  width: 342px !important;
+}
+
+.play-button {
+  font-size: 12px !important;
+  letter-spacing: 0.16em !important;
+  padding: 13px 20px !important;
+  min-height: 52px !important;
+  margin-bottom: 6px !important;
+}
+
+.play-button .icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.legacy-link, .cosmetic-link {
+  background: rgba(22, 36, 28, 0.5) !important;
+  border: 1px solid rgba(180, 205, 175, 0.18) !important;
+  border-radius: 4px !important;
+  padding: 10px 12px !important;
+  margin-top: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.legacy-link:hover, .cosmetic-link:hover {
+  background: rgba(35, 55, 42, 0.65) !important;
+  border-color: var(--stone-border-gold) !important;
+  transform: translateX(2px) !important;
+}
+
+.collection-entrances {
+  margin-top: 6px !important;
+}
+
+.collection-entrances button {
+  background: rgba(22, 36, 28, 0.6) !important;
+  border: 1px solid rgba(180, 205, 175, 0.2) !important;
+  border-radius: 4px !important;
+  padding: 8px 10px !important;
+}
+
+.collection-entrances button:hover {
+  border-color: var(--primal-gold) !important;
+  color: #fff !important;
+}
+
+.difficulty-picker {
+  background: rgba(10, 18, 14, 0.5) !important;
+  padding: 4px 10px !important;
+  margin-top: 8px !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(180, 205, 175, 0.15) !important;
+  display: inline-flex !important;
+}
+
+.difficulty-picker > button.selected {
+  color: var(--primal-gold-bright) !important;
+  border-bottom: 2px solid var(--primal-gold) !important;
+  text-shadow: 0 0 10px rgba(229, 179, 82, 0.4) !important;
+}
+
+.difficulty-description {
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+  min-height: 24px !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+  color: #9eb19a !important;
+}
+
+.menu-footer {
+  margin-top: auto !important;
+  border-top: 1px solid rgba(185, 198, 169, 0.2) !important;
+  padding-top: 12px !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* ============================================================
+   IN-GAME HUD OVERHAUL
+   ============================================================ */
+
+/* Top Species Card */
+.species-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  min-width: 250px !important;
+  background: 
+    linear-gradient(135deg, rgba(14, 25, 19, 0.94), rgba(8, 15, 12, 0.97)),
+    var(--slate-texture) center/256px repeat !important;
+  border: 1px solid var(--stone-border-gold) !important;
+  box-shadow: 
+    0 8px 30px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  padding: 10px 18px 10px 12px !important;
+  border-radius: 6px !important;
+}
+
+.species-card > div {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+.species-emblem {
+  position: relative !important;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  flex: 0 0 52px !important;
+  background: radial-gradient(circle, rgba(229, 179, 82, 0.22), rgba(12, 22, 16, 0.9)) !important;
+  border: 1px solid var(--stone-border-gold) !important;
+  border-radius: 50% !important;
+  clip-path: none !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 0 14px rgba(229, 179, 82, 0.25) !important;
+}
+
+.species-emblem .rendered-icon,
+.species-emblem img {
+  width: 42px !important;
+  height: 42px !important;
+  max-width: 42px !important;
+  max-height: 42px !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: auto !important;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.7)) !important;
+}
+
+.species-card h2 {
+  font-family: Georgia, serif !important;
+  font-size: 24px !important;
+  color: #f7f5ec !important;
+  letter-spacing: -0.02em !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8) !important;
+}
+
+#hud-tier {
+  color: var(--primal-gold) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+}
+
+/* Run Stats & Timer (Top Right) */
+.hud-run {
+  background: 
+    linear-gradient(135deg, rgba(14, 25, 19, 0.94), rgba(8, 15, 12, 0.97)),
+    var(--slate-texture) center/256px repeat !important;
+  border: 1px solid var(--stone-border) !important;
+  border-radius: 6px !important;
+  padding: 8px 16px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+.run-timer {
+  font-size: 26px !important;
+  font-weight: 500 !important;
+  color: #f4f6ea !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.2) !important;
+}
+
+.hud-dna {
+  color: var(--primal-gold-bright) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 0 10px rgba(229, 179, 82, 0.3) !important;
+}
+
+/* Minimap with Prehistoric Compass Bezel */
+.minimap-wrap {
+  position: absolute !important;
+  right: 28px !important;
+  top: 90px !important;
+  width: 190px !important;
+  height: 220px !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.minimap-wrap canvas {
+  width: 154px !important;
+  height: 154px !important;
+  border-radius: 50% !important;
+  border: 2px solid #22382c !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
+  position: relative !important;
+  display: block !important;
+}
+
+/* Ancient Bezel Ring Overlay */
+.minimap-wrap::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 4px;
+  width: 182px;
+  height: 182px;
+  background: var(--compass-bezel) center/contain no-repeat;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.75));
+  z-index: 3;
+}
+
+.map-header, .map-footer {
+  position: relative;
+  z-index: 4;
+  color: #c9d6be !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 4px #000 !important;
+}
+
+/* Bottom Vitals Panel */
+.vitals {
+  background: 
+    linear-gradient(135deg, rgba(14, 25, 19, 0.94), rgba(8, 15, 12, 0.97)),
+    var(--slate-texture) center/320px repeat !important;
+  border: 1px solid var(--stone-border) !important;
+  border-left: 3px solid #3b82f6 !important;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 14px 18px !important;
+  width: 260px !important;
+}
+
+.vital-label {
+  font-size: 9px !important;
+  letter-spacing: 0.14em !important;
+  color: #d6e2cf !important;
+  font-weight: 600 !important;
+}
+
+.vital-label b {
+  font-size: 11px !important;
+  color: #fff !important;
+}
+
+/* Health Meter: Primal Crimson Pulse */
+.meter.health {
+  height: 12px !important;
+  background: #230809 !important;
+  border: 1px solid rgba(220, 38, 38, 0.35) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+  border-radius: 3px !important;
+  overflow: hidden !important;
+}
+
+.meter.health > span {
+  background: linear-gradient(90deg, #991b1b 0%, #dc2626 65%, #f87171 100%) !important;
+  box-shadow: 0 0 14px rgba(220, 38, 38, 0.6) !important;
+  position: relative;
+}
+
+.meter.health > span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Stamina Meter: Electric Cyan */
+.meter.stamina {
+  height: 6px !important;
+  background: #091a26 !important;
+  border: 1px solid rgba(2, 132, 199, 0.3) !important;
+  border-radius: 2px !important;
+}
+
+.meter.stamina > span {
+  background: linear-gradient(90deg, #0369a1, #38bdf8) !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
+}
+
+/* Hunger Meter: Warm Amber */
+.meter.hunger {
+  height: 6px !important;
+  background: #221406 !important;
+  border: 1px solid rgba(217, 119, 6, 0.3) !important;
+  border-radius: 2px !important;
+}
+
+.meter.hunger > span {
+  background: linear-gradient(90deg, #b45309, #fbbf24) !important;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5) !important;
+}
+
+/* Abilities Deck */
+.abilities {
+  gap: 10px !important;
+}
+
+.ability-key {
+  background: 
+    linear-gradient(135deg, rgba(16, 28, 22, 0.92), rgba(9, 16, 13, 0.95)),
+    var(--slate-texture) center/128px repeat !important;
+  border: 1px solid var(--stone-border) !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  min-width: 58px !important;
+  min-height: 74px !important;
+  padding: 8px 10px !important;
+  transition: all 0.18s ease !important;
+}
+
+.ability-key:hover {
+  border-color: var(--stone-border-gold) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7), 0 0 16px rgba(229, 179, 82, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.ability-key kbd {
+  background: linear-gradient(180deg, #f4ecd8, #d4c7a6) !important;
+  color: #1a160c !important;
+  font-weight: 700 !important;
+  border: 1px solid #c4b58e !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  font-size: 8px !important;
+  border-radius: 3px !important;
+}
+
+.ability-key b {
+  color: var(--primal-gold-bright) !important;
+  font-size: 9px !important;
+  text-shadow: 0 0 8px rgba(229, 179, 82, 0.4) !important;
+}
+
+/* Evolution Progress Box (Bottom Right) */
+.evolution-progress {
+  background: 
+    linear-gradient(135deg, rgba(14, 25, 19, 0.94), rgba(8, 15, 12, 0.97)),
+    var(--slate-texture) center/320px repeat !important;
+  border: 1px solid var(--stone-border) !important;
+  border-right: 3px solid var(--primal-gold) !important;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 14px 18px !important;
+  width: 230px !important;
+}
+
+.meter.xp {
+  height: 8px !important;
+  background: #081a13 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  border-radius: 3px !important;
+}
+
+.meter.xp > span {
+  background: linear-gradient(90deg, #059669 0%, #10b981 65%, #f59e0b 100%) !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6) !important;
+}
+
+#evolve-ready {
+  background: linear-gradient(180deg, #f59e0b, #d97706) !important;
+  border: 1px solid #fbbf24 !important;
+  color: #141208 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  border-radius: 4px !important;
+  animation: pulse-beacon 1.4s infinite alternate !important;
+}
+
+@keyframes pulse-beacon {
+  0% { transform: scale(1); box-shadow: 0 0 16px rgba(245, 158, 11, 0.5); }
+  100% { transform: scale(1.02); box-shadow: 0 0 28px rgba(245, 158, 11, 0.85); }
+}
+
+/* Floating Banners & Prompts */
+#toast {
+  position: fixed !important;
+  left: 50% !important;
+  top: 36px !important;
+  transform: translate(-50%, -10px) !important;
+  background: 
+    linear-gradient(135deg, rgba(16, 28, 22, 0.96), rgba(9, 16, 13, 0.98)),
+    var(--slate-texture) center/128px repeat !important;
+  border: 1px solid rgba(229, 179, 82, 0.45) !important;
+  border-top: 2px solid var(--primal-gold) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(229, 179, 82, 0.25) !important;
+  border-radius: 4px !important;
+  color: #f7f5ea !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  padding: 8px 20px !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+  z-index: 45 !important;
+  pointer-events: none !important;
+}
+
+#toast.visible {
+  opacity: 1 !important;
+  transform: translate(-50%, 0) !important;
+}
+
+/* Hide toast when modal overlays are open so it never obstructs dialogs */
+#overlay:not([hidden]) ~ #toast,
+#overlay:not([hidden]) #toast,
+#overlay:not(.hidden) ~ #toast,
+.shade-screen:not([hidden]) ~ #toast,
+body:has(#overlay:not([hidden]):not(.hidden)) #toast {
+  display: none !important;
+}
+
+/* Encyclopedia Cards & Species Grid */
+.encyclopedia-results .species-entry,
+.species-grid .species-entry {
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  min-height: 220px !important;
+  padding: 14px 16px !important;
+  box-sizing: border-box !important;
+  background: rgba(14, 25, 20, 0.6) !important;
+  border: 1px solid rgba(180, 205, 175, 0.16) !important;
+  border-radius: 5px !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+}
+
+.encyclopedia-results .species-entry:hover,
+.species-grid .species-entry:hover {
+  background: rgba(22, 38, 30, 0.8) !important;
+  border-color: var(--stone-border-gold) !important;
+  transform: translateY(-2px) !important;
+}
+
+.encyclopedia-results .species-entry[aria-pressed="true"],
+.species-grid .species-entry[aria-pressed="true"] {
+  border-color: var(--primal-gold) !important;
+  background: rgba(30, 48, 36, 0.85) !important;
+  box-shadow: 0 0 16px rgba(229, 179, 82, 0.2) !important;
+}
+
+.encyclopedia-results .creature-art,
+.species-grid .creature-art {
+  height: 84px !important;
+  min-height: 84px !important;
+  max-height: 84px !important;
+  width: 100% !important;
+  margin: 6px 0 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+.encyclopedia-results .creature-art .rendered-icon,
+.species-grid .creature-art .rendered-icon,
+.encyclopedia-results .creature-art img,
+.species-grid .creature-art img {
+  max-height: 78px !important;
+  max-width: 110px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65)) !important;
+}
+
+.encyclopedia-results .species-entry h2,
+.species-grid .species-entry h2 {
+  font-family: Georgia, serif !important;
+  font-size: 20px !important;
+  line-height: 1.15 !important;
+  margin: 2px 0 4px !important;
+  color: #f5f4ea !important;
+}
+
+.encyclopedia-results .species-ability,
+.species-grid .species-ability {
+  margin-top: auto !important;
+  padding-top: 6px !important;
+  font-size: 9px !important;
+  color: #b5a478 !important;
+}
+
+#pickup-prompt {
+  background: 
+    linear-gradient(135deg, rgba(16, 28, 22, 0.96), rgba(9, 16, 13, 0.98)),
+    var(--slate-texture) center/128px repeat !important;
+  border: 1px solid rgba(229, 179, 82, 0.5) !important;
+  border-bottom: 2px solid var(--primal-gold) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75), 0 0 18px rgba(229, 179, 82, 0.25) !important;
+  border-radius: 4px !important;
+  color: #fff2d1 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* ============================================================
+   EVOLUTION SCREEN OVERHAUL
+   ============================================================ */
+
+.evolution-card {
+  background: 
+    linear-gradient(135deg, rgba(16, 28, 22, 0.94), rgba(9, 16, 13, 0.98)),
+    var(--slate-texture) center/256px repeat !important;
+  border: 1px solid var(--stone-border) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 6px !important;
+  transition: all 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.evolution-card:hover {
+  border-color: var(--stone-border-gold) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(229, 179, 82, 0.25) !important;
+}
+
+.evolution-card.selected {
+  border: 2px solid var(--primal-gold) !important;
+  box-shadow: 0 0 32px rgba(229, 179, 82, 0.45), 0 16px 40px rgba(0, 0, 0, 0.8) !important;
+}
+
+.mutation-card {
+  background: rgba(18, 30, 24, 0.7) !important;
+  border: 1px solid var(--stone-border) !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mutation-card:hover {
+  border-color: var(--stone-border-gold) !important;
+  background: rgba(28, 45, 36, 0.85) !important;
+}
+
+.mutation-card.selected {
+  border-color: var(--primal-gold) !important;
+  background: linear-gradient(135deg, rgba(42, 60, 48, 0.8), rgba(24, 38, 30, 0.8)) !important;
+  box-shadow: 0 0 18px rgba(229, 179, 82, 0.3) !important;
+}
+
+/* ============================================================
+   DEATH SCREEN OVERHAUL
+   ============================================================ */
+
+.death-panel {
+  border-top: 3px solid var(--primal-red) !important;
+}
+
+.death-left > h1 {
+  font-family: Georgia, serif !important;
+  font-size: 42px !important;
+  color: #fff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8) !important;
+}
+
+.death-left em {
+  color: var(--primal-gold-bright) !important;
+  font-style: italic !important;
+}
+
+.final-score > strong {
+  color: #f7e6b8 !important;
+  text-shadow: 0 0 25px rgba(229, 179, 82, 0.4), 0 4px 12px #000 !important;
+  font-family: Georgia, serif !important;
+}

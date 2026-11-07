@@ -11,3 +11,5 @@ playwright-report/
 .DS_Store
 Thumbs.db
 *.local
+.agents/
+skills-lock.json

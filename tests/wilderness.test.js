@@ -4,7 +4,10 @@ import {
   worldFeatures,
   resolveObstacles,
   updateWildlife,
+  marinePose,
+  marineSpeed,
 } from "../src/wilderness.js";
+import { createWildFeature } from "../src/wilderness-art.js";
 import { attackProfile } from "../src/combat.js";
 import { SPECIES, SPECIES_BY_ID } from "../src/data.js";
 import { newProfile, normalizeProfile } from "../src/profile.js";
@@ -75,6 +78,63 @@ test("toxic fungi poison, snapjaws bite and water slows with marine attacks", ()
   const before = g.player.hp;
   updateWildlife(g, 0.1);
   assert.ok(g.player.hp < before);
+});
+function marineGame() {
+  return {
+    time: 0,
+    player: { x: 140, y: 100, vx: 0, vy: 0, poisoned: 0 },
+    species: { size: 1 },
+    effectiveSize: 1,
+    rules: { enemyDamage: 1 },
+    worldFeatures: [{ id: "pool", type: "water", x: 100, y: 100, radius: 16, tier: 2, phase: 0.4 }],
+    bites: 0,
+    damagePlayer() { this.bites++; },
+    emit() {},
+  };
+}
+test("marine predators swim continuously into range rather than teleporting on entry or retarget", () => {
+  const g = marineGame(), f = g.worldFeatures[0];
+  updateWildlife(g, 0);
+  let previous = g.marineState.get(f.id).swimmers.map((s) => ({ ...s }));
+  g.player.x = 100;
+  for (let tick = 0; tick < 100; tick++) {
+    g.time += 0.1;
+    if (tick === 15) g.player.y = 106;
+    if (tick === 20) g.player.y = 100;
+    updateWildlife(g, 0.1);
+    const swimmers = g.marineState.get(f.id).swimmers;
+    swimmers.forEach((s, i) => {
+      assert.ok(Math.hypot(s.x - previous[i].x, s.y - previous[i].y) <= marineSpeed(f, i, true) * 0.1 + 1e-8);
+      assert.ok(Math.abs(s.angle - previous[i].angle) <= 0.28 + 1e-8);
+      assert.ok(Math.hypot(s.x - f.x, s.y - f.y) <= f.radius - 2.3 + 1e-8);
+    });
+    previous = swimmers.map((s) => ({ ...s }));
+    if (tick === 0) assert.equal(g.bites, 0, "entering deep water cannot pull distant predators onto the player");
+  }
+  assert.ok(g.bites > 0, "predators eventually swim into physical bite range");
+});
+test("marine rendering reads simulation positions without moving swimmers, including while paused", () => {
+  const g = marineGame(), f = g.worldFeatures[0];
+  updateWildlife(g, 0.1);
+  const state = g.marineState.get(f.id), snapshot = structuredClone(state),
+    art = createWildFeature({ ...f });
+  art.userData.animate(g.time, g.player, g.marineState);
+  state.swimmers.forEach((s, i) => {
+    assert.equal(marinePose({ ...f }, 900, i, g.player, g.marineState), s);
+    const model = art.userData.swimmers[i];
+    assert.equal(model.position.x + f.x, s.x);
+    assert.equal(model.position.z + f.y, s.y);
+    assert.equal(model.rotation.y, -s.angle);
+  });
+  art.userData.animate(g.time, { x: 100, y: 100 }, g.marineState);
+  assert.deepEqual(state, snapshot, "renderer and player proximity cannot advance the simulation");
+  g.worldFeatures = [{ ...f }];
+  updateWildlife(g, 0);
+  assert.equal(g.marineState.get(f.id), state, "streaming feature objects preserves active pool positions");
+  g.worldFeatures = [];
+  updateWildlife(g, 0.1);
+  assert.equal(g.marineState.size, 0, "unloaded pools release simulation state");
+  art.userData.dispose();
 });
 test("attack reach, recovery and ranged reach depend on the actual species", () => {
   const profiles = SPECIES.map(attackProfile);

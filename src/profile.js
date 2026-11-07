@@ -1,4 +1,5 @@
 import { SKINS, PERMANENT_MODIFIERS } from "./content.js";
+import { normalizeCollection, checkAchievements } from "./collections.js";
 export const PROFILE_KEY = "jurassic-domination.profile.v1";
 export const SETTINGS_KEY = "jurassic-domination.settings.v1";
 export const DEFAULT_SETTINGS = {
@@ -13,7 +14,7 @@ export const DEFAULT_SETTINGS = {
 export const UPGRADE_IDS = ["vitality", "instinct", "metabolism"];
 export function newProfile() {
   return {
-    version: 2,
+    version: 3,
     dna: 0,
     bestScore: 0,
     runs: 0,
@@ -27,6 +28,7 @@ export function newProfile() {
     upgrades: { vitality: 0, instinct: 0, metabolism: 0 },
     history: [],
     achievements: [],
+    ...normalizeCollection(),
   };
 }
 const integer = (n, fallback = 0, max = 1e9) =>
@@ -34,6 +36,7 @@ const integer = (n, fallback = 0, max = 1e9) =>
 export function normalizeProfile(raw) {
   const p = newProfile();
   if (!raw || typeof raw !== "object") return p;
+  Object.assign(p, normalizeCollection(raw));
   for (const k of ["dna", "bestScore", "runs", "totalKills", "highestTier"])
     p[k] = integer(raw[k], 0, k === "highestTier" ? 7 : 1e9);
   p.unlocked = Array.isArray(raw.unlocked)
@@ -164,7 +167,6 @@ export function purchaseUpgrade(profile, id) {
 }
 export function recordRun(profile, results, date = new Date().toISOString()) {
   profile.runs++;
-  profile.dna += integer(results.dna);
   profile.bestScore = Math.max(profile.bestScore, integer(results.score));
   profile.totalKills += integer(results.kills);
   profile.highestTier = Math.max(
@@ -175,18 +177,8 @@ export function recordRun(profile, results, date = new Date().toISOString()) {
     profile.unlocked.push(results.speciesId);
   profile.history.unshift({ ...results, date });
   profile.history = profile.history.slice(0, 10);
-  const newly = [];
-  for (const [id, condition] of [
-    ["first-blood", profile.totalKills >= 1],
-    ["survivor", results.time >= 180],
-    ["evolution", results.tier >= 2],
-    ["apex", results.tier >= 5],
-    ["mythic", results.tier >= 6],
-    ["relentless", profile.runs >= 10],
-  ])
-    if (condition && !profile.achievements.includes(id)) {
-      profile.achievements.push(id);
-      newly.push(id);
-    }
-  return newly;
+  return checkAchievements(profile, {
+    tier: results.tier,
+    time: results.time,
+  }).map((a) => a.id);
 }

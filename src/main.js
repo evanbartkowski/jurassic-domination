@@ -1,6 +1,7 @@
 import "./style.css";
 import "./world-ui.css";
 import "./expansion.css";
+import "./collections.css";
 import { Game } from "./game.js";
 import { SPECIES } from "./data.js";
 import { WorldRenderer } from "./renderer.js";
@@ -17,6 +18,22 @@ import {
 import { SpecimenViewer } from "./specimen.js";
 import { POWERUPS, RUN_SKILLS, TECHNIQUES } from "./content.js";
 import { biomeAt, BANDS, REGIONS, WORLD_RADIUS } from "./world-data.js";
+import { CATALOG, ACHIEVEMENTS } from "./collection-data.js";
+import {
+  purchaseItem,
+  awardRareDNA,
+  grantFind,
+  checkAchievements,
+  equipCosmetic,
+  equipPet,
+  placeIslandItem,
+  moveIslandItem,
+  storeIslandItem,
+  renameIsland,
+  recordGuardianKill,
+} from "./collections.js";
+import { CollectionViewer } from "./collection-art.js";
+import { IslandScene } from "./island.js";
 
 let storage;
 try {
@@ -50,6 +67,121 @@ const pointer = {
 };
 let ui;
 let specimen = null;
+let productViewer = null,
+  islandScene = null,
+  pendingIslandTool = null;
+const islandUndo = [],
+  islandRedo = [];
+function settleAchievements(progress = {}) {
+  const rewards = checkAchievements(profile, progress);
+  if (!rewards.length) return;
+  const earned = rewards.reduce((sum, r) => sum + r.reward, 0);
+  if (game) game.earnedDNA += earned;
+  persist();
+  ui?.updateProfile(profile);
+  for (const reward of rewards)
+    ui?.toast(
+      `${reward.name}${reward.reward ? ` · +${reward.reward} rare DNA` : ""}`,
+    );
+}
+function islandState(
+  state = islandScene
+    ? { selected: islandScene.selected, tool: islandScene.tool }
+    : null,
+) {
+  ui?.refreshIslandInventory(profile, state);
+}
+function openIsland(tool = null) {
+  game = null;
+  paused = false;
+  keys.clear();
+  pending.clear();
+  pointer.down = false;
+  pendingIslandTool = tool;
+  if (tool) ui.islandTab = tool.kind;
+  ui.showIsland(profile);
+  audio.setMode("menu");
+}
+function islandAction(action, payload = {}) {
+  if (
+    !islandScene &&
+    ["tool", "move", "rotate", "store", "cancel"].includes(action)
+  )
+    return { ok: false, reason: "The island is still loading." };
+  if (action === "tool") {
+    islandScene.setTool(payload.kind, payload.id);
+    return { ok: true };
+  }
+  if (action === "cancel") {
+    islandScene.cancelTool();
+    return { ok: true };
+  }
+  if (action === "move" && !payload.id) {
+    islandScene.moveSelected();
+    return { ok: true };
+  }
+  if (action === "rotate") {
+    islandScene.rotate();
+    return { ok: true };
+  }
+  if (action === "store" && !payload.id) {
+    islandScene.storeSelected();
+    return { ok: true };
+  }
+  const before = JSON.stringify(profile.island);
+  let result;
+  if (action === "undo" || action === "redo") {
+    const from = action === "undo" ? islandUndo : islandRedo,
+      to = action === "undo" ? islandRedo : islandUndo;
+    if (!from.length) {
+      ui.islandHint("There are no changes to undo or redo.");
+      return { ok: false };
+    }
+    to.push(before);
+    profile.island = JSON.parse(from.pop());
+    result = { ok: true };
+    islandScene?.cancelTool();
+  } else {
+    if (action === "place")
+      result = placeIslandItem(
+        profile,
+        payload.kind,
+        payload.itemId,
+        payload.x,
+        payload.y,
+        payload.rotation,
+      );
+    else if (action === "move")
+      result = moveIslandItem(
+        profile,
+        payload.id,
+        payload.x,
+        payload.y,
+        payload.rotation,
+      );
+    else if (action === "store")
+      result = { ok: storeIslandItem(profile, payload.id) };
+    else if (action === "rename")
+      result = { ok: renameIsland(profile, payload.name) };
+    else if (action === "grid") {
+      profile.island.grid = !profile.island.grid;
+      result = { ok: true };
+    } else return { ok: false, reason: "Unknown island action." };
+    if (result.ok && before !== JSON.stringify(profile.island)) {
+      islandUndo.push(before);
+      if (islandUndo.length > 30) islandUndo.shift();
+      islandRedo.length = 0;
+    }
+  }
+  if (result.ok) {
+    settleAchievements();
+    persist();
+    islandScene?.sync(profile);
+    islandState();
+    ui.islandHint("Island saved. Your collection is permanent.");
+  } else ui.islandHint(result.reason || "This island change is not available.");
+  return result;
+}
 function persist() {
   if (!saveData(storage, profile, settings) && !storageFailed) {
     storageFailed = true;
@@ -76,6 +208,8 @@ function start(mode = "survival") {
     skinId: profile.equippedSkin,
     knownUnlocks: [...profile.skins, ...profile.modifiers],
   });
+  game.cosmeticId = profile.equippedCosmetic;
+  game.petId = profile.activePet;
   paused = false;
   recorded = false;
   keys.clear();
@@ -146,6 +280,13 @@ ui = new UI(
           persist();
           ui.updateProfile(profile);
         }
+        profile.highestTier = Math.max(profile.highestTier, game.tier);
+        settleAchievements({
+          tier: game.tier,
+          time: game.time,
+          kills: game.player.kills,
+        });
+        persist();
       }
     },
     settings: (next) => {
@@ -160,16 +301,44 @@ ui = new UI(
         ui.updateProfile(profile);
         ui.showLegacy();
         audio.play("evolve");
-      } else ui.toast("Earn more DNA by surviving the food chain.");
+      } else ui.toast("Seek rare DNA finds or one-time achievement rewards.");
     },
     skin: (id) => {
       if (equipSkin(profile, id)) {
         persist();
         ui.updateProfile(profile);
-        world?.setMenuSkin(id);
+        world?.setMenuSkin(id, profile.equippedCosmetic);
         if (game) game.skinId = id;
       }
     },
+    purchase: (sku) => {
+      const result = purchaseItem(profile, sku);
+      if (result.ok) {
+        settleAchievements();
+        persist();
+        ui.updateProfile(profile);
+        ui.refreshShop();
+        ui.toast(`${result.item.name} purchased. Permanently owned.`);
+        audio.play("evolve");
+      } else ui.toast(result.reason);
+    },
+    cosmetic: (id) => {
+      if (equipCosmetic(profile, id)) {
+        persist();
+        ui.updateProfile(profile);
+        world?.setMenuSkin(profile.equippedSkin, id);
+        if (game) game.cosmeticId = id;
+      }
+    },
+    pet: (id) => {
+      if (equipPet(profile, id)) {
+        persist();
+        ui.updateProfile(profile);
+        if (game) game.petId = id;
+      }
+    },
+    island: openIsland,
+    islandAction,
     quit: () => {
       if (window.desktop) window.desktop.quit();
       else ui.toast("Close this tab to exit. Your legacy is saved.");
@@ -204,7 +373,7 @@ function failGraphics(message) {
 }
 try {
   world = new WorldRenderer(canvas, settings, failGraphics);
-  world.setMenuSkin(profile.equippedSkin);
+  world.setMenuSkin(profile.equippedSkin, profile.equippedCosmetic);
 } catch (error) {
   console.error(error);
   failGraphics(
@@ -220,6 +389,8 @@ document.addEventListener("pointerdown", () => unlock(), { once: true });
 window.addEventListener("resize", () => {
   world?.resize();
   specimen?.resize();
+  productViewer?.resize();
+  islandScene?.resize();
 });
 window.addEventListener("contextmenu", (event) => {
   if (ui.view === "hud") event.preventDefault();
@@ -268,6 +439,7 @@ window.addEventListener("keydown", (event) => {
   )
     event.preventDefault();
   if (key === "Escape") {
+    if (ui.view === "island" && islandScene?.cancelTool()) return;
     if (ui.view === "hud") pause();
     else if (ui.view === "pause") resume();
     else if (!["evolution", "death", "menu"].includes(ui.view)) ui.back();
@@ -279,6 +451,10 @@ window.addEventListener("keydown", (event) => {
     return;
   }
   if (event.target.matches("input,select,textarea")) return;
+  if (ui.view === "island") {
+    islandScene?.handleKey(event);
+    return;
+  }
   if (key === "KeyM" && ui.view === "hud" && !event.repeat) {
     mapExpanded = !mapExpanded;
     const map = document.getElementById("minimap");
@@ -553,10 +729,39 @@ function events() {
         "run-cast",
         "unlock",
         "region",
+        "dna-find",
       ].includes(event.type) &&
       event.text
     )
       ui.toast(event.text);
+    if (
+      event.type === "dna-find" &&
+      awardRareDNA(profile, event.receipt, event.amount)
+    ) {
+      game.earnedDNA += event.amount;
+      persist();
+      ui.updateProfile(profile);
+    }
+    if (event.type === "collection-find") {
+      const result = grantFind(profile, event.sku, event.receipt);
+      if (result.ok) {
+        game.earnedDNA += result.dna || 0;
+        persist();
+        ui.updateProfile(profile);
+        ui.toast(
+          result.duplicate
+            ? `Duplicate ${result.item.name} · +1 rare DNA`
+            : `PERMANENT FIND · ${result.item.name}`,
+        );
+        audio.play("evolve");
+      }
+    }
+    if (event.type === "kill" && event.lairId) {
+      if (
+        recordGuardianKill(profile, `guardian:${game.seed}:${event.entityId}`)
+      )
+        persist();
+    }
     if (
       event.type === "unlock" &&
       unlockDiscovery(profile, event.unlockType, event.unlockId)
@@ -648,7 +853,10 @@ function frame(now) {
       if (game.state === "dead" && !recorded) {
         recorded = true;
         const result = game.getResults();
+        const before = profile.dna;
         recordRun(profile, result);
+        game.earnedDNA += profile.dna - before;
+        result.dna = game.earnedDNA;
         persist();
         ui.updateProfile(profile);
         ui.showDeath(result, profile);
@@ -659,6 +867,11 @@ function frame(now) {
       uiTimer += dt;
       miniTimer += dt;
       if (uiTimer > 0.08) {
+        settleAchievements({
+          tier: game.tier,
+          time: game.time,
+          kills: game.state === "dead" ? 0 : game.player.kills,
+        });
         ui.updateHUD(game, dt);
         uiTimer = 0;
       }
@@ -668,7 +881,52 @@ function frame(now) {
       }
     }
     const menuView = !game;
-    if (!graphicsFailed) world?.render(game, paused ? 0 : dt, menuView);
+    if (!graphicsFailed && ui.view !== "island")
+      world?.render(game, paused ? 0 : dt, menuView);
+    const shopCanvas =
+      ui.view === "shop" ? document.getElementById("shop-preview") : null;
+    if (productViewer && productViewer.canvas !== shopCanvas) {
+      productViewer.dispose();
+      productViewer = null;
+    }
+    if (shopCanvas && !graphicsFailed) {
+      const item = CATALOG[ui.shopSelection];
+      if (item) {
+        const key = `${item.sku}:${profile.equippedSkin}:${profile.equippedCosmetic}`;
+        if (!productViewer)
+          productViewer = new CollectionViewer(shopCanvas, item, profile);
+        if (productViewer.appearanceKey !== key) {
+          productViewer.setProduct(item, profile);
+          productViewer.appearanceKey = key;
+        }
+        productViewer.render(dt);
+      }
+    }
+    const islandCanvas =
+      ui.view === "island" ? document.getElementById("island-canvas") : null;
+    if (islandScene && islandScene.canvas !== islandCanvas) {
+      islandScene.dispose();
+      islandScene = null;
+    }
+    if (islandCanvas && !graphicsFailed) {
+      if (!islandScene) {
+        islandScene = new IslandScene(
+          islandCanvas,
+          profile,
+          {
+            change: islandAction,
+            state: (state) => ui.refreshIslandInventory(profile, state),
+            hint: (text) => ui.islandHint(text),
+          },
+          settings,
+        );
+        if (pendingIslandTool) {
+          islandScene.setTool(pendingIslandTool.kind, pendingIslandTool.id);
+          pendingIslandTool = null;
+        }
+      }
+      islandScene.render(dt);
+    }
     const specimenCanvas =
       ui.view === "guide" ? document.getElementById("specimen-canvas") : null;
     if (specimen && specimen.canvas !== specimenCanvas) {
@@ -732,6 +990,12 @@ if (import.meta.env.DEV) {
     },
     get specimen() {
       return specimen;
+    },
+    get island() {
+      return islandScene;
+    },
+    get productViewer() {
+      return productViewer;
     },
     get settings() {
       return settings;

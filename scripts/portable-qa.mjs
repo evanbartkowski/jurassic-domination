@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 
 const exe = path.resolve(
   process.env.JD_PORTABLE_EXE ||
-    "release/Jurassic Domination-0.2.0-portable.exe",
+    "release/Jurassic Domination-0.3.0-portable.exe",
 );
 const profile = await mkdtemp(path.join(os.tmpdir(), "jurassic-portable-qa-"));
 const env = { ...process.env, JD_TEST_USER_DATA: profile };

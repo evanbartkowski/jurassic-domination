@@ -8,6 +8,7 @@ download models, or contact a game server while playing.
 | Archived title illustration, `public/assets/title-art.png` | Generated with OpenAI's built-in image generation tool for the original release | Retained for provenance; 0.2's active title uses a live procedural 3D scene. Preserve the original prompt and review applicable tool terms before commercial release. |
 | Dinosaurs and mythical creature meshes | Original procedural geometry, skin patterns and articulated animation in `src/creatures.js` | No externally downloaded creature models, textures or animations. |
 | Terrain, vegetation, props, particles, and lighting | Procedural Three.js scene generation | No external environment asset pack. |
+| Sanctuary, wearables, decoration models and product previews | Original procedural Three.js geometry in `src/collection-art.js` and `src/island.js` | Pets reuse the original creature models. No external asset pack. |
 | Soundtrack | Original Web Audio synthesis in `src/audio.js` | Adaptive D-minor phrases, ambient textures, percussion, and melodic layers generated at runtime. No sampled commercial recording. |
 | Combat, movement, creature, and UI effects | Original Web Audio synthesis in `src/audio.js` | Generated oscillator and filtered-noise sound design. |
 | UI graphics | Original HTML, CSS, and inline vector marks | No emoji-based game artwork. |

@@ -9,6 +9,15 @@ import {
 } from "./content.js";
 import { REGIONS } from "./world-data.js";
 import { upgradeCost } from "./profile.js";
+import {
+  CATALOG,
+  SHOP_ITEMS,
+  PETS,
+  DECORATIONS,
+  ACHIEVEMENTS,
+  RARITIES,
+} from "./collection-data.js";
+import { ownedCount, availableCount } from "./collections.js";
 
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const esc = (value) =>
@@ -133,6 +142,7 @@ export class UI {
               <div class="secondary-actions"><button class="button quiet" data-action="tutorial">${icon("book")} HOW TO SURVIVE</button><button class="button quiet" data-action="guide">ENCYCLOPEDIA ${icon("arrow")}</button></div>
               <button class="legacy-link" data-action="legacy">${icon("dna")}<span>THE ANCESTRAL LEGACY <b>${number(profile.dna)} DNA</b></span>${icon("arrow")}</button>
               <button class="cosmetic-link" data-action="wardrobe">APPEARANCE & ANCIENT RELICS <span>${(profile.skins || ["natural"]).length} SKINS</span></button>
+              <div class="collection-entrances"><button data-action="shop">${icon("dna")} DNA SHOP <b>${number(profile.dna)}</b></button><button data-action="island">${icon("leaf")} MY DINOSAUR ISLAND</button></div>
             </div>
             <div class="difficulty-picker" role="group" aria-label="Difficulty"><span>WORLD</span>${[
               ["explorer", "EXPLORER"],
@@ -148,7 +158,7 @@ export class UI {
           </div>
           <div class="menu-art-caption"><span class="caption-number">01 / THE FIRST BREATH</span><p>HATCH.<br>HUNT.<br><em>EVOLVE.</em></p><span class="caption-rule"></span><span class="caption-small">THE FOOD CHAIN HAS NO MERCY.</span></div>
         </div>
-        <footer class="menu-footer"><div class="menu-record"><span>BEST RUN <strong>${number(profile.bestScore)}</strong></span><span>LIVES LIVED <strong>${number(profile.runs)}</strong></span><span>SPECIES DISCOVERED <strong>${profile.unlocked?.length || 0} / ${SPECIES.length}</strong></span></div><div class="version-label"><span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.2.0</span><button data-action="quit" class="text-button">QUIT</button></div></footer>
+        <footer class="menu-footer"><div class="menu-record"><span>BEST RUN <strong>${number(profile.bestScore)}</strong></span><span>LIVES LIVED <strong>${number(profile.runs)}</strong></span><span>SPECIES DISCOVERED <strong>${profile.unlocked?.length || 0} / ${SPECIES.length}</strong></span></div><div class="version-label"><span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.3.0</span><button data-action="quit" class="text-button">QUIT</button></div></footer>
       </div>`,
       "menu-screen",
     );
@@ -156,6 +166,8 @@ export class UI {
     this.bind("tutorial", () => this.showTutorial());
     this.bind("guide", () => this.showGuide());
     this.bind("wardrobe", () => this.showWardrobe());
+    this.bind("shop", () => this.showShop());
+    this.bind("island", () => this.callbacks.island());
     this.bind("legacy", () => this.showLegacy());
     this.bind("settings", () => this.showSettings());
     this.bind("quit", () => this.callbacks.quit?.());
@@ -178,7 +190,7 @@ export class UI {
   buildHUD() {
     this.hud.innerHTML = `
       <div class="hud-top"><div class="species-card"><span class="species-emblem" id="hud-emblem">${icon("claw")}</span><div><p class="eyebrow" id="hud-tier">A NEW LIFE</p><h2 id="hud-species">The beginning</h2><span class="small-muted" id="hud-biome">FERN MEADOW</span></div></div>
-        <div class="hud-run"><span class="run-timer" id="hud-time">00:00</span><span class="run-kills">${icon("skull")}<b id="hud-kills">0</b></span><button class="icon-button" id="pause-button" aria-label="Pause game">${icon("pause")}</button></div></div>
+        <div class="hud-run"><span class="hud-dna" id="hud-dna">0 DNA</span><span class="run-timer" id="hud-time">00:00</span><span class="run-kills">${icon("skull")}<b id="hud-kills">0</b></span><button class="icon-button" id="pause-button" aria-label="Pause game">${icon("pause")}</button></div></div>
       <div class="minimap-wrap"><div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div><canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas><div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div></div>
       <div class="hud-bottom"><div class="vitals"><div class="vital"><div class="vital-label">${icon("heart")}<span>VITALITY</span><b id="hud-hp-text">100 / 100</b></div><div class="meter health"><span id="hud-hp"></span></div></div><div class="minor-vitals"><div class="vital"><div class="vital-label">${icon("bolt")}<span>STAMINA</span></div><div class="meter stamina"><span id="hud-stamina"></span></div></div><div class="vital"><div class="vital-label">${icon("leaf")}<span>HUNGER</span></div><div class="meter hunger"><span id="hud-hunger"></span></div></div></div><p class="hunger-warning" id="hud-warning"></p></div>
       <div class="abilities"><div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div><div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div><div class="ability-key"><kbd>SHIFT</kbd>${icon("arrow")}<span>DASH</span><b id="hud-dash-cooldown">READY</b></div><div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div></div>
@@ -210,6 +222,7 @@ export class UI {
       game.state === "egg" ? "An unhatched possibility" : s.name;
     $("#hud-biome").textContent = (game.biome || "Fern meadow").toUpperCase();
     $("#hud-time").textContent = clock(game.time);
+    $("#hud-dna").textContent = `${number(this.profile.dna)} DNA`;
     $("#hud-kills").textContent = number(p.kills);
     $("#hud-hp-text").textContent =
       `${Math.ceil(p.hp)} / ${Math.round(p.maxHp)}`;
@@ -253,7 +266,7 @@ export class UI {
     this.returnView = "pause";
     this.screen(
       "pause",
-      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused.</p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="guide">${icon("book")} ENCYCLOPEDIA</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">END RUN & RETURN TO TITLE</button></div><div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame?.mutations || []).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ") || "No mutations yet."}</p><p>${(this.currentGame?.runSkills || []).map((s) => esc(RUN_SKILLS.find((r) => r.id === s.id)?.name || s.id)).join(" · ") || "Ancient skills await discovery."}</p></div><p class="small-muted">Ending the run abandons this life. Earn DNA when you die.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
+      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused.</p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="guide">${icon("book")} ENCYCLOPEDIA</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">END RUN & RETURN TO TITLE</button></div><div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame?.mutations || []).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ") || "No mutations yet."}</p><p>${(this.currentGame?.runSkills || []).map((s) => esc(RUN_SKILLS.find((r) => r.id === s.id)?.name || s.id)).join(" · ") || "Ancient skills await discovery."}</p></div><p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
       "shade-screen",
     );
     this.bind("resume", () => this.callbacks.resume());
@@ -272,7 +285,7 @@ export class UI {
       <div class="tutorial-grid"><article class="tutorial-card"><span class="step-number">01</span><div class="tutorial-symbol">${icon("leaf")}</div><h2>Earn your first breath.</h2><p>Hatch into a random beginner species. Explore the meadows and feed on plants while you learn your surroundings. Hold <kbd>E</kbd> near food to eat.</p></article>
       <article class="tutorial-card"><span class="step-number">02</span><div class="tutorial-symbol">${icon("claw")}</div><h2>Hunt with intention.</h2><p>Aim with the mouse and bite with <kbd>LMB</kbd> or <kbd>SPACE</kbd>. Watch enemy windups. Dash clear, circle back, and eat the remains. Larger predators are deadly.</p></article>
       <article class="tutorial-card"><span class="step-number">03</span><div class="tutorial-symbol">${icon("dna")}</div><h2>Become something greater.</h2><p>Food fills your evolution bar. At each threshold, choose a new species and a mutation. Branch into armored herbivores, fearsome hunters, and eventually creatures of myth.</p></article>
-      <article class="tutorial-card"><span class="step-number">04</span><div class="tutorial-symbol">${icon("trophy")}</div><h2>Leave a legacy.</h2><p>Death ends the hunt and awards ancestral DNA. Invest it in permanent upgrades. The outer biomes and apex guardians offer greater rewards. At the summit, the hunt continues to intensify.</p></article></div>
+      <article class="tutorial-card"><span class="step-number">04</span><div class="tutorial-symbol">${icon("trophy")}</div><h2>Leave a legacy.</h2><p>DNA is rare: earn it once from selected achievements or find rare DNA clusters. Spend it on permanent skins, crowns, pets, island decorations or lineage upgrades. Permanent finds save immediately and survive death.</p></article></div>
       <div class="control-reference"><h3>YOUR INSTINCTS</h3><div class="controls-grid">${small("W A S D / ARROWS", "Move")}${small("MOUSE", "Aim")}${small("LMB / SPACE", "Bite")}${small("Q", "Species ability")}${small("SHIFT", "Dodge / dash")}${small("E", "Feed / hatch")}${small("TAB", "Field guide")}${small("ESC", "Pause")}${small("M", "Expand map")}${small("F11", "Fullscreen")}</div></div>
       <p class="survival-tip"><strong>A LIVING CONTINENT</strong> Hold <kbd>CTRL</kbd> to sprint. Use <kbd>R</kbd> for your species technique. Find ancient relics to gain <kbd>F / G / C / V / B / N</kbd> skills until death. Rare flowers grant timed damage, speed, magnet, auto-eat, shield or healing effects. Uneaten eggs hatch. Food from weak regions becomes ineffective as you evolve: use <kbd>M</kbd> to plan your journey and click the map to mark a destination. Red circles show enemy strikes before they land.</p>
       <div class="panel-bottom"><span>Death is part of evolution.</span><button class="button primary" data-action="back" data-focus>I’M READY ${icon("arrow")}</button></div></div>`,
@@ -353,7 +366,7 @@ export class UI {
         },
       ).join("")}</div>
       <h2 class="section-label relic-heading">PERMANENT WORLD RELICS</h2><div class="modifier-grid">${PERMANENT_MODIFIERS.map((m) => `<article class="modifier-card ${(p.modifiers || []).includes(m.id) ? "owned" : ""}">${icon("dna")}<div><h3>${esc(m.name)}</h3><p>${esc(m.description)}</p></div><b>${(p.modifiers || []).includes(m.id) ? "ACTIVE" : "UNDISCOVERED"}</b></article>`).join("")}</div><p class="survival-tip">Explore distant regions and defeat lair guardians to seek ancient fossils. Unlocks persist through death. Rare plants and relic skills found during a run are separate, temporary discoveries.</p>
-      <div class="panel-bottom"><span>No purchases. Every appearance is earned in the world.</span><button class="button primary" data-action="back" data-focus>RETURN ${icon("arrow")}</button></div></div>`,
+      <div class="panel-bottom"><span>Find rare appearances in the world or buy them with earned DNA.</span><button class="button secondary" data-action="wardrobe-shop">BROWSE DNA SHOP</button><button class="button primary" data-action="back" data-focus>RETURN ${icon("arrow")}</button></div></div>`,
       "shade-screen",
     );
     this.overlay.querySelectorAll("[data-skin]").forEach(
@@ -363,19 +376,236 @@ export class UI {
           this.showWardrobe();
         }),
     );
+    this.bind("wardrobe-shop", () => this.showShop("skin"));
     this.bind("back", () => this.back());
   }
 
+  showShop(category = this.shopCategory || "pet") {
+    this.hud.hidden = true;
+    this.returnView = "menu";
+    this.shopCategory = category;
+    this.shopSelection ||=
+      SHOP_ITEMS.find((i) => i.kind === category)?.sku || SHOP_ITEMS[0].sku;
+    this.screen(
+      "shop",
+      `<div class="wide-panel dna-shop">${this.header("THE ANCESTRAL EXCHANGE", "The DNA Shop", "Permanent companions, appearances, and pieces of your own prehistoric home.")}
+      <div class="shop-wallet"><span>${icon("dna")} AVAILABLE DNA <strong id="shop-wallet">${number(this.profile.dna)}</strong></span><p>DNA comes from selected one-time achievements and rare map finds.</p><button class="button compact secondary" data-action="shop-legacy">ACHIEVEMENTS & GROWTH</button><button class="button compact secondary" data-action="shop-island">MY ISLAND</button></div>
+      <div class="shop-toolbar"><div class="shop-tabs">${[
+        ["skin", "Skins"],
+        ["cosmetic", "Crowns & cosmetics"],
+        ["pet", "Dinosaur pets"],
+        ["decoration", "Island decorations"],
+      ]
+        .map(
+          ([id, name]) =>
+            `<button data-shop-category="${id}" aria-pressed="${category === id}">${name}</button>`,
+        )
+        .join(
+          "",
+        )}</div><label>RARITY<select id="shop-rarity"><option value="all">All rarities</option>${Object.entries(
+        RARITIES,
+      )
+        .map(([id, r]) => `<option value="${id}">${r.name}</option>`)
+        .join("")}</select></label></div>
+      <div class="shop-layout"><section class="shop-feature"><canvas id="shop-preview" aria-label="Live 3D item preview. Drag to rotate."></canvas><span class="specimen-hint">LIVE PREVIEW · DRAG TO ROTATE</span><div id="shop-details"></div></section><div id="shop-items" class="shop-grid"></div></div>
+      <div class="panel-bottom"><span>Owned pets and decorations survive every death. No real-money purchases.</span><button class="button primary" data-action="back" data-focus>RETURN ${icon("arrow")}</button></div><div id="shop-status" role="status"></div></div>`,
+      "shade-screen",
+    );
+    this.overlay.querySelectorAll("[data-shop-category]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          this.shopCategory = b.dataset.shopCategory;
+          this.refreshShop();
+        }),
+    );
+    $("#shop-rarity").onchange = () => this.refreshShop();
+    this.bind("shop-legacy", () => this.showLegacy());
+    this.bind("shop-island", () => this.callbacks.island());
+    this.bind("back", () => this.back());
+    this.refreshShop();
+  }
+  refreshShop() {
+    if (this.view !== "shop") return;
+    const p = this.profile,
+      rarity = $("#shop-rarity").value;
+    const items = SHOP_ITEMS.filter(
+      (i) =>
+        i.kind === this.shopCategory &&
+        (rarity === "all" || i.rarity === rarity),
+    );
+    if (items.length && !items.some((i) => i.sku === this.shopSelection))
+      this.shopSelection = items[0].sku;
+    $("#shop-wallet").textContent = number(p.dna);
+    this.overlay
+      .querySelectorAll("[data-shop-category]")
+      .forEach((b) =>
+        b.setAttribute(
+          "aria-pressed",
+          String(b.dataset.shopCategory === this.shopCategory),
+        ),
+      );
+    $("#shop-items").innerHTML = items.length
+      ? items
+          .map((item) => {
+            const count = ownedCount(p, item.sku),
+              r = RARITIES[item.rarity];
+            return `<button class="shop-card ${this.shopSelection === item.sku ? "selected" : ""}" data-product="${item.sku}" style="--rarity:${r.color}" aria-pressed="${this.shopSelection === item.sku}"><span class="rarity-label">${r.name}</span><div class="shop-item-art">${item.kind === "pet" ? animal(species(item.speciesId)) : item.kind === "skin" ? animal(species("tyrannosaurus")) : icon(item.kind === "cosmetic" ? "trophy" : "leaf")}</div><h2>${esc(item.name)}</h2><p>${item.kind === "decoration" ? `${count} OWNED` : count ? "PERMANENTLY OWNED" : `${item.price} DNA`}</p><span>${item.kind === "decoration" ? `${item.price} DNA EACH` : count ? "SELECT TO EQUIP" : "FIND OR BUY"}</span></button>`;
+          })
+          .join("")
+      : '<p class="empty-collection">No items in this rarity. Choose another filter.</p>';
+    this.overlay.querySelectorAll("[data-product]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          this.shopSelection = b.dataset.product;
+          this.refreshShop();
+        }),
+    );
+    this.refreshShopDetails();
+  }
+  refreshShopDetails() {
+    const p = this.profile,
+      item = CATALOG[this.shopSelection];
+    if (!item) return;
+    const count = ownedCount(p, item.sku),
+      unique = item.kind !== "decoration",
+      r = RARITIES[item.rarity];
+    const owned = unique && count > 0,
+      full = item.kind === "decoration" && count >= 99;
+    $("#shop-details").innerHTML =
+      `<span class="rarity-label" style="color:${r.color}">${r.name} · ${item.kind === "pet" ? "PERMANENT PET" : item.kind.toUpperCase()}</span><h2>${esc(item.name)}</h2><p>${esc(item.description)}</p><div class="shop-detail-price">${item.price} <small>DNA${item.kind === "decoration" ? " PER COPY" : ""}</small></div><button class="button ${owned ? "secondary" : "primary"}" data-buy="${item.sku}" ${owned || full || p.dna < item.price ? "disabled" : ""}>${owned ? "OWNED" : full ? "INVENTORY FULL" : `BUY · ${item.price} DNA`}</button>
+      ${count && item.kind === "skin" ? `<button class="button secondary" data-equip-skin="${item.id}">${p.equippedSkin === item.id ? "EQUIPPED" : "EQUIP SKIN"}</button>` : ""}
+      ${count && item.kind === "cosmetic" ? `<button class="button secondary" data-equip-cosmetic="${item.id}">${p.equippedCosmetic === item.id ? "UNEQUIP COSMETIC" : "EQUIP COSMETIC"}</button>` : ""}
+      ${count && item.kind === "pet" ? `<button class="button secondary" data-equip-pet="${item.id}">${p.activePet === item.id ? "LEAVE ON ISLAND" : "TAKE ON EXPEDITIONS"}</button>` : ""}
+      ${count && ["pet", "decoration"].includes(item.kind) ? '<button class="button secondary" data-place-product>PLACE ON MY ISLAND</button>' : ""}
+      <small class="shop-source">${owned ? "This collectible is permanent." : p.dna < item.price ? `You need ${item.price - p.dna} more DNA.` : "Purchases save immediately."} ${item.kind === "pet" ? "Pets are extremely rare map finds and cosmetic companions, with no combat advantage." : item.kind === "decoration" ? "Rare decoration caches can also be found in the world." : ""}</small>`;
+    $("[data-buy]").onclick = () => this.callbacks.purchase(item.sku);
+    $("[data-equip-skin]")?.addEventListener("click", () => {
+      this.callbacks.skin(item.id);
+      this.refreshShop();
+    });
+    $("[data-equip-cosmetic]")?.addEventListener("click", () => {
+      this.callbacks.cosmetic(
+        p.equippedCosmetic === item.id ? "none" : item.id,
+      );
+      this.refreshShop();
+    });
+    $("[data-equip-pet]")?.addEventListener("click", () => {
+      this.callbacks.pet(p.activePet === item.id ? null : item.id);
+      this.refreshShop();
+    });
+    $("[data-place-product]")?.addEventListener("click", () =>
+      this.callbacks.island({ kind: item.kind, id: item.id }),
+    );
+  }
+  showIsland(profile = this.profile) {
+    this.profile = profile;
+    this.hud.hidden = true;
+    this.returnView = "menu";
+    this.islandTab ||= "pet";
+    this.islandState = { selected: null, tool: null };
+    this.screen(
+      "island",
+      `<div class="sanctuary-shell"><canvas id="island-canvas" aria-label="Your editable dinosaur island. Drag to orbit, scroll to zoom, right-drag to pan."></canvas>
+      <header class="sanctuary-top"><div><p class="eyebrow">YOUR PERMANENT SANCTUARY</p><label class="island-name-label"><input id="island-name" aria-label="Island name" maxlength="36" value="${esc(profile.island.name)}"/></label></div><div><span>${icon("dna")} <b id="island-wallet">${number(profile.dna)}</b> DNA</span><button class="button compact secondary" data-action="island-shop">SHOP</button><button class="button compact secondary" data-action="back">RETURN TO TITLE</button></div></header>
+      <aside class="island-sidebar"><p class="eyebrow">YOUR COLLECTION</p><h2>Make it yours.</h2><div class="island-tabs"><button data-island-tab="pet">PETS</button><button data-island-tab="decoration">DECORATIONS</button></div><p class="island-inventory-hint">Choose an unplaced item, then click the island. Arrows + Enter also place items.</p><div id="island-inventory"></div><button class="button secondary" data-action="island-shop">FIND MORE IN THE SHOP</button></aside>
+      <aside id="island-selection" class="island-selection"></aside>
+      <div class="island-tools"><button data-island-command="undo" aria-label="Undo island change">UNDO</button><button data-island-command="redo" aria-label="Redo island change">REDO</button><button id="island-grid" data-island-command="grid">${profile.island.grid ? "HIDE" : "SHOW"} GRID</button><button data-island-command="cancel">CANCEL PLACEMENT</button></div><div class="island-bottom"><p id="island-status" role="status">A safe home for your permanent companions.</p><span>DRAG: ORBIT · RIGHT-DRAG / WASD: PAN · SCROLL: ZOOM · R: ROTATE · DELETE: STORE · ESC: CANCEL / LEAVE</span></div></div>`,
+      "island-screen",
+    );
+    this.overlay.querySelectorAll("[data-island-tab]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          this.islandTab = b.dataset.islandTab;
+          this.refreshIslandInventory(this.profile, this.islandState);
+        }),
+    );
+    this.bind("island-shop", () => this.showShop(this.islandTab));
+    this.bind("back", () => this.callbacks.menu());
+    $("#island-name").onchange = (e) =>
+      this.callbacks.islandAction("rename", { name: e.target.value });
+    this.overlay
+      .querySelectorAll("[data-island-command]")
+      .forEach(
+        (b) =>
+          (b.onclick = () =>
+            this.callbacks.islandAction(b.dataset.islandCommand, {})),
+      );
+    this.refreshIslandInventory(profile, this.islandState);
+  }
+  refreshIslandInventory(profile = this.profile, state = this.islandState) {
+    if (this.view !== "island") return;
+    this.profile = profile;
+    this.islandState = state || { selected: null, tool: null };
+    const p = profile;
+    $("#island-wallet").textContent = number(p.dna);
+    this.overlay
+      .querySelectorAll("[data-island-tab]")
+      .forEach((b) =>
+        b.setAttribute(
+          "aria-pressed",
+          String(b.dataset.islandTab === this.islandTab),
+        ),
+      );
+    const items = (this.islandTab === "pet" ? PETS : DECORATIONS).filter(
+      (i) => ownedCount(p, i.sku) > 0,
+    );
+    $("#island-inventory").innerHTML = items.length
+      ? items
+          .map((item) => {
+            const available = availableCount(p, item.kind, item.id);
+            return `<article class="island-inventory-item" style="--rarity:${RARITIES[item.rarity].color}"><button data-island-item="${item.sku}" ${available <= 0 ? "disabled" : ""}><span class="rarity-label">${RARITIES[item.rarity].name}</span><strong>${esc(item.name)}</strong><small>${available} AVAILABLE${item.kind === "decoration" ? ` / ${ownedCount(p, item.sku)} OWNED` : available ? "" : " · ROAMING ON ISLAND"}</small></button>${item.kind === "pet" ? `<button class="pet-expedition" data-island-companion="${item.id}">${p.activePet === item.id ? "EXPEDITION COMPANION" : "TAKE ON EXPEDITIONS"}</button>` : ""}</article>`;
+          })
+          .join("")
+      : `<p class="island-empty">${this.islandTab === "pet" ? "No permanent pets yet. Seek exceptionally rare companion eggs or buy your first dinosaur friend with DNA." : "Your decoration inventory is empty. Find rare supply caches or visit the DNA Shop."}</p>`;
+    this.overlay.querySelectorAll("[data-island-item]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const item = CATALOG[b.dataset.islandItem];
+          this.callbacks.islandAction("tool", { kind: item.kind, id: item.id });
+        }),
+    );
+    this.overlay.querySelectorAll("[data-island-companion]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          this.callbacks.pet(
+            p.activePet === b.dataset.islandCompanion
+              ? null
+              : b.dataset.islandCompanion,
+          );
+          this.refreshIslandInventory(p, this.islandState);
+        }),
+    );
+    const placement = p.island.placements.find(
+        (a) => a.id === this.islandState.selected,
+      ),
+      item = this.islandState.tool
+        ? CATALOG[`${this.islandState.tool.kind}:${this.islandState.tool.id}`]
+        : placement
+          ? CATALOG[`${placement.kind}:${placement.itemId}`]
+          : null;
+    $("#island-selection").innerHTML = item
+      ? `<p class="eyebrow">${this.islandState.tool ? "PLACEMENT MODE" : "SELECTED"}</p><h2>${esc(item.name)}</h2><span class="rarity-label" style="color:${RARITIES[item.rarity].color}">${RARITIES[item.rarity].name}</span><p>${this.islandState.tool ? "Click the island or use arrows + Enter. Invalid positions are marked red." : "Move or rotate this item, or store it safely in your permanent inventory."}</p><div>${!this.islandState.tool ? '<button data-selection-action="move">MOVE</button>' : ""}<button data-selection-action="rotate">ROTATE 45°</button>${!this.islandState.tool ? '<button data-selection-action="store">STORE</button>' : '<button data-selection-action="cancel">CANCEL</button>'}</div>`
+      : '<p class="eyebrow">ISLAND LIFE</p><h2>A place to belong.</h2><p>Your pets roam peacefully here. Select an owned item to place it, or click a placed item to move, rotate, or store it. Everything saves automatically.</p>';
+    this.overlay
+      .querySelectorAll("[data-selection-action]")
+      .forEach(
+        (b) =>
+          (b.onclick = () =>
+            this.callbacks.islandAction(b.dataset.selectionAction, {})),
+      );
+    $("#island-grid").textContent = `${p.island.grid ? "HIDE" : "SHOW"} GRID`;
+  }
+  islandHint(text) {
+    if (this.view === "island" && $("#island-status").textContent !== text)
+      $("#island-status").textContent = text;
+  }
   showLegacy() {
     this.returnView = "menu";
-    const achievements = [
-      ["first-blood", "First blood", "Hunt your first prey."],
-      ["survivor", "Still breathing", "Survive for three minutes."],
-      ["evolution", "Beyond instinct", "Reach the Predator stage."],
-      ["apex", "The greater hunter", "Reach the Titan stage."],
-      ["mythic", "A living legend", "Become a mythic creature."],
-      ["relentless", "Never the last life", "Complete ten runs."],
-    ];
+    const achievements = ACHIEVEMENTS.map((a) => [
+      a.id,
+      a.name,
+      `${a.description}${a.reward ? ` Reward: ${a.reward} DNA, once.` : ""}`,
+    ]);
     const upgrades = [
       {
         id: "vitality",
@@ -529,7 +759,7 @@ export class UI {
     const best = results.score >= (profile.bestScore || 0) && results.score > 0;
     this.screen(
       "death",
-      `<div class="wide-panel death-panel"><div class="death-left"><span class="death-symbol">${icon("skull")}</span><p class="eyebrow">THE FOOD CHAIN REMEMBERS</p><h1>End of a life.<br><em>Start of a legacy.</em></h1><p class="death-cause">${esc(results.cause || "The wild claimed another survivor.")}</p><div class="final-species">${animal(s)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier) + 1}</span><h2>${esc(s.name)}</h2></div></div></div><div class="death-right"><div class="final-score"><span>${best ? "A NEW PERSONAL BEST" : "YOUR FINAL SCORE"}</span><strong>${number(results.score)}</strong></div><div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION REACHED</span><strong>${esc(tierName(results.tier ?? s.tier))}</strong></div></div><div class="dna-earned">${icon("dna")}<span>ANCESTRAL DNA EARNED</span><strong>+${number(results.dna)}</strong></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>ONE MORE LIFE ${icon("arrow")}</button><button class="button secondary" data-action="menu">RETURN TO TITLE</button></div></div></div>`,
+      `<div class="wide-panel death-panel"><div class="death-left"><span class="death-symbol">${icon("skull")}</span><p class="eyebrow">THE FOOD CHAIN REMEMBERS</p><h1>End of a life.<br><em>Start of a legacy.</em></h1><p class="death-cause">${esc(results.cause || "The wild claimed another survivor.")}</p><div class="final-species">${animal(s)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier) + 1}</span><h2>${esc(s.name)}</h2></div></div></div><div class="death-right"><div class="final-score"><span>${best ? "A NEW PERSONAL BEST" : "YOUR FINAL SCORE"}</span><strong>${number(results.score)}</strong></div><div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION REACHED</span><strong>${esc(tierName(results.tier ?? s.tier))}</strong></div></div><div class="dna-earned">${icon("dna")}<span>RARE DNA BANKED THIS LIFE</span><strong>+${number(results.dna)}</strong></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>ONE MORE LIFE ${icon("arrow")}</button><button class="button secondary" data-action="menu">RETURN TO TITLE</button></div></div></div>`,
       "shade-screen death-screen",
     );
     this.bind("restart", () => this.callbacks.restart());

@@ -1,5 +1,29 @@
 # Local validation - November 7, 2026
 
+## Sanctuary Collection (0.3.0)
+
+| Scope | Result |
+| --- | --- |
+| Node gameplay, audio, collection transactions and migration | 57 passed |
+| Existing Chrome gameplay integration | 22 passed, zero runtime errors |
+| New collection browser integration | See artifacts/collections-qa.json |
+| Actual packaged Windows desktop | 12 passed, zero runtime errors |
+| Self-extracting v0.3.0 portable build | 5 passed, zero runtime errors |
+| Production build and Windows portable packaging | Passed |
+
+New checks cover all 49 purchases and previews, insufficient balance, duplicate
+claims, once-only milestones, no ordinary death payouts, v2 migration, owned-copy
+placement rules, collisions and shoreline validation. Browser checks exercise
+shop purchases, equipment, moving/rotating/storing, undo/redo, rename, reload and
+800 x 600 layout. Packaged desktop checks buy a pet, equip it, place it and reopen
+the saved island after reload using an isolated disposable profile. Rare pickup
+checks inject controlled test finds; they do not establish natural drop balance.
+
+Screenshots: [shop](screenshots/shop.png), [island](screenshots/island.png).
+
+## Previous expansion validation
+
+
 The Living Continent expansion (0.2.0) passed the following local checks:
 
 | Scope | Result |

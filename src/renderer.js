@@ -4,6 +4,8 @@ import { createDinosaur, animateCreature } from "./creatures.js";
 import { Terrain } from "./terrain.js";
 import { biomeAt, REGIONS, LAIRS, WORLD_RADIUS } from "./world-data.js";
 import { POWERUPS, SKINS } from "./content.js";
+import { applyCosmetic, createPet } from "./collection-art.js";
+import { CATALOG, RARITIES } from "./collection-data.js";
 export { createDinosaur };
 
 const lookup = (id) => SPECIES.find((s) => s.id === id) || SPECIES[0];
@@ -190,6 +192,11 @@ export class WorldRenderer {
     this.camera.updateProjectionMatrix();
   }
   resetRun() {
+    if (this.companion) {
+      this.scene.remove(this.companion);
+      this.companion.userData.dispose();
+      this.companion = null;
+    }
     for (const model of this.models.values()) this.removeModel(model);
     this.models.clear();
     for (const model of this.foodModels.values()) this.removeModel(model);
@@ -211,8 +218,12 @@ export class WorldRenderer {
     this.particles = [];
     this.cameraTarget.set(0, 0, 0);
   }
-  setMenuSkin(id) {
-    if (this.menuDino?.userData.skinId === id) return;
+  setMenuSkin(id, cosmeticId = "none") {
+    if (
+      this.menuDino?.userData.skinId === id &&
+      this.menuDino.userData.cosmeticId === cosmeticId
+    )
+      return;
     if (this.menuDino) this.removeModel(this.menuDino);
     this.menuDino = createDinosaur(
       SPECIES.find((s) => s.id === "tyrannosaurus"),
@@ -220,6 +231,7 @@ export class WorldRenderer {
       id,
     );
     this.menuDino.position.set(6.6, 0, -1);
+    applyCosmetic(this.menuDino, cosmeticId);
     this.menuDino.scale.setScalar(2.4);
     this.scene.add(this.menuDino);
   }
@@ -337,9 +349,18 @@ export class WorldRenderer {
   }
   event(event) {
     if (
-      ["hit", "kill", "eat", "hatch", "evolve", "ability", "dash"].includes(
-        event.type,
-      )
+      [
+        "hit",
+        "kill",
+        "eat",
+        "hatch",
+        "evolve",
+        "ability",
+        "dash",
+        "collect",
+        "dna-find",
+        "collection-find",
+      ].includes(event.type)
     )
       this.burst(
         event.x || 0,
@@ -491,15 +512,18 @@ export class WorldRenderer {
     invulnerable = false,
     skinId = "natural",
     scaleFactor = 1,
+    cosmeticId = "none",
   ) {
     let model = this.models.get(key);
     if (
       !model ||
       model.userData.species.id !== id ||
-      model.userData.skinId !== skinId
+      model.userData.skinId !== skinId ||
+      model.userData.cosmeticId !== cosmeticId
     ) {
       if (model) this.removeModel(model);
       model = createDinosaur(lookup(id), false, skinId);
+      applyCosmetic(model, cosmeticId);
       model.position.set(x, 0, z);
       model.rotation.y = -angle;
       this.models.set(key, model);
@@ -594,6 +618,8 @@ export class WorldRenderer {
           p.attacking > 0,
           p.invulnerable > 0,
           game.skinId,
+          1,
+          game.cosmeticId || "none",
         );
         keys.add("player");
         this.ring.position.set(p.x, 0.065, p.y);
@@ -634,10 +660,12 @@ export class WorldRenderer {
           this.models.delete(key);
         }
       this.syncFood(game.foods, t);
+      this.syncCompanion(game, dt, t);
       this.dangerRing.visible = false;
       this.syncWarnings(game, t);
       this.dust.position.set(p.x, 0, p.y);
     } else {
+      if (this.companion) this.companion.visible = false;
       this.ring.visible = false;
       this.dangerRing.material.opacity = 0;
       for (const m of this.models.values()) m.visible = false;
@@ -706,8 +734,24 @@ export class WorldRenderer {
       if (!mesh) {
         mesh = new THREE.Group();
         const power = POWERUPS.find((b) => b.id === food.powerup),
-          rare = ["rareplant", "relic", "fossil"].includes(food.type),
+          rare = [
+            "rareplant",
+            "relic",
+            "fossil",
+            "dna",
+            "pet-egg",
+            "decoration-cache",
+            "cosmetic-cache",
+          ].includes(food.type),
           color =
+            {
+              dna: 0xb5a8f0,
+              "pet-egg": CATALOG[food.sku]
+                ? RARITIES[CATALOG[food.sku].rarity].color
+                : 0xe4cc9b,
+              "decoration-cache": 0x9bc7b5,
+              "cosmetic-cache": 0xe5c99a,
+            }[food.type] ??
             power?.color ??
             (food.type === "meat"
               ? 0xba7763
@@ -736,6 +780,44 @@ export class WorldRenderer {
           null,
           rare || food.type === "essence" ? color : 0,
         );
+        if (food.type === "dna")
+          for (let i = 0; i < 10; i++) {
+            const a = i * 0.65;
+            for (const sign of [-1, 1])
+              piece(
+                mesh,
+                smoothSphere,
+                color,
+                [
+                  Math.cos(a) * 0.2 * sign,
+                  0.2 + i * 0.11,
+                  Math.sin(a) * 0.2 * sign,
+                ],
+                [0.075, 0.075, 0.075],
+                null,
+                color,
+              );
+          }
+        if (food.type === "pet-egg") {
+          mesh.children[0].scale.set(0.45, 0.62, 0.45);
+          for (let i = 0; i < 3; i++)
+            piece(
+              mesh,
+              new THREE.TorusGeometry(0.42, 0.025, 6, 24),
+              0xe7d6ad,
+              [0, 0.2 + i * 0.2, 0],
+              [1, 1, 1],
+              [Math.PI / 2, 0, 0],
+            );
+        }
+        if (
+          food.type === "decoration-cache" ||
+          food.type === "cosmetic-cache"
+        ) {
+          mesh.children[0].geometry = box;
+          mesh.children[0].scale.set(0.65, 0.45, 0.5);
+          piece(mesh, box, 0xc5ab75, [0, 0.7, 0], [0.76, 0.08, 0.6]);
+        }
         if (food.type === "plant" || food.type === "rareplant")
           for (let i = 0; i < 5; i++) {
             const a = (i / 5) * 6.28;
@@ -904,6 +986,47 @@ export class WorldRenderer {
         });
         this.warnings.delete(id);
       }
+  }
+  syncCompanion(game, dt, t) {
+    const id = game.petId;
+    if (!id) {
+      if (this.companion) {
+        this.scene.remove(this.companion);
+        this.companion.userData.dispose();
+        this.companion = null;
+      }
+      return;
+    }
+    const p = game.player;
+    if (!this.companion || this.companion.userData.petId !== id) {
+      if (this.companion) {
+        this.scene.remove(this.companion);
+        this.companion.userData.dispose();
+      }
+      this.companion = createPet(id);
+      this.companion.position.set(p.x - 3, 0, p.y + 3);
+      this.scene.add(this.companion);
+    }
+    const m = this.companion,
+      angle = p.angle + 2.2,
+      x = p.x + Math.cos(angle) * (4 + game.species.size * 0.3),
+      y = p.y + Math.sin(angle) * (4 + game.species.size * 0.3),
+      d = Math.hypot(x - m.position.x, y - m.position.z);
+    m.visible = true;
+    if (d > 35) m.position.set(x, 0, y);
+    else {
+      m.position.x = THREE.MathUtils.damp(m.position.x, x, 5, dt);
+      m.position.z = THREE.MathUtils.damp(m.position.z, y, 5, dt);
+    }
+    if (d > 0.15) {
+      const a = -Math.atan2(y - m.position.z, x - m.position.x),
+        diff = Math.atan2(
+          Math.sin(a - m.rotation.y),
+          Math.cos(a - m.rotation.y),
+        );
+      m.rotation.y += diff * Math.min(1, dt * 7);
+    }
+    animateCreature(m, dt, t, Math.min(1, d * 0.4));
   }
   drawParticles(dt) {
     this.particles = this.particles.filter((p) => p.life > 0);

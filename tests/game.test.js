@@ -235,7 +235,7 @@ test("starvation and volcanic boundary can kill; death is final for that run", (
   assert.equal(game.state, "dead");
   assert.equal(game.cause, "Starvation");
   const results = game.getResults();
-  assert.ok(results.dna >= 1);
+  assert.equal(results.dna,0);
   assert.equal(results.cause, "Starvation");
   const x = game.player.x;
   game.update(0.1, { x: 1 });

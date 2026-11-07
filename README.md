@@ -3,7 +3,7 @@
 A single-player dinosaur survival roguelite. Crack your egg, hatch into a random
 small dinosaur, hunt through a living prehistoric wilderness, and evolve into
 larger predators and eventually mythological creatures. Death ends the run;
-earned DNA strengthens the next generation.
+rare DNA funds your permanent collection and next generation.
 
 This is an offline, playable desktop game built with Three.js and Electron. It
 includes original procedural 3D creatures and environments, an adaptive musical
@@ -21,7 +21,7 @@ published on Steam or integrated with Steamworks.
 
 From a packaged build, launch **Jurassic Domination.exe**. The unpacked version is
 at `release/win-unpacked/Jurassic Domination.exe`; keep that entire folder
-together. The portable build is `release/Jurassic Domination-0.2.0-portable.exe`.
+together. The portable build is `release/Jurassic Domination-0.3.0-portable.exe`.
 An unsigned development build may trigger Windows SmartScreen. Obtain builds
 from the project owner and sign the final commercial release.
 
@@ -79,13 +79,49 @@ supports both survival and evolution.
   creatures. Attacks are telegraphed; positioning and timing matter.
 - Progress across eight evolution tiers, from small dinosaurs through apex
   predators to mythical creatures. Survive at the final tier to keep escalating.
-- Death records the run and awards DNA. Spend DNA on permanent upgrades from the
-  title screen, then try again with a new hatchling.
+- Death records the run. Selected achievements and rare discoveries award DNA,
+  banked immediately. Spend it on shop items or permanent lineage upgrades.
 
 Three difficulty settings support learning, the intended survival challenge,
 and a harsher extinction run. Species have different statistics, silhouettes,
 and abilities; permanent upgrades and current-run mutations serve different
 purposes.
+
+## The Sanctuary Collection expansion (0.3.0)
+
+Open **DNA SHOP** or **MY DINOSAUR ISLAND** from the title screen. The shop offers
+**49 items** with live 3D previews: seven skins, seven wearables, 18 permanent pets,
+and 17 island decorations. Rarities range from Common through Uncommon, Rare,
+Epic, and Legendary. Crowns, wreaths, a hat and a halo attach to your dinosaur.
+An equipped pet follows expeditions as a cosmetic companion; it cannot die.
+
+DNA is deliberately scarce: selected achievements pay once, rare map specimens
+award 1?4 DNA, and named guardians can drop 2?5. Ordinary food, kills and deaths
+award no DNA. Extremely rare companion eggs unlock permanent pets; rare decoration
+and cosmetic caches unlock their contents. Collect them with **E**. Duplicate
+unique finds convert to one DNA. Finds, currency and purchases save immediately.
+Companion eggs are distinct from ordinary eggs that hatch into wild dinosaurs.
+
+Your sanctuary has an editable name, wandering pets, an ocean and shoreline.
+Place, move, rotate or store owned items. Storing returns an item to inventory;
+it does not delete ownership. Decoration purchases add copies. The island holds
+up to 16 pets and 80 decorations, with spacing and shoreline validation.
+
+| Island action | Control |
+| --- | --- |
+| Select / place | Left click |
+| Orbit | Left drag |
+| Pan | Right drag or WASD |
+| Zoom | Mouse wheel |
+| Adjust placement | Arrow keys / WASD |
+| Confirm placement | Enter or click |
+| Rotate | R |
+| Store selected item | Delete |
+| Cancel placement / leave island | Escape |
+
+The toolbar provides undo/redo for the last 30 edits and a grid toggle. Collections
+and island layouts survive death. Existing DNA, upgrades, skins and records are
+preserved; previously claimed achievements do not pay again after migration.
 
 ## The Living Continent expansion (0.2.0)
 
@@ -126,7 +162,8 @@ healing, armored stances, feints, wingstorms, constriction and more.
 - **Ancient fossils:** extremely rare discoveries unlock one of seven earned
   skins or four permanent lineage modifiers. Equip owned appearances from
   **Appearance & Ancient Relics**. Unlocks save immediately and survive death;
-  no DNA or real-money purchase can substitute for finding them.
+  skins can now also be purchased with earned DNA. Lineage modifiers remain
+  find-only. There are no real-money purchases.
 - **Enemy ecology:** neutral grazers retaliate when harmed, skittish or outmatched
   creatures flee, ambushers wait, territorial creatures keep to their home range,
   and packs share aggro and flank. Strong enemies use their own abilities.
@@ -163,6 +200,7 @@ cleared.
 ```powershell
 npm test
 npm run build
+npm run qa:collections # requires the local dev server
 npm run package
 ```
 

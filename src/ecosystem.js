@@ -1,4 +1,5 @@
 import { SPECIES, SPECIES_BY_ID } from "./data.js";
+import { rollCollectionItem } from "./collection-data.js";
 import {
   ABILITIES,
   TECHNIQUES,
@@ -47,7 +48,7 @@ export function initializeEcosystem(
   game.buffs = {};
   game.runSkills = [];
   game.discoveredRegions = new Set();
-  game.bonusDNA = 0;
+  game.earnedDNA = 0;
   game.lairs = LAIRS.map((l) => ({
     ...l,
     entityId: null,
@@ -247,6 +248,22 @@ export const Ecosystem = {
           homeChunk: key,
         });
     }
+    for (const [type, chance, kind] of [
+      ["dna", 0.025, null],
+      ["pet-egg", 0.0035, "pet"],
+      ["decoration-cache", 0.015, "decoration"],
+      ["cosmetic-cache", 0.004, "cosmetic"],
+    ]) {
+      if (random() >= chance) continue;
+      const p = point();
+      if (Math.hypot(p.x, p.y) >= WORLD_RADIUS - 35) continue;
+      this.spawnFood(type, p.x, p.y, 0, {
+        tier,
+        homeChunk: key,
+        amount: 1 + Math.floor(random() * 4),
+        sku: kind ? rollCollectionItem(kind, random).sku : null,
+      });
+    }
     if (chunkKey(this.secretSite.x, this.secretSite.y) === key)
       this.spawnFood("fossil", this.secretSite.x, this.secretSite.y, 120, {
         tier: 6,
@@ -358,6 +375,18 @@ export const Ecosystem = {
     this._updateLairs();
   },
   collectSpecial(food) {
+    if (food.type === "dna")
+      this.emit("dna-find", {
+        amount: food.amount || 2,
+        receipt: `find:${this.seed}:${food.id}:dna`,
+        text: `Rare DNA discovered · +${food.amount || 2} DNA`,
+      });
+    if (["pet-egg", "decoration-cache", "cosmetic-cache"].includes(food.type))
+      this.emit("collection-find", {
+        sku: food.sku,
+        receipt: `find:${this.seed}:${food.id}:item`,
+        text: "A permanent collection discovery!",
+      });
     if (food.type === "rareplant") {
       const power = POWERUPS.find((b) => b.id === food.powerup) || POWERUPS[0];
       this.buffs[power.id] = Math.min(
@@ -413,9 +442,10 @@ export const Ecosystem = {
           text: `PERMANENT DISCOVERY · ${reward.name}`,
         });
       } else {
-        this.bonusDNA += 15;
-        this.emit("powerup", {
-          text: "Ancient duplicate: 15 bonus DNA will carry into your legacy.",
+        this.emit("dna-find", {
+          amount: 2,
+          receipt: `find:${this.seed}:${food.id}:fossil`,
+          text: "Ancient duplicate · +2 rare DNA",
         });
       }
     }

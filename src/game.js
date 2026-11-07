@@ -1,4 +1,5 @@
 import { SPECIES, SPECIES_BY_ID, MUTATIONS, DIFFICULTIES } from "./data.js";
+import { rollCollectionItem } from "./collection-data.js";
 import { Ecosystem, initializeEcosystem } from "./ecosystem.js";
 import { ABILITIES } from "./content.js";
 import {
@@ -467,6 +468,15 @@ export class Game {
     if (!food) return false;
     this.foods = this.foods.filter((f) => f.id !== food.id);
     this._eatCooldown = 0.17;
+    if (
+      ["dna", "pet-egg", "decoration-cache", "cosmetic-cache"].includes(
+        food.type,
+      )
+    ) {
+      this.collectSpecial(food);
+      this.emit("collect", { x: food.x, y: food.y });
+      return true;
+    }
     const m = this.mutationCounts;
     const quality = foodEfficiency(this.tier, food.tier || 0);
     p.hunger = Math.min(
@@ -646,6 +656,25 @@ export class Game {
           tier: s.tier,
           rewardType: this.random() < 0.6 ? "skin" : "modifier",
         });
+      const homeChunk = chunkKey(e.x, e.y);
+      if (this.random() < 0.15)
+        this.spawnFood("dna", e.x + 3, e.y - 2, 0, {
+          tier: s.tier,
+          amount: 2 + Math.floor(this.random() * 4),
+          homeChunk,
+        });
+      if (this.random() < 0.012)
+        this.spawnFood("pet-egg", e.x - 3, e.y - 2, 0, {
+          tier: s.tier,
+          sku: rollCollectionItem("pet", () => this.random()).sku,
+          homeChunk,
+        });
+      if (this.random() < 0.08)
+        this.spawnFood("decoration-cache", e.x + 3, e.y + 2, 0, {
+          tier: s.tier,
+          sku: rollCollectionItem("decoration", () => this.random()).sku,
+          homeChunk,
+        });
     }
     if (this.mutationCounts.predator)
       this.player.hp = Math.min(
@@ -659,6 +688,8 @@ export class Game {
       y: e.y,
       text: e.boss ? `${s.name} alpha defeated` : s.name,
       boss: e.boss,
+      lairId: e.lairId,
+      entityId: e.id,
     });
   }
 
@@ -669,17 +700,7 @@ export class Game {
       kills: this.player.kills,
       time: Math.floor(this.time),
       score: Math.floor(this.player.score),
-      dna:
-        this.bonusDNA +
-        Math.max(
-          1,
-          Math.floor(
-            this.player.kills * 0.7 +
-              this.tier * 4 +
-              this.time / 45 +
-              this.ascensions * 14,
-          ),
-        ),
+      dna: this.earnedDNA,
       cause: this.cause || "Run ended",
       ascensions: this.ascensions,
       seed: this.seed,

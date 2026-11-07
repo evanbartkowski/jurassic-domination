@@ -115,7 +115,7 @@ try {
     await page.waitForFunction(() => window.__JD.game.state === "playing");
     const start = await page.evaluate(() => window.__JD.game.player.x);
     await page.keyboard.down("KeyD");
-    await page.waitForTimeout(650);
+    await page.waitForFunction((x) => window.__JD.game.player.x > x + 1, start);
     await page.keyboard.up("KeyD");
     const moved = await page.evaluate(() => window.__JD.game.player.x);
     assert(moved > start + 1);
@@ -378,7 +378,7 @@ try {
     },
   );
   await check(
-    "death awards DNA once and retry starts a fresh egg",
+    "death preserves one-time DNA rewards and retry starts a fresh egg",
     async () => {
       await page.evaluate(() =>
         window.__JD.game.damagePlayer(99999, "QA predator", true),

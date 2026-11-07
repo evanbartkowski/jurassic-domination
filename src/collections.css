@@ -1,0 +1,722 @@
+.collection-entrances {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.collection-entrances > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 38px;
+  background: #91a5750e;
+  border: 1px solid #b4bd8844;
+  color: #e6d5a4;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  padding: 8px;
+}
+.collection-entrances > button .icon {
+  width: 16px;
+  height: 16px;
+}
+.collection-entrances > button:hover {
+  background: #b2b78624;
+  border-color: #e5c98c;
+}
+.collection-entrances b {
+  font-size: 12px;
+}
+.hud-dna {
+  color: #dcc2ef;
+  font-size: 11px;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+}
+.dna-shop {
+  max-width: 1220px;
+}
+.shop-wallet {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  border-bottom: 1px solid #b1c0a326;
+}
+.shop-wallet > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #c2b8d6;
+}
+.shop-wallet strong {
+  font:
+    28px Georgia,
+    serif;
+  color: #e8d6f2;
+  letter-spacing: 0;
+}
+.shop-wallet > p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #adbca5;
+  flex: 1;
+  min-width: 150px;
+}
+.shop-wallet .button {
+  font-size: 8px;
+}
+.shop-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin: 17px 0;
+}
+.shop-tabs {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.shop-tabs button,
+.island-tabs button {
+  background: none;
+  color: #b7c5ac;
+  border: 1px solid #a4b38d22;
+  font-size: 10px;
+  padding: 9px 12px;
+}
+.shop-tabs button[aria-pressed="true"],
+.island-tabs button[aria-pressed="true"] {
+  border-color: #c8ae75;
+  color: #e4d3a6;
+  background: #adad7412;
+}
+.shop-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #acbba0;
+}
+.shop-toolbar select {
+  background: #18271e;
+  color: #e4e5d3;
+  padding: 8px;
+  border: 1px solid #99ad8644;
+  border-radius: 2px;
+  font-size: 10px;
+}
+.shop-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 22px;
+  height: min(520px, 54vh);
+  min-height: 300px;
+}
+.shop-feature {
+  overflow: auto;
+  border: 1px solid #b3bc9230;
+  border-radius: 4px;
+  background: radial-gradient(ellipse at 50% 18%, #bfbc9b16, transparent 66%);
+}
+#shop-preview {
+  display: block;
+  width: 100%;
+  height: 210px;
+  cursor: grab;
+  touch-action: none;
+}
+#shop-details {
+  padding: 22px;
+}
+#shop-details h2 {
+  font-family: Georgia, serif;
+  font-size: 29px;
+  margin: 9px 0 12px;
+}
+#shop-details > p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #b0bfa6;
+}
+#shop-details > .button {
+  display: flex;
+  width: 100%;
+  font-size: 10px;
+  min-height: 42px;
+  margin-top: 10px;
+}
+.shop-detail-price {
+  font-size: 29px;
+  color: #e3c8ec;
+  margin: 16px 0;
+}
+.shop-detail-price small {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+.shop-source {
+  display: block;
+  font-size: 10px;
+  line-height: 1.8;
+  color: #a3b398;
+  margin-top: 15px;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  overflow: auto;
+  align-content: start;
+  padding-right: 5px;
+}
+.shop-card {
+  position: relative;
+  text-align: left;
+  background: #8b9c6d07;
+  border: 1px solid #c7d4b02a;
+  border-radius: 4px;
+  color: #e2e8d5;
+  padding: 16px;
+  min-height: 195px;
+}
+.shop-card.selected {
+  border-color: var(--rarity);
+  background: #c7c8970c;
+  box-shadow: inset 0 0 24px #829d7b08;
+}
+.rarity-label {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rarity, #d5bf8f);
+  display: block;
+}
+.shop-item-art {
+  height: 65px;
+  width: 95px;
+  margin: 12px auto;
+  color: var(--rarity);
+}
+.shop-item-art > .icon {
+  width: 48px;
+  height: 48px;
+  display: block;
+  margin: 0 auto;
+}
+.shop-card h2 {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  line-height: 1.15;
+  margin-top: 7px;
+}
+.shop-card p {
+  color: #cec4de;
+  font-size: 10px;
+  margin: 10px 0 6px;
+}
+.shop-card > span:last-child {
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  color: #9fae93;
+}
+.island-screen {
+  overflow: hidden;
+  background: #648f9a;
+}
+.sanctuary-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+#island-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+.sanctuary-top {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 22px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 13px 19px;
+  background: linear-gradient(100deg, #12291fe6, #183429d9);
+  border: 1px solid #dbdbad55;
+  border-radius: 5px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px #16372d25;
+}
+.sanctuary-top .eyebrow {
+  font-size: 8px;
+  letter-spacing: 0.17em;
+}
+.island-name-label input {
+  font:
+    27px Georgia,
+    serif;
+  color: #f1e8cf;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  width: min(400px, 40vw);
+  padding: 5px 0;
+  outline-offset: 2px;
+}
+.island-name-label input:hover {
+  border-bottom-color: #d3d2a755;
+}
+.sanctuary-top > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sanctuary-top > div:last-child > span {
+  font-size: 10px;
+  white-space: nowrap;
+  color: #d5c0e7;
+}
+.sanctuary-top .icon {
+  width: 17px;
+  height: 17px;
+}
+.sanctuary-top .button {
+  font-size: 8px;
+  color: #e7dfc6;
+  background: #213d2f88;
+}
+.island-sidebar {
+  position: absolute;
+  z-index: 2;
+  left: 24px;
+  top: 132px;
+  bottom: 145px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  padding: 21px;
+  background: #142b20eb;
+  border: 1px solid #d2d5ab44;
+  border-radius: 5px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 35px #12362c33;
+}
+.island-sidebar > h2,
+.island-selection h2 {
+  font-family: Georgia, serif;
+  font-size: 27px;
+  color: #eee6ce;
+  margin: 8px 0 17px;
+}
+.island-tabs {
+  display: flex;
+  gap: 8px;
+}
+.island-tabs button {
+  flex: 1;
+  font-size: 9px;
+}
+.island-inventory-hint {
+  font-size: 10px;
+  color: #bdcbb0;
+  line-height: 1.8;
+  margin: 14px 0;
+}
+.island-empty {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #c0c9b3;
+  padding: 12px 0;
+}
+.island-sidebar > .button {
+  width: 100%;
+  font-size: 8px;
+  min-height: 38px;
+  margin-top: 15px;
+}
+#island-inventory {
+  overflow: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+.island-inventory-item {
+  border: 1px solid #b7cca52c;
+  border-left: 2px solid var(--rarity);
+  border-radius: 3px;
+  margin: 0 0 10px;
+  background: #9db08708;
+}
+.island-inventory-item > button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: #e3e9d6;
+  padding: 12px;
+}
+.island-inventory-item strong {
+  display: block;
+  font-size: 13px;
+  margin: 7px 0;
+}
+.island-inventory-item small {
+  font-size: 8px;
+  color: #b0c09f;
+  letter-spacing: 0.05em;
+  line-height: 1.7;
+}
+.island-inventory-item > button.pet-expedition {
+  border-top: 1px solid #b4c99b22;
+  font-size: 8px;
+  color: #d4c8e3;
+  letter-spacing: 0.05em;
+  padding: 9px 12px;
+}
+.island-inventory-item > button:hover:not(:disabled) {
+  background: #bbc09510;
+}
+.island-selection {
+  position: absolute;
+  z-index: 2;
+  top: 132px;
+  right: 24px;
+  width: 225px;
+  padding: 20px;
+  background: #172b21e8;
+  border: 1px solid #d4d6b244;
+  border-radius: 4px;
+  backdrop-filter: blur(10px);
+}
+.island-selection > p:not(.eyebrow) {
+  font-size: 11px;
+  color: #bac8ab;
+  line-height: 1.9;
+  margin: 13px 0;
+}
+.island-selection > div {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.island-selection button,
+.island-tools button {
+  background: #203b2d;
+  color: #e6dcbe;
+  border: 1px solid #c7cfa455;
+  font-size: 8px;
+  letter-spacing: 0.07em;
+  padding: 10px 12px;
+  border-radius: 3px;
+}
+.island-selection button:hover,
+.island-tools button:hover {
+  background: #36503b;
+  border-color: #ead193;
+}
+.island-tools {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 98px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  max-width: 85vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.island-bottom {
+  position: absolute;
+  z-index: 2;
+  left: 24px;
+  right: 24px;
+  bottom: 21px;
+  text-align: center;
+  padding: 11px 16px;
+  background: #152d22e8;
+  border: 1px solid #d6d9ac44;
+  border-radius: 4px;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+.island-bottom p {
+  font-size: 12px;
+  color: #f0dfb3;
+  line-height: 1.7;
+}
+.island-bottom > span {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: #b4c5aa;
+  margin-top: 5px;
+  line-height: 1.7;
+}
+@media (max-width: 1150px) {
+  .shop-layout {
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .shop-wallet > p {
+    font-size: 10px;
+  }
+  .island-sidebar {
+    width: 250px;
+  }
+  .island-selection {
+    width: 205px;
+  }
+  .sanctuary-top > div:last-child {
+    gap: 8px;
+  }
+  .sanctuary-top .button {
+    padding: 8px 10px;
+  }
+}
+@media (max-width: 850px) {
+  .shop-layout {
+    grid-template-columns: 255px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .shop-card {
+    padding: 12px;
+    min-height: 175px;
+  }
+  .shop-card h2 {
+    font-size: 19px;
+  }
+  .shop-tabs {
+    gap: 5px;
+  }
+  .shop-tabs button {
+    font-size: 9px;
+    padding: 8px;
+  }
+  .shop-wallet {
+    gap: 10px;
+  }
+  .shop-wallet > .button {
+    font-size: 7px;
+  }
+  .shop-toolbar {
+    align-items: flex-start;
+  }
+  .shop-toolbar label {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  #shop-preview {
+    height: 170px;
+  }
+  #shop-details {
+    padding: 17px;
+  }
+  .island-sidebar {
+    width: 215px;
+    left: 15px;
+    top: 115px;
+    padding: 16px;
+  }
+  .island-selection {
+    right: 15px;
+    top: 115px;
+    width: 177px;
+    padding: 15px;
+  }
+  .island-selection h2 {
+    font-size: 23px;
+  }
+  .island-selection > p:not(.eyebrow) {
+    font-size: 10px;
+  }
+  .sanctuary-top {
+    left: 15px;
+    right: 15px;
+    top: 15px;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .island-name-label input {
+    font-size: 23px;
+    width: 34vw;
+  }
+  .sanctuary-top > div:last-child {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 290px;
+  }
+  .sanctuary-top > div:last-child > span {
+    font-size: 9px;
+  }
+  .island-bottom {
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+  }
+  .island-bottom p {
+    font-size: 10px;
+  }
+  .island-bottom > span {
+    font-size: 7px;
+  }
+  .island-tools {
+    bottom: 93px;
+  }
+  .hud-dna {
+    font-size: 9px;
+  }
+  .hud-run {
+    gap: 12px;
+  }
+  .collection-entrances button {
+    font-size: 8px;
+  }
+}
+@media (max-height: 720px) {
+  .menu-copy .menu-description {
+    display: none;
+  }
+  .collection-entrances {
+    margin-top: 6px;
+  }
+  .collection-entrances > button {
+    min-height: 31px;
+    font-size: 8px;
+  }
+  .shop-layout {
+    height: 45vh;
+    min-height: 250px;
+  }
+  .shop-wallet {
+    padding: 11px 0;
+  }
+  .shop-toolbar {
+    margin: 12px 0;
+  }
+  .shop-wallet > p {
+    max-width: 250px;
+  }
+  .dna-shop .panel-bottom {
+    margin-top: 17px;
+  }
+  .island-sidebar,
+  .island-selection {
+    top: 108px;
+  }
+  .island-sidebar {
+    bottom: 130px;
+  }
+  .island-sidebar > h2 {
+    font-size: 23px;
+    margin-bottom: 12px;
+  }
+  .island-inventory-hint {
+    font-size: 9px;
+    margin: 10px 0;
+  }
+  .sanctuary-top {
+    top: 12px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  .island-name-label input {
+    font-size: 23px;
+  }
+  .island-tools {
+    bottom: 85px;
+  }
+  .island-bottom {
+    bottom: 12px;
+    padding: 8px 12px;
+  }
+}
+@media (max-width: 650px) {
+  .shop-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .shop-feature {
+    max-height: 520px;
+  }
+  .shop-grid {
+    max-height: 400px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .shop-wallet > p {
+    display: none;
+  }
+  .shop-tabs button {
+    font-size: 8px;
+  }
+  .shop-toolbar {
+    flex-direction: column;
+  }
+  .island-sidebar {
+    width: 180px;
+    padding: 12px;
+    bottom: 145px;
+  }
+  .island-selection {
+    width: 148px;
+    padding: 12px;
+  }
+  .island-selection h2 {
+    font-size: 19px;
+  }
+  .island-selection > p:not(.eyebrow) {
+    font-size: 9px;
+  }
+  .island-selection button {
+    font-size: 7px;
+    padding: 7px;
+  }
+  .island-tools {
+    bottom: 113px;
+  }
+  .island-tools button {
+    font-size: 7px;
+    padding: 8px;
+  }
+  .island-name-label input {
+    font-size: 20px;
+    width: 39vw;
+  }
+  .sanctuary-top .eyebrow {
+    font-size: 6px;
+  }
+  .sanctuary-top > div:last-child {
+    max-width: 155px;
+  }
+  .sanctuary-top .button {
+    font-size: 6px;
+    min-height: 26px;
+    padding: 6px;
+  }
+  .island-bottom > span {
+    font-size: 6px;
+  }
+  .hud-dna {
+    display: none;
+  }
+}

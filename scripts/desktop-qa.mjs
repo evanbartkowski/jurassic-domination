@@ -140,6 +140,47 @@ try {
   );
 
   await check(
+    "packaged shop purchases and permanent island saves work offline",
+    async () => {
+      await page.evaluate(() => {
+        localStorage.setItem(
+          "jurassic-domination.profile.v1",
+          JSON.stringify({ version: 3, dna: 30 }),
+        );
+      });
+      await page.reload();
+      await page.getByRole("button", { name: /DNA SHOP/ }).click();
+      await page.locator('[data-shop-category="pet"]').click();
+      await page.locator('[data-product="pet:compy"]').click();
+      await page.locator("[data-buy]").click();
+      await page.locator("[data-equip-pet]").click();
+      await page.locator("[data-place-product]").click();
+      await page.locator("#island-canvas").waitFor();
+      await page.waitForTimeout(700);
+      await page.keyboard.press("Enter");
+      await page.waitForFunction(
+        () =>
+          JSON.parse(localStorage.getItem("jurassic-domination.profile.v1"))
+            .island.placements.length === 1,
+      );
+      const saved = await page.evaluate(() =>
+        JSON.parse(localStorage.getItem("jurassic-domination.profile.v1")),
+      );
+      assert.equal(saved.dna, 24);
+      assert.equal(saved.activePet, "compy");
+      await page.screenshot({ path: "artifacts/desktop-island.png" });
+      await page.reload();
+      await page.getByRole("button", { name: /MY DINOSAUR ISLAND/ }).click();
+      await page.locator('[data-island-companion="compy"]').waitFor();
+      assert.match(
+        await page.locator("#island-inventory").textContent(),
+        /ROAMING ON ISLAND/,
+      );
+      await page.keyboard.press("Escape");
+    },
+  );
+
+  await check(
     "new life starts as an egg and E hatches a real beginner species",
     async () => {
       await page.getByRole("button", { name: /BEGIN A NEW LIFE/ }).click();

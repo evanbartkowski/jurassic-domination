@@ -1,3 +1,12 @@
+# Sanctuary Collection ? v0.3.0
+
+- Rare DNA replaces automatic death payouts. Selected achievements pay once, map specimens and guardian drops provide small rare rewards, and finds save immediately.
+- DNA shop: 49 items, rarity filters and animated 3D previews. Seven skins, seven wearable cosmetics, 18 dinosaur/mythical pets and 17 decorations.
+- Permanent companion eggs, decoration caches and cosmetic caches can be discovered in the wilderness. Duplicate unique finds convert to one DNA.
+- Equip a crown, wreath, explorer hat or halo. Bring an immortal cosmetic pet companion on expeditions.
+- Own a tropical dinosaur sanctuary. Name it, place wandering pets, decorate, move, rotate, store, toggle a grid, undo and redo edits. Owned items survive death.
+- Existing profiles retain DNA, upgrades, discoveries, skins and records. Old claimed achievements cannot pay twice.
+
 # Jurassic Domination 0.2.0 — The Living Continent
 
 An expanded offline Windows survival roguelite. Existing DNA, upgrades, records and discovered forms are preserved.
@@ -16,7 +25,7 @@ An expanded offline Windows survival roguelite. Existing DNA, upgrades, records 
 - Neutral, fleeing, territorial, ambush and pack behaviours replace uniform aggression. Packs rally and flank; stronger foes cast their own skills.
 - Red circles and cones show the actual danger area before enemy strikes resolve.
 - Eight named boss lairs have fixed locations, enhanced rewards and respawn timers. Roaming alpha hunts remain additional encounters.
-- Earn ancestral DNA after death, improve three permanent lineage upgrades and record discoveries, achievements, recent runs and personal bests.
+- Earn rare DNA from selected one-time milestones and rare finds; spend it on permanent lineage upgrades or your collection.
 - The title screen is a live animated 3D scene. The searchable encyclopedia tracks evolved forms and includes a draggable animated specimen viewer, both abilities, passives, habitats and temperament.
 - Original animated procedural 3D creatures, vegetation, skeletal remains, crystals, water, particles, impact arcs and lighting.
 - Original adaptive synthesized music, jungle ambience and combat effects, with independent volume controls.

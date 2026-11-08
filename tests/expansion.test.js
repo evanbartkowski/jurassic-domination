@@ -15,6 +15,7 @@ import {
   foodEfficiency,
   LAIRS,
   chunkKey,
+  REGIONAL_ALPHAS,
 } from "../src/world-data.js";
 import { inAttackZone } from "../src/ecosystem.js";
 import { phenotype } from "../src/genetics.js";
@@ -344,4 +345,63 @@ test("streaming preserves consumed loot and hatch ages while exploring distant c
   g._streamWorld();
   assert(!g.foods.some((f) => f.id === id));
   assert(g.foods.some((f) => f.age >= 90));
+});
+
+test("territorial dominance and dinosaur family courtship, nest clutch, and heir follower AI", () => {
+  const g = isolated();
+  form(g, "velociraptor");
+  g.player.growth = 0.5;
+
+  // 1. Regional Alpha spawning and territorial dominance
+  g.player.x = 200; g.player.y = 0;
+  g._spawnBoss();
+  assert.ok(g.boss);
+  const bossEntity = g.entities.find((e) => e.id === g.boss.id);
+  assert.ok(bossEntity.isRegionalAlpha);
+  assert.ok(bossEntity.alphaRegion);
+  const dominatedBiome = bossEntity.alphaRegion;
+
+  // Defeating regional alpha grants dominance and awards DNA
+  g._hitEntity(bossEntity, 999999);
+  assert.ok(g.dominatedRegions.has(dominatedBiome));
+  assert.equal(g.strongestDefeated, bossEntity.speciesId);
+
+  // 2. Dinosaur Courtship Roar bonding
+  const potentialMate = g.spawnEntity("velociraptor", g.player.x + 5, g.player.y, {
+    passive: true,
+    juvenile: false,
+  });
+  assert.equal(g.playerMateId, null);
+  assert.ok(g.roar());
+  assert.equal(g.playerMateId, potentialMate.id);
+  assert.equal(potentialMate.packId, "player-family");
+
+  // 3. Family Nest & Heir Hatching
+  assert.ok(g.buildPlayerNest());
+  assert.ok(g.playerNest);
+  assert.equal(g.playerNest.hatched, false);
+  const clutchEgg = g.foods.find((f) => f.id === g.playerNest.eggId);
+  assert.ok(clutchEgg);
+  assert.equal(clutchEgg.isPlayerEgg, true);
+
+  // Advance simulation until egg hatches
+  g.playerNest.hatchTimer = 0.05;
+  while (g.playerNest && !g.playerNest.hatched) g.update(0.05, {});
+  assert.equal(g.playerNest.hatched, true);
+  assert.equal(g.playerOffspringCount, 1);
+  const heir = g.entities.find((e) => e.isPlayerOffspring);
+  assert.ok(heir);
+  assert.equal(heir.packId, "player-family");
+
+  // Heir follows parent in game update
+  g.player.x += 10; g.player.y += 10;
+  g.update(0.1, {});
+  assert.equal(heir.homeX, g.player.x);
+  assert.equal(heir.homeY, g.player.y);
+
+  // Results recap preserves summary metrics
+  const results = g.getResults();
+  assert.equal(results.offspringCount, 1);
+  assert.ok(results.dominatedRegions.includes(dominatedBiome));
+  assert.equal(results.mateSpecies, "velociraptor");
 });

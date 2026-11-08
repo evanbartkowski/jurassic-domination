@@ -15,6 +15,7 @@ import {
   careForPet,
   sanctuaryProgress,
   ISLAND_TRIALS,
+  COMPANION_SYNERGIES,
 } from "../src/sanctuary.js";
 import { Game } from "../src/game.js";
 test("wilderness is deterministic, varied, bounded and protects the first 55 units", () => {
@@ -207,4 +208,28 @@ test("sanctuary trials measure time, care, placed residents, rarity and decorati
     care: 9,
     rare: true,
   });
+});
+
+test("18 companion pet synergies grant active roles and sanctuary features expanded trials", () => {
+  assert.equal(ISLAND_TRIALS.length, 4);
+  assert.ok(ISLAND_TRIALS.some((t) => t.id === "botanical-garden"));
+  assert.ok(ISLAND_TRIALS.some((t) => t.id === "apex-sanctuary"));
+
+  assert.equal(Object.keys(COMPANION_SYNERGIES).length, 18);
+  assert.equal(COMPANION_SYNERGIES["rex"].role, "apex");
+  assert.equal(COMPANION_SYNERGIES["titan"].role, "titan");
+  assert.equal(COMPANION_SYNERGIES["club"].role, "bulwark");
+  assert.equal(COMPANION_SYNERGIES["raptor"].role, "prowler");
+
+  // In Game, equipping a bulwark pet boosts armor
+  const gBulwark = new Game({ seed: 77, petId: "club" });
+  gBulwark.hatch();
+  const gBase = new Game({ seed: 77, petId: null });
+  gBase.hatch();
+  assert.ok(gBulwark.player.armor > gBase.player.armor);
+
+  // In Game, equipping a titan pet boosts max HP
+  const gTitan = new Game({ seed: 77, petId: "titan" });
+  gTitan.hatch();
+  assert.ok(gTitan.player.maxHp > gBase.player.maxHp);
 });

@@ -14,6 +14,8 @@ import {
   creatureKit,
   SPECIALS,
   growthName,
+  getActiveAffinities,
+  getAffinityForSpecies,
 } from "./progression.js";
 import { REGIONS } from "./world-data.js";
 import { upgradeCost } from "./profile.js";
@@ -536,6 +538,7 @@ export class UI {
         <button class="compendium-tab-btn ${this.compendiumTab === "encyclopedia" ? "active" : ""}" data-comp-tab="encyclopedia" role="tab">${icon("book")} DINOSAUR ENCYCLOPEDIA</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "journal" ? "active" : ""}" data-comp-tab="journal" role="tab">${icon("leaf")} FIELD JOURNAL & SURVIVAL</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "bloodlines" ? "active" : ""}" data-comp-tab="bloodlines" role="tab">${icon("dna")} BLOODLINE PATHS</button>
+        <button class="compendium-tab-btn ${this.compendiumTab === "lineage" ? "active" : ""}" data-comp-tab="lineage" role="tab">👑 FAMILY TREE & ANCESTRY</button>
       </div>
     `;
 
@@ -555,6 +558,51 @@ export class UI {
                 return `<article data-rarity="${s.rarity}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity].color}"><img src="assets/portraits/species-${s.id}.webp" alt=""/><span class="evolution-rarity">${s.rarity.toUpperCase()} - TIER ${b.tier + 1}</span><h2>${s.name}</h2><p>${b.description}</p><strong>${used ? "CLAIMED THIS LIFE" : ready ? "AVAILABLE AT YOUR NEXT EVOLUTION" : "CONDITIONS NOT MET"}</strong></article>`;
               },
             ).join("")}</div>
+          </div>
+        `;
+      }
+      if (this.compendiumTab === "lineage") {
+        const ancestry = this.profile?.ancestry || { generations: 0, recent: [] };
+        const runs = ancestry.recent || [];
+        return `
+          <div class="lineage-tree-wrap" style="padding:16px 20px;max-height:64vh;overflow-y:auto;">
+            <div class="lineage-header-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;background:rgba(0,0,0,0.35);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);">
+              <div><span style="font-size:11px;color:#94a3b8;display:block;">DYNASTY GENERATIONS</span><strong style="font-size:22px;color:#fde047;">${ancestry.generations || 0}</strong></div>
+              <div><span style="font-size:11px;color:#94a3b8;display:block;">LONGEST SURVIVAL</span><strong style="font-size:22px;color:#86efac;">${clock(ancestry.longestLife || 0)}</strong></div>
+              <div><span style="font-size:11px;color:#94a3b8;display:block;">TOTAL TIME SURVIVED</span><strong style="font-size:22px;color:#93c5fd;">${clock(ancestry.totalSurvival || 0)}</strong></div>
+              <div><span style="font-size:11px;color:#94a3b8;display:block;">APEX GUARDIANS SLAIN</span><strong style="font-size:22px;color:#fca5a5;">${ancestry.guardianVictories || 0}</strong></div>
+            </div>
+            <h2 style="font-size:18px;letter-spacing:1px;color:#f3f4f6;margin-bottom:6px;">MULTI-GENERATIONAL DYNASTY</h2>
+            <p class="panel-subtitle" style="font-size:13px;color:#94a3b8;margin-bottom:16px;">Each life passes down genetic markings, survival instincts, and territorial dominance.</p>
+            ${runs.length ? `
+              <div class="family-tree-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
+                ${runs.map((r, idx) => {
+                  const sp = species(r.speciesId);
+                  return `
+                    <div class="family-node ${idx === 0 ? "current-ancestor" : ""}" style="background:rgba(15,23,42,0.75);border:1px solid ${idx === 0 ? "rgba(234,179,8,0.6)" : "rgba(255,255,255,0.08)"};border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+                      <div class="family-node-header" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span class="gen-badge" style="background:rgba(234,179,8,0.2);color:#fde047;border:1px solid rgba(234,179,8,0.4);padding:2px 8px;border-radius:12px;font:700 11px system-ui;">GEN ${r.generation || (runs.length - idx)}</span>
+                        <span class="date-badge" style="font-size:11px;color:#64748b;">${r.date ? r.date.split("T")[0] : "Primordial Era"}</span>
+                      </div>
+                      <div class="family-node-body" style="display:flex;gap:12px;align-items:center;">
+                        <div class="node-portrait" style="width:52px;height:52px;flex-shrink:0;">${portrait(sp?.id || "compsognathus")}</div>
+                        <div class="node-info" style="overflow:hidden;">
+                          <h3 style="font-size:15px;margin:0;color:#f8fafc;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${esc(sp?.name || "Ancestor")}</h3>
+                          <span style="font-size:12px;color:#94a3b8;">Tier ${(r.tier ?? 0) + 1} Apex</span>
+                          <p style="font-size:11px;color:#e2e8f0;margin:3px 0 0;opacity:0.8;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">Defeated: ${esc(r.strongestDefeated ? (species(r.strongestDefeated)?.name || r.strongestDefeated) : "None")}</p>
+                        </div>
+                      </div>
+                      <div class="family-node-stats" style="display:flex;justify-content:space-between;font-size:11px;color:#cbd5e1;background:rgba(0,0,0,0.3);padding:6px 10px;border-radius:6px;">
+                        <span>⏱️ ${clock(r.time || 0)}</span>
+                        <span>⚔️ ${r.kills || 0}</span>
+                        <span>👑 ${r.dominatedCount || 0}</span>
+                        <span>🐣 ${r.offspringCount || 0}</span>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            ` : `<p style="color:#94a3b8;font-style:italic;">No ancestral records yet. Hatch and complete a life to establish your dinosaur family tree!</p>`}
           </div>
         `;
       }
@@ -1173,6 +1221,7 @@ export class UI {
         ? game.mutationChoices[0].id
         : game.mutationChoices?.[0];
     const speciesChoices = game.evolutionChoices || [];
+    const affinities = getActiveAffinities(game);
     const mutations = (game.mutationChoices || [])
       .map((id) =>
         typeof id === "object" ? id : MUTATIONS.find((m) => m.id === id),
@@ -1185,7 +1234,11 @@ export class UI {
         .map((id, i) => {
           const s = species(id);
           const hpDelta = Math.round((s.hp / game.species.hp - 1) * 100), atkDelta = Math.round((s.damage / game.species.damage - 1) * 100);
-          return `<button class="evolution-card ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" data-rarity="${s.rarity || "regular"}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${i === 0}"><span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity">${EVOLUTION_RARITIES[s.rarity || "regular"].name.toUpperCase()}${s.bloodline ? " - EARNED BLOODLINE" : ""}</span><div class="evolution-creature">${portrait(s.id)}</div><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b><small>${hpDelta >= 0 ? "+" : ""}${hpDelta}%</small></span><span>ATK <b>${s.damage}</b><small>${atkDelta >= 0 ? "+" : ""}${atkDelta}%</small></span><span>SPD <b>${s.speed}</b></span></div><span class="evolution-body">${s.compactEvolution ? "COMPACT RARE FORM" : "LARGER EVOLVED BODY"} · ${creatureKit(s).abilityCount} SKILLS</span><span class="species-ability">${esc(skillSummary(s))}</span><span class="choice-indicator"></span></button>`;
+          const affinity = getAffinityForSpecies(s, affinities);
+          const affinityBadge = affinity
+            ? `<div class="behavior-match-pill" style="display:inline-flex;align-items:center;gap:4px;background:rgba(234,179,8,0.18);border:1px solid rgba(234,179,8,0.5);border-radius:12px;padding:2px 8px;font:700 11px system-ui;color:#fde047;margin-top:4px;"><span>${affinity.icon}</span> BEHAVIOR MATCH · ${esc(affinity.label.toUpperCase())}</div>`
+            : "";
+          return `<button class="evolution-card ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" data-rarity="${s.rarity || "regular"}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${i === 0}"><span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity">${EVOLUTION_RARITIES[s.rarity || "regular"].name.toUpperCase()}${s.bloodline ? " - EARNED BLOODLINE" : ""}</span><div class="evolution-creature">${portrait(s.id)}</div><h2>${esc(s.name)}</h2>${affinityBadge}<p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b><small>${hpDelta >= 0 ? "+" : ""}${hpDelta}%</small></span><span>ATK <b>${s.damage}</b><small>${atkDelta >= 0 ? "+" : ""}${atkDelta}%</small></span><span>SPD <b>${s.speed}</b></span></div><span class="evolution-body">${s.compactEvolution ? "COMPACT RARE FORM" : "LARGER EVOLVED BODY"} · ${creatureKit(s).abilityCount} SKILLS</span><span class="species-ability">${esc(skillSummary(s))}</span><span class="choice-indicator"></span></button>`;
         })
         .join("")}</div>
       <div class="mutation-heading"><span class="eyebrow">ADAPTATION</span><p>One mutation. Every future form.</p></div><div class="mutation-choices" role="group" aria-label="Choose a mutation">${mutations.map((m, i) => `<button class="mutation-card ${i === 0 ? "selected" : ""}" data-mutation="${esc(m.id)}" aria-pressed="${i === 0}">${icon("dna")}<span><strong>${esc(m.name)}</strong><small>${esc(m.description)}</small></span><span class="choice-indicator"></span></button>`).join("")}</div>
@@ -1221,12 +1274,14 @@ export class UI {
     this.lastResults = results;
     const s = species(results.speciesId);
     const best = results.score >= (profile.bestScore || 0) && results.score > 0;
+    const strongestName = results.strongestDefeated ? (species(results.strongestDefeated)?.name || results.strongestDefeated) : "None";
     this.screen(
       "death",
-      `<div class="wide-panel death-panel"><div class="death-left"><span class="death-symbol">${icon("skull")}</span><p class="eyebrow">THE FOOD CHAIN REMEMBERS</p><h1>End of a life.<br><em>Start of a legacy.</em></h1><p class="death-cause">${esc(results.cause || "The wild claimed another survivor.")}</p><div class="final-species">${portrait(s.id)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier) + 1}</span><h2>${esc(s.name)}</h2></div></div></div><div class="death-right"><div class="final-score"><span>${best ? "A NEW PERSONAL BEST" : "YOUR FINAL SCORE"}</span><strong>${number(results.score)}</strong></div><div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION REACHED</span><strong>${esc(tierName(results.tier ?? s.tier))}</strong></div></div><div class="dna-earned">${icon("dna")}<span>RARE DNA BANKED THIS LIFE</span><strong>+${number(results.dna)}</strong></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>ONE MORE LIFE ${icon("arrow")}</button><button class="button secondary" data-action="menu">RETURN TO TITLE</button></div></div></div>`,
+      `<div class="wide-panel death-panel"><div class="death-left"><span class="death-symbol">${icon("skull")}</span><p class="eyebrow">THE FOOD CHAIN REMEMBERS</p><h1>End of a life.<br><em>Start of a legacy.</em></h1><p class="death-cause">${esc(results.cause || "The wild claimed another survivor.")}</p><div class="final-species">${portrait(s.id)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier) + 1}</span><h2>${esc(s.name)}</h2></div></div></div><div class="death-right"><div class="final-score"><span>${best ? "A NEW PERSONAL BEST" : "YOUR FINAL SCORE"}</span><strong>${number(results.score)}</strong></div><div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION REACHED</span><strong>${esc(tierName(results.tier ?? s.tier))}</strong></div><div><span>STRONGEST FOE</span><strong>${esc(strongestName)}</strong></div><div><span>DOMINATED</span><strong>${results.dominatedRegions?.length || 0} Biomes</strong></div><div><span>HEIRS RAISED</span><strong>${results.offspringCount || 0}</strong></div></div><div class="dna-earned">${icon("dna")}<span>RARE DNA BANKED THIS LIFE</span><strong>+${number(results.dna)}</strong></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>ONE MORE LIFE ${icon("arrow")}</button><button class="button secondary" data-action="compendium-lineage">VIEW FAMILY TREE</button><button class="button secondary" data-action="menu">RETURN TO TITLE</button></div></div></div>`,
       "shade-screen death-screen",
     );
     this.bind("restart", () => this.callbacks.restart());
+    this.bind("compendium-lineage", () => this.showCompendium("lineage", null));
     this.bind("menu", () => this.callbacks.menu());
   }
 

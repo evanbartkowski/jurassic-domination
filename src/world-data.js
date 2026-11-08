@@ -102,6 +102,23 @@ REGIONS.push({
   color: 0x4c5663,
   description: "The last frontier. Primordial creatures and the rarest relics.",
 });
+export const REGIONAL_ALPHAS = {
+  fernwood: { speciesId: "guanlong", title: "Basin Dominator", tier: 0 },
+  savannah: { speciesId: "utahraptor", title: "Savannah Pack Sovereign", tier: 1 },
+  fen: { speciesId: "suchomimus", title: "Sunken Mire Tyrant", tier: 2 },
+  redwood: { speciesId: "allosaurus", title: "Redwood Grove Ravager", tier: 3 },
+  marsh: { speciesId: "dilophosaurus", title: "Venom Patriarch", tier: 3 },
+  desert: { speciesId: "carnotaurus", title: "Dune Emperor", tier: 4 },
+  frost: { speciesId: "yutyrannus", title: "Blizzard Sovereign", tier: 4 },
+  volcano: { speciesId: "tyrannosaurus", title: "Caldera King", tier: 5 },
+  grove: { speciesId: "argentinosaurus", title: "Elderroot Colossus", tier: 5 },
+  graveyard: { speciesId: "spinosaurus", title: "Graveyard Tyrant", tier: 5 },
+  highlands: { speciesId: "carcharodontosaurus", title: "Highland Apex", tier: 6 },
+  sky: { speciesId: "phoenix", title: "Solar Guardian", tier: 6 },
+  peaks: { speciesId: "eastern-dragon", title: "Dragonspine Overlord", tier: 7 },
+  origin: { speciesId: "behemoth", title: "Primordial World Titan", tier: 7 },
+};
+
 export function biomeAt(x, y) {
   const radius = Math.hypot(x, y);
   if (radius < 180) return REGIONS[0];

@@ -101,6 +101,50 @@ export function recordExploration(game) {
 export function hasDiscovery(game, id) {
   return !!game.exploration?.discoveries.some((record) => record.id === id);
 }
+
+export function interactWithLandmark(game, landmark) {
+  if (!landmark || !game.player) return null;
+  const p = game.player;
+  game.excavatedLandmarks ||= new Set();
+  if (game.excavatedLandmarks.has(landmark.id)) {
+    return { ok: false, reason: "Already excavated during this life." };
+  }
+  game.excavatedLandmarks.add(landmark.id);
+
+  if (landmark.kind === "fossil") {
+    game.spawnFood?.("relic", landmark.x, landmark.y, 45, { tier: landmark.tier, skillId: "rending" });
+    game.earnedDNA = (game.earnedDNA || 0) + 2;
+    game.emit?.("dna-find", { amount: 2, receipt: `fossil:${landmark.id}` });
+    return {
+      ok: true,
+      type: "fossil",
+      text: `EXCAVATION SUCCESS · ${landmark.name}`,
+      detail: "Unearthed ancient genetic fossils! +2 Rare DNA gained. Clues point toward hidden evolutionary bloodlines."
+    };
+  } else if (landmark.kind === "ruin") {
+    p.empowered = Math.max(p.empowered || 0, 45);
+    p.stamina = 100;
+    if (game.buffs) game.buffs.damage = Math.max(game.buffs.damage || 0, 45);
+    return {
+      ok: true,
+      type: "ruin",
+      text: `ANCIENT COMMUNION · ${landmark.name}`,
+      detail: "Ancestral resonance surges through your veins! Empowered (+65% attack damage) for 45s."
+    };
+  } else if (landmark.kind === "standing-stones") {
+    p.hp = p.maxHp;
+    p.stamina = 100;
+    p.poison = 0; p.poisoned = 0; p.bleeding = 0; p.burning = 0; p.chilled = 0;
+    if (game.buffs) game.buffs.shield = Math.max(game.buffs.shield || 0, 40);
+    return {
+      ok: true,
+      type: "standing-stones",
+      text: `ANCESTRAL BLESSING · ${landmark.name}`,
+      detail: "All wounds and toxins cleansed. Vitality restored to 100% and granted living shield (+40% defense) for 40s."
+    };
+  }
+  return null;
+}
 export function isExplored(game, x, y) {
   const cell = gridCell(x, y);
   return !!cell && !!game.exploration && visitedSet(game.exploration).has(`${cell.x},${cell.y}`);

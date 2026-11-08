@@ -28,6 +28,7 @@ import {
   seeded,
   LAIRS,
   foodEfficiency,
+  REGIONAL_ALPHAS,
 } from "./world-data.js";
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -888,6 +889,18 @@ export const Ecosystem = {
       }
       return;
     }
+    if (e.packId === "player-family") {
+      e.homeX = p.x;
+      e.homeY = p.y;
+      e.aggro = 0;
+      const dPlayer = Math.hypot(e.x - p.x, e.y - p.y);
+      if (dPlayer > 5.5) {
+        const followAngle = Math.atan2(p.y - e.y, p.x - e.x);
+        e.angle = followAngle;
+        sweepMove(e, Math.cos(followAngle) * 3.6 * dt, Math.sin(followAngle) * 3.6 * dt, s.size * (e.scaleFactor || 1), this.worldFeatures || []);
+      }
+      return;
+    }
     const sensory = perceivePlayer(this, e),
       nest = e.nestId ? this.nests.find((n) => n.id === e.nestId) : null,
       defendingNest = nest && nest.parentIds.includes(e.id) && sensory.detected &&
@@ -896,6 +909,7 @@ export const Ecosystem = {
     const defendingYoung = !e.juvenile && s.diet === "herbivore" && this.entities.some((m) =>
       m !== e && m.juvenile && m.speciesId === s.id && dist(m, e) < 14 && dist(p, m) < 16
     );
+    const inDominatedTerritory = this.dominatedRegions?.has(biomeAt(e.x, e.y).id);
     const aggressive =
       e.behavior === "hunter" ||
       e.behavior === "ambusher" ||
@@ -911,6 +925,7 @@ export const Ecosystem = {
       !e.boss &&
       e.aggro <= 0 &&
       sensory.detected &&
+      !inDominatedTerritory &&
       (s.tier < this.tier - 1 ||
         e.hp < e.maxHp * 0.22 ||
         (e.juvenile && distance < 16) ||
@@ -1282,18 +1297,34 @@ export const Ecosystem = {
       x *= (WORLD_RADIUS - 20) / r;
       y *= (WORLD_RADIUS - 20) / r;
     }
-    const e = this.spawnEntity(s.id, x, y, {
+    const region = biomeAt(x, y);
+    const regAlpha = REGIONAL_ALPHAS[region.id];
+    const isRegAlpha = regAlpha && !this.dominatedRegions?.has(region.id);
+    const chosenSpeciesId = isRegAlpha && SPECIES_BY_ID[regAlpha.speciesId] ? regAlpha.speciesId : s.id;
+    const finalSpecies = SPECIES_BY_ID[chosenSpeciesId] || s;
+    const e = this.spawnEntity(finalSpecies.id, x, y, {
       boss: true,
       passive: false,
       roaming: true,
+      isRegionalAlpha: isRegAlpha,
+      alphaRegion: isRegAlpha ? region.id : null,
+      name: isRegAlpha ? regAlpha.title : `Alpha ${finalSpecies.name}`,
     });
+    if (isRegAlpha) {
+      e.isRegionalAlpha = true;
+      e.alphaRegion = region.id;
+      e.name = regAlpha.title;
+      e.baseMaxHp = e.baseMaxHp * 1.4;
+      e.maxHp = e.baseMaxHp;
+      e.hp = e.maxHp;
+    }
     this.boss = {
       id: e.id,
-      name: `Alpha ${s.name}`,
+      name: e.name || `Alpha ${finalSpecies.name}`,
       hp: e.hp,
       maxHp: e.maxHp,
-      speciesId: s.id,
+      speciesId: finalSpecies.id,
     };
-    this.emit("boss", { x, y, text: `An alpha ${s.name} is hunting you.` });
+    this.emit("boss", { x, y, text: isRegAlpha ? `REGIONAL ALPHA: ${e.name} has appeared!` : `An alpha ${finalSpecies.name} is hunting you.` });
   },
 };

@@ -149,3 +149,52 @@ test("the actual player dash stops before a boulder rather than reaching its far
   assert.ok(game.player.stamina < before);
   assert.ok(game.player.dashCooldown > 0);
 });
+
+test("directional combat mechanics enforce flank bonus damage, leg wounds, frontal armor deflection, wall-slam collision damage, and telegraph stuns", () => {
+  // 1. Frontal deflection vs Flank vulnerability on armored player
+  const anky = isolated("ankylosaurus");
+  anky.player.angle = Math.PI; // Facing West (-X)
+  const fullHp = anky.player.hp;
+  // Attack from East (0 angle) strikes anky head-on -> frontalShield = 0.65
+  anky.damagePlayer(100, "Apex Predator", false, 0);
+  const headOnDamage = fullHp - anky.player.hp;
+  assert.ok(anky.survivalBehavior.damageBlocked > 0);
+
+  anky.player.hp = fullHp;
+  anky.player.invulnerable = 0;
+  // Attack from West (PI angle) strikes anky from behind -> flankVuln = 1.25
+  anky.damagePlayer(100, "Apex Predator", false, Math.PI);
+  const rearDamage = fullHp - anky.player.hp;
+  assert.ok(rearDamage > headOnDamage * 1.5, "rear attack must deal significantly more damage than frontal armored strike");
+
+  // 2. Player flank attack on enemy inflicts bonus damage and leg wound slow
+  const rap = isolated("velociraptor");
+  rap.player.x = 0; rap.player.y = 0; rap.player.angle = 0;
+  // Enemy at x=2, facing East (angle=0) -> player is hitting from behind
+  const enemy = rap.spawnEntity("triceratops", 2, 0, { passive: true });
+  enemy.angle = 0;
+  const initialEnemyHp = enemy.hp;
+  assert.ok(rap.attack());
+  assert.ok(enemy.hp < initialEnemyHp);
+  assert.ok(enemy.slowed > 0, "rear flank hit must inflict leg wound slow");
+
+  // 3. Environmental wall-slam bonus damage & stun
+  const brawler = isolated("tyrannosaurus");
+  brawler.worldFeatures = [rock(3, 0, 1)]; // solid rock at x=3
+  const victim = brawler.spawnEntity("compsognathus", 1.8, 0, { passive: true });
+  const startHp = victim.hp;
+  // Hit with strong knockback pushing victim into the rock at x=3
+  brawler._hitEntity(victim, 20, 1.5, false, 0);
+  assert.ok(victim.stunned >= 1.0, "slamming into solid feature must stun target");
+  // Total damage must include base damage + 25% wall-slam bonus
+  assert.ok(startHp - victim.hp >= 24);
+
+  // 4. Telegraph interruption on heavy impact
+  const giant = isolated("tyrannosaurus");
+  const charger = giant.spawnEntity("triceratops", 5, 0, { behavior: "hunter" });
+  charger.telegraph = 1.5;
+  charger.cast = { shape: "circle", remaining: 1.5, radius: 4, angle: 0, x: 5, y: 0 };
+  giant._hitEntity(charger, 150, 1.2, true);
+  assert.equal(charger.telegraph, 0, "heavy attack must interrupt active telegraph");
+  assert.equal(charger.cast, null, "heavy attack must clear active cast shape");
+});

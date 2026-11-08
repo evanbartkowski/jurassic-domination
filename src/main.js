@@ -11,7 +11,7 @@ import './indie-polishing.css';
 import { actionHeld, gamepadIntent, keyLabel, DEFAULT_BINDINGS } from "./controls.js";
 import { ancestryOptions } from './ancestry.js';
 import { worldStatus } from './world-events.js';
-import { discoveryStatus, isExplored } from './discoveries.js';
+import { discoveryStatus, isExplored, LANDMARKS } from './discoveries.js';
 import { survivalStatus } from './survival.js';
 import { SaveStore } from "./state-store.js";
 import { snapshotGame, restoreGame } from "./run-state.js";
@@ -957,10 +957,16 @@ function updateWorldUI() {
     const distance = (food.x - p0.x) ** 2 + (food.y - p0.y) ** 2;
     if (distance < nearest) { nearby = food; nearest = distance; }
   }
+  let nearbyLandmark = null;
+  for (const landmark of LANDMARKS) {
+    if (Math.hypot(landmark.x - p0.x, landmark.y - p0.y) < 14) {
+      nearbyLandmark = landmark;
+      break;
+    }
+  }
   const prompt = document.getElementById("pickup-prompt");
-  prompt.hidden = !nearby && !game.hazardHint;
-  if (game.hazardHint) prompt.textContent = game.hazardHint;
-  if (nearby)
+  prompt.hidden = !nearby && !nearbyLandmark && !game.hazardHint && !(game.playerNest === null && game.playerMateId);
+  if (nearby) {
     prompt.textContent =
       nearby.type === "egg"
         ? `E · EAT EGG / HATCHES IN ${Math.ceil(Math.max(0, nearby.hatchAfter - nearby.age))}s`
@@ -975,12 +981,24 @@ function updateWorldUI() {
                 : nearby.type.includes("cache")
                   ? "E - PERMANENT COLLECTION CACHE"
                   : "E - EXCEPTIONALLY RARE FOSSIL - permanent discovery";
-  if (nearby?.type === "lineage-fruit")
-    prompt.textContent = `E - ${nearby.fruit === "sunheart" ? "SUNHEART" : "MOONDROP"} FRUIT - rare bloodline ingredient`;
-  if (nearby && ["plant", "meat", "essence"].includes(nearby.type))
-    prompt.textContent = canEatFood(game.species, nearby)
-      ? `E · ${foodLabel(nearby).toUpperCase()} · LEVEL ${(nearby.tier || 0) + 1} FOOD`
-      : `${foodLabel(nearby).toUpperCase()} · CARNIVORES CANNOT DIGEST THIS PLANT`;
+    if (nearby.type === "lineage-fruit")
+      prompt.textContent = `E - ${nearby.fruit === "sunheart" ? "SUNHEART" : "MOONDROP"} FRUIT - rare bloodline ingredient`;
+    if (["plant", "meat", "essence"].includes(nearby.type))
+      prompt.textContent = canEatFood(game.species, nearby)
+        ? `E · ${foodLabel(nearby).toUpperCase()} · LEVEL ${(nearby.tier || 0) + 1} FOOD`
+        : `${foodLabel(nearby).toUpperCase()} · CARNIVORES CANNOT DIGEST THIS PLANT`;
+  } else if (nearbyLandmark) {
+    prompt.textContent =
+      nearbyLandmark.kind === "fossil"
+        ? `E · EXCAVATE ${nearbyLandmark.name.toUpperCase()} (GENETIC FOSSILS)`
+        : nearbyLandmark.kind === "ruin"
+          ? `E · COMMUNE WITH ${nearbyLandmark.name.toUpperCase()} (ANCESTRAL POWER)`
+          : `E · SANCTUARY OF ${nearbyLandmark.name.toUpperCase()} (HEALING & SHIELD)`;
+  } else if (!game.playerNest && game.playerMateId) {
+    prompt.textContent = "E · BUILD FAMILY NEST & LAY CLUTCH";
+  } else if (game.hazardHint) {
+    prompt.textContent = game.hazardHint;
+  }
   prompt.textContent = prompt.textContent.replace(/^E(?=\s)/, keyLabel(settings.controls?.eat || DEFAULT_BINDINGS.eat));
 }
 function updateCreatureLabels() {
@@ -1136,6 +1154,12 @@ function processEvents() {
       profile.unlocked.push(game.player.speciesId);
       persist();
       ui.updateProfile(profile);
+    }
+    if (event.type === "dominance" || event.type === "courtship" || event.type === "nest-built" || event.type === "egg-hatch") {
+      ui.toast(event.text);
+    }
+    if (event.type === "interact") {
+      ui.toast(`${event.text} · ${event.detail}`);
     }
     try {
     world?.event(event);

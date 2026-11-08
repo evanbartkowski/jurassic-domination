@@ -15,12 +15,24 @@ export function newAncestry() {
 }
 function normalizeRecord(raw) {
   if (!raw || typeof raw !== "object" || !shortId(raw.runId)) return null;
-  return { runId: raw.runId, generation: integer(raw.generation, 1000000),
+  return {
+    runId: raw.runId,
+    generation: integer(raw.generation, 1000000),
     speciesId: shortId(raw.speciesId) ? raw.speciesId : "unknown",
-    tier: integer(raw.tier, 7), time: integer(raw.time), kills: integer(raw.kills),
-    guardians: integer(raw.guardians), date: typeof raw.date === "string" ? raw.date.slice(0, 40) : "",
+    tier: integer(raw.tier, 7),
+    time: integer(raw.time),
+    kills: integer(raw.kills),
+    guardians: integer(raw.guardians),
+    date: typeof raw.date === "string" ? raw.date.slice(0, 40) : "",
     genome: validGenome(raw.genome) ? normalizeGenome(raw.genome) : null,
-    adaptations: acquiredAdaptations(raw.adaptations), discoveries: discoveryIds(raw.discoveries) };
+    adaptations: acquiredAdaptations(raw.adaptations),
+    discoveries: discoveryIds(raw.discoveries),
+    strongestDefeated: typeof raw.strongestDefeated === "string" ? raw.strongestDefeated : null,
+    offspringCount: integer(raw.offspringCount, 100),
+    dominatedCount: Array.isArray(raw.dominatedRegions) ? raw.dominatedRegions.length : integer(raw.dominatedCount, 14),
+    cause: typeof raw.cause === "string" ? raw.cause.slice(0, 80) : "Perished in the wild",
+    formHistory: Array.isArray(raw.formHistory) ? raw.formHistory.slice(0, 16) : [],
+  };
 }
 export function normalizeAncestry(raw) {
   const ancestry = newAncestry();
@@ -74,7 +86,12 @@ export function recordAncestryRun(profile, results, date = new Date().toISOStrin
   const record = normalizeRecord({ ...results, runId,
     generation: Math.min(1000000, ancestry.generations + 1), genome,
     guardians: results.guardians ?? results.lineage?.guardians,
-    adaptations: results.adaptations, discoveries, date });
+    adaptations: results.adaptations, discoveries, date,
+    strongestDefeated: results.strongestDefeated,
+    offspringCount: results.offspringCount,
+    dominatedRegions: results.dominatedRegions,
+    cause: results.cause,
+    formHistory: results.formHistory });
   ancestry.generations = Math.min(1000000, ancestry.generations + 1);
   ancestry.totalSurvival = Math.min(1e9, ancestry.totalSurvival + record.time);
   ancestry.longestLife = Math.max(ancestry.longestLife, record.time);

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/game.js";
 import { neutralGenome, newAdaptationState } from "../src/genetics.js";
 import { fieldJournalHTML, escapeJournalHTML } from "../src/field-journal.js";
-import { LANDMARKS, recordExploration } from "../src/discoveries.js";
+import { LANDMARKS, recordExploration, interactWithLandmark } from "../src/discoveries.js";
 
 test("field journal shows real individual tradeoffs, controls and honest exploration boundaries", () => {
   const g = new Game({ seed: 91, runId: "journal-test" });
@@ -45,4 +45,45 @@ test("title-menu field journal exposes permanent ancestry and earned discoveries
   assert.match(html, /Compsognathus/); assert.match(html, /Tidal Archive/); assert.match(html, /Tidewalker/);
   assert.match(html, /Open 1 recent life/); assert.ok(!html.includes("Written in your scales"));
   assert.deepEqual(profile, before);
+});
+
+test("landmark interactions allow fossil excavation, ruin communion, and sanctuary cleansing with once-per-life safety", () => {
+  const g = new Game({ seed: 94, runId: "landmark-test" });
+  g.hatch();
+
+  const fossilLandmark = LANDMARKS.find((l) => l.kind === "fossil");
+  const ruinLandmark = LANDMARKS.find((l) => l.kind === "ruin");
+  const sanctuaryLandmark = LANDMARKS.find((l) => l.kind === "standing-stones");
+
+  // 1. Fossil excavation
+  const earnedBefore = g.earnedDNA || 0;
+  const foodCountBefore = g.foods.length;
+  const fossilRes = interactWithLandmark(g, fossilLandmark);
+  assert.equal(fossilRes.ok, true);
+  assert.equal(fossilRes.type, "fossil");
+  assert.equal(g.earnedDNA, earnedBefore + 2);
+  assert.equal(g.foods.length, foodCountBefore + 1);
+  assert.equal(g.foods.at(-1).type, "relic");
+
+  // Re-excavating same landmark fails
+  const reExcavate = interactWithLandmark(g, fossilLandmark);
+  assert.equal(reExcavate.ok, false);
+
+  // 2. Ruin communion
+  const ruinRes = interactWithLandmark(g, ruinLandmark);
+  assert.equal(ruinRes.ok, true);
+  assert.equal(ruinRes.type, "ruin");
+  assert.ok(g.player.empowered >= 45);
+
+  // 3. Standing-stones cleansing sanctuary
+  g.player.hp = 10;
+  g.player.poisoned = 5;
+  g.player.bleeding = 3;
+  const sanctRes = interactWithLandmark(g, sanctuaryLandmark);
+  assert.equal(sanctRes.ok, true);
+  assert.equal(sanctRes.type, "standing-stones");
+  assert.equal(g.player.hp, g.player.maxHp);
+  assert.equal(g.player.poisoned, 0);
+  assert.equal(g.player.bleeding, 0);
+  assert.ok(g.hasBuff("shield"));
 });

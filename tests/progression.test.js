@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/game.js";
 import { SPECIES, SPECIES_BY_ID } from "../src/data.js";
@@ -9,6 +9,11 @@ import {
   feedEntity,
   EVOLUTION_ARCHETYPES,
   archetypeForSpecies,
+  BEHAVIOR_AFFINITIES,
+  getActiveAffinities,
+  speciesMatchesAffinity,
+  getAffinityForSpecies,
+  pickWeightedByBehavior,
 } from "../src/progression.js";
 function isolated(id = "velociraptor") {
   const g = new Game({ seed: 170 });
@@ -193,4 +198,52 @@ test("evolution archetypes classify species into distinct roles with balanced co
   assert.equal(kitRex.archetype.id, "apex");
   const kitTrike = creatureKit(trike);
   assert.equal(kitTrike.archetype.id, "titan");
+});
+
+test("behavior-driven evolution affinities dynamically weight offers based on survival actions", () => {
+  const g = isolated("velociraptor");
+  g.survivalBehavior = {
+    nightKills: 4,
+    nightTime: 50,
+    waterTime: 25,
+    aquaticKills: 2,
+    damageBlocked: 80,
+    apexHitsTaken: 4,
+    statusInflicted: 6,
+    coldTime: 30,
+    packKills: 3,
+    roarsWithPack: 3,
+  };
+  const affinities = getActiveAffinities(g);
+  assert.equal(affinities.length, 6);
+  assert.ok(affinities.some((a) => a.id === "night"));
+  assert.ok(affinities.some((a) => a.id === "aquatic"));
+  assert.ok(affinities.some((a) => a.id === "armored"));
+  assert.ok(affinities.some((a) => a.id === "venom"));
+  assert.ok(affinities.some((a) => a.id === "frost"));
+  assert.ok(affinities.some((a) => a.id === "pack"));
+
+  assert.ok(speciesMatchesAffinity(SPECIES_BY_ID["spinosaurus"], "aquatic"));
+  assert.ok(speciesMatchesAffinity(SPECIES_BY_ID["ankylosaurus"], "armored"));
+  assert.ok(speciesMatchesAffinity(SPECIES_BY_ID["velociraptor"], "pack"));
+  assert.ok(speciesMatchesAffinity(SPECIES_BY_ID["yutyrannus"], "frost"));
+
+  const aff = getAffinityForSpecies(SPECIES_BY_ID["spinosaurus"], affinities);
+  assert.equal(aff.id, "aquatic");
+
+  // Behavior-weighted pick biases toward affinity match
+  const choices = [SPECIES_BY_ID["triceratops"], SPECIES_BY_ID["spinosaurus"]];
+  let spinoCount = 0;
+  for (let i = 0; i < 1000; i++) {
+    const picked = pickWeightedByBehavior(choices, [BEHAVIOR_AFFINITIES.aquatic], () => (i / 1000));
+    if (picked.id === "spinosaurus") spinoCount++;
+  }
+  // Spinosaurus has 3.5 weight vs Triceratops 1.0 weight -> ~77.7%
+  assert.ok(spinoCount > 700);
+
+  // chooseEvolutions generates valid offers with survival behavior tracked
+  g.gainXP(g.nextThreshold);
+  const evolutions = chooseEvolutions(g);
+  assert.ok(evolutions.length >= 3);
+  assert.ok(evolutions.every((id) => !!SPECIES_BY_ID[id]));
 });

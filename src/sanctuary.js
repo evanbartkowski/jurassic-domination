@@ -19,7 +19,48 @@ export const ISLAND_TRIALS = [
     rare: true,
     rewards: ["cosmetic:astral-crown", "decoration:obelisk"],
   },
+  {
+    id: "botanical-garden",
+    name: "Primeval Flora",
+    seconds: 360,
+    pets: 4,
+    decorations: 15,
+    care: 15,
+    rare: false,
+    rewards: ["cosmetic:leaf-wreath", "decoration:pavilion"],
+  },
+  {
+    id: "apex-sanctuary",
+    name: "Sanctuary of the Apex",
+    seconds: 1200,
+    pets: 10,
+    decorations: 35,
+    care: 50,
+    rare: true,
+    rewards: ["cosmetic:solar-halo", "decoration:volcano"],
+  },
 ];
+
+export const COMPANION_SYNERGIES = {
+  compy: { role: "prowler", name: "Prowler Sense", desc: "+8% movement speed; highlights scent trails and nearby carnivores." },
+  feather: { role: "prowler", name: "Prowler Sense", desc: "+8% movement speed; highlights scent trails and nearby carnivores." },
+  raptor: { role: "prowler", name: "Prowler Sense", desc: "+12% movement speed; highlights scent trails and critical flank opportunities." },
+  pebble: { role: "forager", name: "Forager Instinct", desc: "+15% nutrition from plants; reveals hidden edible flora." },
+  sprout: { role: "forager", name: "Forager Instinct", desc: "+20% nutrition from plants; reveals hidden edible flora." },
+  stride: { role: "forager", name: "Forager Instinct", desc: "+25% nutrition from plants; detects rare Sunheart & Moondrop fruits." },
+  crest: { role: "tracker", name: "Tracker Instinct", desc: "Senses wounded prey and blood trails from 60 units away." },
+  dome: { role: "bulwark", name: "Bulwark Guard", desc: "+10% armor defense; absorbs 25% of knockback taken." },
+  spike: { role: "bulwark", name: "Bulwark Guard", desc: "+12% armor defense; reflects 10% damage to melee attackers." },
+  club: { role: "bulwark", name: "Bulwark Guard", desc: "+15% armor defense; reduces heavy knockback by 50%." },
+  frill: { role: "bulwark", name: "Bulwark Guard", desc: "+15% armor defense; grants frontal shield against lunges." },
+  titan: { role: "titan", name: "Titan's Grace", desc: "+20% maximum HP; provides passive vitality regeneration." },
+  sail: { role: "aquatic", name: "Aquatic Instinct", desc: "Eliminates deep-water movement penalties; detects marine predators." },
+  serpent: { role: "aquatic", name: "Abyssal Affinity", desc: "Rapid swimming speed; attacks inflict corrosive venom." },
+  ember: { role: "cinder", name: "Cinder Ward", desc: "Immunity to environmental scorching; bite attacks inflict burn." },
+  phoenix: { role: "cinder", name: "Solar Ward", desc: "Immunity to heat; heals 15% HP upon reaching critical health (once per life)." },
+  rex: { role: "apex", name: "Majestic Aura", desc: "Frightens smaller predators away; +20% primal roar radius." },
+  unicorn: { role: "celestial", name: "Starlight Veil", desc: "+20% stamina recovery; cleanses poison & frost when resting." },
+};
 export function sanctuaryProgress(p, trial) {
   const placed = p.island.placements,
     petIds = placed.filter((a) => a.kind === "pet").map((a) => a.itemId);

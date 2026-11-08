@@ -162,7 +162,32 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 - **Combat Impact & Hit-Stop Feel**: Melee hits, crits, and finishing strikes now register with micro-freeze hit-stop frames, camera shake proportional to impact mass, and distinct color-coded floating combat feedback (golden critical hits, red damage received, lime nutrition gains).
 - **Early-Game Nursery Basin Protection**: The central green basin (radius < 55) provides safe starter food abundance, 30% reduced early hunger drain, and unprovoked peaceful behavior from native Tier 0 fauna to let players learn their controls in peace.
 - **One-Page Survival Guide & Control Refresher**: Accessible at any moment with the `? GUIDE` HUD button or the pause menu, featuring full control cards, safe starter area advice, threat rating keys, and telegraph evasion tips.
-- **Sanctuary Expedition Perks**: Equipped island companion pets grant a passive +5% expedition movement speed bonus, and completed sanctuary trials empower stamina recovery and vitality regeneration.
+
+### 11. Core Systems Expansion: Breeding, Dominance, Behavior Evolution & Interactive World
+- **Behavior-Driven Evolution**: Survival actions (night hunting, aquatic life, defending against apex predators, venom usage, frost survival, pack hunting) dynamically weight evolutionary choices (3.5× multiplier) and display affinity match badges directly on evolution cards.
+- **Directional & Weight-Based Combat**:
+  - **Flank & Rear Strikes**: Attacking an opponent from behind deals +35% bonus damage and inflicts debilitating leg wound slows.
+  - **Frontal Armor Deflection**: Armored quadrupeds and ceratopsians deflect 35% of incoming frontal damage.
+  - **Mass-Ratio Knockback & Wall-Slams**: Heavy impacts fling lighter opponents backward; slamming enemies into boulders or cliff faces inflicts +25% bonus collision damage and stuns them.
+  - **Telegraph Interruptions**: Landing heavy impacts on enemies charging telegraphs interrupts the attack and clears the impending attack zone.
+- **Territorial Dominance & Regional Alpha Predators**:
+  - Designated Regional Alpha predators rule each of the 14 continental biomes.
+  - Defeating an Alpha claims territorial dominance over that biome, pacifies native herbivores, halves predator aggression distance, and awards bonus Rare DNA.
+- **Dinosaur Families, Breeding & Juvenile Heir Followers**:
+  - Mature dinosaurs can court same-species companions via Primal Roar (`C`) to form a bonded mate.
+  - Bonded dinosaurs can establish a family nest and lay a fertilized clutch (`E` key).
+  - Incubation hatches juvenile heir followers who inherit blended genetic traits and fight alongside you as a unified pack.
+- **Interactive Ruins, Fossil Excavations & Sanctuaries**:
+  - Landmarks across the continent can be excavated (`E` key) once per life:
+  - **Fossil Beds**: Unearth ancient genetic relics and award +2 Rare DNA.
+  - **Ancient Ruin Monoliths**: Grant a 45-second empowered attack buff (+65% damage) and refill stamina.
+  - **Standing Stones Sanctuaries**: Cleanse all poisons, bleeds, burns, and chills, restore 100% HP, and grant a 40-second living shield (+40% defense).
+- **Multi-Generational Family Tree & Death Recap**:
+  - Compendium (`TAB` / `J` / `L`) includes a dedicated 4th tab: **FAMILY TREE & ANCESTRY**, rendering an interactive multi-generational dynasty graph connecting your current life to ancestral founders, heirs raised, lifespan records, and genetic lineage.
+  - Comprehensive Death Recap celebrates your strongest defeated foe, biomes dominated, and offspring raised.
+- **18 Companion Pet Synergies & Expanded Trials**:
+  - Companion pets provide specialized expedition roles: **Prowler** (movement speed & tracking), **Forager** (nutrition bonus & fruit detection), **Bulwark** (armor defense & knockback absorption), **Titan** (maximum health & vitality regen), **Aquatic** (water mastery & venom), **Cinder** (heat immunity & burn attacks), and **Apex** (fear aura & roar radius).
+  - Expanded sanctuary trials include Primeval Flora Botanical Gardens and Apex Sanctuaries.
 
 ---
 
@@ -179,7 +204,7 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 Jurassic Domination includes a rigorous testing harness:
 
 ```powershell
-# Run the 215-test deterministic logic and ecology suite:
+# Run the 220-test deterministic logic and ecology suite:
 npm test
 
 # Run the 22 Playwright visual and browser integration checks:

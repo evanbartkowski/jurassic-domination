@@ -24,9 +24,11 @@ const scalarFields = [
   "waypoint", "_bossSelection", "secretSite", "worldFeatures", "_hazardCooldown",
   "hazardHint", "region", "cosmeticId", "petId", "commandSequence",
   "worldState", "exploration", "survival", "senses", "nests", "_nextSocialAt",
-  "formHistory", "guardianKills",
+  "formHistory", "guardianKills", "hitStop", "_hasRoared", "survivalBehavior",
+  "playerMateId", "playerNest", "playerOffspringCount", "strongestDefeated",
 ];
-const setFields = ["modifiers", "knownUnlocks", "foundUnlocks", "activeChunks", "discoveredRegions"];
+const baseSetFields = ["modifiers", "knownUnlocks", "foundUnlocks", "activeChunks", "discoveredRegions"];
+const setFields = [...baseSetFields, "dominatedRegions", "excavatedLandmarks"];
 const mapFields = ["chunks", "marineState"];
 const states = new Set(["egg", "playing", "evolution", "dead"]);
 const idPattern = /^[a-zA-Z0-9:_-]{1,96}$/;
@@ -185,7 +187,9 @@ export function validateSnapshot(snapshot) {
       !array(g.mutations, 100000) || !g.mutations.every((id) => MUTATIONS.some((m) => m.id === id)) ||
       !array(g.evolutionChoices, 100) || !g.evolutionChoices.every((id) => !!SPECIES_BY_ID[id]) ||
       !array(g.mutationChoices, 8) || !g.mutationChoices.every((id) => MUTATIONS.some((m) => m.id === id))) return false;
-    if (!setFields.every((k) => array(g[k], k === "activeChunks" ? 9 : 4096)) ||
+    if (!baseSetFields.every((k) => array(g[k], k === "activeChunks" ? 9 : 4096)) ||
+      (g.dominatedRegions !== undefined && !array(g.dominatedRegions, 4096)) ||
+      (g.excavatedLandmarks !== undefined && !array(g.excavatedLandmarks, 4096)) ||
       !g.activeChunks.every((key) => typeof key === "string" && chunkPattern.test(key)) || new Set(g.activeChunks).size !== g.activeChunks.length ||
       !g.modifiers.every((id) => PERMANENT_MODIFIERS.some((m) => m.id === id)) ||
       !SKINS.some((s) => s.id === g.skinId) || !array(g.chunks, 2048) || !array(g.marineState, 9)) return false;
@@ -224,6 +228,14 @@ export function validateSnapshot(snapshot) {
     if (g.cosmeticId !== undefined && g.cosmeticId !== "none" && !COSMETICS.some((c) => c.id === g.cosmeticId)) return false;
     if (g.petId !== undefined && g.petId !== null && !PETS.some((p) => p.id === g.petId)) return false;
     if (!g.discoveredRegions.every((id) => REGIONS.some((r) => r.id === id))) return false;
+    if (g.survivalBehavior !== undefined && (!object(g.survivalBehavior) ||
+      !["nightKills", "nightTime", "waterTime", "aquaticKills", "damageBlocked", "apexHitsTaken", "statusInflicted", "coldTime", "packKills", "roarsWithPack"].every((k) => finite(g.survivalBehavior[k], 0)))) return false;
+    if (g.hitStop !== undefined && !finite(g.hitStop, 0)) return false;
+    if (g._hasRoared !== undefined && typeof g._hasRoared !== "boolean") return false;
+    if (g.playerMateId !== undefined && g.playerMateId !== null && !integer(g.playerMateId, 1)) return false;
+    if (g.playerOffspringCount !== undefined && !integer(g.playerOffspringCount, 0)) return false;
+    if (g.strongestDefeated !== undefined && g.strongestDefeated !== null && !SPECIES_BY_ID[g.strongestDefeated]) return false;
+    if (g.playerNest !== undefined && g.playerNest !== null && (!object(g.playerNest) || !finite(g.playerNest.x) || !finite(g.playerNest.y) || !SPECIES_BY_ID[g.playerNest.speciesId] || !finite(g.playerNest.hatchTimer, 0) || (g.playerNest.eggId !== null && !integer(g.playerNest.eggId, 1)) || typeof g.playerNest.hatched !== "boolean")) return false;
     if (version >= 2 && !livingWorldValid(g)) return false;
     return object(g.lineage) && object(g.lineage.fruits) &&
       ["sunheart", "moondrop"].every((k) => integer(g.lineage.fruits[k])) &&
@@ -265,6 +277,26 @@ export function migrateSnapshot(snapshot) {
   const environment = { seed: game.seed, time: 0 };
   initializeWorldState(environment); game.worldState = environment.worldState;
   initializeDiscoveryState(game);
+  game.dominatedRegions = [];
+  game.excavatedLandmarks = [];
+  game.survivalBehavior = {
+    nightKills: 0,
+    nightTime: 0,
+    waterTime: 0,
+    aquaticKills: 0,
+    damageBlocked: 0,
+    apexHitsTaken: 0,
+    statusInflicted: 0,
+    coldTime: 0,
+    packKills: 0,
+    roarsWithPack: 0,
+  };
+  game.hitStop = 0;
+  game._hasRoared = false;
+  game.playerMateId = null;
+  game.playerNest = null;
+  game.playerOffspringCount = 0;
+  game.strongestDefeated = null;
   copy.version = SNAPSHOT_VERSION;
   if (!validateSnapshot(copy)) throw new Error("Invalid or unsupported run snapshot migration");
   return copy;
@@ -275,12 +307,32 @@ export function restoreGame(snapshot) {
   const copy = migrateSnapshot(snapshot);
   const game = Object.create(Game.prototype), data = copy.game;
   for (const key of scalarFields) if (data[key] !== undefined) game[key] = data[key];
-  for (const key of setFields) game[key] = new Set(data[key]);
-  for (const key of mapFields) game[key] = new Map(data[key]);
+  for (const key of setFields) game[key] = new Set(data[key] || []);
+  for (const key of mapFields) game[key] = new Map(data[key] || []);
   game.runId = copy.runId;
   game.tick = copy.tick;
   game._starter = SPECIES_BY_ID[data.starterId];
   game.rules = DIFFICULTIES[game.difficulty];
   game.worldRadius = WORLD_RADIUS;
+  if (!game.survivalBehavior) {
+    game.survivalBehavior = {
+      nightKills: 0,
+      nightTime: 0,
+      waterTime: 0,
+      aquaticKills: 0,
+      damageBlocked: 0,
+      apexHitsTaken: 0,
+      statusInflicted: 0,
+      coldTime: 0,
+      packKills: 0,
+      roarsWithPack: 0,
+    };
+  }
+  if (game.hitStop === undefined) game.hitStop = 0;
+  if (game._hasRoared === undefined) game._hasRoared = false;
+  if (game.playerMateId === undefined) game.playerMateId = null;
+  if (game.playerNest === undefined) game.playerNest = null;
+  if (game.playerOffspringCount === undefined) game.playerOffspringCount = 0;
+  if (game.strongestDefeated === undefined) game.strongestDefeated = null;
   return game;
 }

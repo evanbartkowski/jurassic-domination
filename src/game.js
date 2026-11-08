@@ -16,15 +16,17 @@ import { canEatFood, forageForRegion, plantDefinition } from "./forage.js";
 import { sweepMove, hasLineOfSight, attackLineClear } from "./combat.js";
 import { makeGenome, normalizeGenome, phenotype, newAdaptationState } from './genetics.js';
 import { initializeLifeEntity } from './life-cycle.js';
-import { initializeWorldState, updateWorldEvents } from './world-events.js';
-import { initializeDiscoveryState, recordExploration } from './discoveries.js';
+import { initializeWorldState, updateWorldEvents, getTimeOfDay } from './world-events.js';
+import { initializeDiscoveryState, recordExploration, LANDMARKS, interactWithLandmark } from './discoveries.js';
 import { newSurvivalState, updateSurvival, survivalSpeed, setMovementPosture } from './survival.js';
 import { recordNoise, recordBlood } from './senses.js';
+import { COMPANION_SYNERGIES } from './sanctuary.js';
 import {
   WORLD_RADIUS,
   biomeAt,
   foodEfficiency,
   chunkKey,
+  REGIONAL_ALPHAS,
 } from "./world-data.js";
 
 const TAU = Math.PI * 2;
@@ -46,8 +48,12 @@ export class Game {
     ancestorGenome = null,
     generation,
     runId,
+    petId = null,
+    cosmeticId = "none",
   } = {}) {
     this.seed = Number(seed) >>> 0;
+    this.petId = petId || null;
+    this.cosmeticId = cosmeticId || "none";
     this.runId = typeof runId === "string" && /^[a-zA-Z0-9:_-]{1,96}$/.test(runId)
       ? runId : (globalThis.crypto?.randomUUID?.() || `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
     this.tick = 0;
@@ -119,6 +125,24 @@ export class Game {
     if (Number.isInteger(generation) && generation >= 1 && generation <= 1000000) this.player.genome.generation = generation;
     this.guardianKills = 0;
     this.survival = newSurvivalState();
+    this.survivalBehavior = {
+      nightKills: 0,
+      nightTime: 0,
+      waterTime: 0,
+      aquaticKills: 0,
+      damageBlocked: 0,
+      apexHitsTaken: 0,
+      statusInflicted: 0,
+      coldTime: 0,
+      packKills: 0,
+      roarsWithPack: 0,
+    };
+    this.dominatedRegions = new Set();
+    this.playerMateId = null;
+    this.playerNest = null;
+    this.playerOffspringCount = 0;
+    this.strongestDefeated = null;
+    this.excavatedLandmarks = new Set();
     initializeWorldState(this);
     initializeDiscoveryState(this);
     initializeEcosystem(this, { modifiers, skinId, knownUnlocks });
@@ -167,6 +191,7 @@ export class Game {
       s = this.species,
       m = this.mutationCounts;
     const ratio = p.hp / Math.max(1, p.maxHp);
+    const synergy = this.petId ? COMPANION_SYNERGIES[this.petId] : null;
     p.maxHp = Math.round(
       s.hp *
         (1 + (p.growth || 0) * 0.4) *
@@ -174,7 +199,8 @@ export class Game {
           this.upgrades.vitality * 0.05 +
           (m.vitality || 0) * 0.18 +
           (this.modifiers.has("ancient-heart") ? 0.08 : 0)) *
-        (1 + this.ascensions * 0.15),
+        (1 + this.ascensions * 0.15) *
+        (synergy?.role === "titan" ? 1.20 : 1),
     );
     p.hp = heal ? p.maxHp : Math.min(p.maxHp, p.maxHp * ratio);
     p.damage =
@@ -191,10 +217,10 @@ export class Game {
       (1 - (p.growth || 0) * 0.04) *
       (1 + (m.swift || 0) * 0.1 + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
       (this.hasBuff("speed") ? 1.4 : 1) *
-      (this.petId ? 1.05 : 1);
+      (synergy?.role === "prowler" ? 1.10 : (this.petId ? 1.05 : 1));
     p.armor = Math.min(
-      0.55,
-      (m.ironhide || 0) * 0.12 + (s.body === "quad" ? 0.12 : 0),
+      0.65,
+      (m.ironhide || 0) * 0.12 + (s.body === "quad" ? 0.12 : 0) + (synergy?.role === "bulwark" ? 0.15 : 0),
     );
   }
 
@@ -295,6 +321,8 @@ export class Game {
       name: options.name || null,
       roaming: !!options.roaming,
       juvenile: !!options.juvenile,
+      isPlayerOffspring: !!options.isPlayerOffspring,
+      isPlayerMate: !!options.isPlayerMate,
       age: 0,
       scaleFactor: (options.juvenile ? 0.42 : 1) * (1 + growth * 0.28),
     };
@@ -413,6 +441,38 @@ export class Game {
 
     this.updateEcosystem(dt, input);
     if (this.state !== "playing") return;
+    if (this.survivalBehavior) {
+      const tod = getTimeOfDay(this.time);
+      if (tod.name === "night" || tod.name === "dusk") {
+        this.survivalBehavior.nightTime = (this.survivalBehavior.nightTime || 0) + dt;
+      }
+      if (p.submerged || (this.hazardHint && this.hazardHint.includes("WATER"))) {
+        this.survivalBehavior.waterTime = (this.survivalBehavior.waterTime || 0) + dt;
+      }
+      if (this.region?.id === "frost") {
+        this.survivalBehavior.coldTime = (this.survivalBehavior.coldTime || 0) + dt;
+      }
+    }
+    if (this.playerNest && !this.playerNest.hatched) {
+      this.playerNest.hatchTimer -= dt;
+      if (this.playerNest.hatchTimer <= 0) {
+        this.playerNest.hatched = true;
+        const heir = this.spawnEntity(this.playerNest.speciesId, this.playerNest.x + 1, this.playerNest.y, {
+          juvenile: true,
+          passive: true,
+          isPlayerOffspring: true,
+          packId: "player-family",
+          genome: makeGenome(`${this.seed}:heir`, this.playerNest.speciesId, this.player.genome),
+        });
+        if (heir) {
+          heir.homeX = this.playerNest.x;
+          heir.homeY = this.playerNest.y;
+          this.playerOffspringCount = (this.playerOffspringCount || 0) + 1;
+          this.emit("egg-hatch", { text: `AN HEIR IS BORN! Offspring hatched and joined your pack!` });
+          this.emit("dna-find", { amount: 2, receipt: `heir:${this.runId}:${this.playerOffspringCount}` });
+        }
+      }
+    }
     updateSurvival(this, dt, input, Math.hypot(p.x-previousX,p.y-previousY) > dt * .3);
     if (this.state !== 'playing') return;
     recordExploration(this);
@@ -507,9 +567,23 @@ export class Game {
         Math.abs(angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle)) <
           1.25 && hasLineOfSight(p, e, this.worldFeatures || [])
       ) {
-        const isFlank = Math.abs(angleDifference(Math.atan2(p.y - e.y, p.x - e.x), e.angle)) > 1.8;
-        const isCrit = p.empowered > 0 || (isFlank && this.species.body === "raptor");
+        const hitAngle = Math.atan2(e.y - p.y, e.x - p.x);
+        const relAngle = Math.abs(angleDifference(hitAngle, e.angle));
+        const isRear = relAngle < 0.95;
+        const isHeadOn = relAngle > 2.25;
+        let directionalMult = 1.0;
+        let legWound = false;
+
+        if (isRear) {
+          directionalMult = 1.35;
+          legWound = true;
+        } else if (isHeadOn && (["quad", "croc"].includes(target.body) || /ankylo|stego|tricer/.test(e.speciesId))) {
+          directionalMult = 0.65;
+        }
+
+        const isCrit = p.empowered > 0 || (isRear && (this.species.body === "raptor" || this.hasBuff("ambush")));
         const multiplier =
+          directionalMult *
           (p.empowered > 0 ? 1.65 : 1) *
           (isCrit ? 1.25 : 1) *
           (this.species.body === "raptor"
@@ -519,8 +593,15 @@ export class Game {
         if (this.species.body === "serpent" || p.venomFang > 0) {
           e.poison = 5;
           e.poisonTick = 0;
+          if (this.survivalBehavior) this.survivalBehavior.statusInflicted = (this.survivalBehavior.statusInflicted || 0) + 1;
         }
-        this._hitEntity(e, p.damage * multiplier, 0.65, isCrit);
+        if (legWound) {
+          e.slowed = Math.max(e.slowed || 0, 3.5);
+        }
+        const targetMass = (target.size || 1) * (e.scaleFactor || 1);
+        const massRatio = Math.max(0.25, Math.min(2.5, this.effectiveSize / targetMass));
+        const knockback = 0.65 * massRatio;
+        this._hitEntity(e, p.damage * multiplier, knockback, isCrit, hitAngle);
       }
     }
     if (this.marineState) {
@@ -693,6 +774,16 @@ export class Game {
       const d = Math.hypot(e.x - p.x, e.y - p.y);
       if (d > roarRadius) continue;
       const s2 = SPECIES_BY_ID[e.speciesId];
+      if (!this.playerMateId && e.speciesId === s.id && !e.juvenile && this.tier >= 1 && (p.growth || 0) >= 0.35 && d < 14) {
+        this.playerMateId = e.id;
+        e.isPlayerMate = true;
+        e.packId = "player-family";
+        e.behavior = "pack";
+        e.aggro = 0;
+        e.fear = 0;
+        this.emit("courtship", { text: `MATE BOND FORMED: Your ${s.name} companion joins your family!` });
+        continue;
+      }
       const entityPower = s2.tier * 10 + s2.size * (e.scaleFactor || 1);
       if (entityPower < playerPower - 2 || e.juvenile || s2.temperament === "skittish") {
         e.fear = 7.0;
@@ -703,6 +794,33 @@ export class Game {
         e.intent = "hunt";
       }
     }
+    if (this.playerMateId || this.playerOffspringCount > 0) {
+      if (this.survivalBehavior) this.survivalBehavior.roarsWithPack = (this.survivalBehavior.roarsWithPack || 0) + 1;
+    }
+    return true;
+  }
+
+  buildPlayerNest() {
+    const p = this.player;
+    if (this.playerNest) return false;
+    this.playerNest = {
+      x: p.x,
+      y: p.y,
+      speciesId: p.speciesId,
+      hatchTimer: 20,
+      eggId: null,
+      hatched: false,
+    };
+    const egg = this.spawnFood("egg", p.x + 1.2, p.y + 0.8, 40, {
+      tier: this.tier,
+      speciesId: p.speciesId,
+      homeChunk: chunkKey(p.x, p.y),
+      hatchAfter: 20,
+      isPlayerEgg: true,
+      genome: makeGenome(`${this.seed}:playerEgg`, p.speciesId, p.genome),
+    });
+    this.playerNest.eggId = egg.id;
+    this.emit("nest-built", { text: "FAMILY NEST ESTABLISHED: Protect your egg until it hatches!" });
     return true;
   }
 
@@ -716,7 +834,25 @@ export class Game {
       const d=(candidate.x-p.x)**2+(candidate.y-p.y)**2;
       if (d<=nearest) { food=candidate; nearest=d; }
     }
-    if (!food) return false;
+    if (!food) {
+      for (const landmark of LANDMARKS) {
+        if (Math.hypot(landmark.x - p.x, landmark.y - p.y) < 14) {
+          const res = interactWithLandmark(this, landmark);
+          if (res) {
+            this._eatCooldown = 0.5;
+            this.emit("interact", { text: res.text, detail: res.detail, ok: res.ok });
+            return true;
+          }
+        }
+      }
+      if (!this.playerNest && this.playerMateId) {
+        if (this.buildPlayerNest()) {
+          this._eatCooldown = 0.5;
+          return true;
+        }
+      }
+      return false;
+    }
     this.onFoodConsumed(food);
     this.foods = this.foods.filter((f) => f.id !== food.id);
     if (this.survival) this.survival.strain = Math.max(0, this.survival.strain - 3);
@@ -967,13 +1103,30 @@ export class Game {
     return true;
   }
 
-  damagePlayer(amount, cause = "A predator", bypass = false) {
+  damagePlayer(amount, cause = "A predator", bypass = false, attackerAngle = null) {
     if (this.state !== "playing" || amount <= 0 || !Number.isFinite(amount))
       return false;
     const p = this.player;
     if (p.invulnerable > 0 && !bypass) return false;
+
+    let frontalShield = 1.0;
+    let flankVuln = 1.0;
+    if (attackerAngle !== null) {
+      const rel = Math.abs(angleDifference(attackerAngle, p.angle));
+      if (rel > 2.2) {
+        if (p.crouching || ["quad", "longneck"].includes(this.species.body) || /ankylo|stego|tricer/.test(this.species.id)) {
+          frontalShield = 0.65;
+          if (this.survivalBehavior) this.survivalBehavior.damageBlocked = (this.survivalBehavior.damageBlocked || 0) + (amount * 0.35);
+        }
+      } else if (rel < 0.95) {
+        flankVuln = 1.25;
+      }
+    }
+
     const damage =
       amount *
+      frontalShield *
+      flankVuln *
       (1 - p.armor) *
       (1 - this.geneticTraits.resistance) *
       (p.guard > 0 ? 0.35 : 1) *
@@ -981,6 +1134,9 @@ export class Game {
     p.hp = Math.max(0, p.hp - damage);
     p.sleeping = 0;
     if (!bypass) {
+      if (this.survivalBehavior && (cause.includes("Apex") || cause.includes("Alpha") || (amount > p.maxHp * 0.2))) {
+        this.survivalBehavior.apexHitsTaken = (this.survivalBehavior.apexHitsTaken || 0) + 1;
+      }
       recordBlood(this, p.x, p.y);
       if (damage > p.maxHp * .22 && this.survival) this.survival.strain = 12;
       if (damage > p.maxHp * 0.16) this.hitStop = 0.05;
@@ -995,10 +1151,14 @@ export class Game {
     return true;
   }
 
-  _hitEntity(e, amount, knockback = 0, isCrit = false) {
+  _hitEntity(e, amount, knockback = 0, isCrit = false, hitAngle = null) {
     if (!this.entities.includes(e) || e.hp <= 0) return;
     this.hitStop = 0.045;
     e.sleeping = 0;
+    if (e.telegraph > 0 && (amount > e.maxHp * 0.14 || knockback > 0.8)) {
+      e.telegraph = 0;
+      e.cast = null;
+    }
     e.hp -= amount * (1 - phenotype(e.genome).resistance);
     e.hitFlash = 0.18;
     e.aggro = 10;
@@ -1007,13 +1167,40 @@ export class Game {
       for (const mate of this.entities)
         if (mate.packId === e.packId && distance(mate, e) < 45) mate.aggro = 12;
     if (knockback) {
-      const angle = Math.atan2(e.y - this.player.y, e.x - this.player.x);
-      sweepMove(e, Math.cos(angle) * knockback, Math.sin(angle) * knockback, SPECIES_BY_ID[e.speciesId].size * (e.scaleFactor || 1), this.worldFeatures || []);
+      const angle = hitAngle !== null ? hitAngle : Math.atan2(e.y - this.player.y, e.x - this.player.x);
+      const res = sweepMove(e, Math.cos(angle) * knockback, Math.sin(angle) * knockback, SPECIES_BY_ID[e.speciesId].size * (e.scaleFactor || 1), this.worldFeatures || []);
+      if (res?.hit && knockback > 0.35) {
+        const wallBonus = amount * 0.25;
+        e.hp -= wallBonus;
+        e.stunned = Math.max(e.stunned || 0, 1.0);
+        this.emit("hit", { x: e.x, y: e.y, amount: wallBonus, target: e.id, wallSlam: true });
+      }
     }
     this.emit("hit", { x: e.x, y: e.y, amount, target: e.id, crit: isCrit });
     if (e.hp > 0) return;
     this.hitStop = e.boss ? 0.09 : 0.065;
     const s = SPECIES_BY_ID[e.speciesId];
+    if (e.isRegionalAlpha && e.alphaRegion) {
+      this.dominatedRegions ||= new Set();
+      this.dominatedRegions.add(e.alphaRegion);
+      this.emit("dominance", {
+        regionId: e.alphaRegion,
+        text: `TERRITORIAL DOMINANCE: ${e.name} Slain! You rule ${biomeAt(e.x, e.y).name}!`,
+      });
+      this.emit("dna-find", { amount: 3, receipt: `dominance:${e.alphaRegion}` });
+    }
+    if (!this.strongestDefeated || s.tier > (SPECIES_BY_ID[this.strongestDefeated]?.tier || 0)) {
+      this.strongestDefeated = s.id;
+    }
+    if (this.survivalBehavior) {
+      const tod = getTimeOfDay(this.time);
+      if (tod.name === "night" || tod.name === "dusk") {
+        this.survivalBehavior.nightKills = (this.survivalBehavior.nightKills || 0) + 1;
+      }
+      if (this.playerMateId || this.petId) {
+        this.survivalBehavior.packKills = (this.survivalBehavior.packKills || 0) + 1;
+      }
+    }
     this.entities = this.entities.filter((other) => other !== e);
     this.player.kills++;
     this.player.score +=
@@ -1167,6 +1354,11 @@ export class Game {
       guardians: this.guardianKills,
       discoveries: (this.exploration?.discoveries || []).map(d => ({ ...d })),
       regionId: biomeAt(this.player.x, this.player.y).id,
+      strongestDefeated: this.strongestDefeated || null,
+      offspringCount: this.playerOffspringCount || 0,
+      dominatedRegions: [...(this.dominatedRegions || [])],
+      mateSpecies: this.playerMateId ? (this.entities.find((e) => e.id === this.playerMateId)?.speciesId || null) : null,
+      formHistory: [...(this.formHistory || [this.player.speciesId])],
     };
   }
 }

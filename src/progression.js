@@ -1,4 +1,4 @@
-﻿import { SPECIES, SPECIES_BY_ID } from "./data.js";
+import { SPECIES, SPECIES_BY_ID } from "./data.js";
 import { phenotype, exposureProgress } from "./genetics.js";
 import { hasDiscovery } from './discoveries.js';
 export const EVOLUTION_RARITIES = {
@@ -105,10 +105,67 @@ export function evolutionPool(g) {
     (s) => s.tier === Math.min(7, g.tier + 1) && !s.bloodline,
   );
 }
+export const BEHAVIOR_AFFINITIES = {
+  night: { id: "night", label: "Night Stalker", icon: "🌙", description: "Hunts and prowls primarily under cover of darkness." },
+  aquatic: { id: "aquatic", label: "Aquatic Hunter", icon: "🌊", description: "Adapts to swimming and hunting deep in waterways." },
+  armored: { id: "armored", label: "Living Fortress", icon: "🛡️", description: "Absorbs damage and deflects lethal frontal attacks." },
+  venom: { id: "venom", label: "Toxin Specialist", icon: "🧪", description: "Inflicts debilitating poison and lingering bleed." },
+  frost: { id: "frost", label: "Frost Survivor", icon: "❄️", description: "Withstands bitter subzero temperatures." },
+  pack: { id: "pack", label: "Pack Leader", icon: "🐺", description: "Coordinates hunts and rallies allies with roars." },
+};
+
+export function getActiveAffinities(g) {
+  const b = g?.survivalBehavior || {};
+  const affinities = [];
+  if ((b.nightKills || 0) >= 2 || (b.nightTime || 0) >= 40) affinities.push(BEHAVIOR_AFFINITIES.night);
+  if ((b.waterTime || 0) >= 15 || (b.aquaticKills || 0) >= 1) affinities.push(BEHAVIOR_AFFINITIES.aquatic);
+  if ((b.damageBlocked || 0) >= 50 || (b.apexHitsTaken || 0) >= 3) affinities.push(BEHAVIOR_AFFINITIES.armored);
+  if ((b.statusInflicted || 0) >= 4) affinities.push(BEHAVIOR_AFFINITIES.venom);
+  if ((b.coldTime || 0) >= 20) affinities.push(BEHAVIOR_AFFINITIES.frost);
+  if ((b.packKills || 0) >= 2 || (b.roarsWithPack || 0) >= 2) affinities.push(BEHAVIOR_AFFINITIES.pack);
+  return affinities;
+}
+
+export function speciesMatchesAffinity(s, affinityId) {
+  if (!s) return false;
+  if (affinityId === "night") return ["raptor", "bird"].includes(s.body) || /troodon|carnotaurus|velociraptor|dromaeo/.test(s.id);
+  if (affinityId === "aquatic") return ["marine", "croc"].includes(s.body) || /spino|baryonyx|sucho|sarco|kronosaur|tideweaver/.test(s.id);
+  if (affinityId === "armored") return ["quad", "longneck"].includes(s.body) || /ankylo|stego|tricer|titan|pachy/.test(s.id);
+  if (affinityId === "venom") return s.body === "serpent" || ["venom", "flame"].includes(s.abilityType) || /dilopho|guanlong|wyrm/.test(s.id);
+  if (affinityId === "frost") return s.abilityType === "frost" || /yutyrannus|cryolopho|mammoth|glacier|blizzard/.test(s.id);
+  if (affinityId === "pack") return s.temperament === "pack" || /raptor|compsognathus|wolf/.test(s.id);
+  return false;
+}
+
+export function getAffinityForSpecies(s, affinities) {
+  if (!s || !affinities || !affinities.length) return null;
+  return affinities.find((aff) => speciesMatchesAffinity(s, aff.id)) || null;
+}
+
+export function pickWeightedByBehavior(choices, affinities, randomFn) {
+  if (!choices.length) return null;
+  if (!affinities || !affinities.length) {
+    const idx = Math.floor(randomFn() * choices.length);
+    return choices[Math.max(0, Math.min(choices.length - 1, idx))];
+  }
+  const weights = choices.map((s) => {
+    const matches = affinities.some((aff) => speciesMatchesAffinity(s, aff.id));
+    return matches ? 3.5 : 1.0;
+  });
+  const total = weights.reduce((a, b) => a + b, 0);
+  let roll = randomFn() * total;
+  for (let i = 0; i < choices.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return choices[i];
+  }
+  return choices[choices.length - 1];
+}
+
 export function chooseEvolutions(g) {
   const pool = evolutionPool(g),
     regular = pool.filter((s) => s.rarity === "regular"),
-    result = [];
+    result = [],
+    affinities = getActiveAffinities(g);
   for (let i = 0; i < 3; i++) {
     const roll = g.random(),
       rarity =
@@ -125,7 +182,10 @@ export function chooseEvolutions(g) {
     if (!choices.length)
       choices = regular.filter((s) => !result.includes(s.id));
     if (!choices.length) choices = pool.filter((s) => !result.includes(s.id));
-    if (choices.length) result.push(g.pick(choices).id);
+    if (choices.length) {
+      const chosen = pickWeightedByBehavior(choices, affinities, () => g.random());
+      result.push(chosen.id);
+    }
   }
   return [...result, ...eligibleBloodlines(g).map((b) => b.speciesId)];
 }

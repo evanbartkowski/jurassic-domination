@@ -133,3 +133,20 @@ test("world renderer disposal removes listeners and owned resources exactly once
   assert.equal(world.scene.children.length, 0);
   assert.equal(world.minimapBackdrops.size, 0);
 });
+
+test("screen projection incorporates terrain elevation", () => {
+  const world = Object.create(WorldRenderer.prototype);
+  world.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+  world.camera.position.set(0, 50, 50);
+  world.camera.lookAt(0, 0, 0);
+  world.camera.updateMatrixWorld();
+  world.projectedPosition = new THREE.Vector3();
+  const flatProj = world.project(0, 0, 2);
+  assert.equal(typeof flatProj.x, "number");
+  assert.equal(typeof flatProj.y, "number");
+  assert.equal(typeof flatProj.visible, "boolean");
+  const ridgeProj = world.project(120, 120, 2);
+  assert.equal(typeof ridgeProj.x, "number");
+  assert.equal(typeof ridgeProj.y, "number");
+  assert.equal(typeof ridgeProj.visible, "boolean");
+});

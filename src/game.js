@@ -434,6 +434,10 @@ export class Game {
       );
     if (p.hunger <= 0) {
       p.starvationTimer = (p.starvationTimer || 0) + dt;
+      if (!p._lastStarveWarn || this.time - p._lastStarveWarn > 4) {
+        this.emit("warning", { text: "CRITICAL STARVATION: Feed immediately!" });
+        p._lastStarveWarn = this.time;
+      }
       const rate = p.starvationTimer > 10 ? 0.055 : 0.035;
       this.damagePlayer(p.maxHp * rate * dt, "Starvation", true);
     } else {

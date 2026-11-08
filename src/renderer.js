@@ -669,26 +669,23 @@ export class WorldRenderer {
     }
   }
   lightning(origin, target, color) {
-    const points = [],
+    const positions = new Float32Array(27),
       dx = target.x - origin.x,
       dz = target.y - origin.y;
     for (let i = 0; i <= 8; i++) {
       const t = i / 8,
         jitter = i === 0 || i === 8 ? 0 : (Math.random() - 0.5) * 1.5;
-      points.push(
-        new THREE.Vector3(
-          dx * t + jitter,
-          1.5 + Math.sin(t * Math.PI),
-          dz * t - jitter,
-        ),
-      );
+      positions[i * 3] = dx * t + jitter;
+      positions[i * 3 + 1] = 1.5 + Math.sin(t * Math.PI);
+      positions[i * 3 + 2] = dz * t - jitter;
     }
-    const geometry = new THREE.BufferGeometry().setFromPoints(points),
-      line = new THREE.Line(
-        geometry,
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 1 }),
-      ),
-      group = new THREE.Group();
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    const line = new THREE.Line(
+      geometry,
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity: 1 }),
+    );
+    const group = new THREE.Group();
     group.position.set(origin.x, 0, origin.y);
     group.add(line);
     this.scene.add(group);
@@ -1716,10 +1713,13 @@ export class WorldRenderer {
     }
   }
   project(x, y, height = 2) {
-    const v = this.projectedPosition.set(x, height, y).project(this.camera);
+    const groundY = elevationAt(x, y);
+    const v = this.projectedPosition.set(x, groundY + height, y).project(this.camera);
+    const width = typeof innerWidth !== "undefined" ? innerWidth : 1920;
+    const heightPx = typeof innerHeight !== "undefined" ? innerHeight : 1080;
     return {
-      x: (v.x * 0.5 + 0.5) * innerWidth,
-      y: (-v.y * 0.5 + 0.5) * innerHeight,
+      x: (v.x * 0.5 + 0.5) * width,
+      y: (-v.y * 0.5 + 0.5) * heightPx,
       visible: v.z < 1,
     };
   }

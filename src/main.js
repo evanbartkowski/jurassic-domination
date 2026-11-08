@@ -414,6 +414,8 @@ function clearWorldFeedback() {
   world?.resetRun();
   for (const item of floating) item.element.remove();
   floating.length = 0;
+  for (const [, element] of labels) element.remove();
+  labels.clear();
   clearTimeout(ui?.toastTimer);
   document.getElementById("toast").classList.remove("visible");
 }
@@ -982,7 +984,13 @@ function updateWorldUI() {
   prompt.textContent = prompt.textContent.replace(/^E(?=\s)/, keyLabel(settings.controls?.eat || DEFAULT_BINDINGS.eat));
 }
 function updateCreatureLabels() {
-  if (!game || !world || ui.view !== "hud" || game.state !== "playing") return;
+  if (!game || !world || ui.view !== "hud" || game.state !== "playing") {
+    if (labels.size > 0) {
+      for (const [, element] of labels) element.remove();
+      labels.clear();
+    }
+    return;
+  }
   const p = game.player,
     near = game.entities
       .filter((e) => Math.hypot(e.x - p.x, e.y - p.y) < 32)

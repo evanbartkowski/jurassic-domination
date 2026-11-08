@@ -103,8 +103,15 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 - Triggers camera screen-shake and visual acoustic shockwaves.
 - **Ecological Impact**: Smaller and skittish prey panic and flee; equal or apex predators are challenged and provoked into aggressive combat.
 
-### 5. Combat Overhaul & Status Effects
+### 5. Combat Overhaul, Evolution Archetypes & Status Effects
 - **Tactical Real-Time Combat**: Swept collision circles prevent attacks or lunges from clipping through solid trees or boulders.
+- **5 Strategic Evolution Archetypes**: Every evolved dinosaur falls into a distinctive combat archetype granting passive tactical bonuses:
+  - **Ambush Predator** (*Raptors, Carnosaurs*): +25% attack speed, 1.8× sneak critical multiplier, and silent stalking.
+  - **Armored Titan** (*Anklyosaurs, Sauropods, Ceratopsians*): +30% armor plate defense, +20% maximum health, and immune to stun/knockback.
+  - **Pack Hunter** (*Dromaeosaurs, Small Theropods*): +15% movement speed, +10% companion synergy bonus per nearby ally.
+  - **Venom Specialist** (*Dilophosaurs, Serpents, Ancient Wyrms*): +40% status effect duration and heightened lingering toxin damage.
+  - **Apex Destroyer** (*Tyrannosaurus, Spinosaurus, Colossal Dragons*): +25% base damage, screen-shaking stomps, and territorial fear aura.
+- **Herbivore Herd Defense**: Adult herbivores actively defend nearby juveniles and eggs, banding together to repel approaching predators.
 - **Elemental Status Effects**:
   - **Bleed**: Inflicts damage over time that intensifies drastically whenever the victim moves. Rendered with dripping blood particles.
   - **Poison**: Armor-piercing venom that saps vitality continuously. Rendered with buoyant green toxin bubbles.
@@ -115,16 +122,26 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 - **Killable Marine Predators**: Deep coastal waters now harbor deadly aquatic carnivores (such as *Abyssal Kronosaur* and *Tideweaver*). Swim out to duel them with full swept-hitbox combat to harvest rare ocean sustenance.
 - **Colossal Apex Evolutions**: Late-stage evolutionary titans (Tier 6–8) possess colossal scales, immense attack radii, earth-shaking footsteps, and screen-clearing cleaves.
 
-### 6. Authentic 66-Sound Audio Engine
+### 6. Continuous Topography, Locomotion Physics & Graphics Engine
+- **Seamless 3D Topography**: Multi-octave continuous terrain elevation (`elevationAt(x, z)`) with rolling hills, jagged basalt ridges, low-lying wetlands, and a sheltered nursery basin. Players, wild fauna, food carcasses, trees, and rocks dynamically align to the ground height.
+- **Biomechanical Locomotion Physics**: Dinosaurs exhibit realistic biomechanical physics:
+  - **Pelvic Weight Shifting**: Hips lean inward on tight turns and bob with stride cadence.
+  - **Centripetal Tail Inertia**: Articulated tails counter-balance fast turning maneuvers.
+  - **Attack Windup & Jaw Snap**: Attacks feature kinetic forward lunge, head recoil, and snapping jaws.
+  - **Anatomical Detailing**: Velociraptor sickle claws, Tyrannosaur masseter jaw muscles, Spinosaurus tail fins, and Carnotaurus brow horns.
+- **Strict Particle Budgeting**: Instanced particle systems enforce a 750-instance budget with priority eviction and frame-rate-independent time-based emission (`dt`), preventing WebGL buffer overruns on high-refresh displays.
+- **Headless Simulation Determinism**: Complete decoupling of visual interpolation and game logic ensures identical simulation output whether running at 30, 60, or 144 FPS.
+
+### 7. Authentic 66-Sound Audio Engine
 - Rich procedural soundscape featuring authentic dinosaur roars, deep Tyrannosaur rumbles, raptor calls, pterosaur shrieks, and sea beast calls.
 - Dynamic environmental audio: rustling foliage, ambient birdsong, ocean waves, cracking thunder, and tactile footsteps on stone, gravel, and mud.
 
-### 7. Dinosaur Sanctuary & Island Builder
+### 8. Dinosaur Sanctuary & Island Builder
 - Visit your private off-shore sanctuary island in full 3D.
 - Place, rotate, and customize up to 80 decorations and house up to 16 companion pets.
 - Feed, bond with, and care for companion animals to earn rare cosmetic crowns, wreaths, and monument recipes.
 
-### 8. Enhanced Realism & World Systems
+### 9. Enhanced Realism & World Systems
 - **Top Center HUD & Bloodthirsty Starvation Vignette**: Vitality and Stamina meters are prominently positioned at the top-center of the screen. The conventional hunger bar is replaced with an immersive, full-screen peripheral red vignette that pulses and deepens as your dinosaur hungers. Low hunger triggers a flashing warning banner (*"STARVING · HUNT FOR FLESH"*); prolonged starvation slows your creature and leads to death.
 - **Organic World Presentation**: Geometric circles underneath player and wild dinosaurs have been removed for natural visual immersion.
 - **3D Skeletal Remains**: Meat drops appear as authentic prehistoric carcasses complete with an articulated spine, bone skull, exposed ribcage arches, and pooled blood.
@@ -138,7 +155,7 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 - **Dynamic Title Scene**: The home screen features wind-blown foliage and leaves drifting across atmospheric prehistoric lighting.
 - **Audio Voice Pooling & Throttling**: Sound effects use strict cooldown intervals and element pooling, eliminating sound overlap, echoing, or looping storms.
 
-### 9. Retention, Tutorial & Objective Loop
+### 10. Retention, Tutorial & Objective Loop
 - **First-Run Onboarding & Objective Tracker**: A streamlined, non-intrusive objective panel directly on the HUD guides new and returning survivors from egg hatch through safe basin growth, roaring, first evolutionary leap, venturing into wild biomes, hunting territory defense, and continental exploration.
 - **Dynamic Progression Goals & Danger Meter**: Clear real-time danger level feedback (`🌿 SAFE BASIN`, `🌾 STABLE`, `⚠️ CAUTION`, `⚔️ HIGH THREAT`, `💀 LETHAL APEX`) and regional tier hazard banners alert players when entering biomes that exceed their current species tier.
 - **Enemy Readability & Visual Telegraphs**: Wild creatures feature high-visibility threat badges (`💀 LETHAL APEX`, `⚠️ DANGEROUS`, `⚔️ FAIR MATCH`, `🌿 PREY`) alongside live behavioral indicators (`⚡ CHARGING!`, `💥 ATTACK IMMINENT!`, `🔮 CASTING`, `🌲 AMBUSH`, `🎯 HUNTING YOU`, `💤 SLEEPING`). Charging beasts project glowing ground trample lanes, while elemental spells display expanding ground warning circles.
@@ -162,7 +179,7 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 Jurassic Domination includes a rigorous testing harness:
 
 ```powershell
-# Run the 211-test deterministic logic and ecology suite:
+# Run the 215-test deterministic logic and ecology suite:
 npm test
 
 # Run the 22 Playwright visual and browser integration checks:
@@ -210,7 +227,7 @@ jurassic-domination/
 │   ├── controls.js        # Keybinding remapping and gamepad deadzone adapter
 │   ├── ui.js              # Polished slate UI panels, HUD, and field journal
 │   └── tutorial.js        # 10-stage dynamic objective tracker, danger assessment, and tier banners
-└── tests/                 # 214 unit tests verifying determinism, balance, and logic
+└── tests/                 # 215 unit tests verifying determinism, balance, and logic
 ```
 
 ---

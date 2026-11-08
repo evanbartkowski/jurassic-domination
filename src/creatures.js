@@ -508,6 +508,7 @@ export function createDinosaur(
           [0.23, -lowerLength + 0.07, 0],
           [horse ? 0.24 : 0.31, 0.09, 0.16],
         );
+        const isRaptor = /raptor|utahraptor|deinonychus|pyroraptor/.test(name);
         if (horse)
           organic(
             knee,
@@ -517,18 +518,20 @@ export function createDinosaur(
           );
         else
           for (let toe = 0; toe < 3; toe++) {
+            const sickleToe = isRaptor && toe === 1;
             organic(
               knee,
               c,
-              [0.38, -lowerLength + 0.055, (toe - 1) * 0.115],
+              [0.38, -lowerLength + (sickleToe ? 0.14 : 0.055), (toe - 1) * 0.115],
               [0.21, 0.06, 0.05],
+              sickleToe ? [0, 0, 0.45] : null,
             );
             horn(
               knee,
               bone,
-              [0.59, -lowerLength + 0.06, (toe - 1) * 0.115],
-              [0.035, 0.16, 0.035],
-              [0, 0, -Math.PI / 2],
+              [sickleToe ? 0.46 : 0.59, -lowerLength + (sickleToe ? 0.22 : 0.06), (toe - 1) * 0.115],
+              [sickleToe ? 0.04 : 0.035, sickleToe ? 0.34 : 0.16, sickleToe ? 0.04 : 0.035],
+              [0, 0, sickleToe ? -2.4 : -Math.PI / 2],
             );
           }
         mergeStatic(knee, owned);
@@ -555,8 +558,12 @@ export function createDinosaur(
           [side * 0.3, 0, 0.4],
         );
         organic(arm, light, [0.28, -0.4, side * 0.22], [0.27, 0.075, 0.08]);
-        const tyrant = /tyrannosaurus|tarbosaurus|albertosaurus/.test(name);
+        const tyrant = /tyrannosaurus|tarbosaurus|albertosaurus|ashborn/.test(name);
         if (tyrant) arm.scale.setScalar(0.62);
+        const isRaptor = /raptor|utahraptor|deinonychus|pyroraptor/.test(name);
+        if (isRaptor) {
+          organic(arm, accent, [0.32, -0.32, side * 0.16], [0.38, 0.12, 0.03], [0, 0, 0.35], "feather");
+        }
         for (let finger = 0; finger < (tyrant ? 2 : 3); finger++)
           horn(
             arm,
@@ -643,15 +650,29 @@ export function createDinosaur(
   }
   if (/pachycephalo|stygimoloch/.test(name))
     organic(head, accent, [-0.06, 0.42, 0], [0.38, 0.33, 0.34]);
-  if (/carno|cerato/.test(name))
-    for (const side of [-1, 1])
+  if (/carno|cerato/.test(name)) {
+    for (const side of [-1, 1]) {
       horn(
         head,
-        accent,
-        [0.02, 0.49, side * 0.25],
-        [0.1, 0.45, 0.1],
-        [side * 0.2, 0, 0],
+        bone,
+        [0.08, 0.54, side * 0.26],
+        [0.09, 0.44, 0.09],
+        [side * 0.32, 0, -0.65],
       );
+    }
+    for (let k = 0; k < 7; k++) {
+      organic(body, dark, [-1.2 + k * 0.35, h + 0.64, 0], [0.08, 0.14, 0.08]);
+    }
+  }
+  if (/tyrannosaurus|tarbosaurus|albertosaurus|ashborn/.test(name)) {
+    for (const side of [-1, 1]) {
+      organic(head, c, [-0.18, 0.06, side * 0.32], [0.28, 0.26, 0.16]);
+      horn(head, dark, [0.06, 0.34, side * 0.28], [0.07, 0.2, 0.07], [side * 0.25, 0, -0.2]);
+    }
+  }
+  if (/brachio|apatos|diplo/.test(name)) {
+    organic(head, c, [0.06, 0.36, 0], [0.22, 0.28, 0.2]);
+  }
   if (/spino|dimetro|acrocantho/.test(name)) {
     const verts = [],
       steps = 12;
@@ -698,6 +719,11 @@ export function createDinosaur(
     );
     owned.add(geo);
     add(body, geo, mat(accent, "membrane"), [0, 0, 0], [1, 1, 1]);
+    for (let i = 0; i < 4; i++) {
+      if (tails[i + 1]) {
+        organic(tails[i + 1], accent, [-0.15, 0.26, 0], [0.22, 0.38, 0.025], [0, 0, 0.15], "membrane");
+      }
+    }
   }
   if (/stego|kentros/.test(name))
     for (let i = 0; i < 10; i++) {
@@ -961,14 +987,20 @@ export function animateCreature(
   const breath = breathCycle * 0.024;
   const strike = d.attackBlend;
 
+  const pelvicRoll = Math.sin(phase) * (quad ? 0.022 : 0.038) * stride;
+  const pelvicYaw = Math.cos(phase) * (quad ? 0.014 : 0.026) * stride;
+  const pelvicBounce = Math.abs(Math.sin(phase)) * 0.036 * stride;
+
   body.position.x = strike * 0.42 * Math.min(2.5, species.size);
   body.position.y =
-    Math.sin(phase * 2) * 0.028 * stride +
+    -pelvicBounce +
     Math.sin(time * 1.9 + model.id) * 0.018 +
     breath * 0.4 -
     strike * 0.12;
-  body.rotation.x = THREE.MathUtils.damp(body.rotation.x, -turn * 0.09, 7, dt);
-  body.rotation.z = Math.sin(phase) * 0.018 * stride - strike * 0.28;
+  body.position.z = Math.sin(phase) * 0.032 * stride;
+  body.rotation.x = THREE.MathUtils.damp(body.rotation.x, -turn * 0.12, 7, dt);
+  body.rotation.y = pelvicYaw;
+  body.rotation.z = pelvicRoll - strike * 0.28;
   for (const leg of legs) {
     const offset = quad
       ? leg.front
@@ -997,14 +1029,16 @@ export function animateCreature(
   }
   const baseHX = d.headBaseX ?? head.position.x;
   const baseHY = d.headBaseY ?? head.position.y;
-  head.position.x = baseHX + strike * 0.38;
-  head.position.y = baseHY - strike * 0.24;
+  const windup = strike < 0.35 ? strike / 0.35 : 1 - (strike - 0.35) / 0.65;
+  const strikeSnap = strike < 0.35 ? -strike * 0.35 : (strike - 0.35) * 1.5;
+  head.position.x = baseHX + strikeSnap * 0.45 * Math.min(2.2, species.size);
+  head.position.y = baseHY - strike * 0.24 + windup * 0.08;
   head.rotation.z =
     Math.sin(phase + 0.4) * 0.026 * stride +
     Math.sin(time * 0.9) * 0.025 -
     strike * 0.72;
-  head.rotation.y = THREE.MathUtils.damp(head.rotation.y, turn * 0.18 + Math.sin(strike * Math.PI) * 0.22, 8, dt);
-  jaw.rotation.z = -strike * 0.88 + Math.sin(time * 2) * 0.014;
+  head.rotation.y = THREE.MathUtils.damp(head.rotation.y, turn * 0.42 + Math.sin(strike * Math.PI) * 0.25, 9, dt);
+  jaw.rotation.z = -strike * 1.15 + Math.sin(time * 2) * 0.014;
 
   if (stride < 0.4 && strike < 0.2) {
     const lookSeed = (model.id || 1) * 31.7;
@@ -1041,14 +1075,14 @@ export function animateCreature(
     wing.rotation.z = -strike * 0.55;
   }
   tails.forEach((node, i) => {
-    node.rotation.y =
-      Math.sin(phase * 0.6 - i * 0.47) *
-        (species.body === "serpent" ? 0.18 : 0.075) *
-        (1 + stride * 0.5) +
-      Math.sin(time * 1.6 - i * 0.45 + (model.id || 0)) * 0.09 * Math.max(0, 1 - stride) +
-      turn * 0.025 +
-      Math.sin(strike * Math.PI) * (species.body === "longneck" ? 0.85 : 0.42);
-    node.rotation.z = Math.sin(time * 1.3 - i * 0.24) * 0.018;
+    const frac = (i + 1) / Math.max(1, tails.length);
+    const swayAmp = (species.body === "serpent" ? 0.22 : 0.08 + frac * 0.09) * (1 + stride * 0.65);
+    const wave = Math.sin(phase * 0.65 - i * 0.42) * swayAmp;
+    const turnInertia = -turn * (0.05 + frac * 0.14);
+    const idleSway = Math.sin(time * 1.6 - i * 0.4 + (model.id || 0)) * (0.05 + frac * 0.06) * Math.max(0, 1 - stride);
+    const strikeWhip = Math.sin(strike * Math.PI) * (species.body === "longneck" ? 0.95 : 0.45);
+    node.rotation.y = wave + turnInertia + idleSway + strikeWhip;
+    node.rotation.z = Math.sin(time * 1.3 - i * 0.24) * 0.018 - (stride > 0.3 && !quad ? 0.035 * frac : 0);
   });
   const impact = strike;
   if (species.body === "marine") {

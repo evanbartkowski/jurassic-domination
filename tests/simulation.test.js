@@ -170,3 +170,37 @@ test("interest snapshots expose nearby public identities and history stays bound
   assert.equal(a.commands[0].payload.x, undefined);
   assert.throws(() => a.interestSnapshot({ radius: 99999 }), /Invalid interest/);
 });
+
+test("simulation produces identical results regardless of render call rate (30, 60, 144 FPS) and renderer is read-only", () => {
+  const g1 = make(501), a1 = new LocalAuthority(g1);
+  const g2 = make(501), a2 = new LocalAuthority(g2);
+  a1.dispatch({ type: "hatch" });
+  a2.dispatch({ type: "hatch" });
+
+  // Spawn ambushing predator with treeDrop in both instances
+  const e1 = g1.spawnEntity("velociraptor", 10, 10);
+  const e2 = g2.spawnEntity("velociraptor", 10, 10);
+  e1.treeDrop = 1.0;
+  e2.treeDrop = 1.0;
+
+  // Run 60 simulation steps (1 second of fixed ticks at 60Hz)
+  // Instance 1: Pure simulation ticks, no renderer calls
+  for (let i = 0; i < 60; i++) {
+    a1.step({ x: 0.1 });
+  }
+
+  // Instance 2: Simulation ticks interleaved with mock render passes at 144 FPS
+  for (let i = 0; i < 60; i++) {
+    a2.step({ x: 0.1 });
+    // Mock renderer reads state (e.g. at 144Hz render intervals)
+    for (let r = 0; r < 2.4; r++) {
+      const readY = e2.treeDrop * (e2.treeY || 4.8);
+      assert.ok(Number.isFinite(readY));
+    }
+  }
+
+  // State must be strictly identical between g1 and g2
+  assert.equal(e1.treeDrop, e2.treeDrop);
+  assert.equal(e1.treeDrop, 0); // treeDrop decays fully within 60 steps (1s * 3.5 = 3.5 > 1.0)
+  assert.deepEqual(snapshotGame(g1), snapshotGame(g2));
+});

@@ -271,6 +271,16 @@ function instanced(group, geometry, mat, count, positions, shadow = true) {
   group.add(mesh);
   return mesh;
 }
+
+export function elevationAt(x, z) {
+  const d = Math.hypot(x, z);
+  const basinFactor = Math.min(1, Math.max(0, (d - 40) / 35));
+  const roll1 = Math.sin(x * 0.016 + 0.5) * Math.cos(z * 0.014);
+  const roll2 = Math.sin(x * 0.038 - z * 0.032) * 0.45;
+  const ripple = Math.sin(x * 0.11) * Math.cos(z * 0.12) * 0.065;
+  return -0.14 + (roll1 * 0.85 + roll2) * basinFactor + ripple;
+}
+
 export function createTerrainChunk(cx, cy, seed) {
   const group = new THREE.Group(),
     owned = [],
@@ -296,7 +306,7 @@ export function createTerrainChunk(cx, cy, seed) {
     if (trail < 0.08) color.lerp(new THREE.Color(0xa09371), 0.32);
     color.multiplyScalar(0.85 + rand() * 0.22);
     colors.push(color.r, color.g, color.b);
-    positions.setY(i, -0.14 + Math.sin(x * 0.11) * Math.cos(z * 0.12) * 0.065);
+    positions.setY(i, elevationAt(x, z));
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geo.computeVertexNormals();
@@ -334,10 +344,11 @@ export function createTerrainChunk(cx, cy, seed) {
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE;
     if (Math.hypot(x, z) < 17 || clearFeature(x, z, 4)) continue;
+    const ey = elevationAt(x, z);
     const scale = 0.85 + rand() * 1.35,
       height = (forest ? 5 : 4) * scale;
     trunks.push({
-      position: [x, height / 2, z],
+      position: [x, ey + height / 2, z],
       scale: [scale, height, scale],
     });
     if (
@@ -346,7 +357,7 @@ export function createTerrainChunk(cx, cy, seed) {
       region.id === "sky"
     ) {
       palmLeaves.push({
-        position: [x, height, z],
+        position: [x, ey + height, z],
         scale: [4 * scale, 2 * scale, 4 * scale],
         rotation: [0, rand() * 6.28, 0],
       });
@@ -358,7 +369,7 @@ export function createTerrainChunk(cx, cy, seed) {
         crowns.push({
           position: [
             x + (j % 2 ? 1 : -1) * scale * 0.75,
-            height + j * 0.65 * scale,
+            ey + height + j * 0.65 * scale,
             z + Math.sin(j * 2.5) * scale,
           ],
           scale: frost
@@ -389,8 +400,9 @@ export function createTerrainChunk(cx, cy, seed) {
       z = oy + rand() * CHUNK_SIZE,
       s = 0.5 + rand() * 2.2;
     if (clearFeature(x, z, 1)) continue;
+    const ey = elevationAt(x, z);
     rocks.push({
-      position: [x, -0.05, z],
+      position: [x, ey - 0.05, z],
       scale: [s, s * 0.65, s * 0.9],
       rotation: [rand(), rand() * 6.28, rand()],
       color: frost ? 0xa4b4b0 : region.id === "volcano" ? 0x454244 : 0x7b7d6d,
@@ -403,8 +415,9 @@ export function createTerrainChunk(cx, cy, seed) {
       z = oy + rand() * CHUNK_SIZE,
       s = 0.35 + rand() * 0.85;
     if (clearFeature(x, z, 0.3)) continue;
+    const ey = elevationAt(x, z);
     ferns.push({
-      position: [x, 0.03, z],
+      position: [x, ey + 0.03, z],
       scale: [s, s, s],
       rotation: [0, rand() * 6.28, 0],
       color: frost ? 0xa1b8a7 : barren ? 0x8c8560 : 0x7aa068,
@@ -415,8 +428,9 @@ export function createTerrainChunk(cx, cy, seed) {
     const x = ox + rand() * 160,
       z = oy + rand() * 160;
     if (clearFeature(x, z, 0.5)) continue;
+    const ey = elevationAt(x, z);
     flowers.push({
-      position: [x, 0.22, z],
+      position: [x, ey + 0.22, z],
       scale: [0.14, 0.2, 0.14],
       color: region.tier >= 6 ? [0xcfa8d9,0x87d7d5,0xe9c88c][i%3] : frost ? 0xbacbdd : [0xd6c397,0xba83a9,0xd2a764,0x94b4d5][i%4],
     });
@@ -434,21 +448,22 @@ export function createTerrainChunk(cx, cy, seed) {
   for (let i=0;i<(barren?25:65);i++) {
     const x=ox+rand()*CHUNK_SIZE,z=oy+rand()*CHUNK_SIZE;
     if (Math.hypot(x,z)<9 || clearFeature(x,z,1)) continue;
+    const ey = elevationAt(x, z);
     const s=.65+rand()*.7;
     if (i%3===0) {
       for (let j=0;j<3;j++) {
         const dx=x+(rand()-.5)*.8,dz=z+(rand()-.5)*.8,h=(.5+rand()*.6)*s;
-        mushroomStems.push({position:[dx,h*.5,dz],scale:[.18*s,h,.18*s]});
-        mushroomCaps.push({position:[dx,h,dz],scale:[.42*s,.19*s,.42*s],color:frost?0x91bac7:i%2?0xc9a67b:0xb87f5f});
+        mushroomStems.push({position:[dx,ey+h*.5,dz],scale:[.18*s,h,.18*s]});
+        mushroomCaps.push({position:[dx,ey+h,dz],scale:[.42*s,.19*s,.42*s],color:frost?0x91bac7:i%2?0xc9a67b:0xb87f5f});
       }
     } else if (i%3===1) {
       for (let j=0;j<4;j++) {
         const h=(1+rand())*s,dx=x+(rand()-.5),dz=z+(rand()-.5);
-        reedStems.push({position:[dx,h*.5,dz],scale:[.09,h,.09],rotation:[0,0,(rand()-.5)*.12]});
-        reedHeads.push({position:[dx,h,dz],scale:[.12,.3*s,.12],color:frost?0xb5c3bd:0x9b7950});
+        reedStems.push({position:[dx,ey+h*.5,dz],scale:[.09,h,.09],rotation:[0,0,(rand()-.5)*.12]});
+        reedHeads.push({position:[dx,ey+h,dz],scale:[.12,.3*s,.12],color:frost?0xb5c3bd:0x9b7950});
       }
     } else {
-      for (let j=0;j<3;j++) shrubs.push({position:[x+(j-1)*.55*s,.4*s,z],scale:[.66*s,.48*s,.62*s],color:frost?0x9db6a4:barren?0x9c9855:j%2?0x668a56:0x71965d});
+      for (let j=0;j<3;j++) shrubs.push({position:[x+(j-1)*.55*s,ey+.4*s,z],scale:[.66*s,.48*s,.62*s],color:frost?0x9db6a4:barren?0x9c9855:j%2?0x668a56:0x71965d});
     }
   }
   instanced(group,trunkGeo,material(0x68834c),reedStems.length,reedStems,false);

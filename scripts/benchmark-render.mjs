@@ -68,16 +68,57 @@ try {
     food.x = 4; food.y = 1; world.syncFood([food], .1);
     const foodFollows = model.position.x === 4 && model.position.z === 1;
     world.syncFood([], .2);
+
+    // Crowded combat benchmark scenario (30+ dinosaurs, active status effects, dense pickups)
+    const crowdedSpecies = [
+      "tyrannosaurus", "velociraptor", "triceratops", "spinosaurus", "carnotaurus",
+      "brachiosaurus", "ankylosaurus", "pteranodon", "dilophosaurus", "stegosaurus"
+    ];
+    for (let i = 0; i < 35; i++) {
+      const sp = crowdedSpecies[i % crowdedSpecies.length];
+      const ang = (i / 35) * Math.PI * 2;
+      const r = 8 + (i % 5) * 6;
+      const ent = game.spawnEntity(sp, Math.cos(ang) * r, Math.sin(ang) * r);
+      if (ent) {
+        if (i % 3 === 0) ent.burning = 5;
+        if (i % 4 === 0) ent.poison = 5;
+        if (i % 5 === 0) ent.bleeding = 5;
+      }
+    }
+    for (let i = 0; i < 40; i++) {
+      game.spawnFood("meat", (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, 20);
+    }
+    const crowdedSubmissions = [], crowdedIntervals = [];
+    let prevCrowded = await frame();
+    for (let i = 0; i < 20; i++) {
+      game.update(1 / 60, { x: 0.1, y: 0.1, attack: i % 4 === 0 });
+      crowdedSubmissions.push(draw());
+      const now = await frame();
+      crowdedIntervals.push(now - prevCrowded);
+      prevCrowded = now;
+    }
+    const combatScenario = {
+      entityCount: game.entities.length,
+      foodCount: game.foods.length,
+      submitMs: percentiles(crowdedSubmissions),
+      frameIntervalMs: percentiles(crowdedIntervals),
+      calls: world.renderer.info.render.calls,
+      triangles: world.renderer.info.render.triangles,
+      geometries: world.renderer.info.memory.geometries,
+      textures: world.renderer.info.memory.textures,
+    };
+
     const gl = world.renderer.getContext(), ext = gl.getExtension("WEBGL_debug_renderer_info");
     const environment = { width: innerWidth, height: innerHeight, seed: 4411, renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), userAgent: navigator.userAgent };
     world.dispose(); world.dispose();
-    return { environment, qualities, streaming, residentBefore, residentAfter, foodFollows,
+    return { environment, qualities, streaming, residentBefore, residentAfter, foodFollows, combatScenario,
       disposed: world.scene.children.length === 0 && world.terrain.chunks.size === 0 && world.terrain.pending.length === 0,
       limitation: "CPU submission and browser frame intervals on this renderer; these measurements do not establish gaming-hardware FPS. A single chunk still builds synchronously." };
   });
   assert.ok(report.qualities.find((q) => q.quality === "low").triangles < report.qualities.find((q) => q.quality === "high").triangles * .65);
   assert.ok(report.streaming.every((p) => p.chunks <= 9 && p.frames <= 9 && p.pending === 0 && p.hasCenter));
   assert.ok(report.residentAfter <= report.residentBefore + 16, "resident GPU geometry must settle after returning to the same position");
+  assert.ok(report.combatScenario && report.combatScenario.entityCount >= 20);
   assert.ok(report.foodFollows && report.disposed);
   assert.deepEqual(errors, []);
   try {

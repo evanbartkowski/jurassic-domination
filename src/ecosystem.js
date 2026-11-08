@@ -750,6 +750,10 @@ export const Ecosystem = {
     ])
       e[key] = Math.max(0, (e[key] || 0) - dt);
 
+    if (e.treeDrop > 0) {
+      e.treeDrop = Math.max(0, e.treeDrop - dt * 3.5);
+    }
+
     if (e.isFlying) {
       e.diveTimer = (e.diveTimer || 5) - dt;
       if (e.diveState === "cruising") {
@@ -889,11 +893,15 @@ export const Ecosystem = {
       defendingNest = nest && nest.parentIds.includes(e.id) && sensory.detected &&
         Math.hypot(sensory.x - nest.x, sensory.y - nest.y) < nest.territoryRadius &&
         Math.hypot(sensory.x, sensory.y) > 55;
+    const defendingYoung = !e.juvenile && s.diet === "herbivore" && this.entities.some((m) =>
+      m !== e && m.juvenile && m.speciesId === s.id && dist(m, e) < 14 && dist(p, m) < 16
+    );
     const aggressive =
       e.behavior === "hunter" ||
       e.behavior === "ambusher" ||
       e.behavior === "pack" ||
       defendingNest ||
+      defendingYoung ||
       e.aggro > 0 ||
       e.boss;
     const pack = e.packId
@@ -915,7 +923,7 @@ export const Ecosystem = {
       aggressive &&
       !afraid &&
       !basinSafe &&
-      (sensory.visible || defendingNest) &&
+      (sensory.visible || defendingNest || defendingYoung) &&
       (!e.juvenile || e.aggro > 0) &&
       (!e.lairId || homeDistance < 85 || distance < 8);
     if (e.inTree) {

@@ -280,3 +280,21 @@ test("a save from a newer journal or content version is preserved without downgr
   const combined = new SaveStore(storage); combined.load();
   assert.equal(combined.previewBackup(store.exportBackup()).ok, false, "ledger repair cannot downgrade a future-version journal");
 });
+
+test("snapshots up to 16 MiB commit and export cleanly without failing the save envelope budget", () => {
+  const storage = memoryStorage(), store = new SaveStore(storage);
+  const data = fresh();
+  // Build a valid large checkpoint containing a large snapshot payload (14 MiB)
+  const base = checkpoint();
+  // Large array of filler events/entities to reach ~14MB
+  base.events = Array(50000).fill({ type: "note", text: "x".repeat(240) });
+  const rawSize = JSON.stringify(base).length;
+  assert.ok(rawSize > 12 * 1024 * 1024 && rawSize < 16 * 1024 * 1024, `rawSize ${rawSize} must be between 12MB and 16MB`);
+  data.run = base;
+  const committed = store.commit(data);
+  assert.ok(committed.ok, `Commit of 14MB snapshot failed: ${committed.error}`);
+  const exported = store.exportBackup();
+  assert.ok(exported.length > 12 * 1024 * 1024);
+  const preview = store.previewBackup(exported);
+  assert.ok(preview.ok, `Preview of large backup failed: ${preview.error}`);
+});

@@ -203,13 +203,14 @@ jurassic-domination/
 │   ├── ecosystem.js       # AI ecology, pack behaviors, sight cones, scent, and nests
 │   ├── senses.js          # Vision cone optics and olfactory proximity calculations
 │   ├── audio.js           # Audio manager, voice budgets, soundscapes, and roar vocalizations
-│   ├── terrain.js         # Streamed chunk terrain, foliage shaders, and biomes
+│   ├── terrain.js         # Streamed chunk terrain, continuous elevation topography, foliage shaders, and biomes
 │   ├── combat.js          # Attack profiles, status effects, and damage calculators
 │   ├── run-state.js       # Checkpoint snapshots, migration, and state verification
-│   ├── state-store.js     # Two-slot verified atomic disk persistence
+│   ├── state-store.js     # Two-slot verified atomic disk persistence (20 MB envelope)
 │   ├── controls.js        # Keybinding remapping and gamepad deadzone adapter
-│   └── ui.js              # Polished slate UI panels, HUD, and field journal
-└── tests/                 # 211 unit tests verifying determinism, balance, and logic
+│   ├── ui.js              # Polished slate UI panels, HUD, and field journal
+│   └── tutorial.js        # 10-stage dynamic objective tracker, danger assessment, and tier banners
+└── tests/                 # 214 unit tests verifying determinism, balance, and logic
 ```
 
 ---

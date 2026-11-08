@@ -5,7 +5,7 @@ import { createDinosaur, animateCreature, genomeAppearanceKey } from "./creature
 import { LANDMARKS, isExplored, hasDiscovery } from './discoveries.js';
 import { getTimeOfDay, conditionsAt } from './world-events.js';
 import { createEcologyArt } from './ecology-art.js';
-import { Terrain } from "./terrain.js";
+import { Terrain, elevationAt } from "./terrain.js";
 import { biomeAt, REGIONS, LAIRS, WORLD_RADIUS } from "./world-data.js";
 import { POWERUPS, SKINS } from "./content.js";
 import { applyCosmetic, createPet } from "./collection-art.js";
@@ -433,6 +433,8 @@ export class WorldRenderer {
     this.scene.add(this.menuDino);
   }
   createParticles() {
+    this.maxParticles = 750;
+    this.particles = [];
     this.particleMesh = new THREE.InstancedMesh(
       new THREE.IcosahedronGeometry(1, 0),
       new THREE.MeshBasicMaterial({
@@ -440,7 +442,7 @@ export class WorldRenderer {
         transparent: true,
         opacity: 0.85,
       }),
-      220,
+      this.maxParticles,
     );
     this.particleMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.particleMesh.frustumCulled = false;
@@ -466,10 +468,39 @@ export class WorldRenderer {
     );
     this.scene.add(this.dust);
   }
+  addParticle(p, priority = 1) {
+    p.priority = priority;
+    const maxCapacity = this.maxParticles || 750;
+    if (this.particles.length < maxCapacity) {
+      this.particles.push(p);
+      return true;
+    }
+    if (priority <= 1) return false;
+    // Replace lowest priority particle when budget is reached
+    let lowestIdx = -1, lowestPri = priority;
+    for (let i = 0; i < this.particles.length; i++) {
+      const pri = this.particles[i].priority || 1;
+      if (pri < lowestPri) {
+        lowestPri = pri;
+        lowestIdx = i;
+        if (lowestPri === 1) break;
+      }
+    }
+    if (lowestIdx >= 0) {
+      this.particles[lowestIdx] = p;
+      return true;
+    }
+    return false;
+  }
+  emitCount(ratePerSecond, dt) {
+    const expected = ratePerSecond * Math.min(0.1, Math.max(0, dt));
+    let count = Math.floor(expected);
+    if (Math.random() < (expected - count)) count++;
+    return count;
+  }
   burst(x, z, color = 0xe5bc6d, count = 16) {
     for (let i = 0; i < count; i++) {
-      if (this.particles.length >= 220) this.particles.shift();
-      this.particles.push({
+      this.addParticle({
         x,
         y: 0.6,
         z,
@@ -480,7 +511,7 @@ export class WorldRenderer {
         max: 1,
         color,
         size: 0.06 + Math.random() * 0.13,
-      });
+      }, 3);
     }
   }
   event(event) {
@@ -805,66 +836,78 @@ export class WorldRenderer {
           game.cosmeticId || "none",
           p.genome,
         );
-        player.position.y = p.submerged ? -.5 : p.crouching ? -.15 : 0;
+        player.position.y = elevationAt(p.x, p.y) + (p.submerged ? -.5 : p.crouching ? -.15 : 0);
         player.userData.isSleeping = p.sleeping > 0;
-        if (p.poisoned > 0 && Math.random() < 0.35) {
-          this.particles.push({
-            x: p.x + (Math.random() - 0.5) * 1.3,
-            y: 0.4 + Math.random() * 1.4,
-            z: p.y + (Math.random() - 0.5) * 1.3,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: 1.8 + Math.random(),
-            vz: (Math.random() - 0.5) * 0.5,
-            floating: true,
-            buoyancy: 0.8,
-            life: 0.6,
-            size: 0.2,
-            color: 0x33ff44,
-          });
+        if (p.poisoned > 0) {
+          const count = this.emitCount(20, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * 1.3,
+              y: 0.4 + Math.random() * 1.4,
+              z: p.y + (Math.random() - 0.5) * 1.3,
+              vx: (Math.random() - 0.5) * 0.5,
+              vy: 1.8 + Math.random(),
+              vz: (Math.random() - 0.5) * 0.5,
+              floating: true,
+              buoyancy: 0.8,
+              life: 0.6,
+              size: 0.2,
+              color: 0x33ff44,
+            }, 2);
+          }
         }
-        if (p.bleeding > 0 && Math.random() < 0.45) {
-          this.particles.push({
-            x: p.x + (Math.random() - 0.5) * 1.1,
-            y: 0.7 + Math.random() * 1.0,
-            z: p.y + (Math.random() - 0.5) * 1.1,
-            vx: (Math.random() - 0.5) * 0.6,
-            vy: -2.0,
-            vz: (Math.random() - 0.5) * 0.6,
-            floating: false,
-            life: 0.35,
-            size: 0.17,
-            color: 0x8b0000,
-          });
+        if (p.bleeding > 0) {
+          const count = this.emitCount(25, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * 1.1,
+              y: 0.7 + Math.random() * 1.0,
+              z: p.y + (Math.random() - 0.5) * 1.1,
+              vx: (Math.random() - 0.5) * 0.6,
+              vy: -2.0,
+              vz: (Math.random() - 0.5) * 0.6,
+              floating: false,
+              life: 0.35,
+              size: 0.17,
+              color: 0x8b0000,
+            }, 2);
+          }
         }
-        if (p.burning > 0 && Math.random() < 0.5) {
-          this.particles.push({
-            x: p.x + (Math.random() - 0.5) * 1.2,
-            y: 0.5 + Math.random() * 1.5,
-            z: p.y + (Math.random() - 0.5) * 1.2,
-            vx: (Math.random() - 0.5) * 0.9,
-            vy: 2.4 + Math.random() * 1.6,
-            vz: (Math.random() - 0.5) * 0.9,
-            floating: true,
-            buoyancy: 1.1,
-            life: 0.5,
-            size: 0.22,
-            color: Math.random() < 0.6 ? 0xff4500 : 0xffcc00,
-          });
+        if (p.burning > 0) {
+          const count = this.emitCount(30, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * 1.2,
+              y: 0.5 + Math.random() * 1.5,
+              z: p.y + (Math.random() - 0.5) * 1.2,
+              vx: (Math.random() - 0.5) * 0.9,
+              vy: 2.4 + Math.random() * 1.6,
+              vz: (Math.random() - 0.5) * 0.9,
+              floating: true,
+              buoyancy: 1.1,
+              life: 0.5,
+              size: 0.22,
+              color: Math.random() < 0.6 ? 0xff4500 : 0xffcc00,
+            }, 2);
+          }
         }
-        if (p.sleeping > 0 && Math.random() < 0.25) {
-          this.particles.push({
-            x: p.x + (Math.random() - 0.5) * 0.7,
-            y: 0.9 + Math.random() * 0.9,
-            z: p.y + (Math.random() - 0.5) * 0.7,
-            vx: 0.28 * Math.sin(t * 3),
-            vy: 1.0,
-            vz: 0.28 * Math.cos(t * 3),
-            floating: true,
-            buoyancy: 0.2,
-            life: 1.0,
-            size: 0.24,
-            color: 0x80d8ff,
-          });
+        if (p.sleeping > 0) {
+          const count = this.emitCount(12, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * 0.7,
+              y: 0.9 + Math.random() * 0.9,
+              z: p.y + (Math.random() - 0.5) * 0.7,
+              vx: 0.28 * Math.sin(t * 3),
+              vy: 1.0,
+              vz: 0.28 * Math.cos(t * 3),
+              floating: true,
+              buoyancy: 0.2,
+              life: 1.0,
+              size: 0.24,
+              color: 0x80d8ff,
+            }, 2);
+          }
         }
         keys.add("player");
         this.ring.visible = false;
@@ -894,15 +937,17 @@ export class WorldRenderer {
           'none',
           e.genome,
         );
+        const baseEY = elevationAt(e.x, e.y);
         if (e.isFlying) {
-          creature.position.y = (e.altitude || 7.5) + Math.sin(t * 2.5 + e.id) * 0.45;
+          creature.position.y = baseEY + (e.altitude || 7.5) + Math.sin(t * 2.5 + e.id) * 0.45;
         } else if (e.inTree) {
-          creature.position.y = e.treeY || 4.8;
+          creature.position.y = baseEY + (e.treeY || 4.8);
         } else if (e.treeDrop > 0) {
-          e.treeDrop = Math.max(0, e.treeDrop - dt * 3.5);
-          creature.position.y = e.treeDrop * (e.treeY || 4.8);
-        } else if (creature.position.y > 0.05) {
-          creature.position.y = Math.max(0, creature.position.y - dt * 10);
+          creature.position.y = baseEY + e.treeDrop * (e.treeY || 4.8);
+        } else if (creature.position.y > baseEY + 0.05) {
+          creature.position.y = Math.max(baseEY, creature.position.y - dt * 10);
+        } else {
+          creature.position.y = baseEY;
         }
         if (e.intent === "graze") {
           creature.userData.head.rotation.z +=
@@ -910,64 +955,76 @@ export class WorldRenderer {
         }
         if (e.intent === "ambush" && !e.inTree) creature.userData.body.position.y -= 0.08;
         creature.userData.isSleeping = (e.sleeping > 0) || !!e.isSleeping;
-        if (e.poison > 0 && Math.random() < 0.25) {
-          this.particles.push({
-            x: e.x + (Math.random() - 0.5) * 1.2,
-            y: 0.4 + Math.random() * 1.2,
-            z: e.y + (Math.random() - 0.5) * 1.2,
-            vx: (Math.random() - 0.5) * 0.4,
-            vy: 1.6 + Math.random(),
-            vz: (Math.random() - 0.5) * 0.4,
-            floating: true,
-            buoyancy: 0.6,
-            life: 0.5,
-            size: 0.18,
-            color: 0x33ff44,
-          });
+        if (e.poison > 0) {
+          const count = this.emitCount(14, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: e.x + (Math.random() - 0.5) * 1.2,
+              y: 0.4 + Math.random() * 1.2,
+              z: e.y + (Math.random() - 0.5) * 1.2,
+              vx: (Math.random() - 0.5) * 0.4,
+              vy: 1.6 + Math.random(),
+              vz: (Math.random() - 0.5) * 0.4,
+              floating: true,
+              buoyancy: 0.6,
+              life: 0.5,
+              size: 0.18,
+              color: 0x33ff44,
+            }, 2);
+          }
         }
-        if (e.bleeding > 0 && Math.random() < 0.35) {
-          this.particles.push({
-            x: e.x + (Math.random() - 0.5) * 1.1,
-            y: 0.6 + Math.random() * 1.0,
-            z: e.y + (Math.random() - 0.5) * 1.1,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: -2.0,
-            vz: (Math.random() - 0.5) * 0.5,
-            floating: false,
-            life: 0.35,
-            size: 0.16,
-            color: 0x8b0000,
-          });
+        if (e.bleeding > 0) {
+          const count = this.emitCount(18, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: e.x + (Math.random() - 0.5) * 1.1,
+              y: 0.6 + Math.random() * 1.0,
+              z: e.y + (Math.random() - 0.5) * 1.1,
+              vx: (Math.random() - 0.5) * 0.5,
+              vy: -2.0,
+              vz: (Math.random() - 0.5) * 0.5,
+              floating: false,
+              life: 0.35,
+              size: 0.16,
+              color: 0x8b0000,
+            }, 2);
+          }
         }
-        if (e.burning > 0 && Math.random() < 0.4) {
-          this.particles.push({
-            x: e.x + (Math.random() - 0.5) * 1.2,
-            y: 0.5 + Math.random() * 1.4,
-            z: e.y + (Math.random() - 0.5) * 1.2,
-            vx: (Math.random() - 0.5) * 0.8,
-            vy: 2.2 + Math.random() * 1.5,
-            vz: (Math.random() - 0.5) * 0.8,
-            floating: true,
-            buoyancy: 1.0,
-            life: 0.5,
-            size: 0.22,
-            color: Math.random() < 0.6 ? 0xff4500 : 0xffcc00,
-          });
+        if (e.burning > 0) {
+          const count = this.emitCount(22, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: e.x + (Math.random() - 0.5) * 1.2,
+              y: 0.5 + Math.random() * 1.4,
+              z: e.y + (Math.random() - 0.5) * 1.2,
+              vx: (Math.random() - 0.5) * 0.8,
+              vy: 2.2 + Math.random() * 1.5,
+              vz: (Math.random() - 0.5) * 0.8,
+              floating: true,
+              buoyancy: 1.0,
+              life: 0.5,
+              size: 0.22,
+              color: Math.random() < 0.6 ? 0xff4500 : 0xffcc00,
+            }, 2);
+          }
         }
-        if (e.sleeping > 0 && Math.random() < 0.2) {
-          this.particles.push({
-            x: e.x + (Math.random() - 0.5) * 0.6,
-            y: 0.7 + Math.random() * 0.8,
-            z: e.y + (Math.random() - 0.5) * 0.6,
-            vx: 0.25 * Math.sin(t * 3),
-            vy: 0.9,
-            vz: 0.25 * Math.cos(t * 3),
-            floating: true,
-            buoyancy: 0.2,
-            life: 1.0,
-            size: 0.22,
-            color: 0x80d8ff,
-          });
+        if (e.sleeping > 0) {
+          const count = this.emitCount(10, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: e.x + (Math.random() - 0.5) * 0.6,
+              y: 0.7 + Math.random() * 0.8,
+              z: e.y + (Math.random() - 0.5) * 0.6,
+              vx: 0.25 * Math.sin(t * 3),
+              vy: 0.9,
+              vz: 0.25 * Math.cos(t * 3),
+              floating: true,
+              buoyancy: 0.2,
+              life: 1.0,
+              size: 0.22,
+              color: 0x80d8ff,
+            }, 2);
+          }
         }
         keys.add(e.id);
       }
@@ -990,8 +1047,9 @@ export class WorldRenderer {
       } else {
         this.roarRing.visible = false;
       }
-      if (Math.random() < 0.22) {
-        this.particles.push({
+      const sporeCount = this.emitCount(14, dt);
+      for (let k = 0; k < sporeCount; k++) {
+        this.addParticle({
           x: p.x + (Math.random() - 0.5) * 36,
           y: 0.6 + Math.random() * 4.5,
           z: p.y + (Math.random() - 0.5) * 36,
@@ -1003,7 +1061,7 @@ export class WorldRenderer {
           life: 3.2,
           size: 0.11,
           color: Math.random() < 0.5 ? 0x9be282 : 0xd8c886,
-        });
+        }, 1);
       }
       this.dust.position.set(p.x, 0, p.y);
     } else {
@@ -1131,9 +1189,10 @@ export class WorldRenderer {
     this.scene.background.copy(this.scene.fog.color);
 
     if (menu) {
-      if (Math.random() < 0.65) {
-        const leafColors = [0x5f8a48, 0x82a657, 0xa37b3e, 0xbf984c, 0x476634];
-        this.particles.push({
+      const leafCount = this.emitCount(38, dt);
+      const leafColors = [0x5f8a48, 0x82a657, 0xa37b3e, 0xbf984c, 0x476634];
+      for (let k = 0; k < leafCount; k++) {
+        this.addParticle({
           x: -18 + Math.random() * 6,
           y: 2 + Math.random() * 8,
           z: -5 + Math.random() * 22,
@@ -1143,10 +1202,11 @@ export class WorldRenderer {
           life: 4.8 + Math.random() * 2,
           size: 0.32 + Math.random() * 0.16,
           color: leafColors[Math.floor(Math.random() * leafColors.length)],
-        });
+        }, 1);
       }
-      if (Math.random() < 0.35) {
-        this.particles.push({
+      const dustCount = this.emitCount(20, dt);
+      for (let k = 0; k < dustCount; k++) {
+        this.addParticle({
           x: (Math.random() - 0.5) * 26,
           y: 1.5 + Math.random() * 9,
           z: (Math.random() - 0.5) * 26,
@@ -1156,14 +1216,15 @@ export class WorldRenderer {
           life: 3.8,
           size: 0.14,
           color: 0xffe28a,
-        });
+        }, 1);
       }
     }
 
     if (p && !menu) {
-      if (isRain && Math.random() < 0.65) {
-        for (let k = 0; k < 3; k++) {
-          this.particles.push({
+      if (isRain) {
+        const rainCount = this.emitCount(115, dt);
+        for (let k = 0; k < rainCount; k++) {
+          this.addParticle({
             x: p.x + (Math.random() - 0.5) * 36,
             y: 14 + Math.random() * 4,
             z: p.y + (Math.random() - 0.5) * 36,
@@ -1173,12 +1234,13 @@ export class WorldRenderer {
             life: 0.5,
             size: 0.12,
             color: 0x88c4ee,
-          });
+          }, 1);
         }
       }
-      if (isAsh && Math.random() < 0.5) {
-        for (let k = 0; k < 2; k++) {
-          this.particles.push({
+      if (isAsh) {
+        const ashCount = this.emitCount(60, dt);
+        for (let k = 0; k < ashCount; k++) {
+          this.addParticle({
             x: p.x + (Math.random() - 0.5) * 32,
             y: Math.random() * 6,
             z: p.y + (Math.random() - 0.5) * 32,
@@ -1188,12 +1250,13 @@ export class WorldRenderer {
             life: 1.4,
             size: 0.16,
             color: Math.random() < 0.6 ? 0xff5511 : 0x5a3e35,
-          });
+          }, 1);
         }
       }
-      if (isFrost && Math.random() < 0.5) {
-        for (let k = 0; k < 2; k++) {
-          this.particles.push({
+      if (isFrost) {
+        const frostCount = this.emitCount(60, dt);
+        for (let k = 0; k < frostCount; k++) {
+          this.addParticle({
             x: p.x + (Math.random() - 0.5) * 32,
             y: 8 + Math.random() * 4,
             z: p.y + (Math.random() - 0.5) * 32,
@@ -1203,7 +1266,7 @@ export class WorldRenderer {
             life: 1.6,
             size: 0.14,
             color: 0xdff2ff,
-          });
+          }, 1);
         }
       }
     }
@@ -1240,7 +1303,7 @@ export class WorldRenderer {
       if (!mesh) {
         if (food.type === "plant") {
           mesh = createForageModel(food);
-          mesh.position.set(food.x, 0, food.y);
+          mesh.position.set(food.x, elevationAt(food.x, food.y), food.y);
           this.scene.add(mesh);
           this.foodModels.set(food.id, mesh);
           continue;
@@ -1430,12 +1493,12 @@ export class WorldRenderer {
           ring.position.y = 0.04;
           mesh.add(ring);
         }
-        mesh.position.set(food.x, 0, food.y);
+        mesh.position.set(food.x, elevationAt(food.x, food.y), food.y);
         this.scene.add(mesh);
         this.foodModels.set(food.id, mesh);
       }
       // Magnets change the simulation coordinates without changing the food id.
-      mesh.position.set(food.x, 0, food.y);
+      mesh.position.set(food.x, elevationAt(food.x, food.y), food.y);
       mesh.visible =
         Math.hypot(food.x - this.cameraTarget.x, food.y - this.cameraTarget.z) <
         60;
@@ -1617,23 +1680,27 @@ export class WorldRenderer {
   }
   drawParticles(dt) {
     const dummy = this.particleDummy,
-      color = (this.particleColor ||= new THREE.Color());
+      color = (this.particleColor ||= new THREE.Color()),
+      maxCapacity = this.maxParticles || 750;
     let active = 0;
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
       p.life -= dt;
       if (p.life <= 0) continue;
-      this.particles[active] = p;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.z += p.vz * dt;
-      if (!p.floating) p.vy -= 8 * dt;
-      else p.vy += (p.buoyancy || 0.4) * dt;
-      dummy.position.set(p.x, Math.max(0.04, p.y), p.z);
-      dummy.scale.setScalar(p.size * clamp(p.life * 3, 0, 1));
-      this.particleMesh.setColorAt(active, color.set(p.color));
-      dummy.updateMatrix();
-      this.particleMesh.setMatrixAt(active++, dummy.matrix);
+      if (active < maxCapacity) {
+        this.particles[active] = p;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.z += p.vz * dt;
+        if (!p.floating) p.vy -= 8 * dt;
+        else p.vy += (p.buoyancy || 0.4) * dt;
+        dummy.position.set(p.x, Math.max(0.04, p.y), p.z);
+        dummy.scale.setScalar(p.size * clamp(p.life * 3, 0, 1));
+        this.particleMesh.setColorAt(active, color.set(p.color));
+        dummy.updateMatrix();
+        this.particleMesh.setMatrixAt(active, dummy.matrix);
+        active++;
+      }
     }
     this.particles.length = active;
     this.particleMesh.count = active;

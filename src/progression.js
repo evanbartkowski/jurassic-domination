@@ -181,6 +181,75 @@ export const SPECIALS = {
     type: "attack",
   },
 };
+export const EVOLUTION_ARCHETYPES = {
+  ambush: {
+    id: "ambush",
+    name: "Ambush Predator",
+    tagline: "Stalk from brush, lethal first strike",
+    pros: "+35% burst damage on sneak/behind attacks, +15% sprint burst",
+    cons: "-15% maximum HP",
+    icon: "🗡️",
+    damageMultiplier: 1.25,
+    speedBonus: 1.15,
+    hpMultiplier: 0.85,
+  },
+  titan: {
+    id: "titan",
+    name: "Armored Titan",
+    tagline: "Unstoppable living fortress",
+    pros: "+35% maximum HP, heavy knockback resistance, +20% armor defense",
+    cons: "-15% movement speed",
+    icon: "🛡️",
+    damageMultiplier: 0.95,
+    speedBonus: 0.85,
+    hpMultiplier: 1.35,
+    armorBonus: 0.20,
+  },
+  pack: {
+    id: "pack",
+    name: "Pack Hunter",
+    tagline: "Coordinated swarm tactics",
+    pros: "+20% movement speed near allies, roar rallies packmates",
+    cons: "Relies on flank positioning",
+    icon: "🐺",
+    damageMultiplier: 1.05,
+    speedBonus: 1.15,
+    hpMultiplier: 1.0,
+  },
+  venom: {
+    id: "venom",
+    name: "Venom Specialist",
+    tagline: "Slow-acting corrosive toxins",
+    pros: "Inflicts stacking poison & slow, immune to toxins",
+    cons: "-15% direct impact damage",
+    icon: "🧪",
+    damageMultiplier: 0.85,
+    speedBonus: 1.05,
+    hpMultiplier: 0.95,
+  },
+  apex: {
+    id: "apex",
+    name: "Apex Destroyer",
+    tagline: "Colossal territorial overlord",
+    pros: "+25% scale & attack reach, ground trample damage, terrifying roar",
+    cons: "+30% hunger depletion rate",
+    icon: "👑",
+    damageMultiplier: 1.35,
+    speedBonus: 0.95,
+    hpMultiplier: 1.25,
+    hungerDrainMult: 1.30,
+  },
+};
+
+export function archetypeForSpecies(s) {
+  if (!s) return EVOLUTION_ARCHETYPES.ambush;
+  if ((s.tier >= 4 && ["rex", "dragon", "longneck"].includes(s.body)) || s.tier >= 5) return EVOLUTION_ARCHETYPES.apex;
+  if (["quad", "croc"].includes(s.body) || /ankylo|stego|tricer/.test(s.id)) return EVOLUTION_ARCHETYPES.titan;
+  if (s.temperament === "pack" || /raptor|compsognathus/.test(s.id)) return EVOLUTION_ARCHETYPES.pack;
+  if (["venom", "flame", "frost"].includes(s.abilityType) || s.body === "serpent") return EVOLUTION_ARCHETYPES.venom;
+  return EVOLUTION_ARCHETYPES.ambush;
+}
+
 const kitCache = new WeakMap();
 export function creatureKit(s) {
   const cached = kitCache.get(s);
@@ -218,6 +287,7 @@ export function creatureKit(s) {
     technique,
     special: extra || null,
     abilityCount: Number(!!ability)+Number(!!technique)+Number(!!extra),
+    archetype: archetypeForSpecies(s),
   };
   kitCache.set(s,kit);
   return kit;

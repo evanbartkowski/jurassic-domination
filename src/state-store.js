@@ -11,7 +11,7 @@ export const SAVE_KEYS = Object.freeze({
 });
 export const SAVE_VERSION = 1;
 export const BACKUP_FORMAT = "jurassic-domination.backup";
-const MAX_SAVE_BYTES = 12 * 1024 * 1024;
+const MAX_SAVE_BYTES = 20 * 1024 * 1024;
 export const MAX_ACTIVE_CLAIMS = 65536;
 const validId = (id) => typeof id === "string" && id.length > 0 && id.length <= 160;
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -248,7 +248,7 @@ export class SaveStore {
   }
   previewBackup(text) {
     try {
-      if (typeof text !== "string" || text.length > MAX_SAVE_BYTES) throw Error("Choose a valid Jurassic Domination backup smaller than 12 MB.");
+      if (typeof text !== "string" || text.length > MAX_SAVE_BYTES) throw Error("Choose a valid Jurassic Domination backup smaller than 20 MB.");
       const backup = JSON.parse(text), { checksum, ...body } = backup;
       if (body.format !== BACKUP_FORMAT || body.version !== SAVE_VERSION || saveChecksum(JSON.stringify(body)) !== checksum)
         throw Error("This backup is incompatible, incomplete or damaged.");

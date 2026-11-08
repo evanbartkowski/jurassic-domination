@@ -7,6 +7,8 @@ import {
   chooseEvolutions,
   creatureKit,
   feedEntity,
+  EVOLUTION_ARCHETYPES,
+  archetypeForSpecies,
 } from "../src/progression.js";
 function isolated(id = "velociraptor") {
   const g = new Game({ seed: 170 });
@@ -168,4 +170,27 @@ test("player astral bolts travel, hit enemies and cannot hurt the caster", () =>
   for (let i = 0; i < 40; i++) g.updateEcosystem(0.025, {});
   assert.ok(e.hp < before);
   assert.equal(g.player.hp, hp);
+});
+
+test("evolution archetypes classify species into distinct roles with balanced combat tradeoffs and kits", () => {
+  const rex = SPECIES_BY_ID["tyrannosaurus"];
+  const trike = SPECIES_BY_ID["triceratops"];
+  const raptor = SPECIES_BY_ID["velociraptor"];
+  const titan = archetypeForSpecies(trike);
+  const pack = archetypeForSpecies(raptor);
+  const apex = archetypeForSpecies(rex);
+
+  assert.equal(titan.id, "titan");
+  assert.equal(pack.id, "pack");
+  assert.equal(apex.id, "apex");
+
+  assert.ok(titan.hpMultiplier > 1.0);
+  assert.ok(titan.speedBonus < 1.0);
+  assert.ok(apex.damageMultiplier > 1.2);
+  assert.ok(pack.speedBonus > 1.1);
+
+  const kitRex = creatureKit(rex);
+  assert.equal(kitRex.archetype.id, "apex");
+  const kitTrike = creatureKit(trike);
+  assert.equal(kitTrike.archetype.id, "titan");
 });

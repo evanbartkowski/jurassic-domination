@@ -85,6 +85,8 @@ export class Game {
     this._warningCooldown = 0;
     this._eatCooldown = 0;
     this._threatCount = 0;
+    this._hasRoared = false;
+    this.hitStop = 0;
     this._starter = this.pick(SPECIES.filter((s) => s.tier === 0));
     this.player = {
       x: 0,
@@ -188,7 +190,8 @@ export class Game {
       s.speed * this.geneticTraits.speed *
       (1 - (p.growth || 0) * 0.04) *
       (1 + (m.swift || 0) * 0.1 + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
-      (this.hasBuff("speed") ? 1.4 : 1);
+      (this.hasBuff("speed") ? 1.4 : 1) *
+      (this.petId ? 1.05 : 1);
     p.armor = Math.min(
       0.55,
       (m.ironhide || 0) * 0.12 + (s.body === "quad" ? 0.12 : 0),
@@ -346,7 +349,11 @@ export class Game {
   }
 
   update(delta, input = {}) {
-    const dt = clamp(Number(delta) || 0, 0, 0.1);
+    let dt = clamp(Number(delta) || 0, 0, 0.1);
+    if (this.hitStop > 0) {
+      this.hitStop = Math.max(0, this.hitStop - dt);
+      dt *= 0.2;
+    }
     if (this.state === "egg") {
       this.eggTime += dt;
       if (this.eggTime >= 3 || input.attack || input.eat) this.hatch();
@@ -410,10 +417,13 @@ export class Game {
     if (this.state !== 'playing') return;
     recordExploration(this);
     const radius = Math.hypot(p.x, p.y);
+    const inBasin = radius < 55;
+    const earlyBasinGrace = inBasin && (this.tier === 0 || this.time < 120) ? 0.7 : 1;
     const hungerDrain =
       0.39 *
       (1 + this.tier * 0.07) *
       this.rules.hunger *
+      earlyBasinGrace *
       Math.max(0.35, 1 - this.upgrades.metabolism * 0.06) *
       Math.pow(0.75, m.metabolism || 0);
     p.hunger = Math.max(0, p.hunger - hungerDrain * dt * (sprint ? 1.45 : 1));
@@ -493,8 +503,11 @@ export class Game {
         Math.abs(angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle)) <
           1.25 && hasLineOfSight(p, e, this.worldFeatures || [])
       ) {
+        const isFlank = Math.abs(angleDifference(Math.atan2(p.y - e.y, p.x - e.x), e.angle)) > 1.8;
+        const isCrit = p.empowered > 0 || (isFlank && this.species.body === "raptor");
         const multiplier =
           (p.empowered > 0 ? 1.65 : 1) *
+          (isCrit ? 1.25 : 1) *
           (this.species.body === "raptor"
             ? 1 + Math.min(3, p.combo) * 0.1
             : 1) *
@@ -503,7 +516,7 @@ export class Game {
           e.poison = 5;
           e.poisonTick = 0;
         }
-        this._hitEntity(e, p.damage * multiplier, 0.65);
+        this._hitEntity(e, p.damage * multiplier, 0.65, isCrit);
       }
     }
     if (this.marineState) {
@@ -658,6 +671,7 @@ export class Game {
     const p = this.player,
       s = this.species;
     if (this.state !== "playing" || (p.roarCooldown || 0) > 0 || p.stamina < 14) return false;
+    this._hasRoared = true;
     p.roarCooldown = 6.0;
     p.stamina -= 14;
     p.abilityActive = 0.7;
@@ -965,6 +979,7 @@ export class Game {
     if (!bypass) {
       recordBlood(this, p.x, p.y);
       if (damage > p.maxHp * .22 && this.survival) this.survival.strain = 12;
+      if (damage > p.maxHp * 0.16) this.hitStop = 0.05;
       p.invulnerable = 0.38;
       this.emit("hit", { amount: damage, target: "player", cause });
     }
@@ -976,8 +991,9 @@ export class Game {
     return true;
   }
 
-  _hitEntity(e, amount, knockback = 0) {
+  _hitEntity(e, amount, knockback = 0, isCrit = false) {
     if (!this.entities.includes(e) || e.hp <= 0) return;
+    this.hitStop = 0.045;
     e.sleeping = 0;
     e.hp -= amount * (1 - phenotype(e.genome).resistance);
     e.hitFlash = 0.18;
@@ -990,8 +1006,9 @@ export class Game {
       const angle = Math.atan2(e.y - this.player.y, e.x - this.player.x);
       sweepMove(e, Math.cos(angle) * knockback, Math.sin(angle) * knockback, SPECIES_BY_ID[e.speciesId].size * (e.scaleFactor || 1), this.worldFeatures || []);
     }
-    this.emit("hit", { x: e.x, y: e.y, amount, target: e.id });
+    this.emit("hit", { x: e.x, y: e.y, amount, target: e.id, crit: isCrit });
     if (e.hp > 0) return;
+    this.hitStop = e.boss ? 0.09 : 0.065;
     const s = SPECIES_BY_ID[e.speciesId];
     this.entities = this.entities.filter((other) => other !== e);
     this.player.kills++;

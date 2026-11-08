@@ -17,6 +17,7 @@ import { SaveStore } from "./state-store.js";
 import { snapshotGame, restoreGame } from "./run-state.js";
 import { LocalAuthority } from "./simulation.js";
 import { SPECIALS, growthName, BLOODLINES } from "./progression.js";
+import { evaluateCreatureThreat, evaluateObjectives, getSurvivalHint } from "./tutorial.js";
 import { ISLAND_TRIALS, sanctuaryProgress, careForPet } from "./sanctuary.js";
 import { Game } from "./game.js";
 import { SPECIES, SPECIES_BY_ID } from "./data.js";
@@ -984,7 +985,7 @@ function updateCreatureLabels() {
   if (!game || !world || ui.view !== "hud" || game.state !== "playing") return;
   const p = game.player,
     near = game.entities
-      .filter((e) => Math.hypot(e.x - p.x, e.y - p.y) < 27)
+      .filter((e) => Math.hypot(e.x - p.x, e.y - p.y) < 32)
       .sort(
         (a, b) =>
           Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y),
@@ -999,17 +1000,33 @@ function updateCreatureLabels() {
     if (!element) {
       element = document.createElement("div");
       element.className = "creature-label";
-      element.innerHTML = "<span></span><b><i></i></b>";
+      element.innerHTML = "<div class='creature-badges'><span class='threat-pill'></span><span class='behavior-pill'></span></div><span class='creature-name'></span><b><i></i></b>";
       labels.set(e.id, element);
       labelLayer.append(element);
     }
-    const isInjured = e.hp < e.maxHp * 0.85;
-    element.className = `creature-label${species.tier > game.tier ? " predator" : ""}${e.boss ? " alpha" : ""}${isInjured ? " injured" : ""}${e.intent === "fight" ? " fighting" : ""}`;
+    const threat = evaluateCreatureThreat(e, game);
+    element.className = `creature-label ${threat.badgeClass}${threat.isApex ? " alpha" : ""}${threat.isInjured ? " injured" : ""}${threat.behavior === "fight" ? " fighting" : ""}`;
     element.dataset.rarity = species.rarity || "regular";
-    element.querySelector("span").textContent =
-      `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${isInjured ? " · INJURED" : ""}${e.intent === "fight" ? " · CLASHING" : e.intent === "graze" ? " · NEUTRAL" : e.packId ? " · PACK" : ""}`;
-    element.querySelector("i").style.transform =
-      `scaleX(${Math.max(0, e.hp / e.maxHp)})`;
+    element.dataset.threat = threat.threatTier;
+
+    const threatPill = element.querySelector(".threat-pill");
+    if (threatPill) {
+      threatPill.textContent = `${threat.symbol} ${threat.threatLabel}`;
+      threatPill.className = `threat-pill ${threat.badgeClass}`;
+    }
+    const behaviorPill = element.querySelector(".behavior-pill");
+    if (behaviorPill) {
+      behaviorPill.textContent = threat.behaviorLabel;
+      behaviorPill.className = `behavior-pill behavior-${threat.behavior}`;
+    }
+    const nameEl = element.querySelector(".creature-name") || element.querySelector("span");
+    if (nameEl) {
+      nameEl.textContent = `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${threat.isInjured ? " · INJURED" : ""}`;
+    }
+    const hpBar = element.querySelector("i");
+    if (hpBar) {
+      hpBar.style.transform = `scaleX(${Math.max(0, e.hp / e.maxHp)})`;
+    }
     const pos = world.project(e.x, e.y, species.size * (e.scaleFactor || 1) * 2 + 1);
     element.style.transform = `translate(${pos.x}px,${pos.y}px)`;
     element.style.opacity = pos.visible ? 1 : 0;
@@ -1032,11 +1049,29 @@ function float(event) {
   const amount = event.amount;
   if (!amount) return;
   const element = document.createElement("span");
-  element.textContent =
-    event.type === "eat" ? `+${Math.round(amount)}` : `${Math.round(amount)}`;
-  element.style.cssText = `position:absolute;font:700 18px system-ui;color:${event.type === "eat" ? "#c0e9a8" : "#ffbc94"};text-shadow:0 2px 5px #000;will-change:transform,opacity`;
+  const isPlayerHit = event.target === "player";
+  const isCrit = !!event.crit;
+  const isEat = event.type === "eat";
+
+  if (isEat) {
+    element.textContent = `+${Math.round(amount)}`;
+    element.className = "floating-text float-eat";
+    element.style.cssText = "position:absolute;font:700 17px system-ui;color:#86efac;text-shadow:0 0 10px rgba(74,222,128,0.7),0 2px 4px #000;will-change:transform,opacity;pointer-events:none;z-index:99";
+  } else if (isCrit) {
+    element.textContent = `CRIT ${Math.round(amount)}!`;
+    element.className = "floating-text float-crit";
+    element.style.cssText = "position:absolute;font:900 22px system-ui;color:#fde047;text-shadow:0 0 14px rgba(250,204,21,0.9),0 2px 5px #000;will-change:transform,opacity;pointer-events:none;transform:scale(1.25);z-index:100";
+  } else if (isPlayerHit) {
+    element.textContent = `-${Math.round(amount)}`;
+    element.className = "floating-text float-player-hit";
+    element.style.cssText = "position:absolute;font:800 20px system-ui;color:#ef4444;text-shadow:0 0 12px rgba(239,68,68,0.85),0 2px 5px #000;will-change:transform,opacity;pointer-events:none;z-index:100";
+  } else {
+    element.textContent = `${Math.round(amount)}`;
+    element.className = "floating-text float-damage";
+    element.style.cssText = "position:absolute;font:700 18px system-ui;color:#fdba74;text-shadow:0 0 8px rgba(249,115,22,0.6),0 2px 5px #000;will-change:transform,opacity;pointer-events:none;z-index:99";
+  }
   damageLayer.append(element);
-  floating.push({ element, x: event.x, y: event.y, life: 1 });
+  floating.push({ element, x: event.x, y: event.y, life: 1, isCrit });
 }
 function processEvents() {
   for (const event of game.consumeEvents()) {

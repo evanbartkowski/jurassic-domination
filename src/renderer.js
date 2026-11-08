@@ -1015,7 +1015,7 @@ export class WorldRenderer {
       for (const m of this.warnings.values()) m.visible = false;
     }
     this.shake = Math.max(0, this.shake - dt * 1.5);
-    const shake = this.settings.shake ? this.shake : 0;
+    const shake = (this.settings.shake && !this.settings.reducedMotion) ? this.shake : 0;
     const zoom =
       p && !menu ? clamp(game.effectiveSize - 1, 0, 14) * 2.2 : 0;
     if (menu) {
@@ -1453,15 +1453,92 @@ export class WorldRenderer {
       }
   }
   syncWarnings(game, t) {
-    // No predicted attack zones: physical animation and active projectiles communicate danger.
-    for (const group of this.warnings.values()) {
-      this.scene.remove(group);
-      group.traverse((m) => {
-        m.geometry?.dispose();
-        m.material?.dispose();
-      });
+    this.warnings ||= new Map();
+    const activeKeys = new Set();
+    const p = game?.player;
+
+    if (p) {
+      for (const e of game.entities || []) {
+        const d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d > 55) continue;
+
+        if (e.cast) {
+          const key = `cast:${e.id}`;
+          activeKeys.add(key);
+          let group = this.warnings.get(key);
+          if (!group) {
+            group = new THREE.Group();
+            const shape = e.cast.shape;
+            const radius = e.cast.radius || 4.5;
+            const geo = shape === "cone"
+              ? new THREE.RingGeometry(0.2, radius, 24, 1, -0.65, 1.3)
+              : new THREE.RingGeometry(0.2, radius, 32);
+            const mat = new THREE.MeshBasicMaterial({
+              color: 0xff3b20,
+              transparent: true,
+              opacity: 0.45,
+              side: THREE.DoubleSide,
+              depthWrite: false,
+              blending: THREE.AdditiveBlending,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.rotation.x = -Math.PI / 2;
+            group.add(mesh);
+            this.scene.add(group);
+            this.warnings.set(key, group);
+          }
+          const mesh = group.children[0];
+          const total = Math.max(0.01, e.cast.total || 0.3);
+          const progress = Math.max(0, Math.min(1, 1 - (e.cast.remaining / total)));
+          group.position.set(e.x, 0.08, e.y);
+          group.rotation.y = -(e.cast.angle || 0);
+          if (mesh?.material) {
+            mesh.material.opacity = 0.35 + Math.sin(t * 18) * 0.15 + progress * 0.25;
+          }
+        }
+
+        if ((e.chargeWindup || 0) > 0 || (e.charging || 0) > 0) {
+          const key = `charge:${e.id}`;
+          activeKeys.add(key);
+          let group = this.warnings.get(key);
+          if (!group) {
+            group = new THREE.Group();
+            const laneGeo = new THREE.PlaneGeometry(13, 2.5);
+            const laneMat = new THREE.MeshBasicMaterial({
+              color: 0xff5511,
+              transparent: true,
+              opacity: 0.5,
+              side: THREE.DoubleSide,
+              depthWrite: false,
+              blending: THREE.AdditiveBlending,
+            });
+            const mesh = new THREE.Mesh(laneGeo, laneMat);
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.position.x = 6.5;
+            group.add(mesh);
+            this.scene.add(group);
+            this.warnings.set(key, group);
+          }
+          group.position.set(e.x, 0.07, e.y);
+          group.rotation.y = -(e.chargeAngle || e.angle || 0);
+          const mesh = group.children[0];
+          if (mesh?.material) {
+            mesh.material.opacity = 0.4 + Math.sin(t * 22) * 0.2;
+          }
+        }
+      }
     }
-    this.warnings.clear();
+
+    for (const [key, group] of this.warnings) {
+      if (!activeKeys.has(key)) {
+        this.scene.remove(group);
+        group.traverse((m) => {
+          m.geometry?.dispose();
+          m.material?.dispose();
+        });
+        this.warnings.delete(key);
+      }
+    }
     this.projectileModels ||= new Map();
     const seen = new Set();
     for (const shot of game.projectiles || []) {

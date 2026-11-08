@@ -909,9 +909,12 @@ export const Ecosystem = {
         (e.behavior === "skittish" && distance < 15) ||
         (e.behavior === "pack" && s.tier < this.tier && pack.length < 3));
     const homeDistance = Math.hypot(e.x - e.homeX, e.y - e.homeY);
+    const inBasin = Math.hypot(p.x, p.y) < 55;
+    const basinSafe = inBasin && s.tier === 0 && e.aggro <= 0 && !e.boss;
     const hunt =
       aggressive &&
       !afraid &&
+      !basinSafe &&
       (sensory.visible || defendingNest) &&
       (!e.juvenile || e.aggro > 0) &&
       (!e.lairId || homeDistance < 85 || distance < 8);

@@ -30,6 +30,7 @@ import { ownedCount, availableCount } from "./collections.js";
 import { dietName } from "./forage.js";
 import { ACTIONS, DEFAULT_BINDINGS, keyLabel, rebind } from "./controls.js";
 import { fieldJournalHTML } from './field-journal.js';
+import { evaluateObjectives, getSurvivalHint, evaluateDanger, evaluateRegionHazard } from "./tutorial.js";
 
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const esc = (value) =>
@@ -287,9 +288,29 @@ export class UI {
           <div class="meter stamina" role="progressbar" aria-label="Stamina"><span id="hud-stamina"></span></div>
         </div>
       </div>
+      <div id="hud-objective-panel" class="hud-objective-panel">
+        <div class="objective-header-row">
+          <span class="objective-badge">CURRENT GOAL</span>
+          <span id="hud-obj-step" class="objective-step">STEP 1 / 10</span>
+          <button id="guide-shortcut-btn" class="guide-shortcut-btn" title="Survival Guide & Controls">? GUIDE</button>
+        </div>
+        <div class="objective-title-row">
+          <span id="hud-obj-title" class="objective-title">Break Free from the Egg</span>
+          <span id="hud-obj-progress" class="objective-progress">0%</span>
+        </div>
+        <div class="meter objective-meter"><span id="hud-obj-bar"></span></div>
+        <p id="hud-obj-hint" class="objective-hint">Press E or click to hatch.</p>
+      </div>
+      <div id="hud-region-hazard" class="hud-region-hazard" hidden>
+        <span class="hazard-icon">⚠️</span>
+        <div class="hazard-text">
+          <strong id="hazard-title">EXTREME HAZARD REGION</strong>
+          <span id="hazard-desc">Tier 3 Zone · Form Tier 1</span>
+        </div>
+      </div>
       <div class="hud-top"><div class="species-card"><span class="species-emblem" id="hud-emblem">${icon("claw")}</span><div><p class="eyebrow" id="hud-tier">A NEW LIFE</p><h2 id="hud-species">The beginning</h2><span class="small-muted" id="hud-biome">FERN MEADOW</span></div></div>
         <div class="hud-run"><span class="hud-dna" id="hud-dna">0 DNA</span><span class="run-timer" id="hud-time">00:00</span><span class="run-kills">${icon("skull")}<b id="hud-kills">0</b></span><button class="icon-button" id="pause-button" aria-label="Pause game">${icon("pause")}</button></div></div>
-      <div class="minimap-wrap"><div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div><canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas><div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div></div>
+      <div class="minimap-wrap"><div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div><canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas><div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div><div class="hud-danger-panel" id="hud-danger-panel"><div class="danger-header-row"><span>THREAT LEVEL</span><b id="hud-danger-label">🌿 SAFE BASIN</b></div><div class="meter danger-meter"><span id="hud-danger-bar"></span></div></div></div>
       <div class="hud-bottom"><div class="vital-status-feed"><p class="hunger-warning" id="hud-warning"></p><span id="hud-diet"></span></div></div>
       <div class="abilities"><div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div><div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div><div class="ability-key"><kbd>SHIFT</kbd>${icon("arrow")}<span id="dash-name">DASH</span><b id="hud-dash-cooldown">READY</b></div><div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div></div>
       <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p><button id="evolve-ready" hidden aria-label="Open evolution choices"><kbd>T</kbd> EVOLUTION READY <span>CHOOSE WHEN YOU ARE READY</span></button><span id="growth-status"></span><button id="bloodline-journal">J - COMPENDIUM</button></div></div>
@@ -299,6 +320,10 @@ export class UI {
     $("#pause-button").addEventListener("click", () =>
       this.callbacks.pause?.(),
     );
+    $("#guide-shortcut-btn")?.addEventListener("click", () => {
+      this.callbacks.pause?.();
+      this.showTutorial();
+    });
     $("#evolve-ready").onclick = () => this.callbacks.evolution();
     $("#bloodline-journal").onclick = () => {
       this.callbacks.pause();
@@ -423,6 +448,40 @@ export class UI {
     $("#egg-prompt").hidden = game.state !== "egg";
     this.hud.classList.toggle("critical", p.hp < p.maxHp * 0.25);
     this.hud.classList.toggle("hungry", p.hunger < 25);
+
+    const obj = evaluateObjectives(game, this.profile);
+    const objStep = $("#hud-obj-step");
+    if (objStep) objStep.textContent = `STEP ${obj.step} / ${obj.totalSteps}`;
+    const objTitle = $("#hud-obj-title");
+    if (objTitle) objTitle.textContent = obj.title;
+    const objProgress = $("#hud-obj-progress");
+    if (objProgress) objProgress.textContent = obj.progressText;
+    const objBar = $("#hud-obj-bar");
+    if (objBar) objBar.style.width = `${Math.round(obj.progress * 100)}%`;
+    const objHint = $("#hud-obj-hint");
+    if (objHint) objHint.textContent = getSurvivalHint(game) || obj.hint;
+
+    const dangerLabel = $("#hud-danger-label");
+    if (dangerLabel) {
+      dangerLabel.textContent = obj.danger.label;
+      dangerLabel.style.color = obj.danger.color;
+    }
+    const dangerBar = $("#hud-danger-bar");
+    if (dangerBar) {
+      dangerBar.style.width = `${Math.round(obj.danger.percent * 100)}%`;
+      dangerBar.style.background = obj.danger.color;
+    }
+
+    const hazardBanner = $("#hud-region-hazard");
+    if (hazardBanner) {
+      hazardBanner.hidden = !obj.regionHazard.isDangerous || game.state !== "playing";
+      if (obj.regionHazard.isDangerous) {
+        const titleEl = $("#hazard-title");
+        if (titleEl) titleEl.textContent = obj.regionHazard.warningTitle;
+        const descEl = $("#hazard-desc");
+        if (descEl) descEl.textContent = obj.regionHazard.warningDesc;
+      }
+    }
   }
 
   refreshControlLabels() {
@@ -599,14 +658,61 @@ export class UI {
       this.returnView = this._view;
     this.screen(
       "tutorial",
-      `<div class="wide-panel guide-panel">${this.header("KNOW THE LAW OF THE WILD", "Survive. Adapt. Repeat.", "Your life is temporary. Your lineage is not.")}
-      <div class="tutorial-grid"><article class="tutorial-card"><span class="step-number">01</span><div class="tutorial-symbol">${icon("leaf")}</div><h2>Earn your first breath.</h2><p>Hatch into a random beginner species. Explore the meadows and feed on plants while you learn your surroundings. Hold <kbd>E</kbd> near food to eat.</p></article>
-      <article class="tutorial-card"><span class="step-number">02</span><div class="tutorial-symbol">${icon("claw")}</div><h2>Hunt with intention.</h2><p>Aim with the mouse and bite with <kbd>LMB</kbd> or <kbd>SPACE</kbd>. Watch enemy movement. Mobile forms can dash with <kbd>SHIFT</kbd>; heavy forms rely on defense or healing. Use <kbd>Q</kbd>, <kbd>R</kbd> and your available <kbd>X</kbd> skill. Circle back and eat the remains. Larger predators are deadly.</p></article>
-      <article class="tutorial-card"><span class="step-number">03</span><div class="tutorial-symbol">${icon("dna")}</div><h2>Become something greater.</h2><p>Food fills your evolution bar. When the indicator flashes, press <kbd>T</kbd> to choose a new species and mutation. You can keep growing or postpone without rerolling. Branch into armored herbivores, fearsome hunters, and eventually creatures of myth.</p></article>
-      <article class="tutorial-card"><span class="step-number">04</span><div class="tutorial-symbol">${icon("trophy")}</div><h2>Leave a legacy.</h2><p>DNA is rare: earn it once from selected achievements or find rare DNA clusters. Spend it on permanent skins, crowns, pets, island decorations or lineage upgrades. Permanent finds save immediately and survive death.</p></article></div>
-      <div class="control-reference"><h3>YOUR INSTINCTS</h3><div class="controls-grid">${small("W A S D / ARROWS", "Move")}${small("MOUSE", "Aim")}${small("LMB / SPACE", "Bite")}${small("Q", "Species ability")}${small("SHIFT", "Dodge / dash")}${small("E", "Feed / hatch")}${small("TAB", "Field guide")}${small("ESC", "Pause")}${small("M", "Expand map")}${small("F11", "Fullscreen")}</div></div>
-      <p class="survival-tip"><strong>A LIVING CONTINENT</strong> Hold <kbd>CTRL</kbd> to sprint. Available species skills appear in your action bar; later forms usually have more. Find ancient relics to gain <kbd>F / G / C / V / B / N</kbd> skills until death. Rare flowers grant timed damage, speed, magnet, auto-eat, shield or healing effects. Uneaten eggs hatch. Food from weak regions becomes ineffective as you evolve: use <kbd>M</kbd> to plan your journey and click the map to mark a destination. Watch each creature, keep your distance and dodge travelling attacks. Marine predators must swim within reach before they can bite.</p>
-      <div class="panel-bottom"><span>Death is part of evolution.</span><button class="button primary" data-action="back" data-focus>I’M READY ${icon("arrow")}</button></div></div>`,
+      `<div class="wide-panel guide-panel survival-guide-panel">${this.header("THE SURVIVAL GUIDE & REFRESHER", "Survive. Adapt. Evolve.", "Everything you need to master early survival, enemy threats, and evolutionary dominance.")}
+      <div class="survival-guide-grid">
+        <article class="guide-section-card">
+          <span class="guide-section-tag">01 · STARTER BASIN</span>
+          <h2>The Nursery Basin (Safe Zone)</h2>
+          <p>Every life begins in the central green basin (radius &lt; 55). In this sanctuary, wild predators will not hunt you unprovoked and safe berries and figs are plentiful.</p>
+          <div class="guide-tip-pill">🌿 Tip: Stay inside the basin until you have fed, grown your body, and reached your first Evolution threshold!</div>
+        </article>
+
+        <article class="guide-section-card">
+          <span class="guide-section-tag">02 · CONTROLS & INSTINCTS</span>
+          <h2>Controls Refresher</h2>
+          <div class="guide-controls-grid">
+            <div class="ctrl-row"><kbd>W A S D</kbd><span>Move & sprint</span></div>
+            <div class="ctrl-row"><kbd>MOUSE</kbd><span>Aim direction</span></div>
+            <div class="ctrl-row"><kbd>LMB / SPACE</kbd><span>Bite & attack</span></div>
+            <div class="ctrl-row"><kbd>E</kbd><span>Hold to feed / hatch</span></div>
+            <div class="ctrl-row"><kbd>C</kbd><span>Primal roar</span></div>
+            <div class="ctrl-row"><kbd>SHIFT</kbd><span>Dash / dodge</span></div>
+            <div class="ctrl-row"><kbd>Q / R / X</kbd><span>Species skills</span></div>
+            <div class="ctrl-row"><kbd>T</kbd><span>Open evolution</span></div>
+          </div>
+        </article>
+
+        <article class="guide-section-card">
+          <span class="guide-section-tag">03 · ENEMY READABILITY</span>
+          <h2>Threat & Danger Ratings</h2>
+          <div class="threat-guide-rows">
+            <div class="threat-guide-item lethal"><span class="badge-tag">💀 LETHAL APEX</span><p>2+ tiers above or Alpha boss. Lethal bites. Retreat immediately!</p></div>
+            <div class="threat-guide-item danger"><span class="badge-tag">⚠️ DANGEROUS</span><p>1 tier above. Dangerous match. Use mobility, kiting, and skills.</p></div>
+            <div class="threat-guide-item fair"><span class="badge-tag">⚔️ FAIR MATCH</span><p>Equal tier. Balanced fight. Mind enemy strike telegraphs.</p></div>
+            <div class="threat-guide-item prey"><span class="badge-tag">🌿 PREY</span><p>Weaker tier. Prime food source for nutrients, growth, and XP.</p></div>
+          </div>
+        </article>
+
+        <article class="guide-section-card">
+          <span class="guide-section-tag">04 · ENEMY TELEGRAPHS</span>
+          <h2>Telegraphs & Combat Impact</h2>
+          <div class="telegraph-guide-rows">
+            <div><strong>⚡ CHARGING</strong><span>Trample lane appears on ground. Step laterally outside the line!</span></div>
+            <div><strong>💥 ATTACK IMMINENT</strong><span>Close-range bite windup. Dash or step backward to dodge.</span></div>
+            <div><strong>🔮 CASTING</strong><span>Red danger circle/cone on ground. Vacate the highlighted zone before impact!</span></div>
+            <div><strong>🩸 COMBAT CRUNCH</strong><span>Flank hits and empowered bites trigger Critical Hits with hit-stop crunch!</span></div>
+          </div>
+        </article>
+
+        <article class="guide-section-card">
+          <span class="guide-section-tag">05 · PROGRESSION & BIOMES</span>
+          <h2>The Evolutionary Path</h2>
+          <p>Eating fills your growth meter (growing larger and increasing HP/ATK in your current form) while XP builds toward your Evolution threshold. When the evolution bar glows, press <kbd>T</kbd> to evolve into new species branches.</p>
+          <div class="guide-tip-pill">⚠️ Warning: Wild biomes (redwoods, swamps, desert, caldera) have regional tiers. Entering a zone 2+ tiers above you will trigger hazard alerts!</div>
+        </article>
+      </div>
+
+      <div class="panel-bottom"><span>Ready to dominate the food chain. Press ESC to return.</span><button class="button primary" data-action="back" data-focus>RETURN TO HUNT ${icon("arrow")}</button></div></div>`,
       "shade-screen",
     );
     this.bind("back", () => this.back());

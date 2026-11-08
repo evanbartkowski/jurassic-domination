@@ -138,6 +138,15 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 - **Dynamic Title Scene**: The home screen features wind-blown foliage and leaves drifting across atmospheric prehistoric lighting.
 - **Audio Voice Pooling & Throttling**: Sound effects use strict cooldown intervals and element pooling, eliminating sound overlap, echoing, or looping storms.
 
+### 9. Retention, Tutorial & Objective Loop
+- **First-Run Onboarding & Objective Tracker**: A streamlined, non-intrusive objective panel directly on the HUD guides new and returning survivors from egg hatch through safe basin growth, roaring, first evolutionary leap, venturing into wild biomes, hunting territory defense, and continental exploration.
+- **Dynamic Progression Goals & Danger Meter**: Clear real-time danger level feedback (`🌿 SAFE BASIN`, `🌾 STABLE`, `⚠️ CAUTION`, `⚔️ HIGH THREAT`, `💀 LETHAL APEX`) and regional tier hazard banners alert players when entering biomes that exceed their current species tier.
+- **Enemy Readability & Visual Telegraphs**: Wild creatures feature high-visibility threat badges (`💀 LETHAL APEX`, `⚠️ DANGEROUS`, `⚔️ FAIR MATCH`, `🌿 PREY`) alongside live behavioral indicators (`⚡ CHARGING!`, `💥 ATTACK IMMINENT!`, `🔮 CASTING`, `🌲 AMBUSH`, `🎯 HUNTING YOU`, `💤 SLEEPING`). Charging beasts project glowing ground trample lanes, while elemental spells display expanding ground warning circles.
+- **Combat Impact & Hit-Stop Feel**: Melee hits, crits, and finishing strikes now register with micro-freeze hit-stop frames, camera shake proportional to impact mass, and distinct color-coded floating combat feedback (golden critical hits, red damage received, lime nutrition gains).
+- **Early-Game Nursery Basin Protection**: The central green basin (radius < 55) provides safe starter food abundance, 30% reduced early hunger drain, and unprovoked peaceful behavior from native Tier 0 fauna to let players learn their controls in peace.
+- **One-Page Survival Guide & Control Refresher**: Accessible at any moment with the `? GUIDE` HUD button or the pause menu, featuring full control cards, safe starter area advice, threat rating keys, and telegraph evasion tips.
+- **Sanctuary Expedition Perks**: Equipped island companion pets grant a passive +5% expedition movement speed bonus, and completed sanctuary trials empower stamina recovery and vitality regeneration.
+
 ---
 
 ## Save Architecture & Integrity
@@ -153,7 +162,7 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 Jurassic Domination includes a rigorous testing harness:
 
 ```powershell
-# Run the 204-test deterministic logic and ecology suite:
+# Run the 211-test deterministic logic and ecology suite:
 npm test
 
 # Run the 22 Playwright visual and browser integration checks:
@@ -186,6 +195,7 @@ jurassic-domination/
 │   └── sounds/            # 66 authentic dinosaur, creature, weather, and ambient audio files
 ├── src/
 │   ├── main.js            # Engine entry point, input router, and lifecycle
+│   ├── tutorial.js        # First-run onboarding, objective loop, and threat evaluation
 │   ├── game.js            # Core survival rules, combat, and evolutionary progression
 │   ├── simulation.js      # Deterministic 60 Hz simulation authority and swept collisions
 │   ├── renderer.js        # Three.js 3D world renderer, weather particles, and status FX
@@ -199,7 +209,7 @@ jurassic-domination/
 │   ├── state-store.js     # Two-slot verified atomic disk persistence
 │   ├── controls.js        # Keybinding remapping and gamepad deadzone adapter
 │   └── ui.js              # Polished slate UI panels, HUD, and field journal
-└── tests/                 # 202 unit tests verifying determinism, balance, and logic
+└── tests/                 # 211 unit tests verifying determinism, balance, and logic
 ```
 
 ---

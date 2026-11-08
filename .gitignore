@@ -13,3 +13,6 @@ Thumbs.db
 *.local
 .agents/
 skills-lock.json
+data/
+*.sqlite3
+

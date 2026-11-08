@@ -16,6 +16,11 @@ const SAMPLES = {
   painRoar: "sounds/gsmsea-dinosaur-calling-amp-roaring-in-pain-428070.mp3",
   wolvesFight: "sounds/alex_jauk-wolves-fighting-227005.mp3",
   sniff: "sounds/alex_jauk-sniffing-animal-sound-447139.mp3",
+  animalGrunt: "sounds/dragon-studio-animal-grunt-382728.mp3",
+  monsterGrunt: "sounds/daviddumaisaudio-monster-05-grunt-and-growl-195715.mp3",
+  dinoMuffledGrowl: "sounds/gsmsea-dinosaur-growls-431298.mp3",
+  pterodactylCall: "sounds/dragon-studio-pterodactyl-call-382716.mp3",
+  smallDinoCall: "sounds/freesound_community-small-dino-raspy-calls-39345.mp3",
   waterSplash: "sounds/traian1984-water-sound-273813.mp3",
   oceanAmbience: "sounds/gmbdecibel-ocean-211408.mp3",
   nightAmbience: "sounds/capaholiczsfx-forest-soundscape-night-time-403609.mp3",
@@ -84,13 +89,18 @@ export class AudioEngine {
         giantStep: 380,
         dinoStep: 340,
         gravelStep: 300,
-        rexRoar: 3200,
-        dinoRoar: 2800,
-        dinoGrowl: 2400,
-        raptorCall: 2500,
-        birdScream: 2500,
-        painRoar: 2200,
+        rexRoar: 6500,
+        dinoRoar: 5500,
+        dinoGrowl: 4500,
+        raptorCall: 4500,
+        birdScream: 4500,
+        painRoar: 3500,
         wolvesFight: 3600,
+        animalGrunt: 280,
+        monsterGrunt: 350,
+        dinoMuffledGrowl: 3500,
+        pterodactylCall: 4000,
+        smallDinoCall: 3500,
         heartbeat: 1400,
         waterSplash: 650,
         uiClick: 80,
@@ -414,14 +424,15 @@ export class AudioEngine {
       );
       tone(pitch * 1.51, 0.55, 0.07, "sine", pitch * 0.7);
       this.rustle(now, 0.4, 0.11 * volume, small ? 2100 : 400);
+      const callVol = Math.max(0.08, (1 - distance / 45) * 0.35);
       if (["rex", "dragon"].includes(species.body)) {
-        this.playSample("rexRoar", (1 - distance / 65) * 0.85);
+        this.playSample(distance < 16 ? "rexRoar" : "dinoMuffledGrowl", callVol);
       } else if (species.body === "raptor") {
-        this.playSample("raptorCall", (1 - distance / 65) * 0.8);
+        this.playSample("smallDinoCall", callVol);
       } else if (["bird", "gryphon"].includes(species.body)) {
-        this.playSample("birdScream", (1 - distance / 65) * 0.75);
+        this.playSample("pterodactylCall", callVol);
       } else {
-        this.playSample("dinoGrowl", (1 - distance / 65) * 0.7);
+        this.playSample("dinoGrowl", callVol * 0.85);
       }
       return;
     }
@@ -522,17 +533,14 @@ export class AudioEngine {
       if (!present.has(id)) this.motionSamples.delete(id);
     if (now >= this.callClock) {
       const actor = actors[1] || actors[0],
-        s = SPECIES_BY_ID[actor.speciesId];
-      if (s)
-        this.voice(
-          s,
-          "call",
-          null,
-          actor.id === "player"
-            ? 8
-            : Math.hypot(actor.x - game.player.x, actor.y - game.player.y),
-        );
-      this.callClock = now + 4 + (Math.floor(game.time) % 4);
+        s = SPECIES_BY_ID[actor?.speciesId];
+      if (s) {
+        const dist = actor.id === "player" ? 0 : Math.hypot(actor.x - game.player.x, actor.y - game.player.y);
+        if (dist <= 38) {
+          this.voice(s, "call", null, dist);
+        }
+      }
+      this.callClock = now + 24 + ((game.time * 7) % 18);
     }
     this.biomeTheme = game.region?.id || "fernwood";
   }
@@ -612,31 +620,35 @@ export class AudioEngine {
       this.tone(frequency, now + offset, duration, gain, type, end, this.sfx);
     switch (name) {
       case "attack":
-        this.rustle(now, 0.16, 0.42, 950);
+        this.rustle(now, 0.16, 0.38, 950);
         tone(170, 0, 0.16, 0.14, "triangle", 60);
-        this.playSample("wolvesFight", 0.5);
+        this.playSample("animalGrunt", 0.55);
         break;
       case "roar":
         {
           const roarSpecies = SPECIES_BY_ID[event.speciesId];
           const roarBody = roarSpecies?.body;
-          if (roarBody === "bird") this.playSample("birdScream", 0.9);
-          else if (roarBody === "raptor") this.playSample("raptorCall", 0.9);
-          else if (roarBody === "rex" || (roarSpecies?.size || 1) > 2.5) this.playSample("rexRoar", 0.95);
-          else this.playSample("dinoRoar", 0.9);
+          if (roarBody === "bird") this.playSample("birdScream", 0.85);
+          else if (roarBody === "raptor") this.playSample("raptorCall", 0.85);
+          else if (roarBody === "rex" || (roarSpecies?.size || 1) > 2.5) this.playSample("rexRoar", 0.9);
+          else this.playSample("dinoRoar", 0.85);
           tone(60, 0, 0.45, 0.22, "sawtooth", 45);
         }
         break;
       case "hit":
         tone(event.target === "player" ? 65 : 105, 0, 0.18, 0.19, "sine", 28);
         this.rustle(now, 0.12, 0.3, event.target === "player" ? 400 : 900);
-        this.playSample("wolvesFight", 0.7);
+        this.playSample("monsterGrunt", event.target === "player" ? 0.45 : 0.35);
         break;
       case "kill":
         tone(110, 0, 0.3, 0.16, "triangle", 40);
         tone(440, 0.06, 0.25, 0.07);
-        if (event.water) this.playSample("seaMonster", 0.85);
-        else this.playSample("dinoRoar", 0.7);
+        if (event.boss || event.tier >= 4 || event.target?.tier >= 4) {
+          if (event.water) this.playSample("seaMonster", 0.65);
+          else this.playSample("dinoRoar", 0.75);
+        } else {
+          this.playSample("itemCollect", 0.65);
+        }
         break;
       case "eat":
         if (event.food === "meat") {
@@ -664,7 +676,8 @@ export class AudioEngine {
         this.rustle(now + 0.06, 0.15, 0.1, 1850);
         tone(100, 0, 0.15, 0.15, "triangle", 35);
         tone(330, 0.09, 0.13, 0.065, "sine", 85);
-        this.playSample("seaMonster", 0.85);
+        this.playSample("waterSplash", 0.75);
+        this.playSample("animalGrunt", 0.45);
         break;
       case "water-enter":
       case "splash":
@@ -675,7 +688,7 @@ export class AudioEngine {
       case "plant-bite":
         this.rustle(now, 0.16, 0.22, 1700);
         tone(230, 0, 0.12, 0.07, "triangle", 80);
-        this.playSample("painRoar", 0.7);
+        this.playSample("animalGrunt", 0.35);
         break;
       case "collect":
         tone(587.33, 0, 0.18, 0.055);

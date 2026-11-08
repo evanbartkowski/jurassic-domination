@@ -504,7 +504,7 @@ export function createTerrainChunk(cx, cy, seed) {
       ring.rotation.x = Math.PI / 2;
       group.add(ring);
     }
-  const features = featureData.map(createWildFeature);
+  const features = featureData.map((f) => createWildFeature(f, elevationAt(f.x, f.y)));
   features.forEach((f) => group.add(f));
   group.userData = {
     ...group.userData,

@@ -2,11 +2,11 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { marinePose } from "./wilderness.js";
 import { createDecoration } from "./collection-art.js";
-export function createWildFeature(f) {
+export function createWildFeature(f, elevation = 0) {
   const root = new THREE.Group(),
     owned = [],
     materials = [];
-  root.position.set(f.x, 0, f.y);
+  root.position.set(f.x, elevation, f.y);
   root.userData.feature = f;
   function mesh(geo, color, pos, scale) {
     const mat = new THREE.MeshStandardMaterial({

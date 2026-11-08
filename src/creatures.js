@@ -353,10 +353,12 @@ export function createDinosaur(
     headY = 1.28;
   }
   if (marine) { headX = longSwimmer ? 3.25 : 1.65; headY = longSwimmer ? 1.13 : .88; }
+  const neckMidX = marine && longSwimmer ? 1.9 : sauropod ? 1.25 : 0.92;
+  const neckMidY = h + (marine && longSwimmer ? .26 : sauropod ? 1.85 : horse ? 0.64 : marine ? 0.08 : 0.35);
   const neckGeo = tube(
     [
       [0.55, h + 0.08, 0],
-      [marine && longSwimmer ? 1.9 : 0.92, h + (marine ? .26 : horse ? 0.64 : 0.35), 0],
+      [neckMidX, neckMidY, 0],
       [headX - 0.12, headY - 0.22, 0],
     ],
     [
@@ -546,8 +548,9 @@ export function createDinosaur(
         });
       }
       if (!quadruped) {
+        const isRaptor = /raptor|utahraptor|deinonychus|pyroraptor/.test(name);
         const arm = new THREE.Group();
-        arm.position.set(0.72, h + 0.15, side * 0.42);
+        arm.position.set(0.72, h + 0.15, side * (isRaptor || (species.size || 1) < 1.1 ? 0.32 : 0.42));
         body.add(arm);
         arms.push({ arm, side });
         organic(
@@ -560,7 +563,6 @@ export function createDinosaur(
         organic(arm, light, [0.28, -0.4, side * 0.22], [0.27, 0.075, 0.08]);
         const tyrant = /tyrannosaurus|tarbosaurus|albertosaurus|ashborn/.test(name);
         if (tyrant) arm.scale.setScalar(0.62);
-        const isRaptor = /raptor|utahraptor|deinonychus|pyroraptor/.test(name);
         if (isRaptor) {
           organic(arm, accent, [0.32, -0.32, side * 0.16], [0.38, 0.12, 0.03], [0, 0, 0.35], "feather");
         }
@@ -1031,14 +1033,15 @@ export function animateCreature(
   const baseHY = d.headBaseY ?? head.position.y;
   const windup = strike < 0.35 ? strike / 0.35 : 1 - (strike - 0.35) / 0.65;
   const strikeSnap = strike < 0.35 ? -strike * 0.35 : (strike - 0.35) * 1.5;
+  const strikeDrop = strike * (species.body === "croc" ? 0.08 : 0.16);
   head.position.x = baseHX + strikeSnap * 0.45 * Math.min(2.2, species.size);
-  head.position.y = baseHY - strike * 0.24 + windup * 0.08;
+  head.position.y = Math.max(0.18, baseHY - strikeDrop + windup * 0.08);
   head.rotation.z =
     Math.sin(phase + 0.4) * 0.026 * stride +
     Math.sin(time * 0.9) * 0.025 -
-    strike * 0.72;
+    strike * (species.body === "croc" ? 0.18 : 0.38);
   head.rotation.y = THREE.MathUtils.damp(head.rotation.y, turn * 0.42 + Math.sin(strike * Math.PI) * 0.25, 9, dt);
-  jaw.rotation.z = -strike * 1.15 + Math.sin(time * 2) * 0.014;
+  jaw.rotation.z = Math.max(-0.48, -strike * 0.48 + Math.sin(time * 2) * 0.014);
 
   if (stride < 0.4 && strike < 0.2) {
     const lookSeed = (model.id || 1) * 31.7;
@@ -1051,19 +1054,21 @@ export function animateCreature(
   }
   if (stride < 0.18 && ["quad", "longneck"].includes(species.body) && strike < 0.1) {
     const graze = Math.max(0, Math.sin(time * 0.42 + (model.id || 0) * 11.0) - 0.35) * 1.5;
-    head.position.y -= graze * 0.35;
-    head.rotation.z += graze * 0.4;
+    head.position.y = Math.max(0.2, head.position.y - graze * 0.28);
+    head.rotation.z += graze * 0.25;
     jaw.rotation.z -= Math.sin(time * 6.5) * graze * 0.08;
   }
   if (stride < 0.18 && ["rex", "raptor", "serpent", "croc"].includes(species.body) && strike < 0.1) {
     const sniff = Math.max(0, Math.sin(time * 0.5 + (model.id || 0) * 17.0) - 0.45) * 1.5;
-    head.position.y += sniff * 0.16;
-    head.rotation.z -= sniff * 0.14;
+    head.position.y = Math.max(0.18, head.position.y + sniff * 0.12);
+    head.rotation.z -= sniff * 0.12;
     head.rotation.x += Math.sin(time * 9.0) * sniff * 0.06;
   }
   if (d.isSleeping) {
-    head.position.y -= 0.58;
-    head.rotation.z += 0.45;
+    head.position.y = Math.max(0.2, baseHY - 0.28);
+    head.rotation.y += 0.72;
+    head.rotation.z += 0.08;
+    body.position.y -= 0.12;
   }
 
   for (const { arm, side } of d.arms || []) {
@@ -1086,12 +1091,24 @@ export function animateCreature(
   });
   const impact = strike;
   if (species.body === "marine") {
-    body.rotation.x = Math.sin(phase * .65) * .05 * stride;
-    body.position.y += Math.sin(phase * .6) * .04;
-    for (const { fin, side, front } of d.flippers || []) {
-      const row = Math.sin(phase * .85 + (front ? 0 : 1.7));
-      fin.rotation.x = side * (.12 + row * (.12 + stride * .25));
-      fin.rotation.y = side * row * .18 * stride;
+    const isWet = d.isWet !== false;
+    if (isWet) {
+      body.rotation.x = Math.sin(phase * .65) * .05 * stride;
+      body.position.y += Math.sin(phase * .6) * .04;
+      for (const { fin, side, front } of d.flippers || []) {
+        const row = Math.sin(phase * .85 + (front ? 0 : 1.7));
+        fin.rotation.x = side * (.12 + row * (.12 + stride * .25));
+        fin.rotation.y = side * row * .18 * stride;
+      }
+    } else {
+      // Beached on dry land: belly rests flat on ground, flippers trail/struggle
+      body.position.y -= 0.28;
+      body.rotation.x = Math.sin(phase * 0.4) * 0.08 * stride;
+      for (const { fin, side, front } of d.flippers || []) {
+        const crawl = Math.sin(phase * 0.5 + (front ? 0 : 1.2));
+        fin.rotation.x = side * (0.05 + crawl * 0.08 * stride);
+        fin.rotation.y = -side * (0.35 - crawl * 0.12 * stride);
+      }
     }
   }
   if (species.body === "raptor" || species.body === "bird")

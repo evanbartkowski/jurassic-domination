@@ -118,7 +118,7 @@ function swim(f, game, dt) {
     states.set(f.id, state);
   }
   const p = game.player,
-    hunting = Math.hypot(p.x - f.x, p.y - f.y) < f.radius;
+    hunting = Math.hypot(p.x - f.x, p.y - f.y) < f.radius - 0.5;
   for (let i = 0; i < state.swimmers.length; i++) {
     const fish = state.swimmers[i];
     if (fish.dead) {
@@ -135,7 +135,7 @@ function swim(f, game, dt) {
       ty = target.y - f.y;
     // Keep the entire predator in its pool, including while pursuing shorelines.
     const targetRadius = Math.hypot(tx, ty),
-      limit = Math.max(1, f.radius - 2.3);
+      limit = Math.max(1, f.radius - 2.8);
     if (targetRadius > limit) {
       tx *= limit / targetRadius;
       ty *= limit / targetRadius;
@@ -181,6 +181,7 @@ export function updateWildlife(game, dt) {
       game.hazardHint = p.submerged ? 'SUBMERGED · QUIET MOVEMENT' : "DEEP WATER · MARINE PREDATORS";
       if (
         game._hazardCooldown === 0 &&
+        d < f.radius - 0.5 &&
         [0, 1, 2].some((i) => {
           const fish = marinePose(f, game.time, i, p, game.marineState);
           if (!fish || fish.dead) return false;

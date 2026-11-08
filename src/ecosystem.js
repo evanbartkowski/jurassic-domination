@@ -215,7 +215,7 @@ export const Ecosystem = {
           0,
           7,
         );
-      const candidates = SPECIES.filter((s) => s.tier === tier && !s.bloodline),
+      const candidates = SPECIES.filter((s) => s.tier === tier && !s.bloodline && s.body !== "marine"),
         habitat =
           region.id === "sky"
             ? candidates.filter((s) =>
@@ -358,7 +358,7 @@ export const Ecosystem = {
       if (Math.hypot(x, y) < WORLD_RADIUS - 12) {
         const region = biomeAt(x, y),
           s = this.pick(
-            SPECIES.filter((s) => s.tier === region.tier && !s.bloodline),
+            SPECIES.filter((s) => s.tier === region.tier && !s.bloodline && s.body !== "marine"),
           );
         this.spawnEntity(s.id, x, y, { homeChunk: chunkKey(x, y) });
       }

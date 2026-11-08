@@ -6,6 +6,7 @@ import { LANDMARKS, isExplored, hasDiscovery } from './discoveries.js';
 import { getTimeOfDay, conditionsAt } from './world-events.js';
 import { createEcologyArt } from './ecology-art.js';
 import { Terrain, elevationAt } from "./terrain.js";
+import { inWater } from "./survival.js";
 import { biomeAt, REGIONS, LAIRS, WORLD_RADIUS } from "./world-data.js";
 import { POWERUPS, SKINS } from "./content.js";
 import { applyCosmetic, createPet } from "./collection-art.js";
@@ -327,7 +328,7 @@ export class WorldRenderer {
       true,
       id,
     );
-    this.menuDino.position.set(6.6, 0, -1);
+    this.menuDino.position.set(6.6, elevationAt(6.6, -1), -1);
     applyCosmetic(this.menuDino, cosmeticId);
     this.menuDino.scale.setScalar(2.4);
     this.scene.add(this.menuDino);
@@ -427,7 +428,7 @@ export class WorldRenderer {
       SPECIES.find((s) => s.id === "tyrannosaurus"),
       true,
     );
-    this.menuDino.position.set(6.2, 0, -0.8);
+    this.menuDino.position.set(6.2, elevationAt(6.2, -0.8), -0.8);
     this.menuDino.scale.setScalar(2.45);
     this.menuDino.rotation.y = -0.65;
     this.scene.add(this.menuDino);
@@ -797,6 +798,7 @@ export class WorldRenderer {
     this.menuDino.visible = menu;
     this.egg.visible = game?.state === "egg";
     if (menu) {
+      this.menuDino.position.y = elevationAt(this.menuDino.position.x, this.menuDino.position.z);
       this.animateDino(this.menuDino, t, 0, false, dt);
       this.menuDino.rotation.y = -0.65 + Math.sin(t * 0.16) * 0.22;
       this.cameraTarget.lerp(this.cameraDesired.set(0, 0, 0), Math.min(1, dt * 3));
@@ -835,6 +837,7 @@ export class WorldRenderer {
         );
         player.position.y = elevationAt(p.x, p.y) + (p.submerged ? -.5 : p.crouching ? -.15 : 0);
         player.userData.isSleeping = p.sleeping > 0;
+        player.userData.isWet = inWater(game, p);
         if (p.poisoned > 0) {
           const count = this.emitCount(20, dt);
           for (let k = 0; k < count; k++) {
@@ -952,6 +955,7 @@ export class WorldRenderer {
         }
         if (e.intent === "ambush" && !e.inTree) creature.userData.body.position.y -= 0.08;
         creature.userData.isSleeping = (e.sleeping > 0) || !!e.isSleeping;
+        creature.userData.isWet = inWater(game, e);
         if (e.poison > 0) {
           const count = this.emitCount(14, dt);
           for (let k = 0; k < count; k++) {
@@ -1186,32 +1190,37 @@ export class WorldRenderer {
     this.scene.background.copy(this.scene.fog.color);
 
     if (menu) {
-      const leafCount = this.emitCount(38, dt);
+      const leafCount = this.emitCount(11, dt);
       const leafColors = [0x5f8a48, 0x82a657, 0xa37b3e, 0xbf984c, 0x476634];
       for (let k = 0; k < leafCount; k++) {
         this.addParticle({
+          kind: "leaf",
           x: -18 + Math.random() * 6,
-          y: 2 + Math.random() * 8,
+          y: 3.5 + Math.random() * 6.5,
           z: -5 + Math.random() * 22,
-          vx: 5.5 + Math.random() * 3.5,
-          vy: -0.4 + (Math.random() - 0.5) * 0.7,
-          vz: -1.2 + (Math.random() - 0.5) * 1.8,
-          life: 4.8 + Math.random() * 2,
-          size: 0.32 + Math.random() * 0.16,
+          vx: 4.2 + Math.random() * 2.8,
+          vy: -0.15 + (Math.random() - 0.5) * 0.25,
+          vz: -0.6 + (Math.random() - 0.5) * 1.2,
+          floating: true,
+          buoyancy: 0.0,
+          life: 5.2 + Math.random() * 2,
+          size: 0.24 + Math.random() * 0.12,
           color: leafColors[Math.floor(Math.random() * leafColors.length)],
         }, 1);
       }
-      const dustCount = this.emitCount(20, dt);
+      const dustCount = this.emitCount(7, dt);
       for (let k = 0; k < dustCount; k++) {
         this.addParticle({
-          x: (Math.random() - 0.5) * 26,
-          y: 1.5 + Math.random() * 9,
-          z: (Math.random() - 0.5) * 26,
-          vx: 1.2 + Math.random() * 1.5,
-          vy: 0.3 + (Math.random() - 0.5) * 0.4,
-          vz: 0.5 + Math.random() * 0.8,
-          life: 3.8,
-          size: 0.14,
+          x: (Math.random() - 0.5) * 24,
+          y: 1.8 + Math.random() * 7,
+          z: (Math.random() - 0.5) * 24,
+          vx: 0.8 + Math.random() * 1.1,
+          vy: 0.15 + (Math.random() - 0.5) * 0.2,
+          vz: 0.3 + Math.random() * 0.6,
+          floating: true,
+          buoyancy: 0.05,
+          life: 3.5,
+          size: 0.08,
           color: 0xffe28a,
         }, 1);
       }
@@ -1691,8 +1700,16 @@ export class WorldRenderer {
         p.z += p.vz * dt;
         if (!p.floating) p.vy -= 8 * dt;
         else p.vy += (p.buoyancy || 0.4) * dt;
+        if (p.kind === "leaf") {
+          p.vy = Math.sin(this.elapsed * 2.8 + p.x * 0.4) * 0.28 - 0.18;
+          if (p.y < 0.45) p.life = Math.min(p.life, 0.15);
+          dummy.rotation.set(Math.sin(this.elapsed * 1.8 + p.z) * 0.4, this.elapsed * 0.9 + p.x, Math.cos(this.elapsed * 2.2 + p.x) * 0.5);
+          dummy.scale.set(p.size * 1.6, p.size * 0.12, p.size * 0.85).multiplyScalar(clamp(p.life * 3, 0, 1));
+        } else {
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.setScalar(p.size * clamp(p.life * 3, 0, 1));
+        }
         dummy.position.set(p.x, Math.max(0.04, p.y), p.z);
-        dummy.scale.setScalar(p.size * clamp(p.life * 3, 0, 1));
         this.particleMesh.setColorAt(active, color.set(p.color));
         dummy.updateMatrix();
         this.particleMesh.setMatrixAt(active, dummy.matrix);

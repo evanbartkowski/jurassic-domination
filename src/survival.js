@@ -21,7 +21,7 @@ export function survivalSpeed(game) {
   const p = game.player, s = game.survival, wet = inWater(game), mode = movementMode(game.species),
     genes = game.geneticTraits || phenotype(p.genome),
     adaptedSwimmer = wet && (genes.adaptations.includes('water') || p.adaptations?.water >= 75);
-  return (p.crouching && !p.submerged ? .64 : 1) * (mode === 'aquatic' ? wet ? 1.3 : .72 : mode === 'amphibious' && wet ? 1.12 : 1) *
+  return (p.crouching && !p.submerged ? .64 : 1) * (mode === 'aquatic' ? wet ? 1.3 : .28 : mode === 'amphibious' && wet ? 1.12 : 1) *
     (adaptedSwimmer ? 1.04 : 1) * (1 - (s?.fatigue || 0) * .0008) * (s?.strain > 0 ? .92 : 1) * conditionsAt(game, p.x, p.y).movementMultiplier;
 }
 export function setMovementPosture(game, input) {
@@ -46,6 +46,10 @@ export function updateSurvival(game, dt, input, moving) {
   // Calm starter shelter and a 60-second grace protect the first encounter.
   if (Math.hypot(p.x, p.y) < 55 || game.time < 60) target = 0;
   state.temperature = clamp(state.temperature + (clamp(target, -1, 1) - state.temperature) * (1 - Math.exp(-dt / 28)), -1, 1);
+  if (mode === 'aquatic' && !wet && game.time >= state.nextNotice) {
+    game.emit('warning', { text: 'Beached on dry land: severely slowed! Return to deep water.' });
+    state.nextNotice = game.time + 15;
+  }
   if (Math.abs(state.temperature) > .65 && game.time >= state.nextNotice) {
     game.emit('warning', { text: state.temperature < 0 ? 'Exposure rising: seek warmer ground. Cold adaptations help.' : 'Heat exposure rising: seek water or cooler ground.' });
     state.nextNotice = game.time + 25;
@@ -63,8 +67,8 @@ export function updateSurvival(game, dt, input, moving) {
   }
 }
 export function survivalStatus(game) {
-  const s = game.survival || newSurvivalState(), p = game.player;
-  return { mode: movementMode(game.species), wet: inWater(game), cover: terrainCover(game, p),
-    label: p.submerged ? 'DIVING' : p.crouching ? 'STALKING' : s.strain > 0 ? 'RECOVERING' : s.fatigue > 50 ? 'WINDED' : 'STEADY',
+  const s = game.survival || newSurvivalState(), p = game.player, wet = inWater(game), mode = movementMode(game.species);
+  return { mode, wet, cover: terrainCover(game, p),
+    label: (mode === 'aquatic' && !wet) ? 'BEACHED · RETURN TO WATER' : p.submerged ? 'DIVING' : p.crouching ? 'STALKING' : s.strain > 0 ? 'RECOVERING' : s.fatigue > 50 ? 'WINDED' : 'STEADY',
     temperature: s.temperature, fatigue: s.fatigue, strain: s.strain, adaptations: acquiredAdaptations(p.adaptations) };
 }

@@ -1098,22 +1098,39 @@ export class WorldRenderer {
           e.genome,
         );
         const baseEY = elevationAt(e.x, e.y);
-        if (e.isFlying) {
-          creature.position.y = baseEY + (e.altitude || 7.5) + Math.sin(t * 2.5 + e.id) * 0.45;
-        } else if (e.inTree) {
-          creature.position.y = baseEY + (e.treeY || 4.8);
-        } else if (e.treeDrop > 0) {
-          creature.position.y = baseEY + e.treeDrop * (e.treeY || 4.8);
-        } else if (creature.position.y > baseEY + 0.05) {
-          creature.position.y = Math.max(baseEY, creature.position.y - dt * 10);
+        if (e.isFlying && (e.hp === undefined || e.hp > 0)) {
+          const isDiving = e.diveState === "diving";
+          const isCruising = e.diveState === "cruising" || !e.diveState;
+          const alt = Math.max(0.4, e.altitude ?? 7.5);
+          const bob = isCruising ? Math.sin(t * 2.5 + e.id) * 0.45 : 0;
+          creature.position.y = baseEY + alt + bob;
+
+          // Realistic flight banking into turns and dive/climb pitch
+          const prevAngle = creature.userData.prevFlightAngle ?? e.angle;
+          let turnDelta = e.angle - prevAngle;
+          while (turnDelta > Math.PI) turnDelta -= Math.PI * 2;
+          while (turnDelta < -Math.PI) turnDelta += Math.PI * 2;
+          creature.userData.prevFlightAngle = e.angle;
+          const targetRoll = Math.max(-0.6, Math.min(0.6, -turnDelta * 4.0));
+          creature.rotation.z = THREE.MathUtils.damp(creature.rotation.z || 0, targetRoll, 6.0, dt);
+          const targetPitch = isDiving ? 0.35 : e.diveState === "ascending" ? -0.3 : 0;
+          creature.rotation.x = THREE.MathUtils.damp(creature.rotation.x || 0, targetPitch, 5.0, dt);
+        } else if (e.treeDrop > 0 && e.treeY) {
+          creature.position.y = baseEY + e.treeDrop * e.treeY;
+          creature.rotation.z = 0;
+          creature.rotation.x = 0;
         } else {
           creature.position.y = baseEY;
+          creature.rotation.z = 0;
+          creature.rotation.x = 0;
         }
         if (e.intent === "graze") {
           creature.userData.head.rotation.z +=
             0.16 + Math.sin(t * 1.4 + e.id) * 0.05;
         }
-        if (e.intent === "ambush" && !e.inTree) creature.userData.body.position.y -= 0.08;
+        if (e.intent === "ambush") creature.userData.body.position.y -= 0.12;
+        creature.userData.isFlying = !!e.isFlying;
+        creature.userData.diveState = e.diveState;
         creature.userData.isSleeping = (e.sleeping > 0) || !!e.isSleeping;
         creature.userData.isWet = inWater(game, e);
         if (e.poison > 0) {

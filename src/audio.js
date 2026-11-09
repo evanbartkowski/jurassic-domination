@@ -336,8 +336,8 @@ export class AudioEngine {
         const isDanger = this.mode === "danger" || (p.hp < (p.maxHp || 100) * 0.25);
         this.updateAmbience(timeOfDay, weather, isNearWater, isDanger);
         if (p.hp < (p.maxHp || 100) * 0.25 && now >= (this.nextHeartbeat || 0)) {
-          this.playSample("heartbeat", 0.7);
-          this.nextHeartbeat = now + 1.1;
+          this.playSample("heartbeat", 0.25);
+          this.nextHeartbeat = now + 1.4;
         }
       }
       if (game.worldState && now >= (this.nextWeatherSound || 0)) {
@@ -393,19 +393,19 @@ export class AudioEngine {
       this.tone(f, now, d, g * volume, type, end, this.sfx);
     if (action === "step") {
       const heavy = ["quad", "longneck", "rex"].includes(species.body);
-      tone(heavy ? 55 : 130, 0.12, heavy ? 0.12 : 0.045, "sine", 30);
+      tone(heavy ? 85 : 140, 0.08, heavy ? 0.022 : 0.012, "sine", heavy ? 65 : 115);
       this.rustle(
         now,
-        0.09,
-        (heavy ? 0.14 : 0.08) * volume,
-        heavy ? 350 : 1800,
+        0.08,
+        (heavy ? 0.06 : 0.035) * volume,
+        heavy ? 550 : 1600,
       );
       if (species.size >= 3.2) {
-        this.playSample("giantStep", (1 - distance / 70) * 0.95);
+        this.playSample("giantStep", (1 - distance / 70) * 0.22);
       } else if (heavy) {
-        this.playSample("dinoStep", (1 - distance / 60) * 0.6);
+        this.playSample("dinoStep", (1 - distance / 60) * 0.16);
       } else {
-        this.playSample("gravelStep", (1 - distance / 50) * 0.45);
+        this.playSample("gravelStep", (1 - distance / 50) * 0.12);
       }
       return;
     }
@@ -594,9 +594,7 @@ export class AudioEngine {
         this.tone(frequency * 2.001, at + 0.12, 0.7, 0.009, "sine");
     }
     if (!menu && beat % 4 === 0) {
-      this.tone(color === "ember" ? 74 : 96, at, 0.28,
-        0.085 + tension * 0.045, "sine", 34);
-      this.rustle(at + 0.025, 0.08, 0.055, color === "sand" ? 1100 : 540, this.music);
+      this.rustle(at + 0.025, 0.06, 0.02, color === "sand" ? 1100 : 540, this.music);
     }
     if (tension > 0.25 && beat % 2 === 1) {
       this.tone(root * (beat % 4 === 1 ? 2 : 3), at, 0.19,

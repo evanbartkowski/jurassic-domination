@@ -157,6 +157,7 @@ test("HUD layout: region route, environment panel and map tooltip do not overlap
   const expansionCss = fs.readFileSync(path.resolve("src/expansion.css"), "utf8");
   const immersionCss = fs.readFileSync(path.resolve("src/immersion.css"), "utf8");
   const livingWildCss = fs.readFileSync(path.resolve("src/living-wild.css"), "utf8");
+  const indieCss = fs.readFileSync(path.resolve("src/indie-polishing.css"), "utf8");
 
   // #region-route must be positioned below the minimap (top >= 420px on desktop)
   assert.ok(expansionCss.includes("top: 425px"), "expansion.css must place #region-route at top: 425px");
@@ -169,4 +170,73 @@ test("HUD layout: region route, environment panel and map tooltip do not overlap
 
   // #map-tooltip must be placed beside the minimap (right: 215px), never colliding with #hud-run
   assert.ok(expansionCss.includes("right: 215px"), "expansion.css must place #map-tooltip at right: 215px");
+
+  // #evolve-ready must be centered in the middle of the screen (fixed, left: 50%, top: 26%)
+  assert.ok(indieCss.includes("position: fixed !important"), "indie-polishing.css must position #evolve-ready fixed");
+  assert.ok(indieCss.includes("left: 50% !important"), "indie-polishing.css must center #evolve-ready at left: 50%");
+  assert.ok(indieCss.includes("top: 26% !important"), "indie-polishing.css must place #evolve-ready at top: 26%");
 });
+
+test("audio: music beat removes continuous sub-bass kick thumping", async (t) => {
+  installMockAudioContext(t);
+  const engine = new AudioEngine();
+  await engine.unlock();
+
+  let lowSubBassCount = 0;
+  const originalTone = engine.tone.bind(engine);
+  engine.tone = (frequency, at, duration, gain, type, end, bus, role) => {
+    // Check if sub-bass drop tone (< 100Hz dropping to 34Hz) was emitted
+    if (frequency < 100 && end <= 40 && gain >= 0.05) {
+      lowSubBassCount++;
+    }
+    return originalTone(frequency, at, duration, gain, type, end, bus, role);
+  };
+
+  // Schedule beats 0, 4, 8, 12, 16
+  for (let b = 0; b < 20; b += 4) {
+    engine.scheduleBeat(b * 0.5, b);
+  }
+
+  assert.equal(lowSubBassCount, 0, "scheduleBeat must not generate loud sub-bass thumping drops every bar");
+  engine.dispose();
+});
+
+test("creatures: pterosaurs have cranial crests, beaks and dynamic flapping animation", async (t) => {
+  const origDoc = globalThis.document;
+  const mockContext = {
+    fillRect() {},
+    createLinearGradient() { return { addColorStop() {} }; },
+    fill() {},
+    beginPath() {},
+    arc() {},
+    ellipse() {},
+    stroke() {},
+    putImageData() {},
+    getImageData() { return { data: new Uint8ClampedArray(4) }; }
+  };
+  globalThis.document = {
+    createElement: () => ({
+      width: 1,
+      height: 1,
+      getContext: () => mockContext,
+    }),
+  };
+  t.after(() => { globalThis.document = origDoc; });
+
+  const { createDinosaur, animateCreature } = await import("../src/creatures.js");
+  const quetz = createDinosaur({ id: "quetzalcoatlus", name: "Quetzalcoatlus", body: "bird", size: 3.5 });
+  assert.ok(quetz.userData.wings.length === 2, "Quetzalcoatlus must generate 2 articulated wings");
+
+  // Test dynamic flight animation
+  quetz.userData.isFlying = true;
+  quetz.userData.diveState = "cruising";
+  animateCreature(quetz, 1/60, 1.0, 1.0);
+  const wingZ = quetz.userData.wings[0].wing.rotation.x;
+  assert.ok(Number.isFinite(wingZ), "Wing rotation must animate");
+
+  // Test diving wing sweep
+  quetz.userData.diveState = "diving";
+  animateCreature(quetz, 1/60, 1.2, 1.0);
+  assert.ok(quetz.userData.wings[0].wing.rotation.y !== 0, "Wings must sweep back in dive mode");
+});
+

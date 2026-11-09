@@ -244,8 +244,8 @@ export const Ecosystem = {
         (["raptor", "bird"].includes(s.body) || s.behavior === "ambusher") &&
         hash < 0.45
       ) {
-        e.inTree = true;
-        e.treeY = 4.8 + ((hash * 10) % 1.5);
+        e.inTree = false;
+        e.treeY = 0;
         e.treeDrop = 0;
         e.intent = "ambush";
       }

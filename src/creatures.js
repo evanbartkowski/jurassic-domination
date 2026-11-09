@@ -767,10 +767,39 @@ export function createDinosaur(
           [0.035, 0.7, 0.035],
           [side * 0.2, 0, 0.3],
         );
+  if (/quetzal|hatzego|pteranodon|pterodactyl/.test(name)) {
+    // Majestic swept-back pterosaur cranial crest
+    const crestGeo = tube(
+      [
+        [-0.08, 0.38, 0],
+        [-0.52, 0.82, 0],
+        [-1.05, 1.25, 0],
+      ],
+      [0.085, 0.055, 0.015],
+      8,
+    );
+    owned.add(crestGeo);
+    add(head, crestGeo, mat(accent), [0, 0, 0], [1, 1, 1]);
+    // Long dagger-like pterosaur spear beak
+    const beakGeo = tube(
+      [
+        [0.45, 0.08, 0],
+        [1.05, 0.03, 0],
+        [1.7, -0.04, 0],
+      ],
+      [0.11, 0.065, 0.015],
+      8,
+    );
+    owned.add(beakGeo);
+    add(head, beakGeo, mat(accent), [0, 0, 0], [1, 1, 1]);
+  }
   const bird = type === "bird",
     flight =
-      bird &&
-      /micro|archaeo|quetzalcoatlus|hatzegopteryx|phoenix|thunderbird/.test(
+      (bird &&
+        /micro|archaeo|quetzalcoatlus|hatzegopteryx|phoenix|thunderbird|pteranodon|pterodactyl|wyvern|quetzalcoatl/.test(
+          name,
+        )) ||
+      /quetzalcoatlus|hatzegopteryx|pteranodon|pterodactyl|wyvern|phoenix|thunderbird|quetzalcoatl/.test(
         name,
       );
   if (bird || /raptor|yutyrannus|therizino/.test(name)) {
@@ -800,9 +829,9 @@ export function createDinosaur(
       body.add(wing);
       const feathered =
           gryphon ||
-          (flight && !/quetzalcoatlus|hatzegopteryx/.test(name)) ||
+          (flight && !/quetzalcoatlus|hatzegopteryx|pteranodon|pterodactyl|wyvern|dragon/.test(name)) ||
           name === "pegasus",
-        span = feathered ? 2.3 : 3.1;
+        span = feathered ? 2.5 : 3.4;
       const geo = tube(
         [
           [0, 0, 0],
@@ -1130,9 +1159,25 @@ export function animateCreature(
     jaw.rotation.z -= impact * 0.22;
     head.rotation.z -= impact * 0.1;
   }
+  const isFlying = d.isFlying;
+  const isDiving = d.diveState === "diving";
+  const flapFreq = species.size > 2.5 ? 4.5 : 5.8;
+  const flapCycle = Math.sin(time * flapFreq + (model.id || 0) * 1.6);
+  const flapCos = Math.cos(time * flapFreq + (model.id || 0) * 1.6);
   wings.forEach(({ wing, side }) => {
-    wing.rotation.x =
-      side * (0.12 + Math.sin(time * 2.6 + model.id) * 0.18 + stride * 0.14);
-    wing.rotation.z = Math.sin(time * 2.6) * 0.035;
+    if (isDiving) {
+      wing.rotation.x = side * 0.15;
+      wing.rotation.y = side * 0.58;
+      wing.rotation.z = -0.32;
+    } else if (isFlying) {
+      const flapAmp = 0.52 + Math.min(0.22, stride * 0.35);
+      wing.rotation.x = side * (0.08 + flapCycle * flapAmp);
+      wing.rotation.y = side * (0.12 - flapCos * 0.18);
+      wing.rotation.z = -flapCycle * 0.18;
+    } else {
+      wing.rotation.x = side * (0.12 + Math.sin(time * 2.2 + (model.id || 0)) * 0.12 + stride * 0.15);
+      wing.rotation.y = side * 0.22;
+      wing.rotation.z = Math.sin(time * 2.2) * 0.04;
+    }
   });
 }

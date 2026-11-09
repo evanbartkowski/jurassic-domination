@@ -307,6 +307,9 @@ export function evaluateCreatureThreat(entity, game) {
   } else if (entity.inTree) {
     behavior = "ambush";
     behaviorLabel = "🌲 AMBUSH STALKER";
+  } else if (entity.beneathNotice || entity.intent === "ignore") {
+    behavior = "indifferent";
+    behaviorLabel = "🦕 COLOSSUS · INDIFFERENT";
   } else if (entity.intent === "hunt" || (entity.aggro || 0) > 0) {
     behavior = "hunt";
     behaviorLabel = "🎯 HUNTING YOU";

@@ -96,7 +96,8 @@ for(const s of SPECIES){
   s.passive=s.body==='quad'?'Armored hide: 12% damage resistance.':s.body==='longneck'?'Titanic endurance: food heals more.':s.body==='equine'?'Sacred metabolism: faster natural healing.':s.body==='serpent'?'Toxic fangs: bites can poison.':s.body==='croc'?'Ambush predator: stronger first strike.':s.body==='raptor'?'Combo hunter: consecutive bites grow stronger.':s.body==='bird'?'Light footed: dodges recover sooner.':'Apex resolve: reduced stagger and powerful techniques.';
 }
 // Clear tier silhouettes and a stronger reward for each step up the food chain.
-const sizeBands = [[.70,.83],[1.10,1.24],[1.48,1.67],[1.98,2.23],[2.56,2.89],[3.18,3.57],[3.92,4.40],[4.82,5.42]];
+// High-tier titans and primordial evolutions are truly massive, towering creatures.
+const sizeBands = [[.70,.83],[1.10,1.24],[1.48,1.67],[1.98,2.23],[2.56,2.92],[3.35,4.45],[4.80,5.85],[6.40,8.20]];
 const compactForms = new Set(['deinonychus','basilisk','unicorn']);
 for (let tier=0;tier<8;tier++) {
   const forms=SPECIES.filter(s=>s.tier===tier), min=Math.min(...forms.map(s=>s.size)), max=Math.max(...forms.map(s=>s.size));

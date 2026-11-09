@@ -916,14 +916,30 @@ export const Ecosystem = {
       m !== e && m.juvenile && m.speciesId === s.id && dist(m, e) < 14 && dist(p, m) < 16
     );
     const inDominatedTerritory = this.dominatedRegions?.has(biomeAt(e.x, e.y).id);
+
+    // Super high level creatures ignore players who are much less evolved ("beneath notice")
+    // e.g. Tier 4+ apex predators and titans ignore Tier 0/1 hatchlings unless provoked or underfoot
+    const isMuchLessEvolved = (this.tier === 0 && s.tier >= 3) || (this.tier <= 1 && s.tier >= 4);
+    const underfootDist = (s.size * (e.scaleFactor || 1)) * 1.1 + 1.8;
+    const underfoot = distance < underfootDist;
+    const beneathNotice =
+      !e.boss &&
+      e.aggro <= 0 &&
+      !defendingNest &&
+      !defendingYoung &&
+      isMuchLessEvolved &&
+      !underfoot;
+    e.beneathNotice = beneathNotice;
+
     const aggressive =
-      e.behavior === "hunter" ||
+      !beneathNotice &&
+      (e.behavior === "hunter" ||
       e.behavior === "ambusher" ||
       e.behavior === "pack" ||
       defendingNest ||
       defendingYoung ||
       e.aggro > 0 ||
-      e.boss;
+      e.boss);
     const pack = e.packId
       ? this.entities.filter((m) => m.packId === e.packId && dist(m, e) < 40)
       : [];
@@ -944,6 +960,7 @@ export const Ecosystem = {
       aggressive &&
       !afraid &&
       !basinSafe &&
+      !beneathNotice &&
       (sensory.visible || defendingNest || defendingYoung) &&
       (!e.juvenile || e.aggro > 0) &&
       (!e.lairId || homeDistance < 85 || distance < 8);
@@ -1095,15 +1112,15 @@ export const Ecosystem = {
       }
     } else if (sensory.detected && !sensory.visible && !e.juvenile &&
       (!nest || homeDistance < nest.territoryRadius + 18)) {
-      if (aggressive && !afraid) {
+      if (aggressive && !afraid && !beneathNotice) {
         e.intent = "track";
         targetAngle = Math.atan2(sensory.y - e.y, sensory.x - e.x);
         move = e.behavior === "ambusher" ? 0.35 : 0.55;
         e.telegraph = 0;
       } else {
-        e.intent = "alert";
+        e.intent = beneathNotice ? "ignore" : "alert";
         targetAngle = Math.atan2(sensory.y - e.y, sensory.x - e.x);
-        move = 0.08;
+        move = beneathNotice ? 0.22 : 0.08;
         e.telegraph = 0;
       }
     } else if (e.territoryRetreat?.until > this.time) {
@@ -1171,11 +1188,13 @@ export const Ecosystem = {
       if (e.boss) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.015 * dt);
     } else {
       e.intent =
-        e.behavior === "neutral" || e.behavior === "territorial"
-          ? "graze"
-          : e.behavior === "ambusher"
-            ? "ambush"
-            : "wander";
+        beneathNotice
+          ? "ignore"
+          : e.behavior === "neutral" || e.behavior === "territorial"
+            ? "graze"
+            : e.behavior === "ambusher"
+              ? "ambush"
+              : "wander";
       e.telegraph = 0;
       e.wanderTime -= dt;
       if (e.wanderTime <= 0) {

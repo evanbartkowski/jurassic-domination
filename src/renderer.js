@@ -815,10 +815,13 @@ export class WorldRenderer {
       dt,
       diff,
     );
+    const isColossal = (model.userData.species.size * scaleFactor >= 2.2) || (model.userData.species.tier >= 4);
+    const viewLimit = isColossal ? 145 : 70;
     model.visible =
-      Math.hypot(x - this.cameraTarget.x, z - this.cameraTarget.z) < 68;
+      Math.hypot(x - this.cameraTarget.x, z - this.cameraTarget.z) < viewLimit;
     model.userData.body.visible = true;
     model.userData.isJuvenile = scaleFactor < 0.68;
+    model.userData.isColossal = isColossal;
     model.scale.setScalar(model.userData.baseScale * scaleFactor);
     return model;
   }
@@ -1059,7 +1062,10 @@ export class WorldRenderer {
         this.ring.visible = false;
       } else this.ring.visible = false;
       for (const e of game.entities) {
-        if (Math.hypot(e.x - p.x, e.y - p.y) > 49) {
+        const s = SPECIES_BY_ID[e.speciesId];
+        const isHighLevelOrHuge = (s && s.tier >= 4) || e.boss || (s && s.size >= 2.2) || (e.scaleFactor && e.scaleFactor >= 1.4);
+        const maxDist = isHighLevelOrHuge ? 140 : 52;
+        if (Math.hypot(e.x - p.x, e.y - p.y) > maxDist) {
           const old = this.models.get(e.id);
           if (old) {
             old.visible = false;
@@ -1234,6 +1240,71 @@ export class WorldRenderer {
         }, 1);
       }
       this.dust.position.set(p.x, 0, p.y);
+
+      // Huge nearby dinosaurs and titans cause ground tremors, screen shake, and dust puffs
+      for (const e of game.entities) {
+        const s = SPECIES_BY_ID[e.speciesId];
+        if (!s) continue;
+        const eSize = s.size * (e.scaleFactor || 1);
+        if (eSize >= 2.2 || e.boss || s.tier >= 4) {
+          const d = Math.hypot(e.x - p.x, e.y - p.y);
+          if (d < 45) {
+            const isMoving = e.intent !== "sleeping" && (e.attacking > 0 || (e.charging || 0) > 0 || (e.telegraph || 0) > 0 || (e.motionX !== undefined && Math.hypot(e.x - e.motionX, e.y - e.motionY) > 0.012));
+            if (isMoving) {
+              const stridePeriod = 0.55 + Math.sqrt(eSize) * 0.18;
+              const phase = ((t + (e.id * 1.37)) % stridePeriod) / stridePeriod;
+              // Rhythmic foot impact when giant foot strikes ground
+              if (phase < 0.14) {
+                const proximity = Math.pow(Math.max(0, 1 - d / 45), 1.6);
+                const tremor = proximity * Math.min(0.75, (eSize / 3.0) * 0.38);
+                this.shake = Math.max(this.shake, tremor);
+
+                // Dust puff kicking up when giant foot hits ground
+                if (this.terrain.quality !== "low" && d < 38 && Math.random() < 0.32) {
+                  const footSide = ((phase * 100) | 0) % 2 === 0 ? 1 : -1;
+                  this.addParticle({
+                    x: e.x + Math.cos(e.angle + Math.PI / 2 * footSide) * eSize * 0.35,
+                    y: 0.12,
+                    z: e.y + Math.sin(e.angle + Math.PI / 2 * footSide) * eSize * 0.35,
+                    vx: (Math.random() - 0.5) * 1.8,
+                    vy: 0.35 + Math.random() * 0.4,
+                    vz: (Math.random() - 0.5) * 1.8,
+                    floating: false,
+                    life: 0.48,
+                    size: 0.22 * Math.min(3.5, eSize),
+                    color: 0x988a75,
+                  }, 1);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // If player is a massive dinosaur/titan, their own heavy strides shake the ground and kick dust
+      if (game.effectiveSize >= 2.2 && (p.vx * p.vx + p.vy * p.vy > 0.8)) {
+        const pSize = game.effectiveSize;
+        const stridePeriod = 0.52 + Math.sqrt(pSize) * 0.16;
+        const phase = (t % stridePeriod) / stridePeriod;
+        if (phase < 0.12) {
+          const playerTremor = Math.min(0.35, (pSize / 4.0) * 0.22);
+          this.shake = Math.max(this.shake, playerTremor);
+          if (this.terrain.quality !== "low" && Math.random() < 0.28) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * pSize * 0.55,
+              y: 0.12,
+              z: p.y + (Math.random() - 0.5) * pSize * 0.55,
+              vx: (Math.random() - 0.5) * 1.3,
+              vy: 0.3 + Math.random() * 0.35,
+              vz: (Math.random() - 0.5) * 1.3,
+              floating: false,
+              life: 0.42,
+              size: 0.2 * Math.min(3.0, pSize),
+              color: 0x988a75,
+            }, 1);
+          }
+        }
+      }
     } else {
       if (this.companion) this.companion.visible = false;
       this.ring.visible = false;
@@ -1242,20 +1313,24 @@ export class WorldRenderer {
       for (const m of this.foodModels.values()) m.visible = false;
       for (const m of this.warnings.values()) m.visible = false;
     }
-    this.shake = Math.max(0, this.shake - dt * 1.5);
+    this.shake = Math.max(0, this.shake - dt * 2.2);
     const shake = (this.settings.shake && !this.settings.reducedMotion) ? this.shake : 0;
-    const zoom =
-      p && !menu ? clamp(game.effectiveSize - 1, 0, 14) * 2.2 : 0;
+    const effectiveSize = (p && !menu) ? game.effectiveSize : 1.0;
+    const targetDist = p && !menu ? 15.0 + Math.pow(effectiveSize, 1.08) * 8.5 : 25;
+    this.cameraDist = this.cameraDist ? THREE.MathUtils.damp(this.cameraDist, targetDist, 3.8, dt) : targetDist;
+
     if (menu) {
       this.camera.position.set(Math.sin(t * 0.08) * 0.45, 8.2, 22.5);
       this.camera.lookAt(1.2, 2.2, 0);
     } else {
+      const shakeX = Math.sin(t * 76) * shake;
+      const shakeY = Math.cos(t * 62) * shake * 0.72;
       this.camera.position.set(
-        this.cameraTarget.x + Math.sin(t * 84) * shake,
-        this.cameraTarget.y + 25 + zoom,
-        this.cameraTarget.z + 25 + zoom,
+        this.cameraTarget.x + shakeX,
+        this.cameraTarget.y + this.cameraDist + shakeY,
+        this.cameraTarget.z + this.cameraDist,
       );
-      this.camera.lookAt(this.cameraTarget.x, 0, this.cameraTarget.z - 1);
+      this.camera.lookAt(this.cameraTarget.x, 0, this.cameraTarget.z - (this.cameraDist * 0.04));
     }
 
     const tod = game && !menu ? getTimeOfDay(game.time) : { name: "day", progress: 0.35, ambientIntensity: 1 };

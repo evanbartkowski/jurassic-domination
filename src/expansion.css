@@ -1760,3 +1760,12 @@
   border: 1px solid #fca5a5;
   animation: pulse-glow 1.5s infinite ease-in-out;
 }
+
+.behavior-pill.behavior-indifferent {
+  background: rgba(30, 27, 24, 0.94) !important;
+  color: #fef08a !important;
+  border: 1px solid rgba(234, 179, 8, 0.6) !important;
+  box-shadow: 0 0 6px rgba(202, 138, 4, 0.35);
+  font-weight: 750;
+  letter-spacing: 0.05em;
+}

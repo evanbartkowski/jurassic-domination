@@ -9,8 +9,8 @@ export const ACTIONS = [
   ["journal", "Bloodline journal", "KeyJ"], ["map", "Expand map", "KeyM"],
   ["crouch", "Stalk / aquatic dive", "KeyH"], ["fieldJournal", "Field journal / ancestry", "KeyL"],
   ["guide", "Encyclopedia", "Tab"],
-  ["roar", "Terrifying Roar", "KeyC"],
-  ...["F", "G", "Z", "V", "B", "N"].map((key, i) => ["skill" + i, "Relic skill " + (i + 1), "Key" + key]),
+  ["roar", "Terrifying Roar", "KeyZ"],
+  ...["F", "G", "Y", "V", "B", "N"].map((key, i) => ["skill" + i, "Relic skill " + (i + 1), "Key" + key]),
 ];
 export const DEFAULT_BINDINGS = Object.freeze(Object.fromEntries(ACTIONS.map(([action, , key]) => [action, key])));
 const actions = new Set(ACTIONS.map(([action]) => action));
@@ -42,7 +42,7 @@ export function keyLabel(code = "") {
 export function actionHeld(action, keys, pending, bindings = DEFAULT_BINDINGS) {
   const code = bindings[action] || DEFAULT_BINDINGS[action];
   if (keys.has(code) || pending?.has(code)) return true;
-  const alternative = { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight" }[action];
+  const alternative = { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", roar: "KeyC" }[action];
   if (alternative && !Object.entries(bindings).some(([id, key]) => id !== action && key === alternative) && (keys.has(alternative) || pending?.has(alternative))) return true;
   if (["dash", "sprint"].includes(action) && code === DEFAULT_BINDINGS[action]) {
     const secondary = code.replace("Left", "Right");

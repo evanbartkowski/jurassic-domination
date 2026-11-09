@@ -1,4 +1,11 @@
-import { SPECIES, MUTATIONS, TIERS } from "./data.js";
+import { SPECIES, MUTATIONS, TIERS, MUTATION_RARITIES } from "./data.js";
+import {
+  BUILD_CATEGORIES,
+  BUILD_MUTATIONS,
+  MUTATION_SYNERGIES,
+  calculateBuildPower,
+  renderStars,
+} from "./build-system.js";
 import {
   ABILITIES,
   TECHNIQUES,
@@ -107,6 +114,170 @@ const skillSummary = (s) => {
   const kit = creatureKit(s);
   return [kit.ability && `Q · ${s.ability}`, kit.technique && `R · ${TECHNIQUES[kit.technique].name}`, kit.special && `X · ${SPECIALS[kit.special].name}`].filter(Boolean).join(" / ") || "INSTINCT ONLY · BITE & SURVIVE";
 };
+
+export function computeUpgradeDiff(m, currentLvl, nextLvl) {
+  const isUpgrade = currentLvl > 0;
+  const bm = BUILD_MUTATIONS[m.id] || m;
+  const curr = bm.levels?.[currentLvl - 1];
+  const next = bm.levels?.[nextLvl - 1] || curr || {};
+
+  const deltas = [];
+
+  if (isUpgrade && curr) {
+    if (next.damage !== undefined && curr.damage !== undefined && next.damage !== curr.damage) {
+      deltas.push({ label: "Damage", from: `${curr.damage}`, to: `${next.damage}`, delta: `+${next.damage - curr.damage}` });
+    }
+    if (next.cooldown !== undefined && curr.cooldown !== undefined && next.cooldown !== curr.cooldown) {
+      deltas.push({ label: "Cooldown", from: `${curr.cooldown}s`, to: `${next.cooldown}s`, delta: `-${(curr.cooldown - next.cooldown).toFixed(1)}s` });
+    }
+    if (next.bleedDmg !== undefined && curr.bleedDmg !== undefined && next.bleedDmg !== curr.bleedDmg) {
+      deltas.push({ label: "Bleed Dmg", from: `${Math.round(curr.bleedDmg * 100)}%`, to: `${Math.round(next.bleedDmg * 100)}%`, delta: `+${Math.round((next.bleedDmg - curr.bleedDmg) * 100)}%` });
+    }
+    if (next.bleedRate !== undefined && curr.bleedRate !== undefined && next.bleedRate !== curr.bleedRate) {
+      deltas.push({ label: "Laceration", from: `${Math.round(curr.bleedRate * 100)}%`, to: `${Math.round(next.bleedRate * 100)}%`, delta: `+${Math.round((next.bleedRate - curr.bleedRate) * 100)}%` });
+    }
+    if (next.arcs !== undefined && curr.arcs !== undefined && next.arcs !== curr.arcs) {
+      deltas.push({ label: "Chain Foes", from: `${curr.arcs}`, to: `${next.arcs}`, delta: `+${next.arcs - curr.arcs}` });
+    }
+    if (next.projectiles !== undefined && curr.projectiles !== undefined && next.projectiles !== curr.projectiles) {
+      deltas.push({ label: "Projectiles", from: `${curr.projectiles}`, to: `${next.projectiles}`, delta: `+${next.projectiles - curr.projectiles}` });
+    }
+    if (next.tailDmg !== undefined && curr.tailDmg !== undefined && next.tailDmg !== curr.tailDmg) {
+      deltas.push({ label: "Tail Sweep", from: `${Math.round(curr.tailDmg * 100)}%`, to: `${Math.round(next.tailDmg * 100)}%`, delta: `+${Math.round((next.tailDmg - curr.tailDmg) * 100)}%` });
+    }
+    if (next.impactDmg !== undefined && curr.impactDmg !== undefined && next.impactDmg !== curr.impactDmg) {
+      deltas.push({ label: "Impact Dmg", from: `${curr.impactDmg}`, to: `${next.impactDmg}`, delta: `+${next.impactDmg - curr.impactDmg}` });
+    }
+    if (next.coneDmg !== undefined && curr.coneDmg !== undefined && next.coneDmg !== curr.coneDmg) {
+      deltas.push({ label: "Flame Dmg", from: `${curr.coneDmg}`, to: `${next.coneDmg}`, delta: `+${next.coneDmg - curr.coneDmg}` });
+    }
+    if (next.hpBonus !== undefined && curr.hpBonus !== undefined && next.hpBonus !== curr.hpBonus) {
+      deltas.push({ label: "Max HP", from: `+${Math.round(curr.hpBonus * 100)}%`, to: `+${Math.round(next.hpBonus * 100)}%`, delta: `+${Math.round((next.hpBonus - curr.hpBonus) * 100)}%` });
+    }
+    if (next.dmgReduct !== undefined && curr.dmgReduct !== undefined && next.dmgReduct !== curr.dmgReduct) {
+      deltas.push({ label: "Dampening", from: `${Math.round(curr.dmgReduct * 100)}%`, to: `${Math.round(next.dmgReduct * 100)}%`, delta: `+${Math.round((next.dmgReduct - curr.dmgReduct) * 100)}%` });
+    }
+    if (next.reflect !== undefined && curr.reflect !== undefined && next.reflect !== curr.reflect) {
+      deltas.push({ label: "Deflect", from: `${Math.round(curr.reflect * 100)}%`, to: `${Math.round(next.reflect * 100)}%`, delta: `+${Math.round((next.reflect - curr.reflect) * 100)}%` });
+    }
+    if (next.armor !== undefined && curr.armor !== undefined && next.armor !== curr.armor) {
+      deltas.push({ label: "Armor", from: `+${Math.round(curr.armor * 100)}%`, to: `+${Math.round(next.armor * 100)}%`, delta: `+${Math.round((next.armor - curr.armor) * 100)}%` });
+    }
+    if (next.barrier !== undefined && curr.barrier !== undefined && next.barrier !== curr.barrier) {
+      deltas.push({ label: "Aegis", from: `${Math.round(curr.barrier * 100)}%`, to: `${Math.round(next.barrier * 100)}%`, delta: `+${Math.round((next.barrier - curr.barrier) * 100)}%` });
+    }
+    if (next.critChance !== undefined && curr.critChance !== undefined && next.critChance !== curr.critChance) {
+      deltas.push({ label: "Crit Chance", from: `${Math.round(curr.critChance * 100)}%`, to: `${Math.round(next.critChance * 100)}%`, delta: `+${Math.round((next.critChance - curr.critChance) * 100)}%` });
+    }
+    if (next.critMult !== undefined && curr.critMult !== undefined && next.critMult !== curr.critMult) {
+      deltas.push({ label: "Crit Multi", from: `${curr.critMult}x`, to: `${next.critMult}x`, delta: `+${(next.critMult - curr.critMult).toFixed(1)}x` });
+    }
+    if (next.speed !== undefined && curr.speed !== undefined && next.speed !== curr.speed) {
+      deltas.push({ label: "Move Speed", from: `+${Math.round(curr.speed * 100)}%`, to: `+${Math.round(next.speed * 100)}%`, delta: `+${Math.round((next.speed - curr.speed) * 100)}%` });
+    }
+    if (next.slow !== undefined && curr.slow !== undefined && next.slow !== curr.slow) {
+      deltas.push({ label: "Slow Power", from: `${Math.round(curr.slow * 100)}%`, to: `${Math.round(next.slow * 100)}%`, delta: `+${Math.round((next.slow - curr.slow) * 100)}%` });
+    }
+
+    if (next.toxicPool && !curr.toxicPool) deltas.push({ tag: "🧪 Lingering Toxic Pools" });
+    if (next.electrocute && !curr.electrocute) deltas.push({ tag: "⚡ Electrocution Stun" });
+    if (next.fullCircle && !curr.fullCircle) deltas.push({ tag: "🌀 360° Tail Spin Sweep" });
+    if (next.armorShatter && !curr.armorShatter) deltas.push({ tag: "🛡️ Shatters Enemy Armor" });
+    if (next.trample && !curr.trample) deltas.push({ tag: "🦏 Trample Through Prey" });
+    if (next.fireExplosion && !curr.fireExplosion) deltas.push({ tag: "🔥 Fiery Nova Blast" });
+    if (next.flashFreeze && !curr.flashFreeze) deltas.push({ tag: "❄️ Instant Flash Freeze" });
+    if (next.semicircle && !curr.semicircle) deltas.push({ tag: "🪓 180° Cleave Arc" });
+  } else {
+    if (next.damage) deltas.push({ tag: `⚔️ Base ${next.damage} Damage` });
+    if (next.bleedDmg) deltas.push({ tag: `🩸 +${Math.round(next.bleedDmg * 100)}% Bleed over ${next.duration || 3}s` });
+    if (next.cooldown) deltas.push({ tag: `⏱️ ${next.cooldown}s Cooldown` });
+    if (next.hpBonus) deltas.push({ tag: `❤️ +${Math.round(next.hpBonus * 100)}% Max HP` });
+    if (next.dmgReduct) deltas.push({ tag: `🛡️ -${Math.round(next.dmgReduct * 100)}% Damage Taken` });
+    if (next.speed) deltas.push({ tag: `⚡ +${Math.round(next.speed * 100)}% Move Speed` });
+    if (next.critChance) deltas.push({ tag: `🎯 +${Math.round(next.critChance * 100)}% Crit (${next.critMult || 1.5}x)` });
+    if (deltas.length === 0) deltas.push({ tag: "🧬 New Genetic Trait" });
+  }
+
+  return deltas;
+}
+
+export function renderCardDiffsHTML(deltas) {
+  if (!deltas || deltas.length === 0) return "";
+  return `
+    <div class="card-upgrade-deltas">
+      <div class="deltas-title">WHAT THIS CHANGES:</div>
+      <div class="deltas-list">
+        ${deltas.map((d) => {
+          if (d.tag) {
+            return `<div class="delta-tag-pill">${esc(d.tag)}</div>`;
+          }
+          return `
+            <div class="delta-row">
+              <span class="delta-label">${esc(d.label)}</span>
+              <span class="delta-values">${esc(d.from)} <i class="delta-arrow">➔</i> <b>${esc(d.to)}</b></span>
+              <span class="delta-badge">${esc(d.delta)}</span>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+export function renderRankBadgeHTML(currentLvl, nextLvl, isUpgrade) {
+  const maxLvl = 5;
+  const pips = [];
+  for (let i = 1; i <= maxLvl; i++) {
+    if (isUpgrade) {
+      if (i <= currentLvl) pips.push(`<span class="rank-pip filled">★</span>`);
+      else if (i === nextLvl) pips.push(`<span class="rank-pip target" title="Target Rank">★</span>`);
+      else pips.push(`<span class="rank-pip empty">☆</span>`);
+    } else {
+      if (i === 1) pips.push(`<span class="rank-pip filled new-pip">★</span>`);
+      else pips.push(`<span class="rank-pip empty">☆</span>`);
+    }
+  }
+
+  return `
+    <div class="card-rank-wrap ${isUpgrade ? "upgrading" : "new"}">
+      <div class="rank-labels">
+        ${isUpgrade ? `
+          <span class="rank-badge curr">RANK ${currentLvl}</span>
+          <span class="rank-transition-arrow">➔</span>
+          <span class="rank-badge next">RANK ${nextLvl}</span>
+        ` : `
+          <span class="rank-badge new-discovery">NEW UNLOCK</span>
+          <span class="rank-badge next">RANK 1</span>
+        `}
+      </div>
+      <div class="rank-pips">${pips.join("")}</div>
+    </div>
+  `;
+}
+
+export function attach3DTilt(element) {
+  element.addEventListener("pointermove", (e) => {
+    const rect = element.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -11;
+    const rotateY = ((x - centerX) / centerX) * 11;
+    const mouseXPercent = (x / rect.width) * 100;
+    const mouseYPercent = (y / rect.height) * 100;
+
+    element.style.setProperty("--mouse-x", `${mouseXPercent.toFixed(1)}%`);
+    element.style.setProperty("--mouse-y", `${mouseYPercent.toFixed(1)}%`);
+    element.style.transform = `perspective(850px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(14px) scale3d(1.025, 1.025, 1.025)`;
+  });
+
+  element.addEventListener("pointerleave", () => {
+    element.style.transform = "";
+    element.style.setProperty("--mouse-x", "50%");
+    element.style.setProperty("--mouse-y", "50%");
+  });
+}
 
 export class UI {
   constructor(callbacks, profile, settings) {
@@ -315,9 +486,9 @@ export class UI {
       <div class="minimap-wrap"><div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div><canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas><div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div><div class="hud-danger-panel" id="hud-danger-panel"><div class="danger-header-row"><span>THREAT LEVEL</span><b id="hud-danger-label">🌿 SAFE BASIN</b></div><div class="meter danger-meter"><span id="hud-danger-bar"></span></div></div></div>
       <div class="hud-bottom"><div class="vital-status-feed"><p class="hunger-warning" id="hud-warning"></p><span id="hud-diet"></span></div></div>
       <div class="abilities"><div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div><div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div><div class="ability-key"><kbd>SHIFT</kbd>${icon("arrow")}<span id="dash-name">DASH</span><b id="hud-dash-cooldown">READY</b></div><div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div></div>
-      <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p><button id="evolve-ready" hidden aria-label="Open evolution choices"><kbd>T</kbd> EVOLUTION READY <span>CHOOSE WHEN YOU ARE READY</span></button><span id="growth-status"></span><button id="bloodline-journal">J - COMPENDIUM</button></div></div>
-      <div class="hud-controls">${small("W A S D", "MOVE")}${small("MOUSE", "AIM")}${small("SPACE", "BITE")}${small("ESC", "PAUSE")}</div>
-      <div id="egg-prompt" class="egg-prompt" hidden><p class="eyebrow">A NEW LIFE STIRS</p><h2>Break into the unknown.</h2><p>Every predator was once prey. Your species is decided at birth.</p><button id="hatch-button" class="button primary">CRACK THE SHELL ${icon("arrow")}</button><span class="small-muted">PRESS E OR CLICK TO HATCH</span></div>
+      <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p><button id="evolve-ready" hidden aria-label="Open evolution choices"><kbd>T</kbd> EVOLUTION READY <span>CHOOSE WHEN YOU ARE READY</span></button><span id="growth-status"></span><button id="bloodline-journal">J - COMPENDIUM</button><button id="build-shortcut-btn" class="build-shortcut-btn"><kbd>B</kbd> BUILDS</button></div></div>
+      <div class="hud-controls">${small("W A S D", "MOVE")}${small("MOUSE", "AIM")}${small("SPACE", "BITE")}${small("B", "BUILDS")}${small("ESC", "PAUSE")}</div>
+      <div id="egg-prompt" class="egg-prompt" hidden><p class="eyebrow">A NEW LIFE STIRS</p><h2>Break into the unknown.</h2><p>Every predator was once prey. Choose your species before birth:</p><div class="starter-choices" id="starter-choices"></div><button id="hatch-button" class="button primary">CRACK THE SHELL ${icon("arrow")}</button><span class="small-muted">SELECT A SPECIES OR PRESS [1], [2], [3] / E / SPACE TO HATCH</span></div>
     `;
     $("#pause-button").addEventListener("click", () =>
       this.callbacks.pause?.(),
@@ -331,13 +502,17 @@ export class UI {
       this.callbacks.pause();
       this.callbacks.bloodlines();
     };
+    $("#build-shortcut-btn")?.addEventListener("click", () => {
+      this.callbacks.pause?.();
+      this.showBuildSheet(this.currentGame);
+    });
     const extra = document.createElement("div");
     extra.className = "ability-key special-key";
     extra.id = "special-key";
     extra.innerHTML =
       '<kbd>X</kbd><span id="special-name"></span><b id="special-cooldown">READY</b>';
     $(".abilities").append(extra);
-    $("#hatch-button").addEventListener("click", () => this.callbacks.hatch());
+    $("#hatch-button").addEventListener("click", () => this.callbacks.hatch(this.selectedStarterId || this.currentGame?._starter?.id));
   }
 
   showHUD() {
@@ -448,6 +623,41 @@ export class UI {
           : "ECOSYSTEM STABLE";
     $("#hud-threat").classList.toggle("danger-text", threat > 0.35);
     $("#egg-prompt").hidden = game.state !== "egg";
+    if (game.state === "egg") {
+      const container = $("#starter-choices");
+      if (container && this._renderedStarterChoices !== (game.starterChoices || []).join(",")) {
+        this._renderedStarterChoices = (game.starterChoices || []).join(",");
+        this.selectedStarterId = this.selectedStarterId || game.starterChoices?.[0] || game._starter?.id;
+        container.innerHTML = (game.starterChoices || []).map((id, idx) => {
+          const sp = species(id);
+          const isSel = id === this.selectedStarterId;
+          const dietColor = sp.diet === "carnivore" ? "#f87171" : sp.diet === "herbivore" ? "#4ade80" : "#fbbf24";
+          return `
+            <button type="button" class="starter-egg-card ${isSel ? "selected" : ""}" data-starter="${esc(sp.id)}">
+              <span class="starter-num">[${idx + 1}]</span>
+              <div class="starter-icon">${portrait(sp.id)}</div>
+              <h3>${esc(sp.name)}</h3>
+              <div class="starter-meta">
+                <span class="starter-diet" style="color:${dietColor}">${esc(sp.diet.toUpperCase())}</span>
+                <span class="starter-body">${esc(sp.body.toUpperCase())}</span>
+              </div>
+              <div class="starter-stats">
+                <span>HP <b>${sp.hp}</b></span>
+                <span>DMG <b>${sp.damage}</b></span>
+                <span>SPD <b>${sp.speed}</b></span>
+              </div>
+              <p class="starter-desc">${esc(sp.description)}</p>
+            </button>
+          `;
+        }).join("");
+        container.querySelectorAll(".starter-egg-card").forEach((card) => {
+          card.onclick = () => {
+            this.selectedStarterId = card.dataset.starter;
+            container.querySelectorAll(".starter-egg-card").forEach((c) => c.classList.toggle("selected", c === card));
+          };
+        });
+      }
+    }
     this.hud.classList.toggle("critical", p.hp < p.maxHp * 0.25);
     this.hud.classList.toggle("hungry", p.hunger < 25);
 
@@ -506,10 +716,11 @@ export class UI {
     const hasMutations = (this.currentGame?.mutations || []).length > 0;
     this.screen(
       "pause",
-      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused. Returning to the title keeps this life.</p><p class="save-status" id="pause-save-status"></p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="compendium">${icon("book")} COMPENDIUM (ENCYCLOPEDIA · JOURNAL · BLOODLINES)</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">SAVE & RETURN TO TITLE</button></div>${hasMutations ? `<div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame.mutations).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ")}</p></div>` : ""}<p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
+      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused. Returning to the title keeps this life.</p><p class="save-status" id="pause-save-status"></p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="build-sheet">🧬 MUTATION BUILDS & SYNERGIES</button><button class="button secondary" data-action="compendium">${icon("book")} COMPENDIUM (ENCYCLOPEDIA · JOURNAL · BLOODLINES)</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button quiet" data-action="menu">SAVE & RETURN TO TITLE</button></div>${hasMutations ? `<div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame.mutations).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ")}</p></div>` : ""}<p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
       "shade-screen",
     );
     this.bind("resume", () => this.callbacks.resume());
+    this.bind("build-sheet", () => this.showBuildSheet(this.currentGame));
     this.bind("compendium", () => this.showCompendium("encyclopedia", this.currentGame));
     this.bind("field-journal", () => this.showCompendium("journal", this.currentGame));
     this.bind("bloodlines", () => this.showCompendium("bloodlines", this.currentGame));
@@ -538,11 +749,95 @@ export class UI {
         <button class="compendium-tab-btn ${this.compendiumTab === "encyclopedia" ? "active" : ""}" data-comp-tab="encyclopedia" role="tab">${icon("book")} DINOSAUR ENCYCLOPEDIA</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "journal" ? "active" : ""}" data-comp-tab="journal" role="tab">${icon("leaf")} FIELD JOURNAL & SURVIVAL</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "bloodlines" ? "active" : ""}" data-comp-tab="bloodlines" role="tab">${icon("dna")} BLOODLINE PATHS</button>
+        <button class="compendium-tab-btn ${this.compendiumTab === "build" ? "active" : ""}" data-comp-tab="build" role="tab">🧬 MUTATION BUILDS</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "lineage" ? "active" : ""}" data-comp-tab="lineage" role="tab">👑 FAMILY TREE & ANCESTRY</button>
       </div>
     `;
 
     const getBodyHTML = () => {
+      if (this.compendiumTab === "build") {
+        const b = game?.build || { offensive: {}, defensive: {}, passive: {}, transformations: {}, activeSynergies: [] };
+        const buildPower = calculateBuildPower(b);
+        const renderCategorySlots = (catKey) => {
+          const catDef = BUILD_CATEGORIES[catKey];
+          const maxSlots = catDef?.maxEquipped || 4;
+          const equipped = Object.entries(b[catKey] || {});
+          const slotsHTML = [];
+          for (let i = 0; i < maxSlots; i++) {
+            if (i < equipped.length) {
+              const [id, lvl] = equipped[i];
+              const def = BUILD_MUTATIONS[id] || MUTATIONS.find((m) => m.id === id) || { name: id, icon: "🧬" };
+              const lvlData = def.levels?.[lvl - 1];
+              slotsHTML.push(`
+                <div class="build-slot filled">
+                  <div class="slot-header">
+                    <span class="slot-icon">${def.icon || "🧬"}</span>
+                    <span class="slot-name">${esc(def.name)}</span>
+                    <span class="slot-stars">${renderStars(lvl)}</span>
+                  </div>
+                  <p class="slot-desc">${esc(lvlData?.desc || def.description || "")}</p>
+                </div>
+              `);
+            } else {
+              slotsHTML.push(`
+                <div class="build-slot empty">
+                  <span class="slot-empty-label">+ Empty ${esc(catDef?.name || "Mutation")} Slot</span>
+                </div>
+              `);
+            }
+          }
+          return slotsHTML.join("");
+        };
+        const synergiesHTML = Object.entries(MUTATION_SYNERGIES).map(([key, syn]) => {
+          const isUnlocked = b.activeSynergies?.includes(key);
+          return `
+            <div class="synergy-card ${isUnlocked ? "unlocked" : "locked"}" style="--syn-color:${syn.color}; --syn-border:${syn.border}; --syn-bg:${syn.bg}">
+              <div class="synergy-card-header">
+                <span class="synergy-icon">${syn.icon}</span>
+                <div class="synergy-title-wrap">
+                  <h3>${esc(syn.name)}</h3>
+                  <span class="synergy-req">${esc(syn.reqText)}</span>
+                </div>
+                <span class="synergy-status-badge">${isUnlocked ? "⚡ UNLOCKED" : "🔒 LOCKED"}</span>
+              </div>
+              <p class="synergy-desc">${esc(syn.description)}</p>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="compendium-build-wrap" style="padding:16px;max-height:64vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+              <div>
+                <h2 style="font-size:20px;color:#f3f4f6;margin-bottom:4px;">DINOSAUR MUTATION BUILD & SYNERGIES</h2>
+                <p style="font-size:13px;color:#94a3b8;">4 Upgrade Disciplines · Max 4 Mutations Each · Level 1-5 Stacking</p>
+              </div>
+              <div class="build-power-badge" style="background:rgba(234,179,8,0.15);border:1px solid #eab308;padding:8px 14px;border-radius:8px;text-align:right;">
+                <span style="font-size:10px;color:#fde047;display:block;">APEX BUILD POWER</span>
+                <strong style="font-size:22px;color:#fde047;">⚡ ${Math.round(buildPower)}</strong>
+              </div>
+            </div>
+            <div class="build-categories-grid">
+              <div class="build-category-col" style="--col-color:#f87171; --col-border:#ef4444">
+                <div class="category-header"><span>⚔️</span><h2>Offensive Mutations</h2><small>Max 4</small></div>
+                <div class="category-slots">${renderCategorySlots("offensive")}</div>
+              </div>
+              <div class="build-category-col" style="--col-color:#38bdf8; --col-border:#0284c7">
+                <div class="category-header"><span>🛡️</span><h2>Defensive Adaptations</h2><small>Max 4</small></div>
+                <div class="category-slots">${renderCategorySlots("defensive")}</div>
+              </div>
+              <div class="build-category-col" style="--col-color:#fbbf24; --col-border:#d97706">
+                <div class="category-header"><span>⚡</span><h2>Passive Abilities</h2><small>Max 4</small></div>
+                <div class="category-slots">${renderCategorySlots("passive")}</div>
+              </div>
+            </div>
+            <div class="synergy-section" style="margin-top:20px;">
+              <h2 style="font-size:16px;color:#e2e8f0;margin-bottom:12px;">🧬 Powerful Mutation Synergies</h2>
+              <div class="synergy-grid">${synergiesHTML}</div>
+            </div>
+          </div>
+        `;
+      }
       if (this.compendiumTab === "journal") {
         return `<div class="field-journal-wrap">${fieldJournalHTML(game, this.profile)}</div>`;
       }
@@ -1210,8 +1505,63 @@ export class UI {
     return true;
   }
 
+  selectEvolutionIndex(idx) {
+    if (this._view !== "evolution") return;
+    const cards = this.overlay.querySelectorAll(".evolution-card");
+    if (!cards[idx]) return;
+    this.chosenEvolutionIndex = idx;
+    this.chosenSpecies = cards[idx].dataset.species;
+    cards.forEach((c, i) => {
+      const isCardSel = i === idx;
+      c.classList.toggle("selected", isCardSel);
+      c.setAttribute("aria-pressed", isCardSel ? "true" : "false");
+      if (isCardSel) c.focus({ preventScroll: true });
+    });
+  }
+
+  cycleEvolutionSelection(direction) {
+    if (this._view !== "evolution") return;
+    const cards = this.overlay.querySelectorAll(".evolution-card");
+    if (!cards.length) return;
+    const nextIdx = ((this.chosenEvolutionIndex || 0) + direction + cards.length) % cards.length;
+    this.selectEvolutionIndex(nextIdx);
+  }
+
+  confirmChosenEvolution() {
+    if (this.isConfirmingEvolution || !this.chosenSpecies) return;
+    this.isConfirmingEvolution = true;
+
+    const cards = this.overlay.querySelectorAll(".evolution-card");
+    cards.forEach((card) => {
+      if (card.dataset.species === this.chosenSpecies) {
+        card.classList.add("burst-confirmed");
+        const ring = document.createElement("div");
+        ring.className = "burst-shockwave-ring";
+        card.appendChild(ring);
+      } else {
+        card.classList.add("dismissed");
+      }
+    });
+
+    const bottomBtn = this.overlay.querySelector('[data-action="evolve"]');
+    if (bottomBtn) {
+      bottomBtn.classList.add("confirming");
+      bottomBtn.textContent = "EVOLUTION EMBRACED! 🧬";
+    }
+
+    try {
+      this.callbacks.audio?.play?.("evolve");
+    } catch {}
+
+    setTimeout(() => {
+      this.callbacks.evolve(this.chosenSpecies, this.chosenMutation);
+    }, 320);
+  }
+
   showEvolution(game) {
     this.evolutionGame = game;
+    this.isConfirmingEvolution = false;
+    this.chosenEvolutionIndex = 0;
     this.chosenSpecies =
       typeof game.evolutionChoices?.[0] === "object"
         ? game.evolutionChoices[0].id
@@ -1238,23 +1588,52 @@ export class UI {
           const affinityBadge = affinity
             ? `<div class="behavior-match-pill" style="display:inline-flex;align-items:center;gap:4px;background:rgba(234,179,8,0.18);border:1px solid rgba(234,179,8,0.5);border-radius:12px;padding:2px 8px;font:700 11px system-ui;color:#fde047;margin-top:4px;"><span>${affinity.icon}</span> BEHAVIOR MATCH · ${esc(affinity.label.toUpperCase())}</div>`
             : "";
-          return `<button class="evolution-card ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" data-rarity="${s.rarity || "regular"}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${i === 0}"><span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity">${EVOLUTION_RARITIES[s.rarity || "regular"].name.toUpperCase()}${s.bloodline ? " - EARNED BLOODLINE" : ""}</span><div class="evolution-creature">${portrait(s.id)}</div><h2>${esc(s.name)}</h2>${affinityBadge}<p>${esc(s.description)}</p><div class="species-stats"><span>HP <b>${s.hp}</b><small>${hpDelta >= 0 ? "+" : ""}${hpDelta}%</small></span><span>ATK <b>${s.damage}</b><small>${atkDelta >= 0 ? "+" : ""}${atkDelta}%</small></span><span>SPD <b>${s.speed}</b></span></div><span class="evolution-body">${s.compactEvolution ? "COMPACT RARE FORM" : "LARGER EVOLVED BODY"} · ${creatureKit(s).abilityCount} SKILLS</span><span class="species-ability">${esc(skillSummary(s))}</span><span class="choice-indicator"></span></button>`;
+          const rarityMeta = EVOLUTION_RARITIES[s.rarity || "regular"] || EVOLUTION_RARITIES.regular;
+          return `<button class="evolution-card rarity-${esc(s.rarity || "regular")} ${i === 0 ? "selected" : ""}" data-species="${esc(s.id)}" data-rarity="${s.rarity || "regular"}" style="--stagger:${i}; --lineage-color:${rarityMeta.color}; --card-color:${rarityMeta.color}; --card-glow:${rarityMeta.color}55;" aria-pressed="${i === 0}">
+            <div class="card-ambient-glow"></div>
+            <div class="card-key-pill"><kbd>${i + 1}</kbd> <span>FORM</span></div>
+            <span class="eyebrow">TIER ${s.tier + 1} / ${esc(tierName(s.tier))}</span>
+            <span class="evolution-rarity">${rarityMeta.name.toUpperCase()}${s.bloodline ? " - EARNED BLOODLINE" : ""}</span>
+            <div class="evolution-creature">${portrait(s.id)}</div>
+            <h2>${esc(s.name)}</h2>
+            ${affinityBadge}
+            <p>${esc(s.description)}</p>
+            <div class="species-stats">
+              <span>HP <b>${s.hp}</b><small>${hpDelta >= 0 ? "+" : ""}${hpDelta}%</small></span>
+              <span>ATK <b>${s.damage}</b><small>${atkDelta >= 0 ? "+" : ""}${atkDelta}%</small></span>
+              <span>SPD <b>${s.speed}</b></span>
+            </div>
+            <span class="evolution-body">${s.compactEvolution ? "COMPACT RARE FORM" : "LARGER EVOLVED BODY"} · ${creatureKit(s).abilityCount} SKILLS</span>
+            <span class="species-ability">${esc(skillSummary(s))}</span>
+            <span class="choice-indicator"></span>
+          </button>`;
         })
         .join("")}</div>
       <div class="mutation-heading"><span class="eyebrow">ADAPTATION</span><p>One mutation. Every future form.</p></div><div class="mutation-choices" role="group" aria-label="Choose a mutation">${mutations.map((m, i) => `<button class="mutation-card ${i === 0 ? "selected" : ""}" data-mutation="${esc(m.id)}" aria-pressed="${i === 0}">${icon("dna")}<span><strong>${esc(m.name)}</strong><small>${esc(m.description)}</small></span><span class="choice-indicator"></span></button>`).join("")}</div>
-      <div class="panel-bottom"><span>Evolution restores vitality and resets growth for the new form. Postpone to keep hunting.</span><button class="button secondary" data-action="postpone">KEEP GROWING - ESC</button><button class="button primary" data-action="evolve" data-focus>EMBRACE EVOLUTION ${icon("arrow")}</button></div></div>`,
+      <div class="panel-bottom">
+        <span class="keyboard-nav-hint">Keys <kbd>[1]</kbd> <kbd>[2]</kbd> <kbd>[3]</kbd> or <kbd>←</kbd> <kbd>→</kbd> + <kbd>ENTER</kbd> to evolve.</span>
+        <button class="button secondary" data-action="postpone">KEEP GROWING - ESC</button>
+        <button class="button primary" data-action="evolve" data-focus>EMBRACE EVOLUTION ${icon("arrow")}</button>
+      </div></div>`,
       "shade-screen evolution-screen",
     );
     this.bind("postpone", () => this.callbacks.postpone());
-    this.overlay.querySelectorAll("[data-species]").forEach((button) =>
+
+    const speciesCards = this.overlay.querySelectorAll(".evolution-card");
+    speciesCards.forEach((button, idx) => {
+      attach3DTilt(button);
       button.addEventListener("click", () => {
-        this.chosenSpecies = button.dataset.species;
-        this.overlay.querySelectorAll("[data-species]").forEach((b) => {
-          b.classList.toggle("selected", b === button);
-          b.setAttribute("aria-pressed", b === button);
-        });
-      }),
-    );
+        if (this.chosenEvolutionIndex === idx) {
+          this.confirmChosenEvolution();
+        } else {
+          this.selectEvolutionIndex(idx);
+        }
+      });
+      button.addEventListener("dblclick", () => {
+        this.confirmChosenEvolution();
+      });
+    });
+
     this.overlay.querySelectorAll("[data-mutation]").forEach((button) =>
       button.addEventListener("click", () => {
         this.chosenMutation = button.dataset.mutation;
@@ -1264,9 +1643,274 @@ export class UI {
         });
       }),
     );
-    this.bind("evolve", () =>
-      this.callbacks.evolve(this.chosenSpecies, this.chosenMutation),
+    this.bind("evolve", () => this.confirmChosenEvolution());
+  }
+
+  selectStarter(speciesId) {
+    if (!speciesId) return;
+    this.selectedStarterId = speciesId;
+    const container = $("#starter-choices");
+    if (container) {
+      container.querySelectorAll(".starter-egg-card").forEach((c) => {
+        c.classList.toggle("selected", c.dataset.starter === speciesId);
+      });
+    }
+  }
+
+  selectMutationIndex(idx, autoConfirm = false) {
+    if (this._view !== "mutation-choice" || !this.mutationChoices?.[idx]) return;
+    this.chosenMutationIndex = idx;
+    this.chosenMutationId = this.mutationChoices[idx].id;
+    const cards = this.overlay.querySelectorAll(".mutation-pick-card");
+    cards.forEach((card, i) => {
+      const isCardSel = i === idx;
+      card.classList.toggle("selected", isCardSel);
+      card.setAttribute("aria-pressed", isCardSel ? "true" : "false");
+      if (isCardSel) {
+        card.focus({ preventScroll: true });
+      }
+    });
+    if (autoConfirm) {
+      this.confirmChosenMutation();
+    }
+  }
+
+  cycleMutationSelection(direction) {
+    if (this._view !== "mutation-choice" || !this.mutationChoices?.length) return;
+    const total = this.mutationChoices.length;
+    const nextIdx = (this.chosenMutationIndex + direction + total) % total;
+    this.selectMutationIndex(nextIdx, false);
+  }
+
+  confirmChosenMutation(mutationId = this.chosenMutationId) {
+    if (this.isConfirmingMutation || !mutationId) return;
+    this.isConfirmingMutation = true;
+
+    const cards = this.overlay.querySelectorAll(".mutation-pick-card");
+    cards.forEach((card) => {
+      if (card.dataset.mutation === mutationId) {
+        card.classList.add("burst-confirmed");
+        const ring = document.createElement("div");
+        ring.className = "burst-shockwave-ring";
+        card.appendChild(ring);
+      } else {
+        card.classList.add("dismissed");
+      }
+    });
+
+    const bottomBtn = this.overlay.querySelector('[data-action="apply-mutation"]');
+    if (bottomBtn) {
+      bottomBtn.classList.add("confirming");
+      bottomBtn.textContent = "MUTATION EMBRACED! ⚡";
+    }
+
+    try {
+      this.callbacks.audio?.play?.("evolve");
+    } catch {}
+
+    setTimeout(() => {
+      this.callbacks.applyMutation(mutationId);
+    }, 320);
+  }
+
+  showMutationChoice(game, event = null) {
+    this.mutationGame = game;
+    this.isConfirmingMutation = false;
+    const choices = (event?.choices || (game.pendingMutationChoices || []).map((id) => MUTATIONS.find((m) => m.id === id))).filter(Boolean);
+    this.mutationChoices = choices;
+    this.chosenMutationIndex = 0;
+    this.chosenMutationId = choices[0]?.id || null;
+    const rarity = event?.rarity || "common";
+    const rarityMeta = MUTATION_RARITIES[rarity] || MUTATION_RARITIES.common;
+    this.screen(
+      "mutation-choice",
+      `<div class="wide-panel mutation-choice-panel">
+        <div class="mutation-choice-header">
+          <span class="mutation-crystal-orbit" style="--glow-color:${rarityMeta.color}">${icon("dna")}</span>
+          <p class="eyebrow" style="color:${rarityMeta.color}">GENETIC CATALYST · ${esc(rarity.toUpperCase())} HARVEST</p>
+          <h1>Adapt. Mutate. Ascend.</h1>
+          <p>You have felled a worthy foe and absorbed an ancient evolutionary catalyst. Select 1 of 3 permanent mutations:</p>
+        </div>
+        <div class="mutation-card-grid" role="group" aria-label="Select a mutation">
+          ${choices.map((m, idx) => {
+            const mRarity = MUTATION_RARITIES[m.rarity] || MUTATION_RARITIES.common;
+            const isSel = idx === 0;
+            const cat = m.category || BUILD_MUTATIONS[m.id]?.category || "offensive";
+            const catDef = BUILD_CATEGORIES[cat];
+            const currentLvl = m.currentLvl || game?.build?.[cat]?.[m.id] || 0;
+            const nextLvl = m.nextLvl || currentLvl + 1;
+            const isUpgrade = m.isUpgrade || currentLvl > 0;
+            const levelDesc = m.levelDesc || m.description;
+            const deltas = computeUpgradeDiff(m, currentLvl, nextLvl);
+            return `
+              <button type="button" class="mutation-pick-card rarity-${esc(m.rarity || "common")} ${isSel ? "selected" : ""} ${m.wouldSynergize ? "synergy-ready" : ""}" data-mutation="${esc(m.id)}" data-card-idx="${idx}" style="--stagger:${idx}; --card-border:${mRarity.border}; --card-bg:${mRarity.bg}; --card-color:${mRarity.color}; --card-glow:${mRarity.color}55;">
+                <div class="card-ambient-glow"></div>
+                <div class="card-top-row">
+                  <div class="card-key-pill"><kbd>${idx + 1}</kbd> <span>SELECT</span></div>
+                  <span class="card-category-pill" style="border-color:${catDef?.border || mRarity.border}; color:${catDef?.color || mRarity.color}">${catDef?.icon || "🧬"} ${esc(catDef?.name || "Mutation")}</span>
+                  <span class="card-rarity-pill rarity-${esc(m.rarity || "common")}">${esc(mRarity.name.toUpperCase())}</span>
+                </div>
+                ${m.wouldSynergize ? `<div class="card-synergy-banner">🔥 SYNERGY UNLOCK READY: ${esc(m.wouldSynergizeName || "COMBINATION")}!</div>` : ""}
+                <div class="mutation-symbol-ring" style="color:${mRarity.color}">${catDef?.icon || icon("dna")}</div>
+                <h2>${esc(m.name)}</h2>
+                ${renderRankBadgeHTML(currentLvl, nextLvl, isUpgrade)}
+                <p class="mutation-desc">${esc(levelDesc)}</p>
+                ${renderCardDiffsHTML(deltas)}
+                <div class="mutation-pick-btn">${isUpgrade ? `UPGRADE TO RANK ${nextLvl}` : "EMBRACE MUTATION"}</div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+        <div class="panel-bottom mutation-choice-bottom">
+          <span class="keyboard-nav-hint">Use keys <kbd>[1]</kbd> <kbd>[2]</kbd> <kbd>[3]</kbd> or <kbd>←</kbd> <kbd>→</kbd> + <kbd>ENTER</kbd> to select.</span>
+          <button class="button secondary" data-action="postpone-mutation">POSTPONE (ESC)</button>
+          <button class="button primary" data-action="apply-mutation" data-focus>EMBRACE MUTATION ${icon("arrow")}</button>
+        </div>
+      </div>`,
+      "shade-screen mutation-modal-screen",
     );
+    this.bind("postpone-mutation", () => this.callbacks.postponeMutation?.());
+
+    const cardElements = this.overlay.querySelectorAll(".mutation-pick-card");
+    cardElements.forEach((card, idx) => {
+      attach3DTilt(card);
+      card.addEventListener("click", () => {
+        if (this.chosenMutationIndex === idx) {
+          this.confirmChosenMutation(card.dataset.mutation);
+        } else {
+          this.selectMutationIndex(idx, false);
+        }
+      });
+      card.addEventListener("dblclick", () => {
+        this.confirmChosenMutation(card.dataset.mutation);
+      });
+    });
+
+    this.bind("apply-mutation", () => {
+      this.confirmChosenMutation();
+    });
+  }
+
+  showBuildSheet(game = this.currentGame) {
+    if (!game) return;
+    this.currentGame = game;
+    if (["menu", "pause"].includes(this._view)) this.returnView = this._view;
+    else if (this._view === "hud") this.returnView = "hud";
+    const b = game.build || { offensive: {}, defensive: {}, passive: {}, transformations: {}, activeSynergies: [] };
+    const buildPower = calculateBuildPower(b);
+
+    const renderCategorySlots = (catKey) => {
+      const catDef = BUILD_CATEGORIES[catKey];
+      const maxSlots = catDef.maxEquipped;
+      const equipped = Object.entries(b[catKey] || {});
+      const slotsHTML = [];
+      for (let i = 0; i < maxSlots; i++) {
+        if (i < equipped.length) {
+          const [id, lvl] = equipped[i];
+          const def = BUILD_MUTATIONS[id] || MUTATIONS.find((m) => m.id === id) || { name: id, icon: "🧬" };
+          const lvlData = def.levels?.[lvl - 1];
+          slotsHTML.push(`
+            <div class="build-slot filled">
+              <div class="slot-header">
+                <span class="slot-icon">${def.icon || "🧬"}</span>
+                <span class="slot-name">${esc(def.name)}</span>
+                <span class="slot-stars">${renderStars(lvl)}</span>
+              </div>
+              <p class="slot-desc">${esc(lvlData?.desc || def.description || "")}</p>
+            </div>
+          `);
+        } else {
+          slotsHTML.push(`
+            <div class="build-slot empty">
+              <span class="slot-empty-label">+ Empty ${esc(catDef.name)} Slot</span>
+            </div>
+          `);
+        }
+      }
+      return slotsHTML.join("");
+    };
+
+    const synergiesHTML = Object.entries(MUTATION_SYNERGIES).map(([key, syn]) => {
+      const isUnlocked = b.activeSynergies?.includes(key);
+      return `
+        <div class="synergy-card ${isUnlocked ? "unlocked" : "locked"}" style="--syn-color:${syn.color}; --syn-border:${syn.border}; --syn-bg:${syn.bg}">
+          <div class="synergy-card-header">
+            <span class="synergy-icon">${syn.icon}</span>
+            <div class="synergy-title-wrap">
+              <h3>${esc(syn.name)}</h3>
+              <span class="synergy-req">${esc(syn.reqText)}</span>
+            </div>
+            <span class="synergy-status-badge">${isUnlocked ? "⚡ UNLOCKED" : "🔒 LOCKED"}</span>
+          </div>
+          <p class="synergy-desc">${esc(syn.description)}</p>
+        </div>
+      `;
+    }).join("");
+
+    this.screen(
+      "build-sheet",
+      `<div class="wide-panel build-sheet-panel">
+        <div class="build-sheet-header">
+          <div class="build-header-left">
+            <span class="build-icon">${icon("dna")}</span>
+            <div>
+              <p class="eyebrow">PREHISTORIC GENETICS</p>
+              <h1>Dinosaur Mutation Build</h1>
+              <p>Stack, combine, and master up to 4 mutations across each evolutionary discipline.</p>
+            </div>
+          </div>
+          <div class="build-power-badge">
+            <span>APEX BUILD POWER</span>
+            <strong>⚡ ${Math.round(buildPower)}</strong>
+          </div>
+        </div>
+
+        <div class="build-categories-grid">
+          <div class="build-category-col" style="--col-color:#f87171; --col-border:#ef4444">
+            <div class="category-header">
+              <span>⚔️</span>
+              <h2>Offensive Mutations</h2>
+              <small>Max 4 Equipped</small>
+            </div>
+            <div class="category-slots">${renderCategorySlots("offensive")}</div>
+          </div>
+
+          <div class="build-category-col" style="--col-color:#38bdf8; --col-border:#0284c7">
+            <div class="category-header">
+              <span>🛡️</span>
+              <h2>Defensive Adaptations</h2>
+              <small>Max 4 Equipped</small>
+            </div>
+            <div class="category-slots">${renderCategorySlots("defensive")}</div>
+          </div>
+
+          <div class="build-category-col" style="--col-color:#fbbf24; --col-border:#d97706">
+            <div class="category-header">
+              <span>⚡</span>
+              <h2>Passive Abilities</h2>
+              <small>Max 4 Equipped</small>
+            </div>
+            <div class="category-slots">${renderCategorySlots("passive")}</div>
+          </div>
+        </div>
+
+        <div class="synergy-section">
+          <div class="synergy-section-header">
+            <h2>🧬 Powerful Mutation Synergies</h2>
+            <p>Combine maximum level mutations to unlock devastating battlefield transformations.</p>
+          </div>
+          <div class="synergy-grid">${synergiesHTML}</div>
+        </div>
+
+        <div class="panel-bottom build-sheet-bottom">
+          <span class="hint-muted">Tip: Felling predators and alphas drops rare catalyst crystals to expand your build.</span>
+          <button class="button primary" data-action="close-build" data-focus>CLOSE BUILD (ESC / B)</button>
+        </div>
+      </div>`,
+      "shade-screen build-modal-screen",
+    );
+
+    this.bind("close-build", () => this.back());
   }
 
   showDeath(results, profile) {
@@ -1290,8 +1934,9 @@ export class UI {
   }
 
   back() {
-    if (this._view === "evolution") return false;
-    if (this.returnView === "pause") this.showPause();
+    if (this._view === "evolution" || this._view === "mutation-choice") return false;
+    if (this.returnView === "hud" && this.callbacks.resume) this.callbacks.resume();
+    else if (this.returnView === "pause") this.showPause();
     else if (this.returnView === "death" && this.lastResults)
       this.showDeath(this.lastResults, this.profile);
     else this.showMenu();

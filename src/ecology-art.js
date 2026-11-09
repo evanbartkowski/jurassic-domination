@@ -144,7 +144,12 @@ export function createEcologyArt(scene) {
     }
     for (const { landmark, group } of landmarks) {
       group.visible = Math.hypot(landmark.x - p.x, landmark.y - p.y) < (detail === "low" ? 100 : 150);
-      if (group.visible) group.userData.halo.visible = !!game.exploration?.discoveries.some((record) => record.id === landmark.id);
+      if (group.visible && group.userData.halo) {
+        const discovered = !!game.exploration?.discoveries.some((record) => record.id === landmark.id);
+        group.userData.halo.visible = true;
+        group.userData.halo.material.opacity = discovered ? 0.38 + Math.sin(time * 2.0) * 0.12 : 0.68 + Math.sin(time * 4.0) * 0.22;
+        group.userData.halo.scale.setScalar(8.0 + Math.sin(time * 2.4) * 0.7);
+      }
     }
     const weather = status?.phase === "active" ? status.event : "clear",
       rainy = ["rain", "flood"].includes(weather), dusty = ["frost", "ashfall", "fire", "eruption"].includes(weather),

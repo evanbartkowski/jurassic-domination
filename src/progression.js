@@ -310,11 +310,8 @@ export function archetypeForSpecies(s) {
   return EVOLUTION_ARCHETYPES.ambush;
 }
 
-const kitCache = new WeakMap();
-export function creatureKit(s) {
-  const cached = kitCache.get(s);
-  if (cached) return cached;
-  const special = {
+export function creatureKit(s, mutations = {}) {
+  const baseSpecial = {
     raptor: "rending",
     rex: "rage",
     quad: "bulwark",
@@ -327,30 +324,30 @@ export function creatureKit(s) {
     equine: "renewal",
     bird: s.tier >= 6 ? "bolt" : "rending",
   }[s.body];
-  const identity=[...s.id].reduce((n,c)=>n+c.charCodeAt(0),0);
-  // Anatomy determines the move; age and individual lineage determine how
-  // many moves it learns. A bite is always available, even to skill-free forms.
-  const count=s.tier===0 ? (identity%3===0 ? 1 : 0)
-    : s.tier===1 ? (identity%4===0 ? 0 : 1)
-      : s.tier===2 ? (identity%3===0 ? 2 : 1)
-        : s.tier===3 ? (identity%3===0 ? 1 : 2)
-          : s.tier===4 ? (identity%3===0 ? 3 : 2)
+  const identity = [...s.id].reduce((n, c) => n + c.charCodeAt(0), 0);
+  const count = s.tier === 0 ? (identity % 3 === 0 ? 1 : 0)
+    : s.tier === 1 ? (identity % 4 === 0 ? 0 : 1)
+      : s.tier === 2 ? (identity % 3 === 0 ? 2 : 1)
+        : s.tier === 3 ? (identity % 3 === 0 ? 1 : 2)
+          : s.tier === 4 ? (identity % 3 === 0 ? 3 : 2)
             : 3;
-  const ability=count>=1?s.abilityType:null,
-    technique=count>=2?s.technique:null,
-    extra=count>=3?special:null;
-  const kit = {
+  const ability = count >= 1 ? s.abilityType : null,
+    technique = count >= 2 ? s.technique : null;
+  // Ultimate attacks are rare & harder to get: unlocked by Tier 4+ heavyweight/apex dinosaurs or rare/legendary mutations
+  const hasUltimateMutation = (mutations.titansWrath || 0) > 0 || (mutations.astralBehemoth || 0) > 0;
+  const ultimateUnlocked = (count >= 3 && s.tier >= 4) || hasUltimateMutation;
+  const specialKey = (mutations.astralBehemoth || 0) > 0 ? "bolt" : baseSpecial;
+  const extra = ultimateUnlocked ? specialKey : null;
+  return {
     dash:
       ["raptor", "bird", "equine", "gryphon", "dragon"].includes(s.body) ||
       (s.body === "rex" && s.size < 2),
     ability,
     technique,
     special: extra || null,
-    abilityCount: Number(!!ability)+Number(!!technique)+Number(!!extra),
+    abilityCount: Number(!!ability) + Number(!!technique) + Number(!!extra),
     archetype: archetypeForSpecies(s),
   };
-  kitCache.set(s,kit);
-  return kit;
 }
 export function growthFromFood(nutrients, tier) {
   return Math.max(

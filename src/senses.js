@@ -82,7 +82,8 @@ export function perceivePlayer(game, entity) {
     d = distance(entity, p), weather = conditionsAt(game, entity.x, entity.y),
     cover = p.crouching ? terrainCover(game, p) : 0,
     silent = p.crouching && ((game.geneticTraits || phenotype(p.genome)).adaptations.includes("stealth") || p.adaptations?.stealth >= 60),
-    concealment = (p.camouflage > 0 ? 0.2 : 1) * (p.crouching ? 0.62 - cover * 0.3 : 1) * (p.submerged ? 0.35 : 1),
+    stealthScales = p.crouching && (game.mutationCounts?.stealthScales || 0) > 0,
+    concealment = (p.camouflage > 0 ? 0.2 : 1) * (stealthScales ? 0.22 : (p.crouching ? 0.62 - cover * 0.3 : 1)) * (p.submerged ? 0.35 : 1),
     visionRange = Math.max(3.5, range * weather.visibilityMultiplier * concealment * (silent ? .92 : 1)),
     angle = Math.atan2(p.y - entity.y, p.x - entity.x),
     facing = Math.cos(angle - entity.angle),
@@ -105,7 +106,7 @@ export function perceivePlayer(game, entity) {
   } else {
     // Proximity scent detection: carnivores and keen trackers smell prey nearby unless blocked by solid cover
     const keenSmell = ["rex", "serpent", "croc", "raptor"].includes(species.body) || species.temperament === "hunter" || species.temperament === "carnivore";
-    const scentProximity = (keenSmell ? (12 + species.size * 1.8) : (7 + species.size)) * weather.scentMultiplier * (p.crouching ? 0.65 : 1);
+    const scentProximity = (keenSmell ? (12 + species.size * 1.8) : (7 + species.size)) * weather.scentMultiplier * (stealthScales ? 0.25 : (p.crouching ? 0.65 : 1));
     if (d < scentProximity && p.camouflage <= 0 && !p.submerged && hasLineOfSight(entity, p, game.worldFeatures || [])) {
       Object.assign(sensory, { detected: true, visible: false, x: p.x, y: p.y, expires: time + 4, channel: "scent" });
     } else {

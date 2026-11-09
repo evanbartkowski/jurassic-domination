@@ -119,15 +119,88 @@ for (let tier=0;tier<8;tier++) {
 }
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 
+export const STARTER_SPECIES = SPECIES.filter(
+  (s) => s.tier <= 1 && !s.bloodline && s.body !== 'marine',
+);
+
+export const MUTATION_RARITIES = {
+  common: { name: 'Common', color: '#4ade80', bg: 'rgba(74, 222, 128, 0.15)', border: '#22c55e' },
+  rare: { name: 'Rare', color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)', border: '#3b82f6' },
+  epic: { name: 'Epic', color: '#c084fc', bg: 'rgba(192, 132, 252, 0.15)', border: '#a855f7' },
+  legendary: { name: 'Legendary', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.2)', border: '#f59e0b' },
+};
+
 export const MUTATIONS = [
-  { id: 'ironhide', name: 'Ironhide', description: 'Take 12% less damage. Stacks up to 45% protection.' },
-  { id: 'razor', name: 'Razor Teeth', description: 'Deal 18% more bite and ability damage.' },
-  { id: 'metabolism', name: 'Efficient Metabolism', description: 'Hunger drains 25% slower; food restores more hunger.' },
-  { id: 'vitality', name: 'Ancient Vitality', description: 'Gain 18% maximum health and heal on evolution.' },
-  { id: 'swift', name: 'Fleet Footed', description: 'Move 10% faster and recover stamina more quickly.' },
-  { id: 'predator', name: 'Blood Siphon', description: 'Recover 5% of maximum health for every kill.' },
-  { id: 'catalyst', name: 'Evolution Catalyst', description: 'Earn 20% more evolution energy from every meal.' },
-  { id: 'adrenaline', name: 'Adrenal Glands', description: 'Abilities recharge 18% faster and dashes cost less stamina.' },
+  // Common Mutations
+  { id: 'ironhide', name: 'Ironhide', rarity: 'common', description: 'Take 12% less damage. Stacks up to 45% protection.', effect: 'defense' },
+  { id: 'razor', name: 'Razor Teeth', rarity: 'common', description: 'Deal 18% more bite and ability damage.', effect: 'damage' },
+  { id: 'metabolism', name: 'Efficient Metabolism', rarity: 'common', description: 'Hunger drains 25% slower; food restores more hunger.', effect: 'hunger' },
+  { id: 'swift', name: 'Fleet Footed', rarity: 'common', description: 'Move 10% faster and recover stamina more quickly.', effect: 'speed' },
+
+  // Rare Mutations
+  { id: 'vitality', name: 'Ancient Vitality', rarity: 'rare', description: 'Gain 22% maximum health and heal on evolution or ingestion.', effect: 'hp' },
+  { id: 'predator', name: 'Blood Siphon', rarity: 'rare', description: 'Recover 6% of maximum health immediately whenever you slay a dinosaur.', effect: 'lifesteal' },
+  { id: 'catalyst', name: 'Evolution Catalyst', rarity: 'rare', description: 'Earn 25% more evolution energy from all meals and kills.', effect: 'xp' },
+  { id: 'adrenaline', name: 'Adrenal Glands', rarity: 'rare', description: 'Abilities recharge 20% faster and dashes cost 35% less stamina.', effect: 'cooldown' },
+  { id: 'toxicBile', name: 'Neurotoxic Venom', rarity: 'rare', description: 'Bites inflict neurotoxin that slows enemies by 30% and deals venom damage over time.', effect: 'poison' },
+  { id: 'boneCrusher', name: 'Bone Crusher', rarity: 'rare', description: 'Bites fracture enemy hide, bypassing 40% defense with a 25% chance to stun.', effect: 'stun' },
+  { id: 'stealthScales', name: 'Camouflage Scales', rarity: 'rare', description: 'Crouching turns you translucent, reducing predator detection range by 80% with +50% ambush critical damage.', effect: 'stealth' },
+
+  // Epic Mutations
+  { id: 'volcanicCore', name: 'Volcanic Core', rarity: 'epic', description: 'Taking damage releases a retaliatory fire shockwave that ignites nearby attackers for 3s.', effect: 'flame_retaliation' },
+  { id: 'bloodRush', name: 'Primal Frenzy', rarity: 'epic', description: 'Slaying a dinosaur triggers bloodlust: +35% movement speed and +40% bite damage for 6 seconds.', effect: 'frenzy' },
+  { id: 'primalRegen', name: 'Ancestral Mending', rarity: 'epic', description: 'When free of damage for 4 seconds, steadily regenerate 4% maximum health per second.', effect: 'regen' },
+  { id: 'shockwaveStride', name: 'Seismic Stride', rarity: 'epic', description: 'Dashing into smaller enemies knocks them down with a concussive shockwave.', effect: 'shockwave' },
+
+  // Legendary Mutations
+  { id: 'titansWrath', name: 'Titan’s Awakening', rarity: 'legendary', description: 'Unlocks your species’ Ultimate Ability regardless of tier! Grants +40% maximum HP and increases body mass by 25%.', effect: 'unlock_ultimate' },
+  { id: 'abyssalLord', name: 'Abyssal Sovereign', rarity: 'legendary', description: 'Permanent deep-water breathing and immunity to beached penalties. Move +50% faster in water and deal double damage to marine prey.', effect: 'aquatic_mastery' },
+  { id: 'astralBehemoth', name: 'Celestial Essence', rarity: 'legendary', description: 'Unlocks the Astral Bolt long-range beam attack and accelerates all ability cooldowns by 40%.', effect: 'astral_beam' },
+
+  // Offensive Mutations (Build System)
+  { id: 'serratedFangs', name: 'Serrated Fangs', rarity: 'common', category: 'offensive', description: 'Bites tear flesh, dealing severe bleeding damage over time.', effect: 'bleed' },
+  { id: 'bleedingClaws', name: 'Bleeding Claws', rarity: 'common', category: 'offensive', description: 'Attacks inflict lacerations dealing extra damage over time.', effect: 'bleed' },
+  { id: 'venomSpit', name: 'Venom Spit', rarity: 'rare', category: 'offensive', description: 'Periodically spit venom globs that slow and poison prey.', effect: 'poison' },
+  { id: 'chainLightning', name: 'Chain Lightning', rarity: 'rare', category: 'offensive', description: 'Melee hits arc lightning across multiple secondary foes.', effect: 'shock' },
+  { id: 'spikedTail', name: 'Spiked Tail', rarity: 'common', category: 'offensive', description: 'Sweeping tail strike knocking foes back with stun.', effect: 'stun' },
+  { id: 'chargingHorns', name: 'Charging Horns', rarity: 'rare', category: 'offensive', description: 'Dashing into enemies deals impact damage and knocks them aside.', effect: 'impact' },
+  { id: 'fireBreath', name: 'Fire Breath', rarity: 'epic', category: 'offensive', description: 'Unleash a fiery cone that melts armor and ignites targets.', effect: 'fire' },
+  { id: 'boneProjectiles', name: 'Bone Projectiles', rarity: 'common', category: 'offensive', description: 'Biting flings piercing bone spikes that puncture foes.', effect: 'projectiles' },
+  { id: 'frostBite', name: 'Frost Bite', rarity: 'rare', category: 'offensive', description: 'Chilling bite that slows and freezes enemies solid.', effect: 'freeze' },
+
+  // Defensive Adaptations (Build System)
+  { id: 'thickScales', name: 'Thick Scales', rarity: 'common', category: 'defensive', description: 'Dense dermal scales reducing incoming damage and boosting health.', effect: 'defense' },
+  { id: 'regenerativeTissue', name: 'Regenerative Tissue', rarity: 'rare', category: 'defensive', description: 'Steadily regenerates health and cleanses status effects.', effect: 'regen' },
+  { id: 'reflectiveArmor', name: 'Reflective Armor', rarity: 'rare', category: 'defensive', description: 'Reflects incoming damage and deflects projectiles.', effect: 'reflect' },
+  { id: 'thorns', name: 'Thorns', rarity: 'common', category: 'defensive', description: 'Pointed quills inflicting retaliatory piercing damage.', effect: 'thorns' },
+  { id: 'poisonResistance', name: 'Poison Resistance', rarity: 'common', category: 'defensive', description: 'Resist and absorb venom and environmental poison.', effect: 'poison_resist' },
+  { id: 'protectiveBarrier', name: 'Protective Barrier', rarity: 'epic', category: 'defensive', description: 'Generates an energy barrier that absorbs heavy damage.', effect: 'shield' },
+  { id: 'armoredHide', name: 'Armored Hide', rarity: 'rare', category: 'defensive', description: 'Heavy frontal plates deflecting head-on attacks.', effect: 'frontal_shield' },
+  { id: 'toxicBlood', name: 'Toxic Blood', rarity: 'rare', category: 'defensive', description: 'Sprays corrosive acid blood upon taking damage.', effect: 'acid_blood' },
+
+  // Passive Abilities (Build System)
+  { id: 'bloodlust', name: 'Bloodlust', rarity: 'common', category: 'passive', description: 'Slaying foes grants movement speed and attack frenzy.', effect: 'frenzy' },
+  { id: 'rapidMetabolism', name: 'Rapid Metabolism', rarity: 'common', category: 'passive', description: 'Food restores more hunger and instantly heals health.', effect: 'nutrition' },
+  { id: 'packInstinct', name: 'Pack Instinct', rarity: 'rare', category: 'passive', description: 'Summons loyal raptor companions that hunt alongside you.', effect: 'pack' },
+  { id: 'xpMagnetism', name: 'XP Magnetism', rarity: 'common', category: 'passive', description: 'Gravitational pull drawing distant meat, essence, and DNA.', effect: 'magnet' },
+  { id: 'predatoryHaste', name: 'Predatory Haste', rarity: 'common', category: 'passive', description: 'Passive movement speed and accelerated attack recovery.', effect: 'speed' },
+  { id: 'apexCrit', name: 'Apex Precision', rarity: 'rare', category: 'passive', description: 'High critical hit chance with lethal damage multipliers.', effect: 'crit' },
+  { id: 'wideCleave', name: 'Colossal Cleave', rarity: 'common', category: 'passive', description: 'Greatly expands bite and strike area.', effect: 'cleave' },
+
+  // Rare Transformations (Build System)
+  { id: 'volcanicScales', name: 'Volcanic Scales', rarity: 'legendary', category: 'transformations', description: 'Skin glows with molten lava veins; bursts retaliatory flame shockwaves.', effect: 'volcanic' },
+  { id: 'thunderJaws', name: 'Thunder Jaws', rarity: 'legendary', category: 'transformations', description: 'Crackling lightning envelopes head and discharges electric bursts on bite.', effect: 'lightning' },
+  { id: 'frostArmor', name: 'Frost Armor', rarity: 'legendary', category: 'transformations', description: 'Glacial ice crystals sprout across hide, chilling all nearby prey.', effect: 'frost' },
+  { id: 'berserkerRage', name: 'Berserker Mutation', rarity: 'legendary', category: 'transformations', description: 'Blood-red aura; deals double damage and gains speed below half health.', effect: 'berserk' },
+
+  // Synergies (Combinations)
+  { id: 'hemorrhage', name: 'Hemorrhage', rarity: 'legendary', category: 'transformations', description: 'Bleeding enemies burst on death dealing AoE damage and healing player.', effect: 'synergy' },
+  { id: 'seismicSlam', name: 'Seismic Slam', rarity: 'epic', category: 'transformations', description: 'Attacks and dash slam the earth, stunning nearby enemies.', effect: 'synergy' },
+  { id: 'plagueCloud', name: 'Plague Cloud', rarity: 'epic', category: 'transformations', description: 'Strikes leave persistent poisonous and blinding zones.', effect: 'synergy' },
+  { id: 'alphasCommand', name: 'Alpha’s Command', rarity: 'legendary', category: 'transformations', description: 'Roar summons and frenzies hunting companions.', effect: 'synergy' },
+  { id: 'inferno', name: 'Inferno', rarity: 'epic', category: 'transformations', description: 'Sprint and dash leave burning molten trails on earth.', effect: 'synergy' },
+  { id: 'glacialFortress', name: 'Glacial Fortress', rarity: 'epic', category: 'transformations', description: 'Heavy hits trigger flash freeze freezing attackers solid.', effect: 'synergy' },
+  { id: 'juggernaut', name: 'Juggernaut', rarity: 'legendary', category: 'transformations', description: 'Dash tramples through multiple enemies dealing 300% damage.', effect: 'synergy' },
 ];
 
 export const DIFFICULTIES = {

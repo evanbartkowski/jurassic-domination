@@ -858,23 +858,29 @@ export const Ecosystem = {
           });
         }
         if (!ranged.ranged && inAttackZone(p, zone) && attackLineClear(e, p, this.worldFeatures || [], s.abilityType)) {
-          this.damagePlayer(
-            (e.damage || s.damage) *
-              (ABILITIES[s.abilityType]?.power || 1.8) *
-              0.66 *
-              this.rules.enemyDamage *
-              (e.boss ? 1.18 : 1),
-            `${e.boss ? e.name || "Alpha " : ""}${s.name}: ${s.ability}`,
-          );
-          if (s.abilityType === "frost" || s.abilityType === "web")
-            p.chilled = 3;
-          if (s.abilityType === "venom") p.poisoned = 4;
-          if (s.abilityType === "flame") p.burning = 4;
-          if (s.abilityType === "blood" || s.abilityType === "pounce") p.bleeding = 4;
-          if (s.abilityType === "stomp" || s.abilityType === "tailspin") {
-            const kbAngle = Math.atan2(p.y - e.y, p.x - e.x);
-            sweepMove(p, Math.cos(kbAngle) * 3.5, Math.sin(kbAngle) * 3.5, this.effectiveSize, this.worldFeatures || []);
+          if (p.invulnerable > 0) {
+            this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${s.name}: ${s.ability}` });
+          } else {
+            this.damagePlayer(
+              (e.damage || s.damage) *
+                (ABILITIES[s.abilityType]?.power || 1.8) *
+                0.66 *
+                this.rules.enemyDamage *
+                (e.boss ? 1.18 : 1),
+              `${e.boss ? e.name || "Alpha " : ""}${s.name}: ${s.ability}`,
+            );
+            if (s.abilityType === "frost" || s.abilityType === "web")
+              p.chilled = 3;
+            if (s.abilityType === "venom") p.poisoned = 4;
+            if (s.abilityType === "flame") p.burning = 4;
+            if (s.abilityType === "blood" || s.abilityType === "pounce") p.bleeding = 4;
+            if (s.abilityType === "stomp" || s.abilityType === "tailspin") {
+              const kbAngle = Math.atan2(p.y - e.y, p.x - e.x);
+              sweepMove(p, Math.cos(kbAngle) * 3.5, Math.sin(kbAngle) * 3.5, this.effectiveSize, this.worldFeatures || []);
+            }
           }
+        } else if (!ranged.ranged && zone.playerWasNear && !inAttackZone(p, zone)) {
+          this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${s.name}: ${s.ability}` });
         }
         if (s.abilityType === "heal")
           e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.12);
@@ -992,19 +998,25 @@ export const Ecosystem = {
         targetAngle = e.chargeAngle;
         e.intent = "charge";
         if (dist(e, p) < range + 1.2 && hasLineOfSight(e, p, this.worldFeatures || [])) {
-          this.damagePlayer(
-            (e.damage || s.damage) * 1.55 * this.rules.enemyDamage * (e.boss ? 1.35 : 1),
-            `${e.boss ? "Alpha " : ""}${s.name} Trample Charge`,
-          );
-          p.vx += Math.cos(targetAngle) * 12;
-          p.vy += Math.sin(targetAngle) * 12;
-          this.emit("hit", { target: "player", x: p.x, y: p.y });
-          e.charging = 0;
-          e.chargeCooldown = 5.5;
+          if (p.invulnerable > 0) {
+            this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name} Trample Charge` });
+            e.charging = 0;
+            e.chargeCooldown = 5.5;
+          } else {
+            this.damagePlayer(
+              (e.damage || s.damage) * 1.55 * this.rules.enemyDamage * (e.boss ? 1.35 : 1),
+              `${e.boss ? "Alpha " : ""}${s.name} Trample Charge`,
+            );
+            p.vx += Math.cos(targetAngle) * 12;
+            p.vy += Math.sin(targetAngle) * 12;
+            this.emit("hit", { target: "player", x: p.x, y: p.y });
+            e.charging = 0;
+            e.chargeCooldown = 5.5;
+          }
         }
         if (e.charging <= 0) e.chargeCooldown = 5.5;
       } else if (!e.chargeWindup && (e.chargeCooldown || 0) <= 0 && isCharger && distance >= 7.5 && distance <= 15 && hasLineOfSight(e, p, this.worldFeatures || [])) {
-        e.chargeWindup = 0.38;
+        e.chargeWindup = 0.45;
         e.chargeAngle = Math.atan2(p.y - e.y, p.x - e.x);
       } else if (e.chargeWindup > 0) {
         e.chargeWindup -= dt;
@@ -1031,9 +1043,10 @@ export const Ecosystem = {
           radius: castRadius,
           angle: Math.atan2(p.y - e.y, p.x - e.x),
           shape,
-          remaining: e.boss ? 0.32 : 0.2,
-          total: e.boss ? 0.32 : 0.2,
+          remaining: e.boss ? 0.35 : 0.28,
+          total: e.boss ? 0.35 : 0.28,
           kind: s.abilityType,
+          playerWasNear: distance < castRadius + 2.5,
         };
         e.skillCooldown =
           (e.boss && e.hp < e.maxHp * 0.5 ? 3.5 : 6) + this.random() * 2;
@@ -1061,15 +1074,23 @@ export const Ecosystem = {
           if (["pounce", "charge"].includes(s.abilityType)) {
             sweepMove(e, Math.cos(targetAngle) * 1.4, Math.sin(targetAngle) * 1.4, s.size * (e.scaleFactor || 1), this.worldFeatures || []);
           }
-          if (dist(e, p) < range + 0.35 && hasLineOfSight(e, p, this.worldFeatures || []))
-            this.damagePlayer(
-              (e.damage || s.damage) *
-                (s.tier === 0 ? 1.02 : 1.15 + s.tier * 0.05) *
-                this.rules.enemyDamage *
-                (e.boss ? 1.25 : 1) *
-                (1 + this.ascensions * 0.2),
-              `${e.boss ? "Alpha " : ""}${s.name}`,
-            );
+          const inRange = dist(e, p) < range + 0.35 && hasLineOfSight(e, p, this.worldFeatures || []);
+          if (inRange) {
+            if (p.invulnerable > 0) {
+              this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}` });
+            } else {
+              this.damagePlayer(
+                (e.damage || s.damage) *
+                  (s.tier === 0 ? 1.02 : 1.15 + s.tier * 0.05) *
+                  this.rules.enemyDamage *
+                  (e.boss ? 1.25 : 1) *
+                  (1 + this.ascensions * 0.2),
+                `${e.boss ? "Alpha " : ""}${s.name}`,
+              );
+            }
+          } else if (dist(e, p) < range + 2.8) {
+            this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}` });
+          }
         }
       }
     } else if (sensory.detected && !sensory.visible && !e.juvenile &&

@@ -1,4 +1,15 @@
-import { SPECIES, SPECIES_BY_ID, MUTATIONS, DIFFICULTIES } from "./data.js";
+import { SPECIES, SPECIES_BY_ID, MUTATIONS, DIFFICULTIES, STARTER_SPECIES } from "./data.js";
+import {
+  BUILD_CATEGORIES,
+  BUILD_MUTATIONS,
+  MUTATION_SYNERGIES,
+  createBuildState,
+  calculateBuildPower,
+  applyBuildMutation,
+  canEquipOrUpgrade,
+  checkNewSynergies,
+  renderStars,
+} from "./build-system.js";
 import { rollCollectionItem } from "./collection-data.js";
 import { Ecosystem, initializeEcosystem } from "./ecosystem.js";
 import {
@@ -50,10 +61,14 @@ export class Game {
     runId,
     petId = null,
     cosmeticId = "none",
+    starterChoices = null,
+    starterId = null,
+    build = null,
   } = {}) {
     this.seed = Number(seed) >>> 0;
     this.petId = petId || null;
     this.cosmeticId = cosmeticId || "none";
+    this.build = build || createBuildState();
     this.runId = typeof runId === "string" && /^[a-zA-Z0-9:_-]{1,96}$/.test(runId)
       ? runId : (globalThis.crypto?.randomUUID?.() || `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
     this.tick = 0;
@@ -93,7 +108,26 @@ export class Game {
     this._threatCount = 0;
     this._hasRoared = false;
     this.hitStop = 0;
-    this._starter = this.pick(SPECIES.filter((s) => s.tier === 0));
+    this.timeSinceDamaged = 0;
+    this.pendingMutationChoices = [];
+    this._starter = starterId && SPECIES_BY_ID[starterId]
+      ? SPECIES_BY_ID[starterId]
+      : this.pick(SPECIES.filter((s) => s.tier === 0));
+    if (starterChoices && Array.isArray(starterChoices) && starterChoices.length > 0) {
+      this.starterChoices = [...starterChoices];
+      if (!this.starterChoices.includes(this._starter.id)) {
+        this.starterChoices[0] = this._starter.id;
+      }
+    } else {
+      const h = (this.seed ^ 0x85ebca6b) >>> 0;
+      const others = STARTER_SPECIES.filter((s) => s.id !== this._starter.id);
+      const sorted = [...others].sort((a, b) => {
+        const valA = ((h ^ a.id.charCodeAt(0) ^ (a.id.charCodeAt(1) || 0)) * 2654435761) >>> 0;
+        const valB = ((h ^ b.id.charCodeAt(0) ^ (b.id.charCodeAt(1) || 0)) * 2654435761) >>> 0;
+        return valA - valB;
+      });
+      this.starterChoices = [this._starter.id, sorted[0]?.id, sorted[1]?.id].filter(Boolean);
+    }
     this.player = {
       x: 0,
       y: 0,
@@ -175,7 +209,7 @@ export class Game {
     return this._phenotype;
   }
   get kit() {
-    return creatureKit(this.species);
+    return creatureKit(this.species, this.mutationCounts);
   }
   get nextThreshold() {
     return Math.round(thresholds[this.tier] * (1 + this.ascensions * 0.38));
@@ -185,19 +219,41 @@ export class Game {
     for (const id of this.mutations) counts[id] = (counts[id] || 0) + 1;
     return counts;
   }
+  get buildPower() {
+    return calculateBuildPower(this.build);
+  }
 
   refreshStats(heal = false) {
     const p = this.player,
       s = this.species,
-      m = this.mutationCounts;
+      m = this.mutationCounts,
+      b = this.build || {};
     const ratio = p.hp / Math.max(1, p.maxHp);
     const synergy = this.petId ? COMPANION_SYNERGIES[this.petId] : null;
+
+    // Build bonuses from 4 upgrade categories
+    const thickScalesLvl = b.defensive?.thickScales || 0;
+    const thickScalesHp = thickScalesLvl >= 3 ? (thickScalesLvl >= 5 ? 0.35 : 0.25) : (thickScalesLvl > 0 ? 0.12 : 0);
+    const thickScalesRed = thickScalesLvl > 0 ? (0.06 + thickScalesLvl * 0.05) : 0;
+
+    const armoredHideLvl = b.defensive?.armoredHide || 0;
+    const armoredHideArmor = armoredHideLvl > 0 ? (armoredHideLvl * 8) / 100 : 0;
+
+    const hasteLvl = b.passive?.predatoryHaste || 0;
+    const hasteSpeed = hasteLvl > 0 ? (hasteLvl * 0.068) : 0;
+
+    const wideCleaveLvl = b.passive?.wideCleave || 0;
+    const wideCleaveDmg = wideCleaveLvl >= 3 ? (wideCleaveLvl * 0.07) : 0;
+
+    const berserkActive = b.transformations?.berserkerRage && (ratio < 0.5);
+
     p.maxHp = Math.round(
       s.hp *
         (1 + (p.growth || 0) * 0.4) *
         (1 +
           this.upgrades.vitality * 0.05 +
           (m.vitality || 0) * 0.18 +
+          thickScalesHp +
           (this.modifiers.has("ancient-heart") ? 0.08 : 0)) *
         (1 + this.ascensions * 0.15) *
         (synergy?.role === "titan" ? 1.20 : 1),
@@ -209,18 +265,21 @@ export class Game {
       (1 +
         this.upgrades.instinct * 0.04 +
         (m.razor || 0) * 0.18 +
+        wideCleaveDmg +
         (this.modifiers.has("predator-mark") ? 0.06 : 0)) *
       (1 + this.ascensions * 0.14) *
-      (this.hasBuff("damage") ? 1.5 : 1);
+      (this.hasBuff("damage") ? 1.5 : 1) *
+      (berserkActive ? 2.0 : 1);
     p.speed =
       s.speed * this.geneticTraits.speed *
       (1 - (p.growth || 0) * 0.04) *
-      (1 + (m.swift || 0) * 0.1 + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
+      (1 + (m.swift || 0) * 0.1 + hasteSpeed + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
       (this.hasBuff("speed") ? 1.4 : 1) *
-      (synergy?.role === "prowler" ? 1.10 : (this.petId ? 1.05 : 1));
+      (synergy?.role === "prowler" ? 1.10 : (this.petId ? 1.05 : 1)) *
+      (berserkActive ? 1.4 : 1);
     p.armor = Math.min(
-      0.65,
-      (m.ironhide || 0) * 0.12 + (s.body === "quad" ? 0.12 : 0) + (synergy?.role === "bulwark" ? 0.15 : 0),
+      0.75,
+      (m.ironhide || 0) * 0.12 + (s.body === "quad" ? 0.12 : 0) + (synergy?.role === "bulwark" ? 0.15 : 0) + thickScalesRed + armoredHideArmor,
     );
   }
 
@@ -331,6 +390,50 @@ export class Game {
     entity.geneticSpeed = traits.speed;
     entity.scaleFactor *= traits.size;
     initializeLifeEntity(this, entity, options);
+
+    // Elite Mutated Predator Escalation (derived from idHash to preserve simulation PRNG stream)
+    const isCarnivore = !["herbivore"].includes(s.behavior) && s.temperament !== "skittish";
+    let eliteMutation = options.eliteMutation || null;
+    if (!eliteMutation && !options.boss && !options.juvenile && isCarnivore && s.tier >= 1) {
+      const bPow = this.build ? calculateBuildPower(this.build) : 0;
+      const eliteChance = Math.min(0.32, (this.tier * 0.035) + (bPow * 0.012));
+      const eliteRoll = (idHash * 13.7) % 1;
+      if (eliteRoll < eliteChance) {
+        const types = ["Blazing", "Venomous", "Armored", "Frost", "Berserk"];
+        eliteMutation = types[Math.floor(((idHash * 31.9) % 1) * types.length)];
+      }
+    }
+    if (eliteMutation) {
+      entity.eliteMutation = eliteMutation;
+      entity.name = options.name || `${eliteMutation} ${s.name}`;
+      if (eliteMutation === "Armored") {
+        entity.maxHp = Math.round(entity.maxHp * 1.85);
+        entity.hp = entity.maxHp;
+        entity.adultMaxHp = entity.maxHp;
+        entity.armor = 0.40;
+      } else if (eliteMutation === "Blazing") {
+        entity.damage = Math.round(entity.damage * 1.35);
+        entity.maxHp = Math.round(entity.maxHp * 1.4);
+        entity.hp = entity.maxHp;
+        entity.adultMaxHp = entity.maxHp;
+      } else if (eliteMutation === "Venomous") {
+        entity.damage = Math.round(entity.damage * 1.25);
+        entity.maxHp = Math.round(entity.maxHp * 1.35);
+        entity.hp = entity.maxHp;
+        entity.adultMaxHp = entity.maxHp;
+      } else if (eliteMutation === "Frost") {
+        entity.damage = Math.round(entity.damage * 1.3);
+        entity.maxHp = Math.round(entity.maxHp * 1.45);
+        entity.hp = entity.maxHp;
+        entity.adultMaxHp = entity.maxHp;
+      } else if (eliteMutation === "Berserk") {
+        entity.damage = Math.round(entity.damage * 1.5);
+        entity.maxHp = Math.round(entity.maxHp * 1.3);
+        entity.hp = entity.maxHp;
+        entity.adultMaxHp = entity.maxHp;
+      }
+    }
+
     this.entities.push(entity);
     return entity;
   }
@@ -357,11 +460,18 @@ export class Game {
     return food;
   }
 
-  hatch() {
+  hatch(chosenSpeciesId = null) {
     if (this.state !== "egg") return false;
+    if (chosenSpeciesId && SPECIES_BY_ID[chosenSpeciesId] && this.starterChoices.includes(chosenSpeciesId)) {
+      this.player.speciesId = chosenSpeciesId;
+      this.formHistory = [chosenSpeciesId];
+      this.player.genome = makeGenome(`${this.seed}:player`, SPECIES_BY_ID[chosenSpeciesId]);
+      this.refreshStats(true);
+    }
     this.state = "playing";
     this.player.invulnerable = 2.5;
     this.emit("hatch", {
+      speciesId: this.player.speciesId,
       text: `A ${this.species.name} is born. Eat. Adapt. Survive.`,
     });
     return true;
@@ -387,6 +497,12 @@ export class Game {
       if (this.eggTime >= 3 || input.attack || input.eat) this.hatch();
       return;
     }
+    if (this.state === "mutation-choice") {
+      if (input.attack || input.eat || input.evolve) {
+        this.applyMutation(this.pendingMutationChoices?.[0]);
+      }
+      return;
+    }
     if (this.state !== "playing" || dt === 0) return;
     this._markEvolutionReady();
     if (input.evolve && this.openEvolution()) return;
@@ -408,6 +524,26 @@ export class Game {
       p[key] = Math.max(0, p[key] - dt);
     this._eatCooldown = Math.max(0, this._eatCooldown - dt);
     this._warningCooldown = Math.max(0, this._warningCooldown - dt);
+    this.timeSinceDamaged = (this.timeSinceDamaged || 0) + dt;
+    if (m.primalRegen && this.timeSinceDamaged >= 4.0 && p.hp < p.maxHp) {
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.04 * dt);
+    }
+    const regenLvl = this.build?.defensive?.regenerativeTissue || 0;
+    if (regenLvl > 0 && p.hp < p.maxHp) {
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * (0.012 + (regenLvl - 1) * 0.0095) * dt);
+    }
+    const barrierLvl = this.build?.defensive?.protectiveBarrier || 0;
+    if (barrierLvl > 0) {
+      this.build.barrierTimer = (this.build.barrierTimer || 0) + dt;
+      const cooldown = Math.max(9, 23 - barrierLvl * 3);
+      if (this.build.barrierTimer >= cooldown) {
+        this.build.barrierTimer = 0;
+        const maxBarrier = p.maxHp * (0.12 + barrierLvl * 0.08);
+        this.build.barrierHp = maxBarrier;
+        this.build.barrierMax = maxBarrier;
+        this.emit("buff", { text: `AEGIS BARRIER: Absorbs ${Math.round(maxBarrier)} dmg!` });
+      }
+    }
     let mx = Number(input.x) || 0,
       my = Number(input.y) || 0;
     const length = Math.hypot(mx, my);
@@ -419,8 +555,11 @@ export class Game {
     else if (length > 0.05) p.angle = Math.atan2(my, mx);
     const sprint = !!input.sprint && p.stamina > 2 && length > 0.05;
     setMovementPosture(this, input);
+    p.speedBoost = Math.max(0, (p.speedBoost || 0) - dt);
+    p.counterReady = Math.max(0, (p.counterReady || 0) - dt);
     const hungerSlow = p.hunger <= 0 && (p.starvationTimer || 0) > 5 ? 0.85 : 1;
-    const speed = p.speed * (sprint ? 1.65 : 1) * (p.chilled > 0 ? 0.6 : 1) * hungerSlow * survivalSpeed(this);
+    const speedBoostMult = p.speedBoost > 0 ? (1 + 0.35 * Math.min(1, p.speedBoost / 2.0)) : 1;
+    const speed = p.speed * (sprint ? 1.65 : 1) * (p.chilled > 0 ? 0.6 : 1) * hungerSlow * speedBoostMult * survivalSpeed(this);
     // Acceleration and braking remove abrupt starts while preserving precise aim.
     const response = 1 - Math.exp(-dt * (length > 0.05 ? 13 : 19));
     p.vx += (mx * speed - p.vx) * response;
@@ -432,12 +571,71 @@ export class Game {
       0,
       100,
     );
+    if (sprint && this.build?.activeSynergies?.includes("inferno")) {
+      this._infernoTimer = (this._infernoTimer || 0) + dt;
+      if (this._infernoTimer >= 0.28) {
+        this._infernoTimer = 0;
+        this.build.flameTrails ||= [];
+        this.build.flameTrails.push({
+          x: p.x,
+          y: p.y,
+          life: 3.5,
+          radius: 2.2,
+          damage: p.damage * 0.55,
+        });
+      }
+    }
     if (input.dash) this.dash(mx, my);
     this._containPlayer();
     if (input.attack) this.attack();
     if (input.ability) this.ability();
     if (input.special) this.special();
     if (input.eat) this.eat();
+
+    // XP Magnetism
+    const magnetLvl = this.build?.passive?.xpMagnetism || 0;
+    if (magnetLvl > 0 || this.hasBuff("magnet")) {
+      const radius = magnetLvl > 0 ? (8 + (magnetLvl - 1) * 7.5) : 18;
+      const pullSpeed = 12 + magnetLvl * 4;
+      for (const f of this.foods) {
+        const d = distance(p, f);
+        if (d < radius && d > 0.5) {
+          const a = Math.atan2(p.y - f.y, p.x - f.x);
+          f.x += Math.cos(a) * pullSpeed * dt;
+          f.y += Math.sin(a) * pullSpeed * dt;
+        }
+      }
+    }
+
+    // Flame Trails (Inferno Synergy)
+    if (this.build?.flameTrails?.length) {
+      for (const trail of this.build.flameTrails) {
+        trail.life -= dt;
+        for (const e of this.entities) {
+          if (distance(e, trail) < trail.radius) {
+            e.burning = Math.max(e.burning || 0, 2.5);
+            e.hp -= trail.damage * dt;
+            e.hitFlash = 0.1;
+          }
+        }
+      }
+      this.build.flameTrails = this.build.flameTrails.filter((t) => t.life > 0);
+    }
+
+    // Poison Clouds (Plague Cloud Synergy)
+    if (this.build?.poisonClouds?.length) {
+      for (const cloud of this.build.poisonClouds) {
+        cloud.life -= dt;
+        for (const e of this.entities) {
+          if (distance(e, cloud) < cloud.radius) {
+            e.poison = Math.max(e.poison || 0, 4.0);
+            e.slowed = Math.max(e.slowed || 0, 3.0);
+            e.hp -= cloud.damage * dt;
+          }
+        }
+      }
+      this.build.poisonClouds = this.build.poisonClouds.filter((c) => c.life > 0);
+    }
 
     this.updateEcosystem(dt, input);
     if (this.state !== "playing") return;
@@ -521,7 +719,8 @@ export class Game {
       this._threatCount / 4 +
         biomeAt(p.x, p.y).tier * 0.075 +
         this.time / 2400 +
-        this.ascensions * 0.1,
+        this.ascensions * 0.1 +
+        this.buildPower * 0.012,
       0,
       1,
     );
@@ -549,6 +748,64 @@ export class Game {
     }
   }
 
+  _hitMarine(fish, damage, isCrit = false, feature = null) {
+    if (!fish || fish.dead) return;
+    const p = this.player;
+    const f = feature || (this.worldFeatures || []).find((feat) => feat.id === fish.poolId);
+    const tier = f?.tier || fish.tier || 0;
+    fish.maxHp = fish.maxHp || (50 + tier * 35);
+    fish.hp = (Number.isFinite(fish.hp) ? fish.hp : fish.maxHp) - damage;
+    this.emit("hit", {
+      amount: damage,
+      x: fish.x,
+      y: fish.y,
+      target: "marine",
+      speciesId: fish.speciesId || "tideweaver",
+      crit: isCrit,
+    });
+    if (fish.hp <= 0) {
+      fish.dead = true;
+      fish.respawnAt = this.time + 35;
+      this.gainXP(35 + tier * 25);
+      p.kills++;
+      p.score += 85 + tier * 55;
+      this.spawnFood("meat", fish.x, fish.y, 30 + tier * 25, {
+        tier,
+        homeChunk: f?.homeChunk || "0,0",
+      });
+      this.emit("kill", { x: fish.x, y: fish.y, speciesId: fish.speciesId || "tideweaver", water: true });
+    }
+  }
+
+  triggerPerfectDodge(details = {}) {
+    const p = this.player;
+    if (this.state !== "playing" || p.hp <= 0) return false;
+    if (this._lastDodgeTime && (this.time - this._lastDodgeTime) < 0.35) return false;
+    this._lastDodgeTime = this.time;
+
+    // 1. Stamina boost refund
+    p.stamina = Math.min(100, (p.stamina || 0) + 32);
+
+    // 2. Adrenaline speed surge
+    p.empowered = Math.max(p.empowered || 0, 2.5);
+    p.speedBoost = Math.max(p.speedBoost || 0, 2.2);
+
+    // 3. Counter-Attack critical readiness: next strike hits for +75% damage
+    p.counterReady = 3.5;
+
+    // 4. Brief invulnerability window (i-frame)
+    p.invulnerable = Math.max(p.invulnerable || 0, 0.45);
+
+    // 5. Emit event for floating text, screen pop and audio feedback
+    this.emit("perfect-dodge", {
+      x: details.x ?? p.x,
+      y: details.y ?? p.y,
+      cause: details.cause || "Telegraphed Strike",
+    });
+
+    return true;
+  }
+
   attack() {
     const p = this.player;
     if (this.state !== "playing" || p.attackCooldown > 0) return false;
@@ -557,15 +814,30 @@ export class Game {
       ? 0.43
       : 0.52;
     p.attacking = 0.28;
-    const reach = 2.8 + this.effectiveSize * 1.45 + (this.effectiveSize >= 3.0 ? (this.effectiveSize - 2.8) * 1.6 : 0);
+    const wideCleaveLvl = this.build?.passive?.wideCleave || 0;
+    const reachMult = wideCleaveLvl > 0 ? (1 + wideCleaveLvl * 0.16) : 1;
+    const baseReach = 2.8 + this.effectiveSize * 1.45 + (this.effectiveSize >= 3.0 ? (this.effectiveSize - 2.8) * 1.6 : 0);
+    const reach = baseReach * reachMult;
+    const maxArc = wideCleaveLvl >= 5 ? 3.14 : (wideCleaveLvl > 0 ? 1.25 + wideCleaveLvl * 0.2 : 1.25);
     this.emit("attack", { x: p.x, y: p.y, angle: p.angle, radius: reach, size: this.effectiveSize });
+
+    const apexCritLvl = this.build?.passive?.apexCrit || 0;
+    const apexCritChance = apexCritLvl > 0 ? (0.12 + (apexCritLvl - 1) * 0.07) : 0;
+    const apexCritMult = apexCritLvl > 0 ? (1.5 + (apexCritLvl - 1) * 0.32) : 1.0;
+    const isApexCrit = apexCritLvl > 0 && this.random() < apexCritChance;
+    const isCounter = (p.counterReady || 0) > 0;
+    if (isCounter) {
+      p.counterReady = 0;
+      this.emit("counter-strike", { x: p.x, y: p.y });
+    }
+
     for (const e of [...this.entities]) {
       if (e.isFlying && (e.altitude || 0) > 2.2) continue;
       const target = SPECIES_BY_ID[e.speciesId];
       if (
         distance(p, e) < reach + target.size * 0.45 &&
         Math.abs(angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle)) <
-          1.25 && hasLineOfSight(p, e, this.worldFeatures || [])
+          maxArc && hasLineOfSight(p, e, this.worldFeatures || [])
       ) {
         const hitAngle = Math.atan2(e.y - p.y, e.x - p.x);
         const relAngle = Math.abs(angleDifference(hitAngle, e.angle));
@@ -581,11 +853,13 @@ export class Game {
           directionalMult = 0.65;
         }
 
-        const isCrit = p.empowered > 0 || (isRear && (this.species.body === "raptor" || this.hasBuff("ambush")));
+        const stealthCrit = p.crouching && (this.mutationCounts.stealthScales || 0) > 0;
+        const isCrit = isCounter || p.empowered > 0 || stealthCrit || isApexCrit || (isRear && (this.species.body === "raptor" || this.hasBuff("ambush")));
         const multiplier =
           directionalMult *
+          (isCounter ? 1.75 : 1) *
           (p.empowered > 0 ? 1.65 : 1) *
-          (isCrit ? 1.25 : 1) *
+          (isApexCrit ? apexCritMult : (isCrit ? (stealthCrit ? 1.5 : 1.25) : 1)) *
           (this.species.body === "raptor"
             ? 1 + Math.min(3, p.combo) * 0.1
             : 1) *
@@ -613,25 +887,12 @@ export class Game {
           if (!fish || fish.dead) continue;
           const dFish = Math.hypot(fish.x - p.x, fish.y - p.y);
           if (
-            dFish < reach + 1.8 &&
-            Math.abs(angleDifference(Math.atan2(fish.y - p.y, fish.x - p.x), p.angle)) < 1.45
+            dFish < reach + 2.5 &&
+            Math.abs(angleDifference(Math.atan2(fish.y - p.y, fish.x - p.x), p.angle)) < 1.65
           ) {
-            const multiplier = (p.empowered > 0 ? 1.65 : 1) * (this.species.body === "croc" ? 1.5 : 1);
+            const multiplier = (isCounter ? 1.75 : 1) * (p.empowered > 0 ? 1.65 : 1) * (this.species.body === "croc" ? 1.5 : 1);
             const damage = p.damage * multiplier;
-            fish.hp = (Number.isFinite(fish.hp) ? fish.hp : (40 + (f.tier || 0) * 35)) - damage;
-            this.emit("hit", { x: fish.x, y: fish.y, target: "marine", speciesId: "tideweaver" });
-            if (fish.hp <= 0) {
-              fish.dead = true;
-              fish.respawnAt = this.time + 35;
-              this.gainXP(35 + (f.tier || 0) * 25);
-              p.kills++;
-              p.score += 85 + (f.tier || 0) * 55;
-              this.spawnFood("meat", fish.x, fish.y, 30 + (f.tier || 0) * 25, {
-                tier: f.tier || 0,
-                homeChunk: f.homeChunk || "0,0",
-              });
-              this.emit("kill", { x: fish.x, y: fish.y, speciesId: "tideweaver", water: true });
-            }
+            this._hitMarine(fish, damage, isCounter || p.empowered > 0, f);
           }
         }
       }
@@ -660,6 +921,35 @@ export class Game {
         }
       }
     }
+    if (this.build?.transformations?.thunderJaws) {
+      for (const foe of this.entities) {
+        if (distance(p, foe) < 6.5) {
+          foe.hp -= 60;
+          foe.hitFlash = 0.2;
+          this.emit("hit", { x: foe.x, y: foe.y, amount: 60, target: foe.id, lightning: true });
+        }
+      }
+      this.emit("ability", { ability: "shockwave", radius: 6.5, text: "Thunder Jaws Discharge" });
+    }
+    const boneLvl = this.build?.offensive?.boneProjectiles || 0;
+    if (boneLvl > 0) {
+      const splinterCount = 1 + boneLvl;
+      const splinterDmg = 20 + boneLvl * 18;
+      for (let sIdx = 0; sIdx < splinterCount; sIdx++) {
+        const spreadAngle = p.angle + (sIdx - (splinterCount - 1) / 2) * 0.22;
+        this.projectiles.push({
+          id: this._nextId++,
+          x: p.x + Math.cos(p.angle) * 1.5,
+          y: p.y + Math.sin(p.angle) * 1.5,
+          angle: spreadAngle,
+          speed: 28,
+          life: 0.75,
+          radius: 0.6,
+          damage: splinterDmg,
+          kind: "bone",
+        });
+      }
+    }
     p.empowered = 0;
     p.combo = Math.min(4, p.combo + 1);
     p.comboTime = 2;
@@ -670,8 +960,9 @@ export class Game {
     const p = this.player,
       m = this.mutationCounts;
     const cost = Math.max(10, 28 - (m.adrenaline || 0) * 5);
+    const hasJuggernaut = !!this.build?.activeSynergies?.includes("juggernaut");
     if (
-      !this.kit.dash ||
+      (!this.kit.dash && !hasJuggernaut) ||
       this.state !== "playing" ||
       p.dashCooldown > 0 ||
       p.stamina < cost
@@ -684,6 +975,83 @@ export class Game {
     p.dashCooldown = this.species.body === "bird" ? 1.2 : 1.6;
     p.invulnerable = Math.max(p.invulnerable, 0.32);
     this._containPlayer();
+
+    // Juggernaut Synergy: locomotive charge trampling all enemies
+    if (this.build?.activeSynergies?.includes("juggernaut")) {
+      for (const e of [...this.entities]) {
+        if (distance(p, e) < 4.8) {
+          const juggernautDmg = p.damage * 3.0;
+          this._hitEntity(e, juggernautDmg, 4.5, true, angle);
+          e.stunned = Math.max(e.stunned || 0, 1.8);
+        }
+      }
+      this.emit("synergy-burst", { synergy: "juggernaut", x: p.x, y: p.y, text: "JUGGERNAUT TRAMPLE!" });
+    } else if (this.build?.offensive?.chargingHorns) {
+      const hornLvl = this.build.offensive.chargingHorns;
+      const impactDmg = 45 + hornLvl * 45;
+      for (const e of [...this.entities]) {
+        if (distance(p, e) < 3.8) {
+          this._hitEntity(e, impactDmg, 2.0 + hornLvl * 0.7, false, angle);
+          if (hornLvl >= 5) e.stunned = Math.max(e.stunned || 0, 1.6);
+        }
+      }
+    }
+
+    // Seismic Slam Synergy: ground shockwave
+    if (this.build?.activeSynergies?.includes("seismicSlam")) {
+      for (const e of [...this.entities]) {
+        if (distance(p, e) < 8.5) {
+          this._hitEntity(e, p.damage * 0.9, 3.2, false);
+          e.stunned = Math.max(e.stunned || 0, 2.0);
+        }
+      }
+      this.emit("synergy-burst", { synergy: "seismicSlam", x: p.x, y: p.y, radius: 8.5, text: "SEISMIC SLAM SHOCKWAVE!" });
+    }
+
+    if (this.marineState) {
+      for (const [poolId, poolState] of this.marineState.entries()) {
+        const f = (this.worldFeatures || []).find((feat) => feat.id === poolId);
+        if (!f || Math.hypot(p.x - f.x, p.y - f.y) > f.radius + 12) continue;
+        for (const fish of (poolState.swimmers || [])) {
+          if (!fish || fish.dead) continue;
+          const dFish = Math.hypot(p.x - fish.x, p.y - fish.y);
+          if (hasJuggernaut && dFish < 5.2) {
+            this._hitMarine(fish, p.damage * 3.0, true, f);
+          } else if (this.build?.activeSynergies?.includes("seismicSlam") && dFish < 8.5) {
+            this._hitMarine(fish, p.damage * 0.9, false, f);
+          } else if (this.build?.offensive?.chargingHorns && dFish < 4.2) {
+            const hornLvl = this.build.offensive.chargingHorns;
+            this._hitMarine(fish, 45 + hornLvl * 45, false, f);
+          }
+        }
+      }
+    }
+
+    // Inferno Synergy: Drop molten flame trail nodes
+    if (this.build?.activeSynergies?.includes("inferno")) {
+      this.build.flameTrails ||= [];
+      for (let i = 0; i < 4; i++) {
+        const frac = i / 4;
+        this.build.flameTrails.push({
+          x: p.x - Math.cos(angle) * (amount * frac),
+          y: p.y - Math.sin(angle) * (amount * frac),
+          life: 4.5,
+          radius: 2.6,
+          damage: p.damage * 0.75,
+        });
+      }
+      this.emit("synergy-burst", { synergy: "inferno", x: p.x, y: p.y, text: "INFERNO TRAIL IGNITED!" });
+    }
+
+    if (m.shockwaveStride) {
+      for (const e of this.entities) {
+        if (distance(p, e) < 5.2 && SPECIES_BY_ID[e.speciesId].tier <= this.tier) {
+          e.stunned = Math.max(e.stunned || 0, 1.2);
+          sweepMove(e, Math.cos(angle) * 2.8, Math.sin(angle) * 2.8, 1, this.worldFeatures || []);
+        }
+      }
+      this.emit("ability", { ability: "shockwave", radius: 5.2, text: "Seismic Stride" });
+    }
     this.emit("dash", { angle });
     return true;
   }
@@ -749,6 +1117,25 @@ export class Game {
       this._hitEntity(e, damage, knockbackForce);
       if (type === "blood") p.hp = Math.min(p.maxHp, p.hp + damage * 0.2);
     }
+    if (this.marineState) {
+      for (const [poolId, poolState] of this.marineState.entries()) {
+        const f = (this.worldFeatures || []).find((feat) => feat.id === poolId);
+        if (!f || Math.hypot(p.x - f.x, p.y - f.y) > f.radius + radius + 6) continue;
+        for (let i = 0; i < (poolState.swimmers || []).length; i++) {
+          const fish = poolState.swimmers[i];
+          if (!fish || fish.dead) continue;
+          const dFish = Math.hypot(fish.x - p.x, fish.y - p.y);
+          const angle = Math.abs(angleDifference(Math.atan2(fish.y - p.y, fish.x - p.x), p.angle));
+          if (
+            dFish <= radius + 2.2 &&
+            (definition.shape !== "cone" || angle <= 1.15)
+          ) {
+            const abilityDamage = p.damage * definition.power;
+            this._hitMarine(fish, abilityDamage, false, f);
+          }
+        }
+      }
+    }
     return true;
   }
 
@@ -794,8 +1181,50 @@ export class Game {
         e.intent = "hunt";
       }
     }
+    if (this.marineState) {
+      for (const [, poolState] of this.marineState.entries()) {
+        for (const fish of (poolState.swimmers || [])) {
+          if (!fish || fish.dead) continue;
+          if (Math.hypot(p.x - fish.x, p.y - fish.y) < roarRadius) {
+            this._hitMarine(fish, 25 + this.tier * 10, false);
+          }
+        }
+      }
+    }
     if (this.playerMateId || this.playerOffspringCount > 0) {
       if (this.survivalBehavior) this.survivalBehavior.roarsWithPack = (this.survivalBehavior.roarsWithPack || 0) + 1;
+    }
+    // Alpha's Command Synergy
+    if (this.build?.activeSynergies?.includes("alphasCommand")) {
+      if (!this.build.packmates?.length) {
+        this.build.packmates = [];
+        for (let i = 0; i < 3; i++) {
+          const comp = this.spawnEntity("velociraptor", p.x + (i - 1) * 2.5, p.y + 2, {
+            passive: false,
+            packId: "player-family",
+            name: `Apex Packmate #${i + 1}`,
+          });
+          if (comp) {
+            comp.isCompanion = true;
+            this.build.packmates.push(comp.id);
+          }
+        }
+      }
+      for (const compId of this.build.packmates) {
+        const mate = this.entities.find((e) => e.id === compId);
+        if (mate) {
+          mate.frenzy = 6.0;
+          mate.speedBonus = 2.0;
+          mate.invulnerable = 5.0;
+          mate.aggro = 25.0;
+        }
+      }
+      this.emit("synergy-burst", {
+        synergy: "alphasCommand",
+        x: p.x,
+        y: p.y,
+        text: "ALPHA'S COMMAND: Packmates Unleashed in Frenzy!",
+      });
     }
     return true;
   }
@@ -857,6 +1286,12 @@ export class Game {
     this.foods = this.foods.filter((f) => f.id !== food.id);
     if (this.survival) this.survival.strain = Math.max(0, this.survival.strain - 3);
     this._eatCooldown = 0.17;
+    if (food.type === "mutation-catalyst") {
+      this.collectSpecial(food);
+      this.emit("collect", { x: food.x, y: food.y });
+      this.openMutationDrop(food.rarity || "common");
+      return true;
+    }
     if (
       ["dna", "pet-egg", "decoration-cache", "cosmetic-cache"].includes(
         food.type,
@@ -868,6 +1303,11 @@ export class Game {
     }
     const m = this.mutationCounts;
     const quality = foodEfficiency(this.tier, food.tier || 0);
+    const rapidMetaLvl = this.build?.passive?.rapidMetabolism || 0;
+    if (rapidMetaLvl >= 3) {
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * (0.05 + rapidMetaLvl * 0.03));
+    }
+    const metaMult = rapidMetaLvl > 0 ? (1 + rapidMetaLvl * 0.2) : 1;
     p.hunger = Math.min(
       100,
       p.hunger +
@@ -879,6 +1319,7 @@ export class Game {
               ? 30
               : food.type === "plant" ? plantDefinition(food).hunger : 12) *
           (1 + (m.metabolism || 0) * 0.15) *
+          metaMult *
           Math.max(0.08, Math.sqrt(quality)),
     );
     p.hp = Math.min(
@@ -951,6 +1392,127 @@ export class Game {
   }
   closeEvolution() {
     if (this.state !== "evolution") return false;
+    this.state = "playing";
+    return true;
+  }
+  openMutationDrop(rarity = "common") {
+    if (this.state !== "playing") return false;
+    this.build ||= createBuildState();
+    const pool = [...MUTATIONS];
+
+    // Collect upgradeable mutations that player currently possesses
+    const upgradeable = [];
+    for (const cat of ["offensive", "defensive", "passive", "transformations"]) {
+      for (const [id, lvl] of Object.entries(this.build[cat] || {})) {
+        if (lvl < 5) {
+          const mut = pool.find((m) => m.id === id);
+          if (mut) upgradeable.push(mut);
+        }
+      }
+    }
+
+    // Filter mutations that can be equipped or upgraded
+    const validPool = pool.filter((m) => canEquipOrUpgrade(this.build, m.id));
+    const activePool = validPool.length >= 3 ? validPool : pool;
+
+    const chosen = [];
+    if (upgradeable.length > 0 && this.random() < 0.65) {
+      chosen.push(this.pick(upgradeable));
+    }
+    const matchingRarity = activePool.filter((m) => m.rarity === rarity && !chosen.some((c) => c.id === m.id));
+    if (matchingRarity.length > 0 && chosen.length < 3) {
+      chosen.push(this.pick(matchingRarity));
+    }
+    const remaining = activePool.filter((m) => !chosen.some((c) => c.id === m.id));
+    const extra = this._sample(remaining, Math.min(remaining.length, 3 - chosen.length));
+    const options = [...chosen, ...extra];
+    this.pendingMutationChoices = options.map((m) => m.id);
+    this.state = "mutation-choice";
+
+    // Annotate choices with current level, next level, and synergy readiness
+    const annotatedChoices = options.map((m) => {
+      const cat = m.category || (BUILD_MUTATIONS[m.id]?.category) || "offensive";
+      const currentLvl = this.build[cat]?.[m.id] || 0;
+      const nextLvl = currentLvl + 1;
+      const bm = BUILD_MUTATIONS[m.id];
+      const lvlData = bm?.levels?.[nextLvl - 1];
+
+      let wouldSynergize = false;
+      let wouldSynergizeName = "";
+      for (const [synKey, syn] of Object.entries(MUTATION_SYNERGIES)) {
+        if (this.build.activeSynergies?.includes(synKey)) continue;
+        if (syn.requires[m.id] && syn.requires[m.id] <= nextLvl) {
+          let otherSatisfied = true;
+          for (const [reqId, minLvl] of Object.entries(syn.requires)) {
+            if (reqId === m.id) continue;
+            const actLvl = (this.build.offensive?.[reqId] || 0) +
+                           (this.build.defensive?.[reqId] || 0) +
+                           (this.build.passive?.[reqId] || 0) +
+                           (this.build.transformations?.[reqId] || 0);
+            if (actLvl < minLvl) { otherSatisfied = false; break; }
+          }
+          if (otherSatisfied) {
+            wouldSynergize = true;
+            wouldSynergizeName = syn.name;
+            break;
+          }
+        }
+      }
+
+      return {
+        ...m,
+        currentLvl,
+        nextLvl,
+        isUpgrade: currentLvl > 0,
+        levelDesc: lvlData?.desc || m.description,
+        wouldSynergize,
+        wouldSynergizeName,
+      };
+    });
+
+    this.emit("mutation-found", {
+      rarity,
+      choices: annotatedChoices,
+    });
+    return true;
+  }
+  applyMutation(mutationId) {
+    if (this.state !== "mutation-choice") return false;
+    if (!this.pendingMutationChoices?.includes(mutationId)) return false;
+    const mutation = MUTATIONS.find((m) => m.id === mutationId);
+    if (!mutation) return false;
+    this.mutations.push(mutationId);
+    this.build ||= createBuildState();
+    const buildRes = applyBuildMutation(this.build, mutationId);
+    if (mutationId === "titansWrath") {
+      this.player.maxHp = Math.round(this.player.maxHp * 1.4);
+      this.player.hp = this.player.maxHp;
+    }
+    this.refreshStats(true);
+    this.pendingMutationChoices = [];
+    this.state = "playing";
+    this.emit("mutation-applied", {
+      id: mutationId,
+      mutation,
+      level: buildRes.level || 1,
+      category: buildRes.category || mutation.category,
+      text: buildRes.ok ? `MUTATION ADAPTED: ${mutation.name} (Lv ${buildRes.level})!` : `MUTATION ADAPTED: ${mutation.name}!`,
+    });
+    if (buildRes.newSynergies?.length) {
+      for (const synKey of buildRes.newSynergies) {
+        const syn = MUTATION_SYNERGIES[synKey];
+        this.emit("synergy-unlocked", {
+          synergy: synKey,
+          definition: syn,
+          text: `⚡ UNLOCKED ${syn.title.toUpperCase()}!`,
+        });
+      }
+    }
+    return true;
+  }
+  closeMutationChoice() {
+    if (this.state !== "mutation-choice") return false;
+    this.pendingMutationChoices = [];
     this.state = "playing";
     return true;
   }
@@ -1040,15 +1602,16 @@ export class Game {
     return result;
   }
 
-  evolve(speciesId, mutationId) {
+  evolve(speciesId, mutationId = null) {
     const offeredSpecies = SPECIES_BY_ID[speciesId];
     if (
       this.state !== "evolution" ||
-      !offeredSpecies || !MUTATIONS.some((mutation) => mutation.id === mutationId) ||
+      !offeredSpecies ||
+      (mutationId && !MUTATIONS.some((mutation) => mutation.id === mutationId)) ||
       this.player.xp < this.nextThreshold || offeredSpecies.tier !== Math.min(7, this.tier + 1) ||
       (offeredSpecies.bloodline && !eligibleBloodlines(this).some((path) => path.speciesId === speciesId)) ||
       !this.evolutionChoices.includes(speciesId) ||
-      !this.mutationChoices.includes(mutationId)
+      (mutationId && !this.mutationChoices.includes(mutationId))
     )
       return false;
     const threshold = this.nextThreshold;
@@ -1082,7 +1645,7 @@ export class Game {
     this.lineage.formGuardians = 0;
     this.evolutionReady = false;
     this.player.xp = Math.max(0, this.player.xp - threshold);
-    this.mutations.push(mutationId);
+    if (mutationId) this.mutations.push(mutationId);
     this.refreshStats(true);
     this.player.hunger = 100;
     this.player.stamina = 100;
@@ -1131,10 +1694,102 @@ export class Game {
       (1 - this.geneticTraits.resistance) *
       (p.guard > 0 ? 0.35 : 1) *
       (this.hasBuff("shield") ? 0.6 : 1);
-    p.hp = Math.max(0, p.hp - damage);
+
+    let absorbedDamage = damage;
+    if (this.build?.barrierHp > 0) {
+      if (this.build.barrierHp >= absorbedDamage) {
+        this.build.barrierHp -= absorbedDamage;
+        absorbedDamage = 0;
+      } else {
+        absorbedDamage -= this.build.barrierHp;
+        this.build.barrierHp = 0;
+      }
+    }
+    p.hp = Math.max(0, p.hp - absorbedDamage);
     p.sleeping = 0;
     if (!bypass) {
-      if (this.survivalBehavior && (cause.includes("Apex") || cause.includes("Alpha") || (amount > p.maxHp * 0.2))) {
+      this.timeSinceDamaged = 0;
+
+      // Reflective Armor
+      const reflectLvl = this.build?.defensive?.reflectiveArmor || 0;
+      if (reflectLvl > 0) {
+        const reflectPct = 0.15 + (reflectLvl - 1) * 0.11;
+        const refDmg = damage * reflectPct;
+        for (const e of this.entities) {
+          if (distance(p, e) < 5.5) {
+            e.hp -= refDmg;
+            e.hitFlash = 0.15;
+            this.emit("hit", { x: e.x, y: e.y, amount: refDmg, target: e.id, reflect: true });
+          }
+        }
+      }
+
+      // Thorns
+      const thornsLvl = this.build?.defensive?.thorns || 0;
+      if (thornsLvl > 0) {
+        const thornDmg = 18 + (thornsLvl - 1) * 20;
+        for (const e of this.entities) {
+          if (distance(p, e) < 4.5) {
+            e.hp -= thornDmg;
+            e.hitFlash = 0.15;
+            if (thornsLvl >= 3) e.bleeding = Math.max(e.bleeding || 0, 3.0);
+            this.emit("hit", { x: e.x, y: e.y, amount: thornDmg, target: e.id, thorns: true });
+          }
+        }
+      }
+
+      // Toxic Blood
+      const toxicBloodLvl = this.build?.defensive?.toxicBlood || 0;
+      if (toxicBloodLvl > 0) {
+        const acidDmg = 25 + (toxicBloodLvl - 1) * 31;
+        for (const e of this.entities) {
+          if (distance(p, e) < 5.0) {
+            e.poison = Math.max(e.poison || 0, 4.0);
+            e.hp -= acidDmg;
+            this.emit("hit", { x: e.x, y: e.y, amount: acidDmg, target: e.id, poison: true });
+          }
+        }
+      }
+
+      // Glacial Fortress Synergy: Flash-freeze on heavy hit
+      if (this.build?.activeSynergies?.includes("glacialFortress") && (amount > p.maxHp * 0.16 || amount > 25)) {
+        if (!this._lastGlacialProc || this.time - this._lastGlacialProc > 8) {
+          this._lastGlacialProc = this.time;
+          for (const e of this.entities) {
+            if (distance(p, e) < 7.5) {
+              e.frozen = 3.0;
+              e.stunned = 3.0;
+              e.chilled = 5.0;
+            }
+          }
+          p.invulnerable = Math.max(p.invulnerable, 1.5);
+          this.emit("synergy-burst", { synergy: "glacialFortress", x: p.x, y: p.y, text: "GLACIAL FORTRESS: Flash-Freeze Barrier!" });
+        }
+      }
+
+      // Volcanic Scales Transformation
+      if (this.build?.transformations?.volcanicScales) {
+        for (const e of this.entities) {
+          if (distance(p, e) < 7.0) {
+            e.burning = Math.max(e.burning || 0, 3.5);
+            e.hp -= p.damage * 0.85;
+            this.emit("hit", { x: e.x, y: e.y, amount: p.damage * 0.85, target: e.id, fire: true });
+          }
+        }
+      }
+
+      if (this.mutationCounts.volcanicCore) {
+        for (const e of this.entities) {
+          if (distance(p, e) < 6.5) {
+            e.burning = Math.max(e.burning || 0, 3.5);
+            e.hp -= p.damage * 0.75;
+            this.emit("hit", { x: e.x, y: e.y, amount: p.damage * 0.75, target: e.id, fire: true });
+          }
+        }
+        this.emit("ability", { ability: "shockwave", radius: 6.5, text: "Volcanic Retaliation" });
+      }
+      const causeStr = typeof cause === "string" ? cause : (cause?.name || "");
+      if (this.survivalBehavior && (causeStr.includes("Apex") || causeStr.includes("Alpha") || (amount > p.maxHp * 0.2))) {
         this.survivalBehavior.apexHitsTaken = (this.survivalBehavior.apexHitsTaken || 0) + 1;
       }
       recordBlood(this, p.x, p.y);
@@ -1159,7 +1814,90 @@ export class Game {
       e.telegraph = 0;
       e.cast = null;
     }
-    e.hp -= amount * (1 - phenotype(e.genome).resistance);
+    const m = this.mutationCounts || {};
+    const res = phenotype(e.genome).resistance;
+    let actualAmount = amount;
+    if (e.eliteMutation === "Armored") {
+      actualAmount *= 0.60;
+    }
+    if (m.boneCrusher) {
+      actualAmount *= (1 - res * 0.55);
+      if (this.random() < 0.28) {
+        e.stunned = Math.max(e.stunned || 0, 1.2);
+      }
+    } else {
+      actualAmount *= (1 - res);
+    }
+    if (m.toxicBile) {
+      e.poison = Math.max(e.poison || 0, 4.5);
+      e.slowed = Math.max(e.slowed || 0, 3.5);
+    }
+
+    // Build Offensive Mutations & Synergies
+    const fangsLvl = this.build?.offensive?.serratedFangs || 0;
+    const clawsLvl = this.build?.offensive?.bleedingClaws || 0;
+    if (fangsLvl > 0 || clawsLvl > 0) {
+      e.bleeding = Math.max(e.bleeding || 0, 3.5 + fangsLvl * 0.3);
+      e.bleedRate = 0.15 + fangsLvl * 0.13 + clawsLvl * 0.10;
+    }
+    const frostLvl = this.build?.offensive?.frostBite || 0;
+    if (frostLvl > 0) {
+      e.chilled = Math.max(e.chilled || 0, 3.0 + frostLvl * 0.4);
+      e.freezeHits = (e.freezeHits || 0) + 1;
+      const neededHits = frostLvl >= 5 ? 2 : frostLvl >= 4 ? 3 : 5;
+      if (e.freezeHits >= neededHits) {
+        e.freezeHits = 0;
+        e.stunned = Math.max(e.stunned || 0, 1.5 + frostLvl * 0.2);
+        e.frozen = 2.0;
+        this.emit("hit", { x: e.x, y: e.y, target: e.id, frozen: true });
+      }
+    }
+    const spitLvl = this.build?.offensive?.venomSpit || 0;
+    if (spitLvl > 0) {
+      e.poison = Math.max(e.poison || 0, 4.0);
+      e.slowed = Math.max(e.slowed || 0, 2.5);
+    }
+    if (this.build?.activeSynergies?.includes("plagueCloud")) {
+      this.build.poisonClouds ||= [];
+      if (this.build.poisonClouds.length < 8) {
+        this.build.poisonClouds.push({
+          x: e.x,
+          y: e.y,
+          life: 6.0,
+          radius: 4.5,
+          damage: 28,
+        });
+        this.emit("synergy-burst", { synergy: "plagueCloud", x: e.x, y: e.y });
+      }
+    }
+    const chainLvl = this.build?.offensive?.chainLightning || 0;
+    if (chainLvl > 0) {
+      const maxArcs = chainLvl;
+      const arcDmg = actualAmount * (0.35 + chainLvl * 0.12);
+      let hitCount = 0;
+      for (const other of this.entities) {
+        if (other !== e && distance(other, e) < 8.0 && hitCount < maxArcs) {
+          other.hp -= arcDmg;
+          other.hitFlash = 0.18;
+          if (chainLvl >= 3 && this.random() < 0.25) other.stunned = Math.max(other.stunned || 0, 1.0);
+          this.emit("hit", { x: other.x, y: other.y, amount: arcDmg, target: other.id, lightning: true });
+          hitCount++;
+        }
+      }
+    }
+    const tailLvl = this.build?.offensive?.spikedTail || 0;
+    if (tailLvl > 0 && knockback > 0) {
+      const tailSweepDmg = actualAmount * (0.5 + tailLvl * 0.25);
+      for (const other of this.entities) {
+        if (other !== e && distance(this.player, other) < 4.5) {
+          other.hp -= tailSweepDmg;
+          if (tailLvl >= 3) other.stunned = Math.max(other.stunned || 0, 1.0);
+          this.emit("hit", { x: other.x, y: other.y, amount: tailSweepDmg, target: other.id, knockback: true });
+        }
+      }
+    }
+
+    e.hp -= actualAmount;
     e.hitFlash = 0.18;
     e.aggro = 10;
     recordBlood(this, e.x, e.y, e.id);
@@ -1262,12 +2000,76 @@ export class Game {
           homeChunk,
         });
     }
+    // Rare Mutation Catalyst Drop (using deterministic hash to preserve PRNG sequence)
+    const isBoss = !!e.boss || !!e.isAlpha;
+    const isHighTier = s.tier >= 4;
+    const mutationChance = isBoss ? 1.0 : isHighTier ? 0.35 : 0.12;
+    const dropHash = Math.abs(Math.sin((e.x * 43.1 + e.y * 19.7 + e.id + this.seed) * 17.3));
+    const dropRoll = (dropHash * 1000) % 1;
+    if (dropRoll < mutationChance) {
+      const rarityRoll = (dropHash * 10000) % 1;
+      let rarity = "common";
+      if (isBoss) {
+        rarity = rarityRoll < 0.45 ? "legendary" : "epic";
+      } else if (isHighTier) {
+        rarity = rarityRoll < 0.15 ? "legendary" : rarityRoll < 0.55 ? "epic" : "rare";
+      } else {
+        rarity = rarityRoll < 0.05 ? "epic" : rarityRoll < 0.35 ? "rare" : "common";
+      }
+      this.spawnFood("mutation-catalyst", e.x, e.y, 45, {
+        tier: s.tier,
+        rarity,
+        homeChunk: e.homeChunk || chunkKey(e.x, e.y),
+      });
+    }
+    // Hemorrhage Ultimate Mutation on Kill
+    if (this.build?.activeSynergies?.includes("hemorrhage") && ((e.bleeding || 0) > 0 || (e.bleedRate || 0) > 0 || isCrit)) {
+      const aoeRadius = 12;
+      const aoeDamage = 120 + this.player.damage * 0.6;
+      for (const other of this.entities) {
+        if (other !== e && distance(other, e) < aoeRadius) {
+          other.hp -= aoeDamage;
+          other.bleeding = Math.max(other.bleeding || 0, 4.0);
+          other.hitFlash = 0.2;
+          this.emit("hit", { x: other.x, y: other.y, amount: aoeDamage, target: other.id, bleed: true });
+        }
+      }
+      const healAmt = this.player.maxHp * 0.10;
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmt);
+      this.emit("synergy-burst", {
+        synergy: "hemorrhage",
+        x: e.x,
+        y: e.y,
+        radius: aoeRadius,
+        damage: aoeDamage,
+        heal: healAmt,
+        text: "HEMORRHAGE ERUPTION! Crimson Burst & Life Restored!",
+      });
+    }
+
+    // Bloodlust Passive on Kill
+    const bloodlustLvl = this.build?.passive?.bloodlust || 0;
+    if (bloodlustLvl > 0) {
+      this.buffs.speed = Math.max(this.buffs.speed || 0, 4.0 + bloodlustLvl * 0.8);
+      this.buffs.damage = Math.max(this.buffs.damage || 0, 4.0 + bloodlustLvl * 0.8);
+      if (bloodlustLvl >= 4) {
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * (bloodlustLvl >= 5 ? 0.08 : 0.04));
+      }
+      this.refreshStats();
+    }
+
     if (this.mutationCounts.predator)
       this.player.hp = Math.min(
         this.player.maxHp,
         this.player.hp +
-          this.player.maxHp * 0.05 * this.mutationCounts.predator,
+          this.player.maxHp * 0.06 * this.mutationCounts.predator,
       );
+    if (this.mutationCounts.bloodRush) {
+      this.buffs.speed = Math.max(this.buffs.speed || 0, 6.0);
+      this.buffs.damage = Math.max(this.buffs.damage || 0, 6.0);
+      this.refreshStats();
+      this.emit("buff", { text: "PRIMAL FRENZY! Speed & Damage Surging!" });
+    }
     if (e.boss) this.boss = null;
     this.lineage.formKills++;
     if (biomeAt(e.homeX ?? e.x, e.homeY ?? e.y).id === "volcano")

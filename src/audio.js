@@ -707,6 +707,34 @@ export class AudioEngine {
         tone(1567.98, 0.3, 0.55, 0.025);
         this.playSample("coinCollect", 0.75);
         break;
+      case "synergy-unlocked":
+        [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((f, i) => tone(f, i * 0.08, 0.65, 0.06));
+        tone(1046.50, 0.45, 0.8, 0.05);
+        this.playSample("coinCollect", 0.85);
+        break;
+      case "synergy-burst":
+        if (event.synergy === "hemorrhage") {
+          tone(80, 0, 0.35, 0.28, "sawtooth", 30);
+          this.rustle(now, 0.25, 0.35, 600);
+          this.playSample("monsterGrunt", 0.55);
+        } else if (event.synergy === "seismicSlam") {
+          tone(55, 0, 0.5, 0.35, "sine", 25);
+          this.rustle(now, 0.35, 0.45, 450);
+        } else if (event.synergy === "alphasCommand") {
+          this.playSample("raptorCall", 0.9);
+          tone(180, 0, 0.4, 0.18, "sawtooth", 70);
+        } else if (event.synergy === "inferno") {
+          this.rustle(now, 0.28, 0.32, 1200);
+          tone(120, 0, 0.25, 0.15, "triangle", 60);
+        } else if (event.synergy === "glacialFortress") {
+          [600, 900, 1200].forEach((f, i) => tone(f, i * 0.05, 0.2, 0.05, "triangle", 300));
+        } else if (event.synergy === "juggernaut") {
+          tone(65, 0, 0.4, 0.3, "sawtooth", 35);
+          this.playSample("monsterGrunt", 0.6);
+        } else {
+          tone(140, 0, 0.25, 0.15, "sine", 70);
+        }
+        break;
       case "dash":
         this.rustle(now, 0.3, 0.3, 1800);
         tone(220, 0, 0.16, 0.07, "sine", 580);

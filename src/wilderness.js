@@ -111,20 +111,37 @@ function swim(f, game, dt) {
   let state = states.get(f.id);
   if (!state) {
     state = {
-      swimmers: Array.from({ length: MARINE_SWIMMERS }, (_, i) =>
-        marinePose(f, Math.max(0, game.time - dt), i),
-      ),
+      swimmers: Array.from({ length: MARINE_SWIMMERS }, (_, i) => {
+        const pose = marinePose(f, Math.max(0, game.time - dt), i);
+        const maxHp = 50 + (f.tier || 0) * 35;
+        const isKronosaur = (i + (f.tier || 0)) % 2 === 1;
+        return {
+          ...pose,
+          id: `${f.id}:swimmer:${i}`,
+          poolId: f.id,
+          index: i,
+          speciesId: isKronosaur ? "abyssal-kronosaur" : "tideweaver",
+          name: isKronosaur ? "Abyssal Hunter" : "Tideweaver Plesiosaur",
+          hp: maxHp,
+          maxHp,
+          tier: f.tier || 0,
+        };
+      }),
     };
     states.set(f.id, state);
   }
   const p = game.player,
-    hunting = Math.hypot(p.x - f.x, p.y - f.y) < f.radius - 0.5;
+    playerDistToCenter = Math.hypot(p.x - f.x, p.y - f.y),
+    // Water predators strictly hunt only if player is actually inside deep water
+    playerInDeepWater = playerDistToCenter <= Math.max(1, f.radius - 2.2),
+    hunting = playerInDeepWater;
   for (let i = 0; i < state.swimmers.length; i++) {
     const fish = state.swimmers[i];
     if (fish.dead) {
       if (game.time >= (fish.respawnAt || 0)) {
         fish.dead = false;
-        fish.hp = 40 + (f.tier || 0) * 35;
+        fish.maxHp = 50 + (f.tier || 0) * 35;
+        fish.hp = fish.maxHp;
       } else {
         continue;
       }
@@ -133,9 +150,9 @@ function swim(f, game, dt) {
       target = hunting ? p : patrol;
     let tx = target.x - f.x,
       ty = target.y - f.y;
-    // Keep the entire predator in its pool, including while pursuing shorelines.
+    // Keep the entire predator strictly submerged in its pool, away from the dry bank.
     const targetRadius = Math.hypot(tx, ty),
-      limit = Math.max(1, f.radius - 2.8);
+      limit = Math.max(1, f.radius - 3.0);
     if (targetRadius > limit) {
       tx *= limit / targetRadius;
       ty *= limit / targetRadius;
@@ -181,7 +198,7 @@ export function updateWildlife(game, dt) {
       game.hazardHint = p.submerged ? 'SUBMERGED · QUIET MOVEMENT' : "DEEP WATER · MARINE PREDATORS";
       if (
         game._hazardCooldown === 0 &&
-        d < f.radius - 0.5 &&
+        d <= f.radius - 2.0 &&
         [0, 1, 2].some((i) => {
           const fish = marinePose(f, game.time, i, p, game.marineState);
           if (!fish || fish.dead) return false;

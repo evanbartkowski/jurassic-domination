@@ -280,6 +280,19 @@ export function evaluateCreatureThreat(entity, game) {
     threatColor = "#4ade80";
   }
 
+  if (entity.eliteMutation) {
+    const eliteIcons = { Blazing: "🔥", Venomous: "☣️", Armored: "🛡️", Frost: "❄️", Berserk: "👹" };
+    symbol = eliteIcons[entity.eliteMutation] || "⚡";
+    threatLabel = `${entity.eliteMutation.toUpperCase()} ELITE`;
+    threatTier = tierDiff >= 0 ? "lethal" : "danger";
+    badgeClass = `threat-${threatTier} elite-${entity.eliteMutation.toLowerCase()}`;
+    threatColor = entity.eliteMutation === "Blazing" ? "#f97316"
+      : entity.eliteMutation === "Venomous" ? "#22c55e"
+      : entity.eliteMutation === "Armored" ? "#38bdf8"
+      : entity.eliteMutation === "Frost" ? "#06b6d4"
+      : "#ef4444";
+  }
+
   let behavior = "neutral";
   let behaviorLabel = "🌾 NEUTRAL";
   if ((entity.charging || 0) > 0 || (entity.chargeWindup || 0) > 0) {
@@ -324,6 +337,7 @@ export function evaluateCreatureThreat(entity, game) {
     threatColor,
     isApex: entity.boss || tierDiff >= 2,
     isInjured: entity.hp < entity.maxHp * 0.85,
+    eliteMutation: entity.eliteMutation || null,
   };
 }
 

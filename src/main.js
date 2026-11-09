@@ -474,11 +474,29 @@ ui = new UI(
       }
     },
     bloodlines: () => ui.showBloodlines(game),
+    showBuildSheet: () => ui.showBuildSheet(game),
     menu,
-    hatch: () => {
+    hatch: (chosenSpeciesId = null) => {
       unlock();
-      authority?.dispatch({ type: "hatch" });
+      authority?.dispatch({ type: "hatch", chosenSpeciesId });
       persist();
+    },
+    applyMutation: (mutationId) => {
+      const result = authority?.dispatch({ type: "apply-mutation", mutationId });
+      if (result?.ok && game?.state === "playing") {
+        paused = false;
+        ui.showHUD();
+        audio.setMode("playing");
+        persist();
+      }
+    },
+    postponeMutation: () => {
+      const result = authority?.dispatch({ type: "close-mutation-choice" });
+      if (result?.ok) {
+        paused = false;
+        ui.showHUD();
+        audio.setMode("playing");
+      }
     },
     evolve: (speciesId, mutationId) => {
       const result = authority?.dispatch({ type: "evolve", speciesId, mutationId });
@@ -718,6 +736,10 @@ window.addEventListener("keydown", (event) => {
       ui.callbacks.postpone();
       return;
     }
+    if (ui.view === "mutation-choice") {
+      ui.callbacks.postponeMutation?.();
+      return;
+    }
     if (ui.view === "hud") pause();
     else if (ui.view === "pause") resume();
     else if (!["evolution", "death", "menu"].includes(ui.view)) ui.back();
@@ -733,9 +755,80 @@ window.addEventListener("keydown", (event) => {
     islandScene?.handleKey(event);
     return;
   }
+  if (ui.view === "evolution" && !event.repeat) {
+    if (key === "Digit1" || key === "Digit2" || key === "Digit3") {
+      const idx = key === "Digit1" ? 0 : key === "Digit2" ? 1 : 2;
+      ui.selectEvolutionIndex?.(idx);
+      return;
+    }
+    if (key === "ArrowLeft" || key === "KeyA") {
+      ui.cycleEvolutionSelection?.(-1);
+      return;
+    }
+    if (key === "ArrowRight" || key === "KeyD") {
+      ui.cycleEvolutionSelection?.(1);
+      return;
+    }
+    if (key === "Enter" || key === "Space") {
+      ui.confirmChosenEvolution?.();
+      return;
+    }
+  }
+  if (ui.view === "mutation-choice" && !event.repeat) {
+    if (key === "Digit1" || key === "Digit2" || key === "Digit3") {
+      const idx = key === "Digit1" ? 0 : key === "Digit2" ? 1 : 2;
+      ui.selectMutationIndex?.(idx, true);
+      return;
+    }
+    if (key === "ArrowLeft" || key === "KeyA") {
+      ui.cycleMutationSelection?.(-1);
+      return;
+    }
+    if (key === "ArrowRight" || key === "KeyD") {
+      ui.cycleMutationSelection?.(1);
+      return;
+    }
+    if (key === "Enter" || key === "Space") {
+      ui.confirmChosenMutation?.();
+      return;
+    }
+  }
+  if (game?.state === "egg" && !event.repeat) {
+    if (key === "Digit1" && game.starterChoices?.[0]) {
+      ui.selectStarter?.(game.starterChoices[0]);
+      return;
+    }
+    if (key === "Digit2" && game.starterChoices?.[1]) {
+      ui.selectStarter?.(game.starterChoices[1]);
+      return;
+    }
+    if (key === "Digit3" && game.starterChoices?.[2]) {
+      ui.selectStarter?.(game.starterChoices[2]);
+      return;
+    }
+    if (key === "Enter" || key === "Space" || key === "KeyE") {
+      ui.callbacks.hatch(ui.selectedStarterId || game.starterChoices?.[0]);
+      return;
+    }
+  }
   if (key === bindings.evolve && ui.view === "hud" && !event.repeat) {
     ui.callbacks.evolution();
     return;
+  }
+  if (key === "KeyB" && !event.repeat) {
+    if (ui.view === "build-sheet") {
+      resume();
+      return;
+    }
+    if (ui.view === "hud" && game) {
+      pause();
+      ui.showBuildSheet(game);
+      return;
+    }
+    if (ui.view === "pause" && game) {
+      ui.showBuildSheet(game);
+      return;
+    }
   }
   if (key === bindings.journal && ui.view === "hud" && !event.repeat) {
     pause();
@@ -808,12 +901,16 @@ techniqueKey.className = "ability-key technique-key";
 techniqueKey.innerHTML =
   '<kbd>R</kbd><span id="hud-technique"></span><b id="hud-technique-cooldown">READY</b>';
 document.querySelector(".abilities").append(techniqueKey);
+const roarDock = document.createElement("div");
+roarDock.id = "hud-roar-dock";
+roarDock.className = "hud-roar-dock";
 const roarKey = document.createElement("div");
-roarKey.className = "ability-key roar-key";
+roarKey.className = "ability-key roar-key roar-corner-btn";
 roarKey.innerHTML =
-  '<kbd>C</kbd><span id="hud-roar">ROAR</span><b id="hud-roar-cooldown">READY</b>';
+  '<kbd>Z</kbd><span id="hud-roar">ROAR</span><b id="hud-roar-cooldown">READY</b>';
 roarKey.addEventListener("click", () => { if (game) game.roar(); });
-document.querySelector(".abilities").append(roarKey);
+roarDock.append(roarKey);
+document.getElementById("hud").append(roarDock);
 ui.refreshControlLabels();
 document.getElementById("minimap").addEventListener("click", (event) => {
   if (!game) return;
@@ -1031,7 +1128,7 @@ function updateCreatureLabels() {
       labelLayer.append(element);
     }
     const threat = evaluateCreatureThreat(e, game);
-    element.className = `creature-label ${threat.badgeClass}${threat.isApex ? " alpha" : ""}${threat.isInjured ? " injured" : ""}${threat.behavior === "fight" ? " fighting" : ""}`;
+    element.className = `creature-label ${threat.badgeClass}${threat.isApex ? " alpha" : ""}${threat.isInjured ? " injured" : ""}${threat.behavior === "fight" ? " fighting" : ""}${e.eliteMutation ? " elite-predator" : ""}`;
     element.dataset.rarity = species.rarity || "regular";
     element.dataset.threat = threat.threatTier;
 
@@ -1047,7 +1144,7 @@ function updateCreatureLabels() {
     }
     const nameEl = element.querySelector(".creature-name") || element.querySelector("span");
     if (nameEl) {
-      nameEl.textContent = `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${threat.isInjured ? " · INJURED" : ""}`;
+      nameEl.textContent = `${e.boss ? "ALPHA · " : e.eliteMutation ? `${e.eliteMutation.toUpperCase()} · ` : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${threat.isInjured ? " · INJURED" : ""}`;
     }
     const hpBar = element.querySelector("i");
     if (hpBar) {
@@ -1057,6 +1154,57 @@ function updateCreatureLabels() {
     element.style.transform = `translate(${pos.x}px,${pos.y}px)`;
     element.style.opacity = pos.visible ? 1 : 0;
   }
+
+  if (game.marineState && game.worldFeatures) {
+    for (const f of game.worldFeatures) {
+      if (f.type !== "water") continue;
+      const dPool = Math.hypot(f.x - p.x, f.y - p.y);
+      if (dPool > f.radius + 24) continue;
+      const poolState = game.marineState.get(f.id);
+      if (!poolState?.swimmers) continue;
+      for (let i = 0; i < poolState.swimmers.length; i++) {
+        const fish = poolState.swimmers[i];
+        if (!fish || fish.dead) continue;
+        const dFish = Math.hypot(fish.x - p.x, fish.y - p.y);
+        if (dFish > 30) continue;
+        const fishId = fish.id || `marine:${f.id}:${i}`;
+        seen.add(fishId);
+        let element = labels.get(fishId);
+        if (!element) {
+          element = document.createElement("div");
+          element.className = "creature-label marine-creature-label";
+          element.innerHTML = "<div class='creature-badges'><span class='threat-pill'></span><span class='behavior-pill'></span></div><span class='creature-name'></span><b><i></i></b>";
+          labels.set(fishId, element);
+          labelLayer.append(element);
+        }
+        element.className = `creature-label marine-creature-label threat-danger${fish.hunting ? " fighting" : ""}`;
+        element.dataset.threat = "danger";
+        const threatPill = element.querySelector(".threat-pill");
+        if (threatPill) {
+          threatPill.textContent = "🌊 AQUATIC PREDATOR";
+          threatPill.className = "threat-pill threat-danger";
+        }
+        const behaviorPill = element.querySelector(".behavior-pill");
+        if (behaviorPill) {
+          behaviorPill.textContent = fish.hunting ? "HUNTING" : "SWIMMING";
+          behaviorPill.className = `behavior-pill behavior-${fish.hunting ? "fight" : "neutral"}`;
+        }
+        const nameEl = element.querySelector(".creature-name") || element.querySelector("span");
+        if (nameEl) {
+          nameEl.textContent = fish.name || "Tideweaver Plesiosaur";
+        }
+        const hpBar = element.querySelector("i");
+        if (hpBar) {
+          const maxHp = fish.maxHp || (50 + (f.tier || 0) * 35);
+          hpBar.style.transform = `scaleX(${Math.max(0, Math.min(1, (fish.hp ?? maxHp) / maxHp))})`;
+        }
+        const pos = world.project(fish.x, fish.y, 1.8);
+        element.style.transform = `translate(${pos.x}px,${pos.y}px)`;
+        element.style.opacity = pos.visible ? 1 : 0;
+      }
+    }
+  }
+
   for (const [id, element] of labels)
     if (!seen.has(id)) {
       element.remove();
@@ -1071,7 +1219,34 @@ function float(event) {
     !Number.isFinite(event.y)
   )
     return;
-  if (!["hit", "eat"].includes(event.type)) return;
+  if (!["hit", "eat", "synergy-burst", "perfect-dodge", "counter-strike"].includes(event.type)) return;
+  if (event.type === "perfect-dodge") {
+    const element = document.createElement("span");
+    element.textContent = "⚡ PERFECT DODGE!";
+    element.className = "floating-text float-dodge";
+    element.style.cssText = "position:absolute;font:900 24px system-ui;color:#38bdf8;text-shadow:0 0 18px rgba(56,189,248,0.95),0 2px 6px #000;will-change:transform,opacity;pointer-events:none;transform:scale(1.2);z-index:102";
+    damageLayer.append(element);
+    floating.push({ element, x: event.x, y: event.y, life: 1.3, isCrit: true });
+    return;
+  }
+  if (event.type === "counter-strike") {
+    const element = document.createElement("span");
+    element.textContent = "💥 COUNTER STRIKE!";
+    element.className = "floating-text float-counter";
+    element.style.cssText = "position:absolute;font:900 22px system-ui;color:#facc15;text-shadow:0 0 16px rgba(250,204,21,0.95),0 2px 6px #000;will-change:transform,opacity;pointer-events:none;transform:scale(1.2);z-index:102";
+    damageLayer.append(element);
+    floating.push({ element, x: event.x, y: event.y, life: 1.1, isCrit: true });
+    return;
+  }
+  if (event.type === "synergy-burst") {
+    const element = document.createElement("span");
+    element.textContent = `⚡ ${event.synergy?.toUpperCase() || "SYNERGY"}!`;
+    element.className = "floating-text float-synergy";
+    element.style.cssText = "position:absolute;font:900 22px system-ui;color:#e879f9;text-shadow:0 0 16px rgba(217,70,239,0.9),0 2px 6px #000;will-change:transform,opacity;pointer-events:none;transform:scale(1.25);z-index:101";
+    damageLayer.append(element);
+    floating.push({ element, x: event.x, y: event.y, life: 1.2, isCrit: true });
+    return;
+  }
   const amount = event.amount;
   if (!amount) return;
   const element = document.createElement("span");
@@ -1160,6 +1335,18 @@ function processEvents() {
     }
     if (event.type === "interact") {
       ui.toast(`${event.text} · ${event.detail}`);
+    }
+    if (event.type === "mutation-found") {
+      keys.clear();
+      pointer.down = false;
+      ui.showMutationChoice(game, event);
+      audio.setMode("paused");
+    }
+    if (event.type === "mutation-applied") {
+      ui.toast(event.text || "MUTATION ADAPTED!");
+    }
+    if (event.type === "synergy-unlocked") {
+      ui.toast(`⚡ SYNERGY UNLOCKED: ${event.text || "NEW POWER"}!`);
     }
     try {
     world?.event(event);
@@ -1279,7 +1466,7 @@ function frame(now) {
           ability: held("ability") || pad.ability,
           special: held("special") || pad.special,
           technique: held("technique") || pad.technique,
-          roar: held("roar") || pad.roar || pending.has("KeyC") || false,
+          roar: held("roar") || pad.roar || pending.has("KeyZ") || pending.has("KeyC") || false,
           skill: [0, 1, 2, 3, 4, 5].findIndex((slot) => held("skill" + slot)),
           sprint: held("sprint") || pad.sprint,
           crouch: held('crouch') || pad.crouch || false,
@@ -1298,6 +1485,12 @@ function frame(now) {
         keys.clear();
         pointer.down = false;
         ui.showEvolution(game);
+        audio.setMode("paused");
+      }
+      if (game.state === "mutation-choice" && ui.view !== "mutation-choice") {
+        keys.clear();
+        pointer.down = false;
+        ui.showMutationChoice(game);
         audio.setMode("paused");
       }
       if (game.state === "dead" && !recorded) completeDeath();

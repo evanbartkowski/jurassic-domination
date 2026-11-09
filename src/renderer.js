@@ -432,6 +432,46 @@ export class WorldRenderer {
     this.menuDino.scale.setScalar(2.45);
     this.menuDino.rotation.y = -0.65;
     this.scene.add(this.menuDino);
+
+    this.menuRoamers = [
+      {
+        speciesId: "triceratops",
+        scale: 1.55,
+        speed: 1.5,
+        x: -24,
+        baseZ: -5.5,
+        z: -5.5,
+        angle: 0.08,
+        phase: 0,
+      },
+      {
+        speciesId: "parasaurolophus",
+        scale: 1.45,
+        speed: 1.8,
+        x: 22,
+        baseZ: 4.8,
+        z: 4.8,
+        angle: Math.PI - 0.05,
+        phase: 1.8,
+      },
+      {
+        speciesId: "compsognathus",
+        scale: 1.15,
+        speed: 2.8,
+        x: -12,
+        baseZ: 9.5,
+        z: 9.5,
+        angle: 0.12,
+        phase: 3.2,
+      },
+    ].map((cfg) => {
+      const sp = SPECIES.find((s) => s.id === cfg.speciesId) || SPECIES[0];
+      const mesh = createDinosaur(sp, true);
+      mesh.scale.setScalar(cfg.scale);
+      mesh.visible = false;
+      this.scene.add(mesh);
+      return { ...cfg, mesh };
+    });
   }
   createParticles() {
     this.maxParticles = 750;
@@ -557,6 +597,20 @@ export class WorldRenderer {
       this.roarY = event.y;
       this.roarRadius = event.radius || 20;
       this.burst(event.x || 0, event.y || 0, 0xf6ecd8, 32);
+    }
+    if (event.type === "synergy-burst") {
+      this.shake = Math.max(this.shake, 0.45);
+      const synColors = {
+        hemorrhage: 0xef4444,
+        seismicSlam: 0xf59e0b,
+        plagueCloud: 0x22c55e,
+        alphasCommand: 0xa855f7,
+        inferno: 0xf97316,
+        glacialFortress: 0x38bdf8,
+        juggernaut: 0xeab308,
+      };
+      const burstColor = synColors[event.synergy] || 0xfbbf24;
+      this.burst(event.x || 0, event.y || 0, burstColor, 36);
     }
     if (event.type === "hit" || event.type === "ability")
       this.shake = Math.max(
@@ -797,6 +851,26 @@ export class WorldRenderer {
       p = game?.player;
     this.menuDino.visible = menu;
     this.egg.visible = game?.state === "egg";
+    if (Array.isArray(this.menuRoamers)) {
+      for (const roamer of this.menuRoamers) {
+        roamer.mesh.visible = menu;
+        if (menu) {
+          roamer.x += Math.cos(roamer.angle) * roamer.speed * dt;
+          roamer.z += Math.sin(roamer.angle) * roamer.speed * dt;
+          if (roamer.x > 32) {
+            roamer.x = -32;
+            roamer.z = roamer.baseZ + (Math.sin(t * 0.2) * 1.5);
+          } else if (roamer.x < -32) {
+            roamer.x = 32;
+            roamer.z = roamer.baseZ + (Math.cos(t * 0.2) * 1.5);
+          }
+          const ey = elevationAt(roamer.x, roamer.z);
+          roamer.mesh.position.set(roamer.x, ey, roamer.z);
+          roamer.mesh.rotation.y = -roamer.angle + Math.PI / 2;
+          this.animateDino(roamer.mesh, t * 1.6 + roamer.phase, roamer.speed, false, dt);
+        }
+      }
+    }
     if (menu) {
       this.menuDino.position.y = elevationAt(this.menuDino.position.x, this.menuDino.position.z);
       this.animateDino(this.menuDino, t, 0, false, dt);
@@ -906,6 +980,78 @@ export class WorldRenderer {
               life: 1.0,
               size: 0.24,
               color: 0x80d8ff,
+            }, 2);
+          }
+        }
+        // Build Transformations & Synergies Audiovisual Payoffs
+        if (game.build?.activeSynergies?.includes("inferno") || game.build?.transformations?.volcanicScales) {
+          const count = this.emitCount(18, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * 1.5,
+              y: 0.5 + Math.random() * 1.4,
+              z: p.y + (Math.random() - 0.5) * 1.5,
+              vx: (Math.random() - 0.5) * 0.7,
+              vy: 1.6 + Math.random() * 1.2,
+              vz: (Math.random() - 0.5) * 0.7,
+              floating: true,
+              buoyancy: 0.8,
+              life: 0.65,
+              size: 0.22,
+              color: Math.random() < 0.65 ? 0xf97316 : 0xfbbf24,
+            }, 2);
+          }
+        }
+        if (game.build?.transformations?.thunderJaws || (game.build?.offensive?.chainLightning || 0) >= 3) {
+          const count = this.emitCount(14, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + Math.cos(p.angle) * 1.1 + (Math.random() - 0.5) * 0.8,
+              y: 0.7 + Math.random() * 0.8,
+              z: p.y + Math.sin(p.angle) * 1.1 + (Math.random() - 0.5) * 0.8,
+              vx: (Math.random() - 0.5) * 2.2,
+              vy: (Math.random() - 0.5) * 2.2,
+              vz: (Math.random() - 0.5) * 2.2,
+              floating: true,
+              life: 0.2,
+              size: 0.16,
+              color: Math.random() < 0.5 ? 0x38bdf8 : 0xfef08a,
+            }, 2);
+          }
+        }
+        if (game.build?.transformations?.frostArmor || game.build?.activeSynergies?.includes("glacialFortress")) {
+          const count = this.emitCount(16, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * 1.5,
+              y: 0.3 + Math.random() * 1.4,
+              z: p.y + (Math.random() - 0.5) * 1.5,
+              vx: (Math.random() - 0.5) * 0.3,
+              vy: 0.4 + Math.random() * 0.6,
+              vz: (Math.random() - 0.5) * 0.3,
+              floating: true,
+              buoyancy: 0.1,
+              life: 0.8,
+              size: 0.18,
+              color: Math.random() < 0.7 ? 0x67e8f9 : 0xe0f2fe,
+            }, 2);
+          }
+        }
+        if (game.build?.transformations?.berserkerRage || game.build?.activeSynergies?.includes("hemorrhage") || (game.build?.passive?.bloodlust || 0) >= 3) {
+          const count = this.emitCount(20, dt);
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: p.x + (Math.random() - 0.5) * 1.4,
+              y: 0.2 + Math.random() * 1.2,
+              z: p.y + (Math.random() - 0.5) * 1.4,
+              vx: (Math.random() - 0.5) * 0.4,
+              vy: 1.3 + Math.random() * 1.1,
+              vz: (Math.random() - 0.5) * 0.4,
+              floating: true,
+              buoyancy: 0.9,
+              life: 0.6,
+              size: 0.2,
+              color: Math.random() < 0.6 ? 0xef4444 : 0x991b1b,
             }, 2);
           }
         }
@@ -1024,6 +1170,29 @@ export class WorldRenderer {
               life: 1.0,
               size: 0.22,
               color: 0x80d8ff,
+            }, 2);
+          }
+        }
+        if (e.eliteMutation) {
+          const count = this.emitCount(14, dt);
+          const eliteColor = e.eliteMutation === "Blazing" ? 0xf97316
+            : e.eliteMutation === "Venomous" ? 0x22c55e
+            : e.eliteMutation === "Armored" ? 0x38bdf8
+            : e.eliteMutation === "Frost" ? 0x06b6d4
+            : 0xef4444;
+          for (let k = 0; k < count; k++) {
+            this.addParticle({
+              x: e.x + (Math.random() - 0.5) * 1.2,
+              y: 0.4 + Math.random() * 1.2,
+              z: e.y + (Math.random() - 0.5) * 1.2,
+              vx: (Math.random() - 0.5) * 0.5,
+              vy: 1.0 + Math.random() * 0.8,
+              vz: (Math.random() - 0.5) * 0.5,
+              floating: true,
+              buoyancy: 0.6,
+              life: 0.5,
+              size: 0.18,
+              color: eliteColor,
             }, 2);
           }
         }
@@ -1190,7 +1359,7 @@ export class WorldRenderer {
     this.scene.background.copy(this.scene.fog.color);
 
     if (menu) {
-      const leafCount = this.emitCount(11, dt);
+      const leafCount = this.emitCount(2.4, dt);
       const leafColors = [0x5f8a48, 0x82a657, 0xa37b3e, 0xbf984c, 0x476634];
       for (let k = 0; k < leafCount; k++) {
         this.addParticle({
@@ -1208,7 +1377,7 @@ export class WorldRenderer {
           color: leafColors[Math.floor(Math.random() * leafColors.length)],
         }, 1);
       }
-      const dustCount = this.emitCount(7, dt);
+      const dustCount = this.emitCount(2.0, dt);
       for (let k = 0; k < dustCount; k++) {
         this.addParticle({
           x: (Math.random() - 0.5) * 24,
@@ -1309,6 +1478,21 @@ export class WorldRenderer {
       if (!mesh) {
         if (food.type === "plant") {
           mesh = createForageModel(food);
+          const plantRing = new THREE.Mesh(
+            new THREE.RingGeometry(0.52, 0.76, 24),
+            new THREE.MeshBasicMaterial({
+              color: 0x4ade80,
+              transparent: true,
+              opacity: 0.65,
+              side: THREE.DoubleSide,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            }),
+          );
+          plantRing.rotation.x = -Math.PI / 2;
+          plantRing.position.y = 0.04;
+          mesh.add(plantRing);
+          mesh.userData.auraRing = plantRing;
           mesh.position.set(food.x, elevationAt(food.x, food.y), food.y);
           this.scene.add(mesh);
           this.foodModels.set(food.id, mesh);
@@ -1365,7 +1549,23 @@ export class WorldRenderer {
             rare || food.type === "essence" ? color : 0,
           );
         } else {
-          // Prehistoric dinosaur skeletal carcass with dark blood pool, spine, skull and exposed ribcage
+          // Prehistoric dinosaur skeletal carcass with glowing bloody aura ring, dark blood pool, spine, skull and exposed ribcage
+          const meatAura = new THREE.Mesh(
+            new THREE.RingGeometry(0.85, 1.35, 24),
+            new THREE.MeshBasicMaterial({
+              color: 0xef4444,
+              transparent: true,
+              opacity: 0.7,
+              side: THREE.DoubleSide,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            }),
+          );
+          meatAura.rotation.x = -Math.PI / 2;
+          meatAura.position.y = 0.03;
+          mesh.add(meatAura);
+          mesh.userData.auraRing = meatAura;
+
           piece(mesh, new THREE.CircleGeometry(0.88, 16), 0x3d0c10, [0, 0.02, 0], [1.35, 0.85, 1], [-Math.PI / 2, 0, 0]);
           piece(mesh, cylinder, 0xe5dfcf, [0, 0.22, 0], [0.07, 1.45, 0.07], [0, 0, Math.PI / 2]);
           piece(mesh, smoothSphere, 0xd8ceb8, [-0.75, 0.24, 0], [0.24, 0.18, 0.18]);
@@ -1418,6 +1618,33 @@ export class WorldRenderer {
               [1, 1, 1],
               [Math.PI / 2, 0, 0],
             );
+        }
+        if (food.type === "mutation-catalyst") {
+          const catColors = {
+            common: 0x4ade80,
+            rare: 0x38bdf8,
+            epic: 0xc084fc,
+            legendary: 0xfbbf24,
+          };
+          const catColor = catColors[food.rarity] || 0x4ade80;
+          mesh.children[0].geometry = new THREE.OctahedronGeometry(0.52, 0);
+          mesh.children[0].material = new THREE.MeshStandardMaterial({
+            color: catColor,
+            emissive: catColor,
+            emissiveIntensity: 0.95,
+            roughness: 0.12,
+            metalness: 0.85,
+          });
+          const orbit = piece(mesh, new THREE.TorusGeometry(0.72, 0.035, 6, 24), catColor, [0, 0.45, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+          orbit.material = new THREE.MeshBasicMaterial({ color: catColor });
+          const lightBeam = piece(mesh, new THREE.CylinderGeometry(0.04, 0.28, 5.5, 8), catColor, [0, 2.8, 0], [1, 1, 1]);
+          lightBeam.material = new THREE.MeshBasicMaterial({
+            color: catColor,
+            transparent: true,
+            opacity: 0.35,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          });
         }
         if (
           food.type === "decoration-cache" ||
@@ -1485,19 +1712,22 @@ export class WorldRenderer {
           );
           halo.material = new THREE.MeshBasicMaterial({ color });
         }
-        if (food.type !== "meat") {
+        if (!mesh.userData.auraRing) {
           const ring = new THREE.Mesh(
-            new THREE.RingGeometry(0.5, 0.55, 16),
+            new THREE.RingGeometry(0.48, 0.74, 24),
             new THREE.MeshBasicMaterial({
               color,
               transparent: true,
-              opacity: 0.4,
+              opacity: 0.65,
               side: THREE.DoubleSide,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
             }),
           );
           ring.rotation.x = -Math.PI / 2;
           ring.position.y = 0.04;
           mesh.add(ring);
+          mesh.userData.auraRing = ring;
         }
         mesh.position.set(food.x, elevationAt(food.x, food.y), food.y);
         this.scene.add(mesh);
@@ -1508,12 +1738,21 @@ export class WorldRenderer {
       mesh.visible =
         Math.hypot(food.x - this.cameraTarget.x, food.y - this.cameraTarget.z) <
         60;
+      if (mesh.userData.auraRing?.material) {
+        mesh.userData.auraRing.material.opacity = 0.42 + Math.sin(t * 3.5 + mesh.id * 0.7) * 0.24;
+        mesh.userData.auraRing.scale.setScalar(1.0 + Math.sin(t * 2.6 + mesh.id * 0.5) * 0.09);
+      }
       if (food.type === "plant")
         mesh.rotation.z = Math.sin(t * 1.5 + mesh.id) * 0.025;
       else if (food.type !== "egg" && food.type !== "meat")
         mesh.children[0].position.y = 0.45 + Math.sin(t * 2 + mesh.id) * 0.07;
       if (food.type === "relic" || food.type === "essence")
         mesh.children[0].rotation.y = t * 0.6;
+      if (food.type === "mutation-catalyst") {
+        mesh.children[0].rotation.y = t * 2.2;
+        mesh.children[0].rotation.x = Math.sin(t * 1.8) * 0.25;
+        mesh.children[0].position.y = 0.55 + Math.sin(t * 3.2 + mesh.id) * 0.12;
+      }
     }
     for (const [key, mesh] of this.foodModels)
       if (!keys.has(key)) {
@@ -1535,6 +1774,7 @@ export class WorldRenderer {
           const key = `cast:${e.id}`;
           activeKeys.add(key);
           let group = this.warnings.get(key);
+          const castColor = e.cast.kind === "flame" ? 0xff4500 : e.cast.kind === "frost" ? 0x06b6d4 : e.cast.kind === "venom" ? 0x22c55e : e.cast.kind === "blood" ? 0xef4444 : 0xf59e0b;
           if (!group) {
             group = new THREE.Group();
             const shape = e.cast.shape;
@@ -1543,26 +1783,49 @@ export class WorldRenderer {
               ? new THREE.RingGeometry(0.2, radius, 24, 1, -0.65, 1.3)
               : new THREE.RingGeometry(0.2, radius, 32);
             const mat = new THREE.MeshBasicMaterial({
-              color: 0xff3b20,
+              color: castColor,
               transparent: true,
-              opacity: 0.45,
+              opacity: 0.5,
               side: THREE.DoubleSide,
               depthWrite: false,
               blending: THREE.AdditiveBlending,
             });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.rotation.x = -Math.PI / 2;
-            group.add(mesh);
+            const outerMesh = new THREE.Mesh(geo, mat);
+            outerMesh.rotation.x = -Math.PI / 2;
+            group.add(outerMesh);
+
+            // Inner expanding windup indicator
+            const fillGeo = shape === "cone"
+              ? new THREE.CircleGeometry(radius, 24, -0.65, 1.3)
+              : new THREE.CircleGeometry(radius, 32);
+            const fillMat = new THREE.MeshBasicMaterial({
+              color: castColor,
+              transparent: true,
+              opacity: 0.35,
+              side: THREE.DoubleSide,
+              depthWrite: false,
+              blending: THREE.AdditiveBlending,
+            });
+            const fillMesh = new THREE.Mesh(fillGeo, fillMat);
+            fillMesh.rotation.x = -Math.PI / 2;
+            fillMesh.position.y = 0.01;
+            group.add(fillMesh);
+
             this.scene.add(group);
             this.warnings.set(key, group);
           }
-          const mesh = group.children[0];
+          const outerMesh = group.children[0];
+          const fillMesh = group.children[1];
           const total = Math.max(0.01, e.cast.total || 0.3);
           const progress = Math.max(0, Math.min(1, 1 - (e.cast.remaining / total)));
           group.position.set(e.x, 0.08, e.y);
           group.rotation.y = -(e.cast.angle || 0);
-          if (mesh?.material) {
-            mesh.material.opacity = 0.35 + Math.sin(t * 18) * 0.15 + progress * 0.25;
+          if (outerMesh?.material) {
+            outerMesh.material.opacity = 0.4 + Math.sin(t * 18) * 0.15 + progress * 0.3;
+          }
+          if (fillMesh) {
+            fillMesh.scale.set(Math.max(0.05, progress), Math.max(0.05, progress), 1);
+            fillMesh.material.opacity = 0.2 + progress * 0.5;
           }
         }
 
@@ -1748,6 +2011,12 @@ export class WorldRenderer {
     this.terrain.dispose();
     this.ecologyArt?.dispose();
     this.removeModel(this.menuDino);
+    if (Array.isArray(this.menuRoamers)) {
+      for (const roamer of this.menuRoamers) {
+        if (roamer?.mesh) this.removeModel(roamer.mesh);
+      }
+      this.menuRoamers = [];
+    }
     const geometries = new Set(), materials = new Set();
     this.scene.traverse((object) => {
       if (object.isInstancedMesh) object.dispose();

@@ -12,7 +12,13 @@ export const FIXED_DELTA = 1 / TICK_RATE;
 const movement = new Set(["x", "y", "aim", "attack", "ability", "special", "technique", "roar", "skill", "sprint", "dash", "eat", "evolve", "crouch"]);
 const flags = ["attack", "ability", "special", "technique", "roar", "sprint", "dash", "eat", "evolve", "crouch"];
 const commandFields = {
-  hatch: [], "open-evolution": [], "close-evolution": [], evolve: ["speciesId", "mutationId"], waypoint: ["x", "y"],
+  hatch: ["chosenSpeciesId"],
+  "open-evolution": [],
+  "close-evolution": [],
+  evolve: ["speciesId", "mutationId"],
+  "apply-mutation": ["mutationId"],
+  "close-mutation-choice": [],
+  waypoint: ["x", "y"],
 };
 const plain = (v) => v && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
 export function normalizeInput(input = {}) {
@@ -81,12 +87,16 @@ export class LocalAuthority {
       const next = this._sequence(sequence), g = this.game;
       let ok = false;
       switch (command.type) {
-        case "hatch": ok = g.hatch(); break;
+        case "hatch": ok = g.hatch(command.chosenSpeciesId || null); break;
         case "open-evolution": ok = g.openEvolution(); break;
         case "close-evolution": ok = g.closeEvolution(); break;
+        case "apply-mutation":
+          if (typeof command.mutationId !== "string") throw new Error("Invalid mutation intent");
+          ok = g.applyMutation(command.mutationId); break;
+        case "close-mutation-choice": ok = g.closeMutationChoice(); break;
         case "evolve":
-          if (typeof command.speciesId !== "string" || typeof command.mutationId !== "string") throw new Error("Invalid evolution intent");
-          ok = g.evolve(command.speciesId, command.mutationId); break;
+          if (typeof command.speciesId !== "string" || (command.mutationId && typeof command.mutationId !== "string")) throw new Error("Invalid evolution intent");
+          ok = g.evolve(command.speciesId, command.mutationId || null); break;
         case "waypoint":
           if (![command.x, command.y].every((n) => typeof n === "number" && Number.isFinite(n)) || Math.hypot(command.x, command.y) > WORLD_RADIUS) throw new Error("Invalid destination");
           if (g.state === "dead") throw new Error("Run has ended");

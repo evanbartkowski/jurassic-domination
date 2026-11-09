@@ -26,14 +26,15 @@ const scalarFields = [
   "worldState", "exploration", "survival", "senses", "nests", "_nextSocialAt",
   "formHistory", "guardianKills", "hitStop", "_hasRoared", "survivalBehavior",
   "playerMateId", "playerNest", "playerOffspringCount", "strongestDefeated",
+  "build",
 ];
 const baseSetFields = ["modifiers", "knownUnlocks", "foundUnlocks", "activeChunks", "discoveredRegions"];
 const setFields = [...baseSetFields, "dominatedRegions", "excavatedLandmarks"];
 const mapFields = ["chunks", "marineState"];
-const states = new Set(["egg", "playing", "evolution", "dead"]);
+const states = new Set(["egg", "playing", "evolution", "dead", "mutation-choice"]);
 const idPattern = /^[a-zA-Z0-9:_-]{1,96}$/;
 const chunkPattern = /^-?\d{1,4},-?\d{1,4}$/;
-const foodTypes = new Set(["plant", "meat", "essence", "egg", "rareplant", "lineage-fruit", "relic", "fossil", "dna", "pet-egg", "decoration-cache", "cosmetic-cache"]);
+const foodTypes = new Set(["plant", "meat", "essence", "egg", "rareplant", "lineage-fruit", "relic", "fossil", "dna", "pet-egg", "decoration-cache", "cosmetic-cache", "mutation-catalyst"]);
 const featureTypes = new Set(["boulder", "fallen-log", "landmark", "water", "volcano", "mushrooms", "toxic-bloom", "carnivore"]);
 const finite = (n, low = -1e12, high = 1e12) => typeof n === "number" && Number.isFinite(n) && n >= low && n <= high;
 const integer = (n, low = 0, high = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && n >= low && n <= high;
@@ -235,6 +236,7 @@ export function validateSnapshot(snapshot) {
     if (g.playerMateId !== undefined && g.playerMateId !== null && !integer(g.playerMateId, 1)) return false;
     if (g.playerOffspringCount !== undefined && !integer(g.playerOffspringCount, 0)) return false;
     if (g.strongestDefeated !== undefined && g.strongestDefeated !== null && !SPECIES_BY_ID[g.strongestDefeated]) return false;
+    if (g.build !== undefined && (!object(g.build) || !object(g.build.offensive) || !object(g.build.defensive) || !object(g.build.passive) || !object(g.build.transformations) || !array(g.build.activeSynergies, 32))) return false;
     if (g.playerNest !== undefined && g.playerNest !== null && (!object(g.playerNest) || !finite(g.playerNest.x) || !finite(g.playerNest.y) || !SPECIES_BY_ID[g.playerNest.speciesId] || !finite(g.playerNest.hatchTimer, 0) || (g.playerNest.eggId !== null && !integer(g.playerNest.eggId, 1)) || typeof g.playerNest.hatched !== "boolean")) return false;
     if (version >= 2 && !livingWorldValid(g)) return false;
     return object(g.lineage) && object(g.lineage.fruits) &&

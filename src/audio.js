@@ -383,7 +383,8 @@ export class AudioEngine {
     const now = this.context.currentTime,
       key = "creature:" + action + ":" + species.body,
       last = this.effectTimes.get(key) ?? -10;
-    if (now - last < (action === "step" ? 0.11 : 0.14) || distance > 60) return;
+    const throttle = action === "step" ? 0.11 : action === "call" ? 2.5 : 0.22;
+    if (now - last < throttle || distance > 50) return;
     this.effectTimes.set(key, now);
     const hash = [...species.id].reduce((n, c) => n + c.charCodeAt(0), 0),
       pitch = (90 + (hash % 90)) / Math.sqrt(Math.max(0.6, species.size)),
@@ -417,22 +418,22 @@ export class AudioEngine {
       const small = ["raptor", "bird", "gryphon"].includes(species.body);
       tone(
         small ? pitch * 5 : pitch,
-        0.5,
-        0.12,
+        0.4,
+        0.08,
         "triangle",
         small ? pitch * 3 : pitch * 0.55,
       );
-      tone(pitch * 1.51, 0.55, 0.07, "sine", pitch * 0.7);
-      this.rustle(now, 0.4, 0.11 * volume, small ? 2100 : 400);
-      const callVol = Math.max(0.08, (1 - distance / 45) * 0.35);
+      tone(pitch * 1.51, 0.45, 0.05, "sine", pitch * 0.7);
+      this.rustle(now, 0.3, 0.07 * volume, small ? 2100 : 400);
+      const callVol = Math.max(0.04, Math.min(0.22, (1 - distance / 45) * 0.22));
       if (["rex", "dragon"].includes(species.body)) {
-        this.playSample(distance < 16 ? "rexRoar" : "dinoMuffledGrowl", callVol);
+        this.playSample(distance < 12 ? "rexRoar" : "dinoMuffledGrowl", callVol * 0.7);
       } else if (species.body === "raptor") {
-        this.playSample("smallDinoCall", callVol);
+        this.playSample("smallDinoCall", callVol * 0.6);
       } else if (["bird", "gryphon"].includes(species.body)) {
-        this.playSample("pterodactylCall", callVol);
+        this.playSample("pterodactylCall", callVol * 0.6);
       } else {
-        this.playSample("dinoGrowl", callVol * 0.85);
+        this.playSample("dinoGrowl", callVol * 0.65);
       }
       return;
     }
@@ -532,15 +533,18 @@ export class AudioEngine {
     for (const id of this.motionSamples.keys())
       if (!present.has(id)) this.motionSamples.delete(id);
     if (now >= this.callClock) {
-      const actor = actors[1] || actors[0],
-        s = SPECIES_BY_ID[actor?.speciesId];
-      if (s) {
-        const dist = actor.id === "player" ? 0 : Math.hypot(actor.x - game.player.x, actor.y - game.player.y);
-        if (dist <= 38) {
-          this.voice(s, "call", null, dist);
+      const wildActors = actors.filter((a) => a.id !== "player");
+      if (wildActors.length > 0 && Math.random() < 0.4) {
+        const actor = wildActors[Math.floor(Math.random() * wildActors.length)],
+          s = SPECIES_BY_ID[actor?.speciesId];
+        if (s) {
+          const dist = Math.hypot(actor.x - game.player.x, actor.y - game.player.y);
+          if (dist <= 32) {
+            this.voice(s, "call", null, dist);
+          }
         }
       }
-      this.callClock = now + 24 + ((game.time * 7) % 18);
+      this.callClock = now + 35 + ((game.time * 11) % 35);
     }
     this.biomeTheme = game.region?.id || "fernwood";
   }
@@ -628,10 +632,10 @@ export class AudioEngine {
         {
           const roarSpecies = SPECIES_BY_ID[event.speciesId];
           const roarBody = roarSpecies?.body;
-          if (roarBody === "bird") this.playSample("birdScream", 0.85);
-          else if (roarBody === "raptor") this.playSample("raptorCall", 0.85);
-          else if (roarBody === "rex" || (roarSpecies?.size || 1) > 2.5) this.playSample("rexRoar", 0.9);
-          else this.playSample("dinoRoar", 0.85);
+          if (roarBody === "bird") this.playSample("birdScream", 0.55);
+          else if (roarBody === "raptor") this.playSample("raptorCall", 0.6);
+          else if (roarBody === "rex" || (roarSpecies?.size || 1) > 2.5) this.playSample("rexRoar", 0.75);
+          else this.playSample("dinoRoar", 0.65);
           tone(60, 0, 0.45, 0.22, "sawtooth", 45);
         }
         break;
@@ -644,8 +648,8 @@ export class AudioEngine {
         tone(110, 0, 0.3, 0.16, "triangle", 40);
         tone(440, 0.06, 0.25, 0.07);
         if (event.boss || event.tier >= 4 || event.target?.tier >= 4) {
-          if (event.water) this.playSample("seaMonster", 0.65);
-          else this.playSample("dinoRoar", 0.75);
+          if (event.water) this.playSample("seaMonster", 0.42);
+          else this.playSample("dinoRoar", 0.55);
         } else {
           this.playSample("itemCollect", 0.65);
         }
@@ -773,14 +777,18 @@ export class AudioEngine {
           tone(f, i * 0.16, 1.6, 0.13),
         );
         this.rustle(now, 1.2, 0.23, 250);
-        this.playSample("painRoar", 0.8);
+        this.playSample("painRoar", 0.55);
+        break;
+      case "warning":
+        tone(55, 0, 0.8, 0.1, "triangle", 38);
+        tone(58.27, 0, 0.7, 0.06, "sine");
+        this.rustle(now, 0.35, 0.08, 400);
         break;
       case "boss":
-      case "warning":
         tone(55, 0, 1.1, 0.15, "triangle", 38);
         tone(58.27, 0, 1, 0.08, "sine");
         this.rustle(now, 0.65, 0.17, 400);
-        this.playSample("rexRoar", 0.8);
+        this.playSample("dinoRoar", 0.65);
         break;
       case "click":
         tone(620, 0, 0.07, 0.045);

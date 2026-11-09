@@ -295,13 +295,15 @@
 }
 #map-tooltip {
   position: fixed;
-  right: 35px;
-  top: 65px;
-  z-index: 6;
-  max-width: min(480px, 80vw);
-  padding: 7px 12px;
-  background: #10221de8;
-  border: 1px solid #c5ad6a55;
+  right: 215px;
+  top: 120px;
+  z-index: 50;
+  max-width: min(340px, 40vw);
+  padding: 8px 14px;
+  background: rgba(16, 34, 29, 0.96);
+  border: 1px solid rgba(229, 179, 82, 0.45);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
   font-size: 10px;
   color: #e1d7bc;
   pointer-events: none;
@@ -311,28 +313,37 @@
 }
 #region-route {
   position: absolute;
-  right: 28px;
-  top: 315px;
-  width: 190px;
-  padding: 10px 0;
-  color: #cecbb2;
+  right: 24px;
+  top: 425px;
+  width: 180px;
+  padding: 8px 12px;
+  background: rgba(12, 24, 18, 0.92);
+  border: 1px solid rgba(229, 179, 82, 0.35);
+  border-radius: 6px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+  color: #e2e8f0;
   font-size: 10px;
-  line-height: 1.8;
+  line-height: 1.5;
   letter-spacing: 0.03em;
-  text-shadow: 0 1px 4px #08150c;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+  z-index: 10;
 }
 #active-buffs {
   position: absolute;
-  left: 30px;
-  top: 115px;
-  max-width: 310px;
-  font-size: 11px;
-  line-height: 1.8;
+  left: 20px;
+  top: 356px;
+  width: 275px;
+  max-width: 275px;
+  font-size: 10px;
+  line-height: 1.6;
   color: #dcdeb1;
-  text-shadow: 0 2px 5px #000;
-  background: #0b1b1266;
-  padding: 3px 9px;
+  text-shadow: 0 1px 3px #000;
+  background: rgba(11, 27, 18, 0.85);
+  padding: 6px 10px;
   border-left: 2px solid #d0b982;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 #active-buffs:empty {
   display: none;

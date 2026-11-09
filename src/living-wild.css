@@ -133,8 +133,8 @@
 #alpha-boss b { height: 10px; }
 #alpha-boss>span,#alpha-boss small { font-size: 10px; }
 .expedition-hud { position: absolute; inset: 0; }
-#region-route { top: 355px; right: 24px; width: 180px; font-size: 11px; line-height: 1.7; text-shadow: 0 2px 4px #000; }
-#active-buffs { top: 127px; left: 24px; font-size: 11px; }
+#region-route { top: 425px; right: 24px; width: 180px; font-size: 10px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
+#active-buffs { top: 356px; left: 20px; width: 275px; max-width: 275px; font-size: 10px; }
 #discovered-skills { bottom: 175px; font-size: 11px; }
 #pickup-prompt { bottom: 262px; font-size: 12px; padding: 12px 16px; border-radius: 5px; color: #fff0c4; border: 1px solid #d8bd8277; background: #102a23f2; line-height: 1.6; }
 #pickup-prompt[hidden] { display: none; }
@@ -145,8 +145,8 @@
   .vitals { width: 310px; }
   .evolution-progress { width: 280px; }
   #alpha-boss { top: 135px; width: 280px; }
-  #region-route { left: 24px; right: auto; top: 126px; width: 300px; }
-  #active-buffs { top: 182px; }
+  #region-route { top: 425px; right: 24px; left: auto; width: 180px; }
+  #active-buffs { top: 356px; left: 20px; width: 275px; }
   #pickup-prompt { bottom: 378px; }
   #discovered-skills { bottom: 337px; }
 }

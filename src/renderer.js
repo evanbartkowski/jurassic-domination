@@ -612,11 +612,19 @@ export class WorldRenderer {
       const burstColor = synColors[event.synergy] || 0xfbbf24;
       this.burst(event.x || 0, event.y || 0, burstColor, 36);
     }
-    if (event.type === "hit" || event.type === "ability")
-      this.shake = Math.max(
-        this.shake,
-        event.type === "ability" ? 0.45 : event.target === "player" ? 0.35 : 0.22,
-      );
+    if (event.type === "hit") {
+      if (event.target === "player") {
+        this.shake = Math.max(this.shake, Math.min(0.52, 0.24 + (event.damage || 10) * 0.012));
+      } else if (event.crit) {
+        this.shake = Math.max(this.shake, 0.28);
+      }
+    }
+    if (event.type === "ability" || event.type === "enemy-ability") {
+      this.shake = Math.max(this.shake, 0.45);
+    }
+    if (event.type === "technique") {
+      this.shake = Math.max(this.shake, 0.40);
+    }
     if (["attack", "enemy-strike", "ability", "enemy-ability", "evolve"].includes(event.type)) {
       const isPlayerAttack = event.type === "attack";
       const isEnemyStrike = event.type === "enemy-strike";
@@ -1241,68 +1249,62 @@ export class WorldRenderer {
       }
       this.dust.position.set(p.x, 0, p.y);
 
-      // Huge nearby dinosaurs and titans cause ground tremors, screen shake, and dust puffs
+      // Ground tremors and screen shake only near giant enemies much bigger than the player during heavy actions
+      const effectiveSize = game.effectiveSize || 1.0;
       for (const e of game.entities) {
         const s = SPECIES_BY_ID[e.speciesId];
         if (!s) continue;
         const eSize = s.size * (e.scaleFactor || 1);
-        if (eSize >= 2.2 || e.boss || s.tier >= 4) {
+        const isMuchBigger = (eSize >= effectiveSize * 1.8 && eSize >= 3.0) || (e.boss && eSize >= effectiveSize * 1.5);
+        if (isMuchBigger) {
           const d = Math.hypot(e.x - p.x, e.y - p.y);
-          if (d < 45) {
-            const isMoving = e.intent !== "sleeping" && (e.attacking > 0 || (e.charging || 0) > 0 || (e.telegraph || 0) > 0 || (e.motionX !== undefined && Math.hypot(e.x - e.motionX, e.y - e.motionY) > 0.012));
-            if (isMoving) {
-              const stridePeriod = 0.55 + Math.sqrt(eSize) * 0.18;
-              const phase = ((t + (e.id * 1.37)) % stridePeriod) / stridePeriod;
-              // Rhythmic foot impact when giant foot strikes ground
-              if (phase < 0.14) {
-                const proximity = Math.pow(Math.max(0, 1 - d / 45), 1.6);
-                const tremor = proximity * Math.min(0.75, (eSize / 3.0) * 0.38);
-                this.shake = Math.max(this.shake, tremor);
-
-                // Dust puff kicking up when giant foot hits ground
-                if (this.terrain.quality !== "low" && d < 38 && Math.random() < 0.32) {
-                  const footSide = ((phase * 100) | 0) % 2 === 0 ? 1 : -1;
-                  this.addParticle({
-                    x: e.x + Math.cos(e.angle + Math.PI / 2 * footSide) * eSize * 0.35,
-                    y: 0.12,
-                    z: e.y + Math.sin(e.angle + Math.PI / 2 * footSide) * eSize * 0.35,
-                    vx: (Math.random() - 0.5) * 1.8,
-                    vy: 0.35 + Math.random() * 0.4,
-                    vz: (Math.random() - 0.5) * 1.8,
-                    floating: false,
-                    life: 0.48,
-                    size: 0.22 * Math.min(3.5, eSize),
-                    color: 0x988a75,
-                  }, 1);
-                }
-              }
+          if (d < 24) {
+            const isHeavyAction = (e.charging || 0) > 0 || (e.telegraph || 0) > 0 || e.attacking > 0 || !!e.cast;
+            const stridePeriod = 0.55 + Math.sqrt(eSize) * 0.18;
+            const phase = ((t + (e.id * 1.37)) % stridePeriod) / stridePeriod;
+            if (isHeavyAction && phase < 0.16) {
+              const proximity = Math.pow(Math.max(0, 1 - d / 24), 1.6);
+              const tremor = proximity * Math.min(0.65, (eSize / 3.5) * 0.32);
+              this.shake = Math.max(this.shake, tremor);
+            }
+            // Dust puff kicking up when giant foot hits ground
+            if (this.terrain.quality !== "low" && phase < 0.14 && d < 24 && Math.random() < 0.28) {
+              const footSide = ((phase * 100) | 0) % 2 === 0 ? 1 : -1;
+              this.addParticle({
+                x: e.x + Math.cos(e.angle + Math.PI / 2 * footSide) * eSize * 0.35,
+                y: 0.12,
+                z: e.y + Math.sin(e.angle + Math.PI / 2 * footSide) * eSize * 0.35,
+                vx: (Math.random() - 0.5) * 1.8,
+                vy: 0.35 + Math.random() * 0.4,
+                vz: (Math.random() - 0.5) * 1.8,
+                floating: false,
+                life: 0.48,
+                size: 0.22 * Math.min(3.5, eSize),
+                color: 0x988a75,
+              }, 1);
             }
           }
         }
       }
 
-      // If player is a massive dinosaur/titan, their own heavy strides shake the ground and kick dust
-      if (game.effectiveSize >= 2.2 && (p.vx * p.vx + p.vy * p.vy > 0.8)) {
-        const pSize = game.effectiveSize;
+      // If player is massive, subtle dust puffs kick up on heavy strides without shaking the camera
+      if (effectiveSize >= 2.4 && (p.vx * p.vx + p.vy * p.vy > 0.8)) {
+        const pSize = effectiveSize;
         const stridePeriod = 0.52 + Math.sqrt(pSize) * 0.16;
         const phase = (t % stridePeriod) / stridePeriod;
-        if (phase < 0.12) {
-          const playerTremor = Math.min(0.35, (pSize / 4.0) * 0.22);
-          this.shake = Math.max(this.shake, playerTremor);
-          if (this.terrain.quality !== "low" && Math.random() < 0.28) {
-            this.addParticle({
-              x: p.x + (Math.random() - 0.5) * pSize * 0.55,
-              y: 0.12,
-              z: p.y + (Math.random() - 0.5) * pSize * 0.55,
-              vx: (Math.random() - 0.5) * 1.3,
-              vy: 0.3 + Math.random() * 0.35,
-              vz: (Math.random() - 0.5) * 1.3,
-              floating: false,
-              life: 0.42,
-              size: 0.2 * Math.min(3.0, pSize),
-              color: 0x988a75,
-            }, 1);
-          }
+        if (phase < 0.12 && this.terrain.quality !== "low" && Math.random() < 0.25) {
+          this.addParticle({
+            x: p.x + (Math.random() - 0.5) * pSize * 0.55,
+            y: 0.12,
+            z: p.y + (Math.random() - 0.5) * pSize * 0.55,
+            vx: (Math.random() - 0.5) * 1.3,
+            vy: 0.3 + Math.random() * 0.35,
+            vz: (Math.random() - 0.5) * 1.3,
+            floating: false,
+            life: 0.42,
+            size: 0.2 * Math.min(3.0, pSize),
+            color: 0x988a75,
+          }, 1);
         }
       }
     } else {

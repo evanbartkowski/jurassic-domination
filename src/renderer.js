@@ -11,6 +11,7 @@ import { biomeAt, REGIONS, LAIRS, WORLD_RADIUS } from "./world-data.js";
 import { POWERUPS, SKINS } from "./content.js";
 import { applyCosmetic, createPet } from "./collection-art.js";
 import { CATALOG, RARITIES } from "./collection-data.js";
+import { tryAttachFlagshipGLB, animateFlagshipGLB, FLAGSHIP_SPECIES_IDS } from "./flagship-models.js";
 export { createDinosaur };
 
 const lookup = (id) => SPECIES_BY_ID[id] || SPECIES[0];
@@ -328,6 +329,7 @@ export class WorldRenderer {
       true,
       id,
     );
+    tryAttachFlagshipGLB(this.menuDino, "tyrannosaurus");
     this.menuDino.position.set(6.6, elevationAt(6.6, -1), -1);
     applyCosmetic(this.menuDino, cosmeticId);
     this.menuDino.scale.setScalar(2.4);
@@ -428,6 +430,7 @@ export class WorldRenderer {
       SPECIES.find((s) => s.id === "tyrannosaurus"),
       true,
     );
+    tryAttachFlagshipGLB(this.menuDino, "tyrannosaurus");
     this.menuDino.position.set(6.2, elevationAt(6.2, -0.8), -0.8);
     this.menuDino.scale.setScalar(2.45);
     this.menuDino.rotation.y = -0.65;
@@ -1088,7 +1091,11 @@ export class WorldRenderer {
     return Math.atan2(this.aimPoint.z - player.y, this.aimPoint.x - player.x);
   }
   animateDino(model, t, speed = 0, attacking = false, dt = 1 / 60, turn = 0) {
-    animateCreature(model, dt, t, speed, attacking, turn);
+    if (model.userData?.isGLB) {
+      animateFlagshipGLB(model, dt, t, speed, attacking, turn);
+    } else {
+      animateCreature(model, dt, t, speed, attacking, turn);
+    }
   }
   syncModel(
     key,
@@ -1116,6 +1123,7 @@ export class WorldRenderer {
       if (model) this.removeModel(model);
       model = createDinosaur(lookup(id), false, skinId, genome);
       applyCosmetic(model, cosmeticId);
+      tryAttachFlagshipGLB(model, id);
       model.position.set(x, 0, z);
       model.rotation.y = -angle;
       this.models.set(key, model);
@@ -1149,7 +1157,8 @@ export class WorldRenderer {
     const viewLimit = isColossal ? 145 : 70;
     model.visible =
       Math.hypot(x - this.cameraTarget.x, z - this.cameraTarget.z) < viewLimit;
-    model.userData.body.visible = true;
+    if (model.userData.body) model.userData.body.visible = !model.userData.isGLB;
+    if (model.userData.glbContainer) model.userData.glbContainer.visible = !!model.userData.isGLB;
     model.userData.isJuvenile = scaleFactor < 0.68;
     model.userData.isColossal = isColossal;
     model.scale.setScalar(model.userData.baseScale * scaleFactor);
@@ -1701,6 +1710,16 @@ export class WorldRenderer {
     if (isRain) {
       targetSunIntensity *= 0.65;
       baseFogDensity += 0.006;
+      this.lightningTimer = (this.lightningTimer || (10 + Math.random() * 12)) - dt;
+      if (this.lightningTimer <= 0) {
+        this.lightningTimer = 14 + Math.random() * 18;
+        this.lightningFlash = 0.26;
+        if (this.currentGame?.sound?.play) {
+          setTimeout(() => {
+            this.currentGame?.sound?.play?.("thunder");
+          }, 350 + Math.random() * 450);
+        }
+      }
     } else if (isAsh) {
       targetSunColor = 0xff4818;
       targetSunIntensity *= 0.75;
@@ -1708,6 +1727,13 @@ export class WorldRenderer {
     } else if (isFrost) {
       targetSunColor = 0xb4e2ff;
       baseFogDensity += 0.005;
+    }
+
+    if ((this.lightningFlash || 0) > 0) {
+      this.lightningFlash = Math.max(0, this.lightningFlash - dt);
+      const flash = Math.sin((this.lightningFlash / 0.26) * Math.PI);
+      targetSunIntensity += flash * 5.2;
+      targetSunColor = 0xd4ecff;
     }
 
     this.sun.position.set(

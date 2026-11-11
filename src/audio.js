@@ -394,6 +394,9 @@ export class AudioEngine {
     if (action === "step") {
       const heavy = ["quad", "longneck", "rex"].includes(species.body);
       tone(heavy ? 85 : 140, 0.08, heavy ? 0.022 : 0.012, "sine", heavy ? 65 : 115);
+      if (species.size >= 2.4) {
+        tone(42, 0.12, 0.038, "sine", 22);
+      }
       this.rustle(
         now,
         0.08,
@@ -740,6 +743,23 @@ export class AudioEngine {
       case "dash":
         this.rustle(now, 0.3, 0.3, 1800);
         tone(220, 0, 0.16, 0.07, "sine", 580);
+        break;
+      case "thunder":
+        tone(36, 0, 1.8, 0.36, "sine", 18);
+        tone(54, 0.12, 1.5, 0.24, "triangle", 26);
+        this.rustle(now, 1.4, 0.38, 300);
+        break;
+      case "rock_smash":
+      case "demolish":
+        tone(65, 0, 0.35, 0.32, "sawtooth", 28);
+        tone(45, 0.04, 0.42, 0.36, "sine", 20);
+        this.rustle(now, 0.32, 0.46, 820);
+        this.playSample("monsterGrunt", 0.45);
+        break;
+      case "bite_flesh":
+        tone(115, 0, 0.16, 0.19, "triangle", 38);
+        this.rustle(now, 0.18, 0.34, 880);
+        this.playSample("animalGrunt", 0.45);
         break;
       case "ability":
         tone(140, 0, 0.55, 0.22, "sawtooth", 48);

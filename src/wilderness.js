@@ -179,7 +179,40 @@ function swim(f, game, dt) {
 export function updateWildlife(game, dt) {
   const p = game.player,
     features = game.worldFeatures || [];
-  resolveObstacles(p, game.effectiveSize || game.species.size, features);
+  resolveObstacles(p, game.effectiveSize || game.species.size, features, (f, actor) => {
+    try {
+      game.sound?.play?.("demolish");
+    } catch {}
+    if (f.type === "fallen-log") {
+      game.notifications?.push?.({ text: "🪵 Hollow Log Smashed! Insects scattered!", color: "#ca8a04", time: 3 });
+      if (Array.isArray(game.foods)) {
+        for (let i = 0; i < 3; i++) {
+          game.foods.push({
+            id: `demolish_grub_${f.id}_${i}_${Math.floor((game.time || 0) * 100)}`,
+            type: "insect",
+            x: f.x + (i - 1) * 1.2,
+            y: f.y + ((i % 2) - 0.5) * 1.2,
+            value: 20,
+            nutrition: 25,
+            spawned: game.time || 0,
+          });
+        }
+      }
+    } else if (f.type === "boulder") {
+      game.notifications?.push?.({ text: "💎 Amber Geode Shattered! Essence exposed!", color: "#f59e0b", time: 3 });
+      if (Array.isArray(game.foods)) {
+        game.foods.push({
+          id: `demolish_amber_${f.id}_${Math.floor((game.time || 0) * 100)}`,
+          type: "amber",
+          x: f.x,
+          y: f.y,
+          value: 45,
+          nutrition: 15,
+          spawned: game.time || 0,
+        });
+      }
+    }
+  });
   game._hazardCooldown = Math.max(0, (game._hazardCooldown || 0) - dt);
   game.hazardHint = "";
   const activePools = new Set();

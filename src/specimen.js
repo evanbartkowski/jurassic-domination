@@ -10,6 +10,9 @@ const FLAGSHIP_MODELS = new Set([
   "ankylosaurus",
   "stegosaurus",
   "brachiosaurus",
+  "compsognathus",
+  "carnotaurus",
+  "dilophosaurus",
 ]);
 const gltfCache = new Map();
 let gltfLoaderInstance = null;

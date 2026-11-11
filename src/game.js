@@ -889,6 +889,55 @@ export class Game {
         this._hitEntity(e, p.damage * multiplier, knockback, isCrit, hitAngle);
       }
     }
+    for (const f of this.worldFeatures || []) {
+      if (!f.solid || f.destroyed) continue;
+      if (f.type !== "fallen-log" && f.type !== "boulder") continue;
+      const df = Math.hypot(f.x - p.x, f.y - p.y);
+      if (
+        df < reach + f.radius &&
+        Math.abs(angleDifference(Math.atan2(f.y - p.y, f.x - p.x), p.angle)) < maxArc
+      ) {
+        f.hits = (f.hits || 0) + 1;
+        const requiredHits = f.type === "boulder" ? (this.effectiveSize >= 2.2 ? 1 : 2) : 1;
+        if (f.hits >= requiredHits || this.effectiveSize >= 2.5) {
+          f.destroyed = true;
+          f.solid = false;
+          try {
+            this.sound?.play?.("demolish");
+          } catch {}
+          this.emit("obstacle-demolished", { feature: f });
+          if (f.type === "fallen-log") {
+            this.notifications?.push?.({ text: "🪵 Hollow Log Smashed! Insects scattered!", color: "#ca8a04", time: 3 });
+            if (Array.isArray(this.foods)) {
+              for (let i = 0; i < 3; i++) {
+                this.foods.push({
+                  id: `demolish_grub_${f.id}_${i}_${Math.floor(this.time * 100)}`,
+                  type: "insect",
+                  x: f.x + (i - 1) * 1.2,
+                  y: f.y + ((i % 2) - 0.5) * 1.2,
+                  value: 20,
+                  nutrition: 25,
+                  spawned: this.time,
+                });
+              }
+            }
+          } else if (f.type === "boulder") {
+            this.notifications?.push?.({ text: "💎 Amber Geode Shattered! Essence exposed!", color: "#f59e0b", time: 3 });
+            if (Array.isArray(this.foods)) {
+              this.foods.push({
+                id: `demolish_amber_${f.id}_${Math.floor(this.time * 100)}`,
+                type: "amber",
+                x: f.x,
+                y: f.y,
+                value: 45,
+                nutrition: 15,
+                spawned: this.time,
+              });
+            }
+          }
+        }
+      }
+    }
     if (this.marineState) {
       for (const [poolId, poolState] of this.marineState.entries()) {
         const f = (this.worldFeatures || []).find((feat) => feat.id === poolId);

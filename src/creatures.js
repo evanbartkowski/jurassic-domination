@@ -7,94 +7,211 @@ export function genomeAppearanceKey(genome) {
   return `${Math.round(p.hue / .0225)}:${p.markings === 'speckled' ? 'speckled' : p.markings === 'banded' ? 'banded' : 'skin'}`;
 }
 
-const sphere = new THREE.SphereGeometry(1, 20, 14);
-const cone = new THREE.ConeGeometry(1, 1, 10);
+const sphere = new THREE.SphereGeometry(1, 28, 20);
+const cone = new THREE.ConeGeometry(1, 1, 16);
 const materialCache = new Map(),
-  textureCache = new Map();
-function skinTexture(kind) {
-  if (textureCache.has(kind)) return textureCache.get(kind);
+  textureCache = new Map(),
+  bumpCache = new Map(),
+  eyeCache = new Map();
+
+function eyeTexture(isPredator = true) {
+  const key = isPredator ? "predator" : "herbivore";
+  if (eyeCache.has(key)) return eyeCache.get(key);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 256;
+  const c = canvas.getContext("2d");
+  if (c && c.createRadialGradient) {
+    c.fillStyle = "#16120e";
+    c.fillRect(0, 0, 256, 256);
+
+    const irisGrad = c.createRadialGradient(128, 128, 20, 128, 128, 112);
+    if (isPredator) {
+      irisGrad.addColorStop(0, "#ffb822");
+      irisGrad.addColorStop(0.5, "#e66a08");
+      irisGrad.addColorStop(0.85, "#992a04");
+      irisGrad.addColorStop(1, "#260601");
+    } else {
+      irisGrad.addColorStop(0, "#c4b47a");
+      irisGrad.addColorStop(0.5, "#6d5a34");
+      irisGrad.addColorStop(0.85, "#3d321e");
+      irisGrad.addColorStop(1, "#14110b");
+    }
+    c.fillStyle = irisGrad;
+    c.beginPath();
+    c.arc(128, 128, 108, 0, Math.PI * 2);
+    c.fill();
+
+    c.strokeStyle = isPredator ? "rgba(255, 230, 130, 0.4)" : "rgba(230, 220, 170, 0.35)";
+    c.lineWidth = 1.6;
+    for (let a = 0; a < Math.PI * 2; a += 0.08) {
+      c.beginPath();
+      c.moveTo(128 + Math.cos(a) * 32, 128 + Math.sin(a) * 32);
+      c.lineTo(128 + Math.cos(a) * 105, 128 + Math.sin(a) * 105);
+      c.stroke();
+    }
+
+    c.fillStyle = "#040507";
+    c.beginPath();
+    if (isPredator) {
+      c.ellipse(128, 128, 16, 92, 0, 0, Math.PI * 2);
+    } else {
+      c.ellipse(128, 128, 54, 46, 0, 0, Math.PI * 2);
+    }
+    c.fill();
+
+    c.fillStyle = "rgba(255, 255, 255, 0.92)";
+    c.beginPath();
+    c.arc(102, 94, 14, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "rgba(255, 255, 255, 0.55)";
+    c.beginPath();
+    c.arc(150, 148, 6, 0, Math.PI * 2);
+    c.fill();
+  } else if (c) {
+    c.fillStyle = isPredator ? "#e66a08" : "#6d5a34";
+    c.fillRect(0, 0, 256, 256);
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  eyeCache.set(key, tex);
+  return tex;
+}
+
+function skinBumpTexture(kind) {
+  if (bumpCache.has(kind)) return bumpCache.get(kind);
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 512;
   const c = canvas.getContext("2d");
-  c.fillStyle = "#c5c0ad";
-  c.fillRect(0, 0, 512, 512);
+  if (c && c.fillRect) {
+    c.fillStyle = "#222222";
+    c.fillRect(0, 0, 512, 512);
 
-  // Reptilian polygonal scale matrix with deep recessed crevices
-  for (let row = 0; row < 38; row++) {
-    for (let col = 0; col < 30; col++) {
-      const x = col * 18 + (row % 2) * 9,
-        y = row * 14;
-      const value = 195 + ((row * 31 + col * 17) % 36);
-      
-      // Crevice shadow border
-      c.fillStyle = "rgba(42,46,38,0.22)";
-      c.beginPath();
-      c.ellipse(
-        x,
-        y,
-        kind === "feather" ? 5.2 : 9.5,
-        kind === "feather" ? 13 : 7.2,
-        kind === "feather" ? -0.32 : 0,
-        0,
-        Math.PI * 2,
-      );
-      c.fill();
-
-      // Scale dorsal plate highlight
-      c.fillStyle = `rgb(${value},${value + 4},${value - 3})`;
-      c.beginPath();
-      c.ellipse(
-        x - 0.7,
-        y - 0.7,
-        kind === "feather" ? 4.4 : 8.2,
-        kind === "feather" ? 11.5 : 5.8,
-        kind === "feather" ? -0.32 : 0,
-        0,
-        Math.PI * 2,
-      );
-      c.fill();
+    for (let row = 0; row < 38; row++) {
+      for (let col = 0; col < 30; col++) {
+        const x = col * 18 + (row % 2) * 9,
+          y = row * 14;
+        c.fillStyle = "#ececec";
+        c.beginPath();
+        c.ellipse(
+          x,
+          y,
+          kind === "feather" ? 4.5 : 8.2,
+          kind === "feather" ? 11.5 : 6.0,
+          kind === "feather" ? -0.32 : 0,
+          0,
+          Math.PI * 2,
+        );
+        c.fill();
+      }
     }
   }
+  const map = new THREE.CanvasTexture(canvas);
+  map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  map.repeat.set(2.5, 1.5);
+  bumpCache.set(kind, map);
+  return map;
+}
 
-  // Broad organic pigment markings and predator camouflage
-  if (kind === "speckled") {
-    // Predatory rosette spots and dappled camouflage
-    for (let i = 0; i < 65; i++) {
-      const sx = (i * 73) % 512, sy = (i * 109) % 512;
-      c.fillStyle = "rgba(35, 42, 34, 0.35)";
-      c.beginPath();
-      c.arc(sx, sy, 7 + (i % 7), 0, Math.PI * 2);
-      c.fill();
-      c.fillStyle = "rgba(180, 140, 75, 0.25)";
-      c.beginPath();
-      c.arc(sx, sy, 3.5 + (i % 4), 0, Math.PI * 2);
-      c.fill();
+function skinTexture(kind) {
+  if (textureCache.has(kind)) return textureCache.get(kind);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1024;
+  const c = canvas.getContext("2d");
+  if (c && c.fillRect) {
+    c.fillStyle = "#c8c3af";
+    c.fillRect(0, 0, 1024, 1024);
+
+    // High-resolution reptilian polygonal scale matrix with deep recessed crevices and specular domes
+    for (let row = 0; row < 54; row++) {
+      for (let col = 0; col < 44; col++) {
+        const x = col * 24 + (row % 2) * 12,
+          y = row * 19;
+        const value = 194 + ((row * 37 + col * 19) % 38);
+
+        // Crevice shadow border
+        c.fillStyle = "rgba(34, 40, 30, 0.28)";
+        c.beginPath();
+        c.ellipse(
+          x,
+          y,
+          kind === "feather" ? 6.2 : 11.5,
+          kind === "feather" ? 15.5 : 8.8,
+          kind === "feather" ? -0.32 : 0,
+          0,
+          Math.PI * 2,
+        );
+        c.fill();
+
+        // Scale dorsal plate highlight
+        c.fillStyle = `rgb(${value},${value + 5},${value - 3})`;
+        c.beginPath();
+        c.ellipse(
+          x - 0.8,
+          y - 0.8,
+          kind === "feather" ? 5.2 : 9.8,
+          kind === "feather" ? 13.5 : 7.2,
+          kind === "feather" ? -0.32 : 0,
+          0,
+          Math.PI * 2,
+        );
+        c.fill();
+
+        // Secondary specular highlight crest on the scale dome
+        c.fillStyle = "rgba(255, 255, 245, 0.20)";
+        c.beginPath();
+        c.ellipse(
+          x - 2.0,
+          y - 1.5,
+          kind === "feather" ? 2.6 : 4.6,
+          kind === "feather" ? 6.5 : 3.4,
+          kind === "feather" ? -0.32 : 0,
+          0,
+          Math.PI * 2,
+        );
+        c.fill();
+      }
     }
-  } else if (kind === "banded") {
-    // Striated predator tiger-stripes across flank
-    for (let i = 0; i < 16; i++) {
-      const bx = i * 34, by = 250 + Math.sin(i * 1.2) * 80;
-      c.fillStyle = "rgba(28, 34, 28, 0.40)";
-      c.beginPath();
-      c.ellipse(bx, by, 16, 210, 0.28, 0, Math.PI * 2);
-      c.fill();
-    }
-  } else if (kind === "feather") {
-    // Directional plumulaceous shafts
-    for (let i = 0; i < 45; i++) {
-      const fx = (i * 59) % 512, fy = (i * 97) % 512;
-      c.fillStyle = "rgba(220, 205, 165, 0.32)";
-      c.beginPath();
-      c.ellipse(fx, fy, 4, 22, -0.35, 0, Math.PI * 2);
-      c.fill();
-    }
-  } else {
-    // Subtle dorsal spine counter-shading
-    for (let i = 0; i < 18; i++) {
-      c.fillStyle = "rgba(38, 44, 38, 0.18)";
-      c.beginPath();
-      c.ellipse(i * 30, 240 + Math.sin(i * 0.8) * 45, 18, 160, 0.15, 0, Math.PI * 2);
-      c.fill();
+
+    // Broad organic pigment markings and predator camouflage
+    if (kind === "speckled") {
+      // Predatory rosette spots and dappled camouflage
+      for (let i = 0; i < 90; i++) {
+        const sx = (i * 127) % 1024, sy = (i * 181) % 1024;
+        c.fillStyle = "rgba(32, 38, 30, 0.42)";
+        c.beginPath();
+        c.arc(sx, sy, 12 + (i % 10), 0, Math.PI * 2);
+        c.fill();
+        c.fillStyle = "rgba(185, 142, 70, 0.32)";
+        c.beginPath();
+        c.arc(sx, sy, 6 + (i % 6), 0, Math.PI * 2);
+        c.fill();
+      }
+    } else if (kind === "banded") {
+      // Striated predator tiger-stripes across flank
+      for (let i = 0; i < 24; i++) {
+        const bx = i * 44, by = 500 + Math.sin(i * 1.2) * 150;
+        c.fillStyle = "rgba(24, 32, 24, 0.45)";
+        c.beginPath();
+        c.ellipse(bx, by, 22, 420, 0.28, 0, Math.PI * 2);
+        c.fill();
+      }
+    } else if (kind === "feather") {
+      // Directional plumulaceous shafts
+      for (let i = 0; i < 75; i++) {
+        const fx = (i * 97) % 1024, fy = (i * 157) % 1024;
+        c.fillStyle = "rgba(225, 212, 175, 0.36)";
+        c.beginPath();
+        c.ellipse(fx, fy, 5.5, 36, -0.35, 0, Math.PI * 2);
+        c.fill();
+      }
+    } else {
+      // Subtle dorsal spine counter-shading
+      for (let i = 0; i < 28; i++) {
+        c.fillStyle = "rgba(34, 40, 32, 0.22)";
+        c.beginPath();
+        c.ellipse(i * 38, 480 + Math.sin(i * 0.8) * 90, 26, 320, 0.15, 0, Math.PI * 2);
+        c.fill();
+      }
     }
   }
 
@@ -107,20 +224,21 @@ function skinTexture(kind) {
   return map;
 }
 
-function mat(color, kind = "skin", glow = false) {
-  const key = `${color}:${kind}:${glow}`;
+function mat(color, kind = "skin", glow = false, isPredator = true) {
+  const key = `${color}:${kind}:${glow}:${isPredator}`;
   if (!materialCache.has(key)) {
     const isEye = kind === "eye";
     const isHorn = kind === "horn";
+    const hasSkinTex = ["skin", "feather", "speckled", "banded"].includes(kind);
     const m = new THREE.MeshStandardMaterial({
-      color,
-      roughness: isEye ? 0.08 : isHorn ? 0.38 : 0.64,
-      metalness: isHorn ? 0.08 : isEye ? 0.02 : 0.03,
-      map: ["skin", "feather", "speckled", "banded"].includes(kind) ? skinTexture(kind) : null,
-      bumpMap: ["skin", "feather", "speckled", "banded"].includes(kind) ? skinTexture(kind) : null,
-      bumpScale: 0.052,
-      emissive: glow ? color : isEye ? 0x1f1808 : 0,
-      emissiveIntensity: glow ? 0.38 : isEye ? 0.15 : 0,
+      color: isEye ? 0xffffff : color,
+      roughness: isEye ? 0.06 : isHorn ? 0.36 : 0.60,
+      metalness: isHorn ? 0.08 : isEye ? 0.04 : 0.03,
+      map: isEye ? eyeTexture(isPredator) : (hasSkinTex ? skinTexture(kind) : null),
+      bumpMap: isEye ? null : (hasSkinTex ? skinBumpTexture(kind) : null),
+      bumpScale: 0.065,
+      emissive: glow ? color : isEye ? 0x181005 : 0,
+      emissiveIntensity: glow ? 0.38 : isEye ? 0.12 : 0,
       side: kind === "membrane" ? THREE.DoubleSide : THREE.FrontSide,
     });
     m.userData.shared = true;
@@ -150,11 +268,11 @@ function profileGeometry(sections) {
     n = [],
     uv = [],
     indices = [],
-    sides = 24;
+    sides = 32;
   const curve = new THREE.CatmullRomCurve3(
       sections.map((s) => new THREE.Vector3(s[0], s[1], 0)),
     ),
-    count = sections.length * 5;
+    count = sections.length * 8;
   for (let i = 0; i <= count; i++) {
     const t = i / count,
       p = curve.getPoint(t),
@@ -189,11 +307,11 @@ function profileGeometry(sections) {
   geo.computeVertexNormals();
   return geo;
 }
-function tube(points, radii, radial = 12) {
+function tube(points, radii, radial = 20) {
   const curve = new THREE.CatmullRomCurve3(
       points.map((p) => new THREE.Vector3(...p)),
     ),
-    steps = Math.max(12, points.length * 6),
+    steps = Math.max(16, points.length * 8),
     frames = curve.computeFrenetFrames(steps, false);
   const vertices = [],
     normals = [],
@@ -415,7 +533,20 @@ export function createDinosaur(
     horse ? [0, 0, -0.25] : null,
     horse ? "fur" : "skin",
   );
+  if (!horse) {
+    // Modeled fleshy pink tongue along the floor of the lower jaw
+    organic(
+      jaw,
+      0xaf384a,
+      [headLength * 0.62, 0.02, 0],
+      [headLength * 0.52, 0.045, 0.13],
+      null,
+      "skin",
+    );
+  }
+  const isCarnivore = !horse && !sauropod && type !== "quad";
   for (const side of [-1, 1]) {
+    // Rugose postorbital / supraorbital brow ridge
     organic(
       head,
       dark,
@@ -423,41 +554,53 @@ export function createDinosaur(
       [0.2, 0.055, 0.065],
       [0, 0, -0.12],
     );
+    // Sculpted eye socket eyelid rim
+    organic(
+      head,
+      dark,
+      [0.045, 0.25, side * (horse ? 0.24 : 0.34)],
+      [0.08, 0.035, 0.028],
+      [0, 0, -0.14],
+    );
     const eye = organic(
       head,
       horse ? 0x413b32 : 0xd9b16b,
       [0.045, 0.215, side * (horse ? 0.235 : 0.337)],
-      [0.048, 0.046, 0.025],
+      [0.052, 0.050, 0.028],
       null,
       "eye",
     );
     eyes.push(eye);
     organic(
       head,
-      0x101713,
-      [0.059, 0.215, side * (horse ? 0.255 : 0.357)],
-      [0.013, 0.038, 0.01],
-      null,
-      "eye",
-    );
-    organic(
-      head,
       dark,
       [headLength * 1.13, 0.02, side * (croc ? 0.3 : 0.22)],
       [0.046, 0.029, 0.019],
     );
-    if (!horse && !sauropod && type !== "quad")
-      for (let i = 0; i < (croc ? 10 : rex ? 8 : 5); i++) {
-        const x = 0.1 + (i * headLength) / (rex ? 7 : croc ? 9 : 4);
+    if (isCarnivore) {
+      const toothCount = croc ? 11 : rex ? 9 : 6;
+      for (let i = 0; i < toothCount; i++) {
+        const x = 0.08 + (i * headLength * 0.95) / (toothCount - 1);
+        const fangPeak = rex ? (i >= 1 && i <= 3 ? 1.45 : 0.88) : 1.0;
+        const toothLen = (rex ? 0.16 : 0.11) * fangPeak;
+        // Upper recurved ivory teeth
         horn(
           head,
           bone,
-          [x, -0.17, side * 0.25],
-          [0.025, rex ? 0.15 : 0.1, 0.025],
-          [0, 0, Math.PI],
+          [x, -0.165, side * (croc ? 0.28 : 0.25)],
+          [0.026, toothLen, 0.024],
+          [0, 0, Math.PI + 0.22],
         );
-        horn(jaw, bone, [x + 0.12, 0.055, side * 0.235], [0.022, 0.08, 0.022]);
+        // Lower interlocking mandibular teeth
+        horn(
+          jaw,
+          bone,
+          [x + 0.08, 0.055, side * (croc ? 0.26 : 0.235)],
+          [0.022, toothLen * 0.82, 0.022],
+          [0, 0, -0.16],
+        );
       }
+    }
     if (gryphon)
       horn(
         head,
@@ -524,16 +667,17 @@ export function createDinosaur(
             organic(
               knee,
               c,
-              [0.38, -lowerLength + (sickleToe ? 0.14 : 0.055), (toe - 1) * 0.115],
-              [0.21, 0.06, 0.05],
-              sickleToe ? [0, 0, 0.45] : null,
+              [0.38, -lowerLength + (sickleToe ? 0.16 : 0.055), (toe - 1) * 0.115],
+              [0.22, 0.065, 0.052],
+              sickleToe ? [0, 0, 0.48] : null,
             );
+            // Prominent hyper-extended predatory sickle claw on Digit II
             horn(
               knee,
-              bone,
-              [sickleToe ? 0.46 : 0.59, -lowerLength + (sickleToe ? 0.22 : 0.06), (toe - 1) * 0.115],
-              [sickleToe ? 0.04 : 0.035, sickleToe ? 0.34 : 0.16, sickleToe ? 0.04 : 0.035],
-              [0, 0, sickleToe ? -2.4 : -Math.PI / 2],
+              sickleToe ? 0x222222 : bone,
+              [sickleToe ? 0.46 : 0.59, -lowerLength + (sickleToe ? 0.24 : 0.06), (toe - 1) * 0.115],
+              [sickleToe ? 0.048 : 0.035, sickleToe ? 0.42 : 0.17, sickleToe ? 0.048 : 0.035],
+              [0, 0, sickleToe ? -2.45 : -Math.PI / 2],
             );
           }
         mergeStatic(knee, owned);
@@ -564,14 +708,24 @@ export function createDinosaur(
         const tyrant = /tyrannosaurus|tarbosaurus|albertosaurus|ashborn/.test(name);
         if (tyrant) arm.scale.setScalar(0.62);
         if (isRaptor) {
-          organic(arm, accent, [0.32, -0.32, side * 0.16], [0.38, 0.12, 0.03], [0, 0, 0.35], "feather");
+          // Layered aerodynamic primary and secondary wing plumes along forearm
+          for (let f = 0; f < 5; f++) {
+            organic(
+              arm,
+              accent,
+              [0.16 + f * 0.09, -0.26 - f * 0.035, side * (0.16 + f * 0.02)],
+              [0.34, 0.09, 0.024],
+              [0, side * 0.22, 0.42],
+              "feather",
+            );
+          }
         }
         for (let finger = 0; finger < (tyrant ? 2 : 3); finger++)
           horn(
             arm,
-            bone,
+            isRaptor ? 0x222222 : bone,
             [0.55, -0.45, side * (0.13 + finger * 0.08)],
-            [0.025, 0.23, 0.025],
+            [0.028, 0.26, 0.028],
             [0, 0, -2],
           );
         mergeStatic(arm, owned);
@@ -629,26 +783,32 @@ export function createDinosaur(
     }
   // Species-specific skulls, sails, armor, crests and feathers preserve silhouettes.
   if (/tricer|styrac|protocer|pachyrhino/.test(name)) {
-    organic(head, c, [-0.31, 0.2, 0], [0.15, 0.75, 0.72], [0, 0, 0.24]);
-    for (let i = 0; i < 9; i++) {
-      const a = (i / 8) * Math.PI;
+    // Grand anatomically sculpted neck frill with parabolic curvature
+    organic(head, c, [-0.31, 0.22, 0], [0.16, 0.82, 0.78], [0, 0, 0.24]);
+    // Perimeter epoccipital spikes encircling the frill margin
+    for (let i = 0; i < 11; i++) {
+      const a = (i / 10) * Math.PI;
       horn(
         head,
         accent,
-        [-0.33, 0.2 + Math.sin(a) * 0.7, Math.cos(a) * 0.64],
-        [0.07, 0.24, 0.065],
-        [Math.cos(a) * 1.2, 0, 0],
+        [-0.34, 0.22 + Math.sin(a) * 0.78, Math.cos(a) * 0.72],
+        [0.075, 0.28, 0.07],
+        [Math.cos(a) * 1.25, 0, 0],
       );
     }
+    // Forward-curved brow horns with ringed keratin ridges
     for (const side of [-1, 1])
       horn(
         head,
         bone,
-        [0.21, 0.52, side * 0.24],
-        [0.085, name === "protoceratops" ? 0.18 : 0.76, 0.085],
-        [0, 0, -0.5],
+        [0.24, 0.54, side * 0.26],
+        [0.095, name === "protoceratops" ? 0.2 : 0.84, 0.095],
+        [0, 0, -0.55],
       );
-    horn(head, bone, [0.65, 0.21, 0], [0.08, 0.34, 0.08], [0, 0, -0.4]);
+    // Nasal horn
+    horn(head, bone, [0.68, 0.24, 0], [0.09, 0.38, 0.09], [0, 0, -0.42]);
+    // Sturdy rostral beak
+    horn(head, dark, [headLength * 1.28, -0.06, 0], [0.09, 0.24, 0.09], [0, 0, -2.1]);
   }
   if (/pachycephalo|stygimoloch/.test(name))
     organic(head, accent, [-0.06, 0.42, 0], [0.38, 0.33, 0.34]);
@@ -668,25 +828,31 @@ export function createDinosaur(
   }
   if (/tyrannosaurus|tarbosaurus|albertosaurus|ashborn/.test(name)) {
     for (const side of [-1, 1]) {
+      // Rugose postorbital brow horns above the eyes
       organic(head, c, [-0.18, 0.06, side * 0.32], [0.28, 0.26, 0.16]);
-      horn(head, dark, [0.06, 0.34, side * 0.28], [0.07, 0.2, 0.07], [side * 0.25, 0, -0.2]);
+      horn(head, dark, [0.08, 0.36, side * 0.28], [0.08, 0.24, 0.08], [side * 0.25, 0, -0.2]);
+      // Temporal fenestra jaw muscle bulge
+      organic(head, dark, [-0.12, -0.02, side * 0.34], [0.22, 0.20, 0.12]);
     }
   }
   if (/brachio|apatos|diplo/.test(name)) {
-    organic(head, c, [0.06, 0.36, 0], [0.22, 0.28, 0.2]);
+    // High-domed cranial forehead with dorsal nostrils
+    organic(head, c, [0.06, 0.38, 0], [0.24, 0.32, 0.22]);
+    organic(head, dark, [0.18, 0.42, 0], [0.12, 0.16, 0.14]);
   }
   if (/spino|dimetro|acrocantho/.test(name)) {
+    // Majestic tall arching neural spine dorsal sail
     const verts = [],
-      steps = 12;
+      steps = 16;
     for (let i = 0; i < steps; i++) {
-      const x = -1.2 + i * 0.2,
-        x2 = x + 0.2,
+      const x = -1.35 + i * 0.18,
+        x2 = x + 0.18,
         y =
           h +
           0.5 +
           Math.sin((i / steps) * Math.PI) *
-            (name === "acrocanthosaurus" ? 0.55 : 1.25),
-        y2 = h + 0.5 + Math.sin(((i + 1) / steps) * Math.PI) * 1.25;
+            (name === "acrocanthosaurus" ? 0.6 : 1.45),
+        y2 = h + 0.5 + Math.sin(((i + 1) / steps) * Math.PI) * (name === "acrocanthosaurus" ? 0.6 : 1.45);
       verts.push(
         x,
         h + 0.4,
@@ -707,7 +873,8 @@ export function createDinosaur(
         h + 0.4,
         0,
       );
-      horn(body, dark, [x, y - 0.15, 0], [0.035, 0.35, 0.035]);
+      // Tall neural spine structural ribs
+      horn(body, dark, [x, y - 0.12, 0], [0.04, 0.45, 0.04]);
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
@@ -721,39 +888,78 @@ export function createDinosaur(
     );
     owned.add(geo);
     add(body, geo, mat(accent, "membrane"), [0, 0, 0], [1, 1, 1]);
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       if (tails[i + 1]) {
-        organic(tails[i + 1], accent, [-0.15, 0.26, 0], [0.22, 0.38, 0.025], [0, 0, 0.15], "membrane");
+        organic(tails[i + 1], accent, [-0.15, 0.28, 0], [0.24, 0.42, 0.025], [0, 0, 0.15], "membrane");
       }
     }
   }
-  if (/stego|kentros/.test(name))
-    for (let i = 0; i < 10; i++) {
-      const side = i % 2 ? -0.11 : 0.11;
+  if (/stego|kentros/.test(name)) {
+    // Alternating double row of angular diamond plates along spine
+    for (let i = 0; i < 11; i++) {
+      const side = i % 2 ? -0.12 : 0.12;
+      const plateScale = 0.54 + Math.sin((i / 11) * Math.PI) * 0.42;
       organic(
         body,
         accent,
-        [-1.5 + i * 0.3, h + 0.73, side],
-        [0.19, 0.48 + Math.sin((i / 10) * Math.PI) * 0.34, 0.055],
-        [0, 0, -0.15],
+        [-1.6 + i * 0.32, h + 0.76, side],
+        [0.22, plateScale, 0.055],
+        [0, 0, -0.16],
       );
     }
+    // 4-spike horizontal thagomizer on tail tip
+    const tailEnd = tails.at(-1);
+    if (tailEnd) {
+      for (const side of [-1, 1]) {
+        for (let sp = 0; sp < 2; sp++) {
+          horn(
+            tailEnd,
+            bone,
+            [-0.1 - sp * 0.22, 0.08, side * 0.28],
+            [0.065, 0.62, 0.065],
+            [side * 1.35, 0, -0.25],
+          );
+        }
+      }
+      mergeStatic(tailEnd, owned);
+    }
+  }
   if (/ankylo|euoplo|minmi|behemoth/.test(name)) {
-    for (let row = 0; row < 4; row++)
-      for (let i = 0; i < 7; i++) {
-        const z = (row - 1.5) * 0.29,
-          x = -1 + i * 0.34;
+    // Carapace of multi-tiered keeled osteoderm armor plates
+    for (let row = 0; row < 5; row++)
+      for (let i = 0; i < 8; i++) {
+        const z = (row - 2) * 0.28,
+          x = -1.1 + i * 0.32;
         organic(
           body,
           dark,
-          [x, h + 0.62 - Math.abs(z) * 0.3, z],
-          [0.2, 0.16, 0.17],
+          [x, h + 0.64 - Math.abs(z) * 0.28, z],
+          [0.22, 0.17, 0.18],
         );
         if (i % 2 === 0)
-          horn(body, accent, [x, h + 0.7, z], [0.07, 0.27, 0.07]);
+          horn(body, accent, [x, h + 0.72, z], [0.08, 0.3, 0.08]);
       }
-    organic(tails.at(-1), accent, [-0.25, 0, 0], [0.42, 0.31, 0.4]);
-    mergeStatic(tails.at(-1), owned);
+    // Heavy lateral triangular spikes along both flanks
+    for (const side of [-1, 1]) {
+      for (let s = 0; s < 6; s++) {
+        horn(
+          body,
+          bone,
+          [-0.9 + s * 0.32, h + 0.28, side * 0.76],
+          [0.08, 0.38, 0.08],
+          [side * 1.25, 0, 0],
+        );
+      }
+    }
+    // Heavy fused bone tail club
+    const tailClub = tails.at(-1);
+    if (tailClub) {
+      organic(tailClub, accent, [-0.28, 0, 0], [0.48, 0.34, 0.46]);
+      for (const side of [-1, 1]) {
+        organic(tailClub, dark, [-0.28, 0, side * 0.26], [0.38, 0.28, 0.34]);
+      }
+      mergeStatic(tailClub, owned);
+    }
   }
   if (/dilopho|oviraptor|parasauro/.test(name))
     organic(head, accent, [-0.17, 0.5, 0], [0.45, 0.48, 0.1], [0, 0, 0.55]);
@@ -821,6 +1027,25 @@ export function createDinosaur(
         [0, i * 0.1, 0.1],
         "feather",
       );
+    if (/raptor|utahraptor|deinonychus|pyroraptor/.test(name)) {
+      const tipTail = tails.at(-1);
+      const subTip = tails.at(-2);
+      for (const side of [-1, 1]) {
+        for (let f = 0; f < 3; f++) {
+          const parentTail = f === 0 ? subTip : tipTail;
+          if (parentTail) {
+            organic(
+              parentTail,
+              accent,
+              [-0.15 - f * 0.11, 0.03, side * (0.14 + f * 0.06)],
+              [0.34, 0.024, 0.15],
+              [0, side * 0.32, 0.06],
+              "feather",
+            );
+          }
+        }
+      }
+    }
   }
   if (dragon || gryphon || flight || name === "pegasus")
     for (const side of [-1, 1]) {

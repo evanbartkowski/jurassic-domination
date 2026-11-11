@@ -973,8 +973,27 @@ export class Game {
     sweepMove(p, Math.cos(angle) * amount, Math.sin(angle) * amount, this.effectiveSize, this.worldFeatures || []);
     p.stamina -= cost;
     p.dashCooldown = this.species.body === "bird" ? 1.2 : 1.6;
-    p.invulnerable = Math.max(p.invulnerable, 0.32);
+    p.invulnerable = Math.max(p.invulnerable, 0.38);
     this._containPlayer();
+
+    // Skillful Perfect Dodge: evading an active enemy strike or windup
+    let dodgedThreat = null;
+    for (const e of this.entities) {
+      if (e.dead || e.isSleeping) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (((e.attacking || 0) > 0 || (e.telegraph || 0) > 0) && d < 6.8) {
+        dodgedThreat = e;
+        break;
+      }
+    }
+    if (dodgedThreat) {
+      const threatSpecies = SPECIES_BY_ID[dodgedThreat.speciesId];
+      this.triggerPerfectDodge({
+        x: p.x,
+        y: p.y,
+        cause: `${dodgedThreat.boss ? "Alpha " : ""}${threatSpecies?.name || "Predator"}`,
+      });
+    }
 
     // Juggernaut Synergy: locomotive charge trampling all enemies
     if (this.build?.activeSynergies?.includes("juggernaut")) {
@@ -1052,7 +1071,7 @@ export class Game {
       }
       this.emit("ability", { ability: "shockwave", radius: 5.2, text: "Seismic Stride" });
     }
-    this.emit("dash", { angle });
+    this.emit("dash", { angle, x: p.x, y: p.y });
     return true;
   }
 

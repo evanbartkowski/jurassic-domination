@@ -568,6 +568,8 @@ export class WorldRenderer {
         "collect",
         "dna-find",
         "collection-find",
+        "perfect-dodge",
+        "counter-strike",
       ].includes(event.type)
     ) {
       let particleColor = 0xf4d48a;
@@ -582,13 +584,78 @@ export class WorldRenderer {
         particleColor = 0x84cc16;
         particleCount = 14;
       } else if (event.type === "dash") {
-        particleColor = 0x8a927a;
-        particleCount = 12;
+        particleColor = 0x93c5fd;
+        particleCount = 14;
+      } else if (event.type === "perfect-dodge") {
+        particleColor = 0x38bdf8;
+        particleCount = 28;
+      } else if (event.type === "counter-strike") {
+        particleColor = 0xf59e0b;
+        particleCount = 26;
       } else if (event.type === "evolve") {
         particleColor = 0xf59e0b;
         particleCount = 75;
       }
       this.burst(event.x || 0, event.y || 0, particleColor, particleCount);
+    }
+    if (event.type === "perfect-dodge") {
+      const ringGeo = new THREE.RingGeometry(0.6, 2.6, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.85,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.y = 0.12;
+      const group = new THREE.Group();
+      group.position.set(event.x || 0, 0.05, event.y || 0);
+      group.add(ringMesh);
+      this.scene.add(group);
+      this.effects.push({ group, mesh: ringMesh, life: 0.32, max: 0.32 });
+    }
+    if (event.type === "counter-strike") {
+      this.shake = Math.max(this.shake, 0.28);
+      const ringGeo = new THREE.RingGeometry(0.8, 3.2, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xf59e0b,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.y = 0.15;
+      const group = new THREE.Group();
+      group.position.set(event.x || 0, 0.05, event.y || 0);
+      group.add(ringMesh);
+      this.scene.add(group);
+      this.effects.push({ group, mesh: ringMesh, life: 0.35, max: 0.35 });
+    }
+    if (event.type === "dash" && Number.isFinite(event.angle)) {
+      const dashGeo = new THREE.PlaneGeometry(1.2, 4.5);
+      const dashMat = new THREE.MeshBasicMaterial({
+        color: 0x93c5fd,
+        transparent: true,
+        opacity: 0.65,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const dashMesh = new THREE.Mesh(dashGeo, dashMat);
+      dashMesh.rotation.x = -Math.PI / 2;
+      dashMesh.rotation.z = -event.angle - Math.PI / 2;
+      dashMesh.position.y = 0.1;
+      const group = new THREE.Group();
+      group.position.set(event.x || 0, 0.05, event.y || 0);
+      group.add(dashMesh);
+      this.scene.add(group);
+      this.effects.push({ group, mesh: dashMesh, life: 0.22, max: 0.22 });
     }
     if (event.type === "roar") {
       this.shake = Math.max(this.shake, 0.42);
@@ -685,6 +752,28 @@ export class WorldRenderer {
       mesh.rotation.x = -Math.PI / 2 + (isPlayerAttack || isEnemyStrike ? 0.16 : 0);
       mesh.position.y = isPlayerAttack ? 0.35 + Math.min(2.0, (event.size || 1) * 0.18) : 0.35;
       group.add(mesh);
+      if (isPlayerAttack) {
+        const coreGeo = new THREE.RingGeometry(
+          innerR * 0.95,
+          radius * 1.02,
+          36,
+          1,
+          -arc * 0.44,
+          arc * 0.88,
+        );
+        const coreMat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.85,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        coreMesh.rotation.x = -Math.PI / 2 + 0.16;
+        coreMesh.position.y = mesh.position.y + 0.02;
+        group.add(coreMesh);
+      }
       group.position.set(event.x || 0, 0.12, event.y || 0);
       group.rotation.y = -(event.angle || 0);
       this.scene.add(group);

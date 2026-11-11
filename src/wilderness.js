@@ -76,7 +76,7 @@ export function resolveObstacles(actor, size, features, onDemolish) {
       d = Math.hypot(dx, dy),
       r = f.radius + Math.min(3, size * 0.35);
     if (d < r) {
-      const isMassive = size >= 2.8 || actor?.charging || actor?.dashing;
+      const isMassive = size >= 2.8 || actor?.charging || actor?.dashing || actor?.sprinting;
       if (isMassive && (f.type === "boulder" || f.type === "fallen-log")) {
         f.destroyed = true;
         f.solid = false;

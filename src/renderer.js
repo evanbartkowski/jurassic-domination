@@ -1647,8 +1647,28 @@ export class WorldRenderer {
     this.shake = Math.max(0, this.shake - dt * 2.2);
     const shake = (this.settings.shake && !this.settings.reducedMotion) ? this.shake : 0;
     const effectiveSize = (p && !menu) ? game.effectiveSize : 1.0;
-    const targetDist = p && !menu ? 15.0 + Math.pow(effectiveSize, 1.08) * 8.5 : 25;
+    const sprintZoom = (p && p.sprinting) ? 3.2 : 0;
+    const targetDist = p && !menu ? 15.0 + Math.pow(effectiveSize, 1.08) * 8.5 + sprintZoom : 25;
     this.cameraDist = this.cameraDist ? THREE.MathUtils.damp(this.cameraDist, targetDist, 3.8, dt) : targetDist;
+
+    if (p && !menu && p.sprinting && dt > 0) {
+      const dustCount = this.emitCount(20, dt);
+      for (let k = 0; k < dustCount; k++) {
+        this.addParticle({
+          x: p.x - Math.cos(p.angle) * (effectiveSize * 0.7) + (Math.random() - 0.5) * 0.6,
+          y: 0.18 + Math.random() * 0.35,
+          z: p.y - Math.sin(p.angle) * (effectiveSize * 0.7) + (Math.random() - 0.5) * 0.6,
+          vx: -Math.cos(p.angle) * 3.2 + (Math.random() - 0.5) * 1.4,
+          vy: 0.8 + Math.random() * 0.9,
+          vz: -Math.sin(p.angle) * 3.2 + (Math.random() - 0.5) * 1.4,
+          floating: true,
+          buoyancy: 0.2,
+          life: 0.38,
+          size: 0.28,
+          color: 0x9b8c78,
+        }, 1);
+      }
+    }
 
     if (menu) {
       this.camera.position.set(Math.sin(t * 0.06) * 0.35, 7.8, 21.5);
@@ -2326,29 +2346,89 @@ export class WorldRenderer {
       seen.add(shot.id);
       let mesh = this.projectileModels.get(shot.id);
       if (!mesh) {
+        const isVenom = shot.kind === "venom";
+        const isFlame = shot.kind === "flame";
+        const isFrost = shot.kind === "frost";
+        const isLightning = shot.kind === "lightning";
         mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(1, 12, 8),
+          new THREE.SphereGeometry(1, 16, 12),
           new THREE.MeshStandardMaterial({
             color:
-              shot.kind === "flame"
-                ? 0xff9a36
-                : shot.kind === "venom"
-                  ? 0x9dce56
-                  : 0x9ecfed,
-            emissive: shot.kind === "flame" ? 0xff5722 : 0x417e92,
-            emissiveIntensity: 1.5,
-            roughness: 0.3,
+              isFlame ? 0xff4500 : isVenom ? 0x22c55e : isFrost ? 0x38bdf8 : 0xffffff,
+            emissive:
+              isFlame ? 0xff6600 : isVenom ? 0x4ade80 : isFrost ? 0x7dd3fc : 0x67e8f9,
+            emissiveIntensity: isLightning ? 4.5 : isVenom ? 3.5 : isFlame ? 3.8 : 2.8,
+            roughness: 0.15,
+            metalness: 0.1,
           }),
         );
+        mesh.userData.kind = shot.kind;
         this.scene.add(mesh);
         this.projectileModels.set(shot.id, mesh);
       }
       mesh.position.set(shot.x, 1.2, shot.y);
-      mesh.scale.set(shot.radius, shot.radius * 0.55, shot.radius * 0.6);
+      mesh.scale.set(shot.radius * 1.2, shot.radius * 0.7, shot.radius * 0.7);
       mesh.rotation.y = -shot.angle;
+
+      // Trailing dynamic particle emissions for high visibility
+      if (dt > 0) {
+        if (shot.kind === "venom") {
+          this.addParticle({
+            x: shot.x + (Math.random() - 0.5) * 0.35,
+            y: 1.2 + (Math.random() - 0.5) * 0.3,
+            z: shot.y + (Math.random() - 0.5) * 0.35,
+            vx: (Math.random() - 0.5) * 0.6,
+            vy: -1.2 + Math.random() * 0.4,
+            vz: (Math.random() - 0.5) * 0.6,
+            floating: false,
+            life: 0.42,
+            size: 0.24,
+            color: Math.random() < 0.65 ? 0x22c55e : 0x84cc16,
+          }, 2);
+        } else if (shot.kind === "flame") {
+          this.addParticle({
+            x: shot.x + (Math.random() - 0.5) * 0.4,
+            y: 1.2 + (Math.random() - 0.5) * 0.3,
+            z: shot.y + (Math.random() - 0.5) * 0.4,
+            vx: (Math.random() - 0.5) * 0.9,
+            vy: 0.8 + Math.random() * 1.2,
+            vz: (Math.random() - 0.5) * 0.9,
+            floating: true,
+            buoyancy: 0.8,
+            life: 0.35,
+            size: 0.26,
+            color: Math.random() < 0.6 ? 0xff4500 : 0xfbbf24,
+          }, 2);
+        } else if (shot.kind === "lightning") {
+          this.addParticle({
+            x: shot.x + (Math.random() - 0.5) * 0.5,
+            y: 1.2 + (Math.random() - 0.5) * 0.5,
+            z: shot.y + (Math.random() - 0.5) * 0.5,
+            vx: (Math.random() - 0.5) * 2.5,
+            vy: (Math.random() - 0.5) * 2.5,
+            vz: (Math.random() - 0.5) * 2.5,
+            floating: true,
+            life: 0.18,
+            size: 0.18,
+            color: 0x67e8f9,
+          }, 2);
+        }
+      }
     }
     for (const [id, mesh] of this.projectileModels)
       if (!seen.has(id)) {
+        // Impact burst when projectile lands / hits
+        const kind = mesh.userData.kind;
+        if (kind === "venom") {
+          this.burst(mesh.position.x, mesh.position.z, 0x22c55e, 14);
+          this.burst(mesh.position.x, mesh.position.z, 0x84cc16, 8);
+        } else if (kind === "flame") {
+          this.burst(mesh.position.x, mesh.position.z, 0xff4500, 16);
+        } else if (kind === "frost") {
+          this.burst(mesh.position.x, mesh.position.z, 0x38bdf8, 14);
+        } else if (kind === "lightning") {
+          this.burst(mesh.position.x, mesh.position.z, 0x67e8f9, 16);
+        }
         this.scene.remove(mesh);
         mesh.geometry.dispose();
         mesh.material.dispose();

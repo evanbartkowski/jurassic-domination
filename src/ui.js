@@ -328,33 +328,104 @@ export class UI {
       `
       <div class="menu-art" aria-hidden="true"></div><div class="menu-grain" aria-hidden="true"></div>
       <div class="menu-shell">
-        <header class="menu-top"><span class="brand-mark">${icon("claw")}<span>JURASSIC DOMINATION</span></span><button class="icon-button" data-action="settings" aria-label="Open settings">${icon("settings")}</button></header>
+        <header class="menu-top">
+          <span class="brand-mark">${icon("claw")}<span>JURASSIC DOMINATION</span></span>
+          <button class="icon-button" data-action="settings" aria-label="Open settings">${icon("settings")}</button>
+        </header>
         <div class="menu-main">
-          <div class="menu-copy"><p class="eyebrow"><span class="gold-line"></span> THE WILD REMEMBERS YOUR BLOODLINE</p>
+          <div class="menu-copy">
+            <p class="eyebrow"><span class="gold-line"></span> THE WILD REMEMBERS YOUR BLOODLINE</p>
             <h1 class="game-title"><span>JURASSIC</span><span>DOMINATION<span class="title-dot">.</span></span></h1>
-            <p class="menu-description">One fragile egg. An untamed continent.<br>Become a legend. Build a home.</p>
-            <div class="menu-chapter"><span>THE LIVING PREHISTORIC WORLD</span><b>${SPECIES.length} FORMS · GENETICS · ANCIENT DISCOVERIES</b></div>
-            <div class="menu-actions">${this.savedRun ? `<div class="save-summary"><strong>${esc(this.savedRun.name)}</strong><small>TIER ${this.savedRun.tier + 1} · ${clock(this.savedRun.time)} SURVIVED · ${esc(this.savedRun.difficulty.toUpperCase())}</small></div><button class="button primary continue-button" data-action="continue" data-focus>CONTINUE THIS LIFE ${icon("arrow")}</button>` : ""}<button class="button ${this.savedRun ? "secondary" : "primary"} play-button" data-action="start" ${this.savedRun ? "" : "data-focus"}><span>${icon("claw")} BEGIN A NEW LIFE</span>${icon("arrow")}</button>
-              <div class="secondary-actions"><button class="button quiet" data-action="tutorial">${icon("book")} HOW TO SURVIVE</button><button class="button quiet" data-action="guide">ENCYCLOPEDIA ${icon("arrow")}</button></div>
-              <button class="legacy-link" data-action="legacy">${icon("dna")}<span>THE ANCESTRAL LEGACY <b>${number(profile.dna)} DNA</b></span>${icon("arrow")}</button>
-              <button class="cosmetic-link" data-action="field-journal">FIELD JOURNAL & GENERATIONS <span>${profile.ancestry?.generations || 0} ANCESTORS</span></button>
-              <button class="cosmetic-link" data-action="wardrobe">APPEARANCE & ANCIENT RELICS <span>${(profile.skins || ["natural"]).length} SKINS</span></button>
-              <div class="collection-entrances"><button data-action="shop">${icon("dna")} DNA SHOP <b>${number(profile.dna)}</b></button><button data-action="island">${icon("leaf")} MY DINOSAUR ISLAND</button></div>
+            <p class="menu-description">One fragile egg. An untamed prehistoric continent.<br>Evolve from hatchling to apex predator. Build your sanctuary.</p>
+
+            <!-- Main Expedition CTA Hero Area -->
+            <div class="menu-hero-area">
+              ${this.savedRun ? `
+                <div class="menu-hero-card saved-run-card">
+                  <div class="save-run-info">
+                    <span class="save-tag">EXPEDITION IN PROGRESS</span>
+                    <strong class="save-species">${esc(this.savedRun.name)}</strong>
+                    <span class="save-meta">TIER ${this.savedRun.tier + 1} · ${clock(this.savedRun.time)} SURVIVED · ${esc(this.savedRun.difficulty.toUpperCase())}</span>
+                  </div>
+                  <button class="button primary continue-btn" data-action="continue" data-focus>
+                    <span>${icon("arrow")} RESUME EXPEDITION</span>
+                  </button>
+                </div>
+                <button class="button secondary play-button new-expedition-sub" data-action="start">
+                  <span>${icon("claw")} BEGIN A NEW EXPEDITION</span>
+                </button>
+              ` : `
+                <button class="button primary play-button hero-play-btn" data-action="start" data-focus>
+                  <span>${icon("claw")} BEGIN A NEW LIFE</span>
+                  <span class="sub-label">CRACK THE EGG · EVOLVE & SURVIVE</span>
+                </button>
+              `}
             </div>
-            <div class="difficulty-picker" role="group" aria-label="Difficulty"><span>WORLD</span>${[
-              ["explorer", "EXPLORER"],
-              ["survival", "SURVIVAL"],
-              ["extinction", "EXTINCTION"],
-            ]
-              .map(
-                ([id, text]) =>
-                  `<button data-difficulty="${id}" aria-pressed="${this.difficulty === id}" class="${this.difficulty === id ? "selected" : ""}">${text}</button>`,
-              )
-              .join("")}</div>
-            <p class="difficulty-description">${this.difficultyText()}</p>
+
+            <!-- Structured 2x2 Feature Grid -->
+            <div class="menu-feature-grid">
+              <button class="menu-feature-tile" data-action="legacy">
+                <div class="tile-icon">${icon("dna")}</div>
+                <div class="tile-text">
+                  <strong>Ancestral Legacy</strong>
+                  <span>${number(profile.dna)} DNA Shards</span>
+                </div>
+              </button>
+              <button class="menu-feature-tile" data-action="island">
+                <div class="tile-icon">${icon("leaf")}</div>
+                <div class="tile-text">
+                  <strong>Dinosaur Island</strong>
+                  <span>Sanctuary & Habitats</span>
+                </div>
+              </button>
+              <button class="menu-feature-tile" data-action="field-journal">
+                <div class="tile-icon">${icon("book")}</div>
+                <div class="tile-text">
+                  <strong>Field Journal</strong>
+                  <span>${profile.ancestry?.generations || 0} Ancestors</span>
+                </div>
+              </button>
+              <button class="menu-feature-tile" data-action="guide">
+                <div class="tile-icon">${icon("claw")}</div>
+                <div class="tile-text">
+                  <strong>Encyclopedia</strong>
+                  <span>${SPECIES.length} Species Guides</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Secondary Actions Row -->
+            <div class="menu-sub-row">
+              <button class="menu-sub-btn" data-action="wardrobe">${icon("sparkles")} Skins (${(profile.skins || ["natural"]).length})</button>
+              <button class="menu-sub-btn" data-action="shop">${icon("dna")} DNA Shop</button>
+              <button class="menu-sub-btn" data-action="tutorial">${icon("book")} Survival Guide</button>
+            </div>
+
+            <!-- World Difficulty Selector -->
+            <div class="difficulty-picker-wrap">
+              <div class="difficulty-picker" role="group" aria-label="Difficulty">
+                <span>WORLD RULES</span>
+                ${[
+                  ["explorer", "EXPLORER"],
+                  ["survival", "SURVIVAL"],
+                  ["extinction", "EXTINCTION"],
+                ].map(([id, text]) => `<button data-difficulty="${id}" aria-pressed="${this.difficulty === id}" class="${this.difficulty === id ? "selected" : ""}">${text}</button>`).join("")}
+              </div>
+              <p class="difficulty-description">${this.difficultyText()}</p>
+            </div>
           </div>
         </div>
-        <footer class="menu-footer"><div class="menu-record"><span>BEST RUN <strong>${number(profile.bestScore)}</strong></span><span>LIVES LIVED <strong>${number(profile.runs)}</strong></span><span>SPECIES DISCOVERED <strong>${new Set([...(profile.unlocked || []), ...(profile.hunted || [])]).size} / ${SPECIES.length}</strong></span></div><div class="version-label"><span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.8.0</span><button data-action="quit" class="text-button">QUIT</button></div></footer>
+        <footer class="menu-footer">
+          <div class="menu-record">
+            <span>BEST RUN <strong>${number(profile.bestScore)}</strong></span>
+            <span>LIVES LIVED <strong>${number(profile.runs)}</strong></span>
+            <span>SPECIES DISCOVERED <strong>${new Set([...(profile.unlocked || []), ...(profile.hunted || [])]).size} / ${SPECIES.length}</strong></span>
+          </div>
+          <div class="version-label">
+            <span class="status-dot"></span> OFFLINE SINGLE PLAYER <span class="version">v0.8.0</span>
+            <button data-action="quit" class="text-button">QUIT</button>
+          </div>
+        </footer>
       </div>`,
       "menu-screen",
     );
@@ -450,43 +521,116 @@ export class UI {
     this.hud.innerHTML = `<span id="hud-save-status" class="save-indicator" role="status"></span>
       <div id="hud-hunger-vignette" class="hunger-vignette" aria-hidden="true"></div>
       <div id="hud-starving-alert" class="starving-alert" aria-hidden="true" hidden><span class="starving-title">STARVING · HUNT FOR FLESH</span><span class="starving-sub">YOUR BODY WEAKENS · FEED IMMEDIATELY</span></div>
-      <div class="hud-top-center-vitals">
-        <div class="vital hp-vital">
-          <div class="vital-label">${icon("heart")}<span>VITALITY</span><b id="hud-hp-text">100 / 100</b></div>
-          <div class="meter health" role="progressbar" aria-label="Health"><span id="hud-hp"></span></div>
+      
+      <!-- Top Center Cluster: Vitals & Prominent Evolution Progress Bar -->
+      <div class="hud-top-center-cluster">
+        <div class="hud-top-center-vitals">
+          <div class="vital hp-vital">
+            <div class="vital-label">${icon("heart")}<span>VITALITY</span><b id="hud-hp-text">100 / 100</b></div>
+            <div class="meter health" role="progressbar" aria-label="Health"><span id="hud-hp"></span></div>
+          </div>
+          <div class="vital stamina-vital">
+            <div class="vital-label">${icon("bolt")}<span>STAMINA</span><b id="hud-stamina-text">100%</b></div>
+            <div class="meter stamina" role="progressbar" aria-label="Stamina"><span id="hud-stamina"></span></div>
+          </div>
         </div>
-        <div class="vital stamina-vital">
-          <div class="vital-label">${icon("bolt")}<span>STAMINA</span><b id="hud-stamina-text">100%</b></div>
-          <div class="meter stamina" role="progressbar" aria-label="Stamina"><span id="hud-stamina"></span></div>
+        
+        <!-- Dedicated Evolution Progress Bar -->
+        <div id="hud-evolution-bar-container" class="hud-evolution-bar-container">
+          <div class="evolution-bar-header">
+            <span class="evolution-bar-title">${icon("dna")} EVOLUTION PROGRESS</span>
+            <span id="growth-status" class="growth-status-badge">JUVENILE · 0%</span>
+            <b id="hud-xp-text" class="evolution-bar-xp">0 / 60 XP · 0%</b>
+          </div>
+          <div class="meter evolution-meter" role="progressbar" aria-label="Evolution Progress">
+            <span id="hud-xp" class="evolution-meter-fill"></span>
+            <div class="evolution-milestones" aria-hidden="true">
+              <span class="milestone-pip pip-25" title="25%"></span>
+              <span class="milestone-pip pip-50" title="50%"></span>
+              <span class="milestone-pip pip-75" title="75%"></span>
+              <span class="milestone-pip pip-100" title="100%"></span>
+            </div>
+          </div>
+          <button id="evolve-ready" class="evolve-ready-banner" hidden aria-label="Open evolution choices">
+            <span class="pulse-ring"></span>
+            <kbd>T</kbd> 
+            <span class="ready-title">EVOLUTION READY</span>
+            <span class="ready-sub">PRESS [T] TO CHOOSE NEW FORM</span>
+          </button>
         </div>
       </div>
-      <div id="hud-objective-panel" class="hud-objective-panel">
-        <div class="objective-header-row">
-          <span class="objective-badge">CURRENT GOAL</span>
-          <span id="hud-obj-step" class="objective-step">STEP 1 / 10</span>
-          <button id="guide-shortcut-btn" class="guide-shortcut-btn" title="Survival Guide & Controls">? GUIDE</button>
+
+      <!-- Top Left Cluster: Species Card, Hazard Alert, and Objectives (Guaranteed Zero Overlap) -->
+      <div class="hud-top-left-cluster">
+        <div class="species-card">
+          <span class="species-emblem" id="hud-emblem">${icon("claw")}</span>
+          <div>
+            <p class="eyebrow" id="hud-tier">A NEW LIFE</p>
+            <h2 id="hud-species">The beginning</h2>
+            <span class="small-muted" id="hud-biome">FERN MEADOW</span>
+          </div>
         </div>
-        <div class="objective-title-row">
-          <span id="hud-obj-title" class="objective-title">Break Free from the Egg</span>
-          <span id="hud-obj-progress" class="objective-progress">0%</span>
+        <div id="hud-region-hazard" class="hud-region-hazard" hidden>
+          <span class="hazard-icon">⚠️</span>
+          <div class="hazard-text">
+            <strong id="hazard-title">EXTREME HAZARD REGION</strong>
+            <span id="hazard-desc">Tier 3 Zone · Form Tier 1</span>
+          </div>
         </div>
-        <div class="meter objective-meter"><span id="hud-obj-bar"></span></div>
-        <p id="hud-obj-hint" class="objective-hint">Press E or click to hatch.</p>
+        <div id="hud-objective-panel" class="hud-objective-panel">
+          <div class="objective-header-row">
+            <span class="objective-badge">CURRENT GOAL</span>
+            <span id="hud-obj-step" class="objective-step">STEP 1 / 10</span>
+            <button id="guide-shortcut-btn" class="guide-shortcut-btn" title="Survival Guide & Controls">? GUIDE</button>
+          </div>
+          <div class="objective-title-row">
+            <span id="hud-obj-title" class="objective-title">Break Free from the Egg</span>
+            <span id="hud-obj-progress" class="objective-progress">0%</span>
+          </div>
+          <div class="meter objective-meter"><span id="hud-obj-bar"></span></div>
+          <p id="hud-obj-hint" class="objective-hint">Press E or click to hatch.</p>
+        </div>
       </div>
-      <div id="hud-region-hazard" class="hud-region-hazard" hidden>
-        <span class="hazard-icon">⚠️</span>
-        <div class="hazard-text">
-          <strong id="hazard-title">EXTREME HAZARD REGION</strong>
-          <span id="hazard-desc">Tier 3 Zone · Form Tier 1</span>
+
+      <!-- Top Right Cluster: Expedition Info & Minimap -->
+      <div class="hud-top-right-cluster">
+        <div class="hud-run">
+          <span class="hud-dna" id="hud-dna">0 DNA</span>
+          <span class="run-timer" id="hud-time">00:00</span>
+          <span class="run-kills">${icon("skull")}<b id="hud-kills">0</b></span>
+          <button class="icon-button" id="pause-button" aria-label="Pause game">${icon("pause")}</button>
         </div>
       </div>
-      <div class="hud-top"><div class="species-card"><span class="species-emblem" id="hud-emblem">${icon("claw")}</span><div><p class="eyebrow" id="hud-tier">A NEW LIFE</p><h2 id="hud-species">The beginning</h2><span class="small-muted" id="hud-biome">FERN MEADOW</span></div></div>
-        <div class="hud-run"><span class="hud-dna" id="hud-dna">0 DNA</span><span class="run-timer" id="hud-time">00:00</span><span class="run-kills">${icon("skull")}<b id="hud-kills">0</b></span><button class="icon-button" id="pause-button" aria-label="Pause game">${icon("pause")}</button></div></div>
-      <div class="minimap-wrap"><div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div><canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas><div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div><div class="hud-danger-panel" id="hud-danger-panel"><div class="danger-header-row"><span>THREAT LEVEL</span><b id="hud-danger-label">🌿 SAFE BASIN</b></div><div class="meter danger-meter"><span id="hud-danger-bar"></span></div></div></div>
-      <div class="hud-bottom"><div class="vital-status-feed"><p class="hunger-warning" id="hud-warning"></p><span id="hud-diet"></span></div></div>
-      <div class="abilities"><div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div><div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div><div class="ability-key"><kbd>SHIFT</kbd>${icon("arrow")}<span id="dash-name">DASH</span><b id="hud-dash-cooldown">READY</b></div><div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div></div>
-      <div class="evolution-progress"><div class="evolution-heading"><span>${icon("dna")} NEXT EVOLUTION</span><b id="hud-xp-text">0 / 60</b></div><div class="meter xp"><span id="hud-xp"></span></div><p id="hud-score">SCORE 0</p><button id="evolve-ready" hidden aria-label="Open evolution choices"><kbd>T</kbd> EVOLUTION READY <span>CHOOSE WHEN YOU ARE READY</span></button><span id="growth-status"></span><button id="bloodline-journal">J - COMPENDIUM</button><button id="build-shortcut-btn" class="build-shortcut-btn"><kbd>B</kbd> BUILDS</button></div></div>
-      <div class="hud-controls">${small("W A S D", "MOVE")}${small("MOUSE", "AIM")}${small("SPACE", "BITE")}${small("B", "BUILDS")}${small("ESC", "PAUSE")}</div>
+      <div class="minimap-wrap">
+        <div class="map-header"><span>THE LOST CONTINENT</span><span>N ↑</span></div>
+        <canvas id="minimap" width="180" height="180" aria-label="Minimap with player, nearby creatures, and food"></canvas>
+        <div class="map-footer"><span class="status-dot"></span><span id="hud-threat">ECOSYSTEM STABLE</span></div>
+        <div class="hud-danger-panel" id="hud-danger-panel">
+          <div class="danger-header-row"><span>THREAT LEVEL</span><b id="hud-danger-label">🌿 SAFE BASIN</b></div>
+          <div class="meter danger-meter"><span id="hud-danger-bar"></span></div>
+        </div>
+      </div>
+
+      <!-- Bottom HUD: Status, Ability Bar, Quick Links -->
+      <div class="hud-bottom">
+        <div class="vital-status-feed">
+          <p class="hunger-warning" id="hud-warning"></p>
+          <span id="hud-diet"></span>
+          <p id="hud-score" class="hud-score-display">SCORE 0</p>
+        </div>
+        <div class="hud-quick-buttons">
+          <button id="bloodline-journal" class="hud-badge-btn">${icon("dna")} [J] BLOODLINES</button>
+          <button id="build-shortcut-btn" class="hud-badge-btn build-shortcut-btn">${icon("settings")} [B] BUILDS</button>
+        </div>
+      </div>
+      <div class="abilities">
+        <div class="ability-key"><kbd>LMB</kbd>${icon("claw")}<span>BITE</span><i id="attack-ready"></i></div>
+        <div class="ability-key sprint-key"><kbd>SHIFT</kbd>${icon("bolt")}<span>SPRINT</span><b id="hud-sprint-status">HOLD</b></div>
+        <div class="ability-key"><kbd>Q</kbd>${icon("bolt")}<span id="hud-ability">PRIMAL INSTINCT</span><b id="hud-ability-cooldown">READY</b></div>
+        <div class="ability-key"><kbd>SPACE</kbd>${icon("arrow")}<span id="dash-name">DASH</span><b id="hud-dash-cooldown">READY</b></div>
+        <div class="ability-key eat-key"><kbd>E</kbd>${icon("leaf")}<span>FEED</span><b>HOLD</b></div>
+      </div>
+      <div class="hud-controls">${small("W A S D", "MOVE")}${small("SHIFT", "SPRINT")}${small("SPACE", "DODGE")}${small("LMB", "BITE")}${small("Q", "ABILITY")}${small("B", "BUILDS")}${small("ESC", "PAUSE")}</div>
       <div id="egg-prompt" class="egg-prompt" hidden><p class="eyebrow">A NEW LIFE STIRS</p><h2>Break into the unknown.</h2><p>Every predator was once prey. Choose your species before birth:</p><div class="starter-choices" id="starter-choices"></div><button id="hatch-button" class="button primary">CRACK THE SHELL ${icon("arrow")}</button><span class="small-muted">SELECT A SPECIES OR PRESS [1], [2], [3] / E / SPACE TO HATCH</span></div>
     `;
     $("#pause-button").addEventListener("click", () =>
@@ -570,9 +714,24 @@ export class UI {
       this.hud.dataset.rarity = s.rarity || "regular";
     }
     const threshold = game.nextThreshold || 1;
-    $("#hud-xp").style.width = `${Math.min(100, (p.xp / threshold) * 100)}%`;
-    $("#hud-xp-text").textContent =
-      `${Math.floor(p.xp)} / ${Math.floor(threshold)}`;
+    const progressPct = Math.min(100, Math.round((p.xp / threshold) * 100));
+    const xpBar = $("#hud-xp");
+    if (xpBar) xpBar.style.width = `${progressPct}%`;
+    const xpText = $("#hud-xp-text");
+    if (xpText) xpText.textContent = `${Math.floor(p.xp)} / ${Math.floor(threshold)} XP · ${progressPct}%`;
+    const container = $("#hud-evolution-bar-container");
+    if (container) {
+      container.classList.toggle("ready-pulse", !!game.evolutionReady && game.state === "playing");
+      container.querySelectorAll(".milestone-pip").forEach((pip) => {
+        const thresholdPct = pip.classList.contains("pip-25") ? 25 : pip.classList.contains("pip-50") ? 50 : pip.classList.contains("pip-75") ? 75 : 100;
+        pip.classList.toggle("reached", progressPct >= thresholdPct);
+      });
+    }
+    const sprintKey = $("#hud-sprint-status");
+    if (sprintKey) {
+      sprintKey.textContent = p.sprinting ? "SPRINTING" : p.stamina <= 5 ? "TIRED" : "HOLD";
+      sprintKey.closest(".ability-key")?.classList.toggle("active-sprint", !!p.sprinting);
+    }
     $("#hud-score").textContent = `SCORE ${number(p.score)}`;
     $("#hud-ability").textContent = (
       typeof s.ability === "object"

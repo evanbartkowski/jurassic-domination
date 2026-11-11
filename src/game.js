@@ -44,7 +44,7 @@ const TAU = Math.PI * 2;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const angleDifference = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
-const thresholds = [60, 160, 340, 680, 1100, 1800, 2800, 4200];
+const thresholds = [60, 160, 360, 780, 1450, 2400, 3800, 5800];
 export { WORLD_RADIUS };
 
 /** Seeded, renderer-independent simulation. update accepts seconds and caps stalls. */
@@ -565,6 +565,7 @@ export class Game {
     if (Number.isFinite(input.aim)) p.angle = input.aim;
     else if (length > 0.05) p.angle = Math.atan2(my, mx);
     const sprint = !!input.sprint && p.stamina > 2 && length > 0.05;
+    p.sprinting = sprint;
     setMovementPosture(this, input);
     p.speedBoost = Math.max(0, (p.speedBoost || 0) - dt);
     p.counterReady = Math.max(0, (p.counterReady || 0) - dt);
@@ -2074,7 +2075,8 @@ export class Game {
         tier: s.tier,
         powerup: this.pick(["damage", "magnet", "autoeat", "regen"]),
       });
-      if (this.random() < 0.28)
+      const isEliteOrBoss = !!e.boss || !!e.isAlpha;
+      if (this.random() < (isEliteOrBoss ? 0.55 : 0.07))
         this.spawnFood("relic", e.x - 2, e.y, 30, {
           tier: s.tier,
           skillId: this.pick([
@@ -2114,7 +2116,7 @@ export class Game {
     // Rare Mutation Catalyst Drop (using deterministic hash to preserve PRNG sequence)
     const isBoss = !!e.boss || !!e.isAlpha;
     const isHighTier = s.tier >= 4;
-    const mutationChance = isBoss ? 1.0 : isHighTier ? 0.35 : 0.12;
+    const mutationChance = isBoss ? 1.0 : isHighTier ? 0.16 : 0.05;
     const dropHash = Math.abs(Math.sin((e.x * 43.1 + e.y * 19.7 + e.id + this.seed) * 17.3));
     const dropRoll = (dropHash * 1000) % 1;
     if (dropRoll < mutationChance) {

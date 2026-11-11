@@ -663,39 +663,46 @@ export const Ecosystem = {
     const skill = RUN_SKILLS.find((s) => s.id === slot.id);
     slot.cooldown = skill.cooldown;
     if (skill.id === "rebirth") {
-      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.5);
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.65);
+      p.poisoned = 0;
+      p.burning = 0;
+      p.chilled = 0;
+      p.bleeding = 0;
       p.invulnerable = 6;
     } else if (skill.id === "timewarp") {
+      this.buffs.speed = Math.max(this.buffs.speed || 0, 5);
+      this.refreshStats();
       for (const e of this.entities)
-        if (dist(e, p) < 30) {
+        if (dist(e, p) < 32) {
           e.slowed = 8;
-          e.stunned = 1;
+          e.stunned = 1.2;
         }
     } else {
       if (skill.id === "blink") {
-        p.x += Math.cos(p.angle) * 20;
-        p.y += Math.sin(p.angle) * 20;
+        p.x += Math.cos(p.angle) * 22;
+        p.y += Math.sin(p.angle) * 22;
         this._containPlayer();
-        p.invulnerable = 1.5;
+        p.invulnerable = 1.8;
       }
       const center =
         skill.id === "meteor"
           ? { x: p.x + Math.cos(p.angle) * 14, y: p.y + Math.sin(p.angle) * 14 }
           : p;
       const radius =
-        skill.id === "thunder" ? 28 : skill.id === "meteor" ? 13 : 19;
+        skill.id === "thunder" ? 28 : skill.id === "meteor" ? 15 : 20;
       for (const e of [...this.entities])
         if (dist(e, center) < radius) {
-          e.stunned = skill.id === "meteor" ? 2 : 1;
-          const damage = p.damage * (skill.id === "meteor" ? 4 : 2.6);
-          this._hitEntity(e, damage, 2);
+          e.stunned = skill.id === "meteor" ? 2.2 : skill.id === "thunder" ? 1.6 : 1;
+          if (skill.id === "meteor") e.burning = 5;
+          const damage = p.damage * (skill.id === "meteor" ? 4.5 : skill.id === "thunder" ? 3.0 : 2.6);
+          this._hitEntity(e, damage, 2.5);
           if (skill.id === "soulstorm")
-            p.hp = Math.min(p.maxHp, p.hp + damage * 0.16);
+            p.hp = Math.min(p.maxHp, p.hp + damage * 0.25);
         }
       this.emit("ability", {
         x: center.x,
         y: center.y,
-        ability: skill.id === "meteor" ? "flame" : "nova",
+        ability: skill.id === "meteor" ? "flame" : skill.id === "thunder" ? "lightning" : "nova",
         radius,
         text: skill.name,
         angle: p.angle,
@@ -841,18 +848,22 @@ export const Ecosystem = {
         if (zone.isSpecial || zone.isMutation) {
           const kind = zone.kind;
           if (kind === "venomSpit") {
-            this.projectiles.push({
-              id: `${e.id}:spit:${this.time}`,
-              x: e.x,
-              y: e.y,
-              angle: zone.angle,
-              speed: 22,
-              life: 1.2,
-              radius: 1.2,
-              kind: "venom",
-              damage: (e.damage || s.damage) * 1.35 * this.rules.enemyDamage,
-              cause: `${e.boss ? "Alpha " : ""}${s.name}: Venom Spit`,
-            });
+            const shotCount = (e.boss || s.id === "dilophosaurus") ? 2 : 1;
+            const spread = [-0.12, 0.12];
+            for (let i = 0; i < shotCount; i++) {
+              this.projectiles.push({
+                id: `${e.id}:spit:${this.time}:${i}`,
+                x: e.x,
+                y: e.y,
+                angle: zone.angle + (shotCount > 1 ? spread[i] : 0),
+                speed: 22,
+                life: 1.3,
+                radius: 1.2,
+                kind: "venom",
+                damage: (e.damage || s.damage) * 1.35 * this.rules.enemyDamage,
+                cause: `${e.boss ? "Alpha " : ""}${s.name}: Venom Spit`,
+              });
+            }
           } else if (kind === "rage") {
             e.damageBuff = 1.4;
             e.speedBuff = 1.35;
@@ -1205,29 +1216,34 @@ export const Ecosystem = {
           e.telegraph = 0;
           return;
         }
-        if ((e.boss || e.eliteMutation) && (e.mutationCooldown || 0) <= 0) {
-          if (distance > 7 && distance < 22 && attackLineClear(e, p, this.worldFeatures || [], "venom")) {
+        const isVenomPredator = e.boss || e.eliteMutation || s.id === "dilophosaurus" || s.abilityType === "venom";
+        if (isVenomPredator && (e.mutationCooldown || 0) <= 0 && (e.skillCooldown || 0) <= 0) {
+          if (distance > 5.5 && distance < 22 && attackLineClear(e, p, this.worldFeatures || [], "venom")) {
             e.cast = {
               x: e.x,
               y: e.y,
               radius: 20,
               angle: Math.atan2(p.y - e.y, p.x - e.x),
               shape: "cone",
-              remaining: 0.5,
-              total: 0.5,
+              remaining: 0.45,
+              total: 0.45,
               kind: "venomSpit",
               isMutation: true,
               playerWasNear: true,
             };
-            e.mutationCooldown = 9.0;
+            e.mutationCooldown = 8.0;
+            e.skillCooldown = 8.0;
             e.intent = "casting";
             e.telegraph = 0;
             return;
-          } else if (distance < 5.5) {
+          }
+        }
+        if ((e.boss || e.eliteMutation || s.body === "ankylosaur" || s.abilityType === "stomp") && (e.mutationCooldown || 0) <= 0) {
+          if (distance < 5.8) {
             e.cast = {
               x: e.x,
               y: e.y,
-              radius: 6.2,
+              radius: 6.5,
               angle: 0,
               shape: "circle",
               remaining: 0.52,
@@ -1236,7 +1252,7 @@ export const Ecosystem = {
               isMutation: true,
               playerWasNear: true,
             };
-            e.mutationCooldown = 11.0;
+            e.mutationCooldown = 10.0;
             e.intent = "casting";
             e.telegraph = 0;
             return;

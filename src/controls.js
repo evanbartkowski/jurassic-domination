@@ -42,6 +42,8 @@ export function keyLabel(code = "") {
 export function actionHeld(action, keys, pending, bindings = DEFAULT_BINDINGS) {
   const code = bindings[action] || DEFAULT_BINDINGS[action];
   if (keys.has(code) || pending?.has(code)) return true;
+  // Sprint is universally triggered by holding Shift (ShiftLeft or ShiftRight) or Control
+  if (action === "sprint" && (keys.has("ShiftLeft") || keys.has("ShiftRight") || pending?.has("ShiftLeft") || pending?.has("ShiftRight"))) return true;
   const alternative = { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", roar: "KeyC" }[action];
   if (alternative && !Object.entries(bindings).some(([id, key]) => id !== action && key === alternative) && (keys.has(alternative) || pending?.has(alternative))) return true;
   if (["dash", "sprint"].includes(action) && code === DEFAULT_BINDINGS[action]) {

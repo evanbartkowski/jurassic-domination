@@ -433,45 +433,20 @@ export class WorldRenderer {
     this.menuDino.rotation.y = -0.65;
     this.scene.add(this.menuDino);
 
-    this.menuRoamers = [
-      {
-        speciesId: "triceratops",
-        scale: 1.55,
-        speed: 1.5,
-        x: -24,
-        baseZ: -5.5,
-        z: -5.5,
-        angle: 0.08,
-        phase: 0,
-      },
-      {
-        speciesId: "parasaurolophus",
-        scale: 1.45,
-        speed: 1.8,
-        x: 22,
-        baseZ: 4.8,
-        z: 4.8,
-        angle: Math.PI - 0.05,
-        phase: 1.8,
-      },
-      {
-        speciesId: "compsognathus",
-        scale: 1.15,
-        speed: 2.8,
-        x: -12,
-        baseZ: 9.5,
-        z: 9.5,
-        angle: 0.12,
-        phase: 3.2,
-      },
-    ].map((cfg) => {
-      const sp = SPECIES.find((s) => s.id === cfg.speciesId) || SPECIES[0];
-      const mesh = createDinosaur(sp, true);
-      mesh.scale.setScalar(cfg.scale);
-      mesh.visible = false;
-      this.scene.add(mesh);
-      return { ...cfg, mesh };
-    });
+    this.menuVistaGroup = new THREE.Group();
+    const rockPedestal = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(3.6, 1),
+      new THREE.MeshStandardMaterial({
+        color: 0x47493f,
+        roughness: 0.85,
+        metalness: 0.05,
+      }),
+    );
+    rockPedestal.scale.set(1.4, 0.45, 1.2);
+    rockPedestal.position.set(6.2, elevationAt(6.2, -0.8) - 0.7, -0.8);
+    this.menuVistaGroup.add(rockPedestal);
+    this.scene.add(this.menuVistaGroup);
+    this.menuRoamers = [];
   }
   createParticles() {
     this.maxParticles = 750;
@@ -783,6 +758,264 @@ export class WorldRenderer {
         life: (isPlayerAttack || isEnemyStrike) ? 0.22 : 0.65,
         max: (isPlayerAttack || isEnemyStrike) ? 0.22 : 0.65,
       });
+      if (event.ability === "rending") {
+        this.shake = Math.max(this.shake, 0.42);
+        const rGroup = new THREE.Group();
+        rGroup.position.set(event.x || 0, 0.45, event.y || 0);
+        rGroup.rotation.y = -(event.angle || 0);
+        const slashGeo = new THREE.RingGeometry(1.6, 3.2, 32, 1, -0.7, 1.4);
+        const slashMat1 = new THREE.MeshBasicMaterial({
+          color: 0xef4444,
+          transparent: true,
+          opacity: 0.95,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const slashMat2 = new THREE.MeshBasicMaterial({
+          color: 0x10b981,
+          transparent: true,
+          opacity: 0.85,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const blade1 = new THREE.Mesh(slashGeo, slashMat1);
+        blade1.rotation.x = -Math.PI / 2 + 0.45;
+        blade1.rotation.z = 0.28;
+        const blade2 = new THREE.Mesh(slashGeo, slashMat2);
+        blade2.rotation.x = -Math.PI / 2 - 0.45;
+        blade2.rotation.z = -0.28;
+        rGroup.add(blade1, blade2);
+        this.scene.add(rGroup);
+        this.burst(event.x || 0, event.y || 0, 0xef4444, 30);
+        this.effects.push({
+          group: rGroup,
+          life: 0.42,
+          max: 0.42,
+          update: (dt, progress) => {
+            rGroup.scale.setScalar(0.7 + progress * 0.9);
+            blade1.position.z -= dt * 8.0;
+            blade2.position.z -= dt * 8.0;
+            slashMat1.opacity = (1 - progress) * 0.95;
+            slashMat2.opacity = (1 - progress) * 0.85;
+          },
+        });
+      } else if (event.ability === "rage") {
+        this.shake = Math.max(this.shake, 0.5);
+        const rGroup = new THREE.Group();
+        rGroup.position.set(event.x || 0, 0.1, event.y || 0);
+        const pillarGeo = new THREE.CylinderGeometry(1.8, 2.8, 7.0, 24, 1, true);
+        const pillarMat = new THREE.MeshBasicMaterial({
+          color: 0xdc2626,
+          transparent: true,
+          opacity: 0.8,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+        pillar.position.y = 3.5;
+        rGroup.add(pillar);
+        const ringGeo = new THREE.RingGeometry(0.8, 4.2, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xf97316,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        rGroup.add(ring);
+        this.scene.add(rGroup);
+        this.burst(event.x || 0, event.y || 0, 0xdc2626, 40);
+        this.effects.push({
+          group: rGroup,
+          life: 0.7,
+          max: 0.7,
+          update: (dt, progress) => {
+            pillar.scale.set(1 + progress * 0.4, 1 + progress * 0.3, 1 + progress * 0.4);
+            pillar.rotation.y += dt * 4.5;
+            ring.scale.setScalar(0.5 + progress * 1.5);
+            pillarMat.opacity = (1 - progress) * 0.8;
+            ringMat.opacity = (1 - progress) * 0.9;
+          },
+        });
+      } else if (event.ability === "bulwark") {
+        this.shake = Math.max(this.shake, 0.35);
+        const rGroup = new THREE.Group();
+        rGroup.position.set(event.x || 0, 1.2, event.y || 0);
+        const domeGeo = new THREE.IcosahedronGeometry(event.radius || 3.2, 1);
+        const domeMat = new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.9,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const dome = new THREE.Mesh(domeGeo, domeMat);
+        rGroup.add(dome);
+        const innerGeo = new THREE.SphereGeometry((event.radius || 3.2) * 0.85, 16, 12);
+        const innerMat = new THREE.MeshBasicMaterial({
+          color: 0x0284c7,
+          transparent: true,
+          opacity: 0.35,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const inner = new THREE.Mesh(innerGeo, innerMat);
+        rGroup.add(inner);
+        this.scene.add(rGroup);
+        this.burst(event.x || 0, event.y || 0, 0x38bdf8, 25);
+        this.effects.push({
+          group: rGroup,
+          life: 0.85,
+          max: 0.85,
+          update: (dt, progress) => {
+            dome.rotation.y += dt * 2.5;
+            dome.rotation.x += dt * 1.2;
+            domeMat.opacity = (1 - progress) * 0.9;
+            innerMat.opacity = (1 - progress) * 0.35;
+          },
+        });
+      } else if (event.ability === "renewal") {
+        const rGroup = new THREE.Group();
+        rGroup.position.set(event.x || 0, 0.1, event.y || 0);
+        const helixPoints1 = [];
+        const helixPoints2 = [];
+        for (let i = 0; i <= 36; i++) {
+          const angle = (i / 36) * Math.PI * 4;
+          const rad = 2.0;
+          const h = (i / 36) * 5.5;
+          helixPoints1.push(new THREE.Vector3(Math.cos(angle) * rad, h, Math.sin(angle) * rad));
+          helixPoints2.push(new THREE.Vector3(Math.cos(angle + Math.PI) * rad, h, Math.sin(angle + Math.PI) * rad));
+        }
+        const helixGeo1 = new THREE.BufferGeometry().setFromPoints(helixPoints1);
+        const helixGeo2 = new THREE.BufferGeometry().setFromPoints(helixPoints2);
+        const helixMat = new THREE.LineBasicMaterial({
+          color: 0x10b981,
+          transparent: true,
+          opacity: 0.92,
+          blending: THREE.AdditiveBlending,
+        });
+        const strand1 = new THREE.Line(helixGeo1, helixMat);
+        const strand2 = new THREE.Line(helixGeo2, helixMat);
+        rGroup.add(strand1, strand2);
+        this.scene.add(rGroup);
+        this.burst(event.x || 0, event.y || 0, 0x34d399, 32);
+        this.effects.push({
+          group: rGroup,
+          life: 0.9,
+          max: 0.9,
+          update: (dt, progress) => {
+            rGroup.rotation.y += dt * 3.0;
+            rGroup.position.y += dt * 1.5;
+            helixMat.opacity = (1 - progress) * 0.92;
+          },
+        });
+      } else if (event.ability === "deathroll") {
+        this.shake = Math.max(this.shake, 0.48);
+        const rGroup = new THREE.Group();
+        rGroup.position.set(event.x || 0, 0.35, event.y || 0);
+        const torusGeo = new THREE.TorusGeometry(3.2, 0.6, 12, 36);
+        const torusMat = new THREE.MeshBasicMaterial({
+          color: 0xb91c1c,
+          transparent: true,
+          opacity: 0.88,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const torus = new THREE.Mesh(torusGeo, torusMat);
+        torus.rotation.x = -Math.PI / 2;
+        rGroup.add(torus);
+        const frothGeo = new THREE.TorusGeometry(2.8, 0.35, 8, 28);
+        const frothMat = new THREE.MeshBasicMaterial({
+          color: 0xfef08a,
+          transparent: true,
+          opacity: 0.75,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const froth = new THREE.Mesh(frothGeo, frothMat);
+        froth.rotation.x = -Math.PI / 2;
+        rGroup.add(froth);
+        this.scene.add(rGroup);
+        this.burst(event.x || 0, event.y || 0, 0xef4444, 35);
+        this.effects.push({
+          group: rGroup,
+          life: 0.58,
+          max: 0.58,
+          update: (dt, progress) => {
+            rGroup.rotation.y += dt * 12.0;
+            rGroup.scale.setScalar(0.6 + progress * 0.8);
+            torusMat.opacity = (1 - progress) * 0.88;
+            frothMat.opacity = (1 - progress) * 0.75;
+          },
+        });
+      } else if (event.ability === "seismicSlam") {
+        this.shake = Math.max(this.shake, 0.52);
+        const rGroup = new THREE.Group();
+        rGroup.position.set(event.x || 0, 0.1, event.y || 0);
+        const fissureGeo = new THREE.RingGeometry(0.5, 5.2, 36);
+        const fissureMat = new THREE.MeshBasicMaterial({
+          color: 0xf97316,
+          transparent: true,
+          opacity: 0.92,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const fissure = new THREE.Mesh(fissureGeo, fissureMat);
+        fissure.rotation.x = -Math.PI / 2;
+        rGroup.add(fissure);
+        this.scene.add(rGroup);
+        this.burst(event.x || 0, event.y || 0, 0xf59e0b, 38);
+        this.effects.push({
+          group: rGroup,
+          life: 0.65,
+          max: 0.65,
+          update: (dt, progress) => {
+            fissure.scale.setScalar(0.4 + progress * 1.5);
+            fissureMat.opacity = (1 - progress) * 0.92;
+          },
+        });
+      } else if (event.ability === "shed") {
+        const rGroup = new THREE.Group();
+        rGroup.position.set(event.x || 0, 0.6, event.y || 0);
+        rGroup.rotation.y = -(event.angle || 0);
+        const huskGeo = new THREE.SphereGeometry(1.6, 16, 12);
+        const huskMat = new THREE.MeshBasicMaterial({
+          color: 0xa7f3d0,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const husk = new THREE.Mesh(huskGeo, huskMat);
+        husk.scale.set(1.6, 0.8, 0.8);
+        rGroup.add(husk);
+        this.scene.add(rGroup);
+        this.burst(event.x || 0, event.y || 0, 0xa7f3d0, 24);
+        this.effects.push({
+          group: rGroup,
+          life: 1.5,
+          max: 1.5,
+          update: (dt, progress) => {
+            huskMat.opacity = (1 - progress) * 0.8;
+            rGroup.position.y += dt * 0.2;
+          },
+        });
+      } else if (event.ability === "bolt") {
+        this.shake = Math.max(this.shake, 0.38);
+        this.burst(event.x || 0, event.y || 0, 0x818cf8, 28);
+      }
       if (isPlayerAttack && (event.size >= 3.0)) {
         this.shake = Math.max(this.shake, 0.38);
         for (let i = -3; i <= 3; i++) {
@@ -950,32 +1183,13 @@ export class WorldRenderer {
     const t = this.elapsed,
       p = game?.player;
     this.menuDino.visible = menu;
+    if (this.menuVistaGroup) this.menuVistaGroup.visible = menu;
     this.egg.visible = game?.state === "egg";
-    if (Array.isArray(this.menuRoamers)) {
-      for (const roamer of this.menuRoamers) {
-        roamer.mesh.visible = menu;
-        if (menu) {
-          roamer.x += Math.cos(roamer.angle) * roamer.speed * dt;
-          roamer.z += Math.sin(roamer.angle) * roamer.speed * dt;
-          if (roamer.x > 32) {
-            roamer.x = -32;
-            roamer.z = roamer.baseZ + (Math.sin(t * 0.2) * 1.5);
-          } else if (roamer.x < -32) {
-            roamer.x = 32;
-            roamer.z = roamer.baseZ + (Math.cos(t * 0.2) * 1.5);
-          }
-          const ey = elevationAt(roamer.x, roamer.z);
-          roamer.mesh.position.set(roamer.x, ey, roamer.z);
-          roamer.mesh.rotation.y = -roamer.angle + Math.PI / 2;
-          this.animateDino(roamer.mesh, t * 1.6 + roamer.phase, roamer.speed, false, dt);
-        }
-      }
-    }
     if (menu) {
-      this.menuDino.position.y = elevationAt(this.menuDino.position.x, this.menuDino.position.z);
-      this.animateDino(this.menuDino, t, 0, false, dt);
-      this.menuDino.rotation.y = -0.65 + Math.sin(t * 0.16) * 0.22;
-      this.cameraTarget.lerp(this.cameraDesired.set(0, 0, 0), Math.min(1, dt * 3));
+      this.menuDino.position.y = elevationAt(this.menuDino.position.x, this.menuDino.position.z) + 0.35;
+      this.animateDino(this.menuDino, t * 0.7, 0, false, dt);
+      this.menuDino.rotation.y = -0.75 + Math.sin(t * 0.12) * 0.08;
+      this.cameraTarget.lerp(this.cameraDesired.set(1.5, 1.8, 0), Math.min(1, dt * 3));
     } else if (p)
       this.cameraTarget.lerp(
         this.cameraDesired.set(p.x, 0, p.y),
@@ -1428,8 +1642,8 @@ export class WorldRenderer {
     this.cameraDist = this.cameraDist ? THREE.MathUtils.damp(this.cameraDist, targetDist, 3.8, dt) : targetDist;
 
     if (menu) {
-      this.camera.position.set(Math.sin(t * 0.08) * 0.45, 8.2, 22.5);
-      this.camera.lookAt(1.2, 2.2, 0);
+      this.camera.position.set(Math.sin(t * 0.06) * 0.35, 7.8, 21.5);
+      this.camera.lookAt(1.5, 2.0, 0);
     } else {
       const shakeX = Math.sin(t * 76) * shake;
       const shakeY = Math.cos(t * 62) * shake * 0.72;
@@ -1636,13 +1850,22 @@ export class WorldRenderer {
       effect.life -= dt;
       if (effect.life <= 0) {
         this.scene.remove(effect.group);
-        effect.mesh.geometry.dispose();
-        effect.mesh.material.dispose();
+        effect.group.traverse((child) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach((m) => m.dispose());
+            else child.material.dispose();
+          }
+        });
         this.effects.splice(i, 1);
       } else {
         const progress = 1 - effect.life / effect.max;
-        effect.group.scale.setScalar(0.6 + progress * 0.5);
-        effect.mesh.material.opacity = (1 - progress) * 0.55;
+        if (effect.update) {
+          effect.update(dt, progress);
+        } else if (effect.mesh?.material) {
+          effect.group.scale.setScalar(0.6 + progress * 0.5);
+          effect.mesh.material.opacity = (1 - progress) * 0.55;
+        }
       }
     }
     this.drawParticles(dt);
@@ -1957,7 +2180,24 @@ export class WorldRenderer {
           const key = `cast:${e.id}`;
           activeKeys.add(key);
           let group = this.warnings.get(key);
-          const castColor = e.cast.kind === "flame" ? 0xff4500 : e.cast.kind === "frost" ? 0x06b6d4 : e.cast.kind === "venom" ? 0x22c55e : e.cast.kind === "blood" ? 0xef4444 : 0xf59e0b;
+          const castColor =
+            e.cast.kind === "flame" || e.cast.kind === "fireBreath"
+              ? 0xff4500
+              : e.cast.kind === "frost"
+                ? 0x06b6d4
+                : e.cast.kind === "venom" || e.cast.kind === "venomSpit" || e.cast.kind === "plagueCloud"
+                  ? 0x22c55e
+                  : e.cast.kind === "blood" || e.cast.kind === "rending" || e.cast.kind === "deathroll"
+                    ? 0xef4444
+                    : e.cast.kind === "rage"
+                      ? 0xdc2626
+                      : e.cast.kind === "bulwark"
+                        ? 0x38bdf8
+                        : e.cast.kind === "lightning" || e.cast.kind === "thunderJaws"
+                          ? 0x38bdf8
+                          : e.cast.kind === "seismicSlam"
+                            ? 0xf97316
+                            : 0xf59e0b;
           if (!group) {
             group = new THREE.Group();
             const shape = e.cast.shape;

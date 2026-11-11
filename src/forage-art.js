@@ -45,9 +45,9 @@ function build(definition) {
     plain.setAttribute("color", new THREE.BufferAttribute(values, 3));
     parts.push(plain);
   };
-  const orb = (tint, p, s) => add(new THREE.SphereGeometry(1, 8, 5), tint, p, s),
+  const orb = (tint, p, s) => add(new THREE.SphereGeometry(1, 16, 12), tint, p, s),
     stalk = (tint, p, height, radius = 0.035, rotation = [0, 0, 0]) =>
-      add(new THREE.CylinderGeometry(radius, radius * 1.25, height, 6), tint, p, [1, 1, 1], rotation),
+      add(new THREE.CylinderGeometry(radius, radius * 1.25, height, 12), tint, p, [1, 1, 1], rotation),
     leaf = (tint, p, length, width, angle = 0, lift = 0) => {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.Float32BufferAttribute([

@@ -528,6 +528,17 @@ export class Game {
     if (m.primalRegen && this.timeSinceDamaged >= 4.0 && p.hp < p.maxHp) {
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.04 * dt);
     }
+    if (p.regeneration > 0 && p.hp < p.maxHp) {
+      p.regeneration = Math.max(0, p.regeneration - dt);
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.05 * dt);
+    }
+    if (p.bulwarkActive > 0) {
+      p.bulwarkActive = Math.max(0, p.bulwarkActive - dt);
+    }
+    if (this.decoyHusk) {
+      this.decoyHusk.life -= dt;
+      if (this.decoyHusk.life <= 0) this.decoyHusk = null;
+    }
     const regenLvl = this.build?.defensive?.regenerativeTissue || 0;
     if (regenLvl > 0 && p.hp < p.maxHp) {
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * (0.012 + (regenLvl - 1) * 0.0095) * dt);
@@ -1555,18 +1566,42 @@ export class Game {
     if (key === "rage") {
       this.buffs.damage = Math.max(this.buffs.damage || 0, 7);
       this.buffs.speed = Math.max(this.buffs.speed || 0, 7);
+      p.chilled = 0;
+      p.slowed = 0;
       this.refreshStats();
+      recordNoise(this, p.x, p.y, 4.0);
+      for (const e of this.entities) {
+        if (distance(p, e) < 6 + this.effectiveSize) {
+          e.fear = 3.5;
+          e.stunned = 0.4;
+        }
+      }
     } else if (key === "bulwark") {
       p.guard = 6;
       p.empowered = 6;
-    } else if (key === "renewal" || key === "shed") {
-      p.hp = Math.min(
-        p.maxHp,
-        p.hp + p.maxHp * (key === "renewal" ? 0.25 : 0.12),
-      );
+      p.bulwarkActive = 6;
+    } else if (key === "renewal") {
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.30);
       p.poisoned = 0;
       p.chilled = 0;
-      p.invulnerable = Math.max(p.invulnerable, key === "shed" ? 0.7 : 0);
+      p.burning = 0;
+      p.bleeding = 0;
+      p.regeneration = 5.0;
+    } else if (key === "shed") {
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.15);
+      p.poisoned = 0;
+      p.chilled = 0;
+      p.burning = 0;
+      p.bleeding = 0;
+      p.invulnerable = Math.max(p.invulnerable, 1.2);
+      this.buffs.speed = Math.max(this.buffs.speed || 0, 3.5);
+      this.refreshStats();
+      this.decoyHusk = { x: p.x, y: p.y, life: 3.0, radius: 8.0 };
+      for (const e of this.entities) {
+        if (distance(p, e) < 12) {
+          e.aggro = 0;
+        }
+      }
     } else if (key === "bolt") {
       this.projectiles.push({
         id: "player:" + this.time,
@@ -1574,40 +1609,48 @@ export class Game {
         x: p.x,
         y: p.y,
         angle: p.angle,
-        speed: 27,
-        life: 32 / 27,
-        radius: 1,
+        speed: 28,
+        life: 36 / 28,
+        radius: 1.2,
         kind: "lightning",
-        damage: p.damage * 2.2,
+        damage: p.damage * 2.3,
         cause: skill.name,
       });
-    } else
+    } else if (key === "deathroll") {
       for (const e of [...this.entities]) {
-        const d = distance(p, e),
-          arc = Math.abs(
-            angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle),
-          );
-        if (d < 4 + this.effectiveSize && (key === "deathroll" || arc < 1.1) && hasLineOfSight(p, e, this.worldFeatures || [])) {
-          if (key === "rending") {
-            e.poison = 3;
-            e.poisonTick = 0;
-          } else e.stunned = 1.4;
-          this._hitEntity(e, p.damage * (key === "deathroll" ? 2.3 : 1.9), 1);
+        const d = distance(p, e);
+        if (d < 4.8 + this.effectiveSize && hasLineOfSight(p, e, this.worldFeatures || [])) {
+          const pullAngle = Math.atan2(p.y - e.y, p.x - e.x);
+          sweepMove(e, Math.cos(pullAngle) * 2.2, Math.sin(pullAngle) * 2.2, SPECIES_BY_ID[e.speciesId].size, this.worldFeatures || []);
+          e.stunned = 1.6;
+          this._hitEntity(e, p.damage * 2.5, 0.4);
         }
       }
+    } else if (key === "rending") {
+      for (const e of [...this.entities]) {
+        const d = distance(p, e),
+          arc = Math.abs(angleDifference(Math.atan2(e.y - p.y, e.x - p.x), p.angle));
+        if (d < 4.2 + this.effectiveSize && arc < 1.3 && hasLineOfSight(p, e, this.worldFeatures || [])) {
+          const wasAfflicted = (e.poison > 0) || (e.bleeding > 0);
+          e.poison = 4;
+          e.poisonTick = 0;
+          e.bleeding = 4;
+          e.bleedTick = 0;
+          const rendDmg = p.damage * (wasAfflicted ? 2.6 : 1.9);
+          if (wasAfflicted) {
+            this.emit("synergy-burst", { synergy: "hemorrhage", x: e.x, y: e.y });
+          }
+          this._hitEntity(e, rendDmg, 1.2);
+        }
+      }
+    }
     this.emit("ability", {
-      ability:
-        key === "renewal" || key === "shed"
-          ? "heal"
-          : key === "bulwark"
-            ? "guard"
-            : key === "bolt"
-              ? "lightning"
-              : key === "rage"
-                ? "roar"
-                : "cleave",
-      radius: 5 + this.effectiveSize,
+      ability: key,
+      specialKey: key,
+      radius: (key === "rage" ? 7 : key === "deathroll" ? 5 : 4.5) + this.effectiveSize,
       angle: p.angle,
+      x: p.x,
+      y: p.y,
       text: skill.name,
     });
     return true;

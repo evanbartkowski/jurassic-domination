@@ -838,6 +838,84 @@ export const Ecosystem = {
         const zone = e.cast;
         e.cast = null;
         e.attacking = 0.55;
+        if (zone.isSpecial || zone.isMutation) {
+          const kind = zone.kind;
+          if (kind === "venomSpit") {
+            this.projectiles.push({
+              id: `${e.id}:spit:${this.time}`,
+              x: e.x,
+              y: e.y,
+              angle: zone.angle,
+              speed: 22,
+              life: 1.2,
+              radius: 1.2,
+              kind: "venom",
+              damage: (e.damage || s.damage) * 1.35 * this.rules.enemyDamage,
+              cause: `${e.boss ? "Alpha " : ""}${s.name}: Venom Spit`,
+            });
+          } else if (kind === "rage") {
+            e.damageBuff = 1.4;
+            e.speedBuff = 1.35;
+            e.buffDuration = 7.0;
+            this.emit("roar", { speciesId: s.id, x: e.x, y: e.y, radius: zone.radius, power: 50 });
+            if (inAttackZone(p, zone)) {
+              if (p.invulnerable > 0) this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Predator Focus` });
+              else p.stunned = 0.5;
+            } else if (zone.playerWasNear) {
+              this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Predator Focus` });
+            }
+          } else if (kind === "bulwark") {
+            e.guard = 6.0;
+            e.armor = Math.min(0.7, (e.armor || 0) + 0.3);
+          } else if (kind === "rending") {
+            if (inAttackZone(p, zone) && attackLineClear(e, p, this.worldFeatures || [], "rending")) {
+              if (p.invulnerable > 0) {
+                this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Rending Flurry` });
+              } else {
+                this.damagePlayer((e.damage || s.damage) * 1.65 * this.rules.enemyDamage * (e.boss ? 1.2 : 1), `${e.boss ? "Alpha " : ""}${s.name}: Rending Flurry`);
+                p.bleeding = 4;
+                p.poisoned = 3;
+              }
+            } else if (zone.playerWasNear) {
+              this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Rending Flurry` });
+            }
+          } else if (kind === "deathroll") {
+            if (inAttackZone(p, zone) && attackLineClear(e, p, this.worldFeatures || [], "deathroll")) {
+              if (p.invulnerable > 0) {
+                this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Death Roll` });
+              } else {
+                const pullAngle = Math.atan2(e.y - p.y, e.x - p.x);
+                sweepMove(p, Math.cos(pullAngle) * 2.5, Math.sin(pullAngle) * 2.5, this.effectiveSize, this.worldFeatures || []);
+                this.damagePlayer((e.damage || s.damage) * 2.2 * this.rules.enemyDamage * (e.boss ? 1.25 : 1), `${e.boss ? "Alpha " : ""}${s.name}: Death Roll`);
+                p.stunned = 1.3;
+              }
+            } else if (zone.playerWasNear) {
+              this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Death Roll` });
+            }
+          } else if (kind === "seismicSlam") {
+            if (inAttackZone(p, zone)) {
+              if (p.invulnerable > 0) {
+                this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Seismic Slam` });
+              } else {
+                this.damagePlayer((e.damage || s.damage) * 1.8 * this.rules.enemyDamage * (e.boss ? 1.25 : 1), `${e.boss ? "Alpha " : ""}${s.name}: Seismic Slam`);
+                p.stunned = 1.4;
+                const kbAngle = Math.atan2(p.y - e.y, p.x - e.x);
+                sweepMove(p, Math.cos(kbAngle) * 4.0, Math.sin(kbAngle) * 4.0, this.effectiveSize, this.worldFeatures || []);
+              }
+            } else if (zone.playerWasNear) {
+              this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}: Seismic Slam` });
+            }
+          }
+          this.emit("enemy-ability", {
+            speciesId: s.id,
+            x: zone.x,
+            y: zone.y,
+            radius: zone.radius,
+            angle: zone.angle,
+            ability: zone.kind,
+          });
+          return;
+        }
         const ranged = attackProfile(s);
         if (ranged.ranged) {
           this.projectiles.push({
@@ -1044,8 +1122,129 @@ export const Ecosystem = {
           e.charging = 0.75;
         }
       }
+      const kit = creatureKit(s);
+      e.specialCooldown = Math.max(0, (e.specialCooldown || 0) - dt);
+      e.mutationCooldown = Math.max(0, (e.mutationCooldown || 0) - dt);
+      if (e.buffDuration > 0) {
+        e.buffDuration = Math.max(0, e.buffDuration - dt);
+        if (e.buffDuration <= 0) {
+          e.damageBuff = 1.0;
+          e.speedBuff = 1.0;
+        }
+      }
+      if (e.telegraph <= 0 && e.skillCooldown <= 0) {
+        if (kit.special === "rage" && (e.specialCooldown || 0) <= 0 && distance < 18 && (e.hp < e.maxHp * 0.65)) {
+          e.cast = {
+            x: e.x,
+            y: e.y,
+            radius: 7.0,
+            angle: targetAngle,
+            shape: "circle",
+            remaining: 0.52,
+            total: 0.52,
+            kind: "rage",
+            isSpecial: true,
+            playerWasNear: distance < 9,
+          };
+          e.specialCooldown = 18.0 + this.random() * 4;
+          e.intent = "casting";
+          e.telegraph = 0;
+          return;
+        }
+        if (kit.special === "deathroll" && (e.specialCooldown || 0) <= 0 && distance < 4.6 && attackLineClear(e, p, this.worldFeatures || [], "deathroll")) {
+          e.cast = {
+            x: e.x,
+            y: e.y,
+            radius: 4.8 + s.size * 0.35,
+            angle: targetAngle,
+            shape: "circle",
+            remaining: 0.5,
+            total: 0.5,
+            kind: "deathroll",
+            isSpecial: true,
+            playerWasNear: true,
+          };
+          e.specialCooldown = 12.0 + this.random() * 3;
+          e.intent = "casting";
+          e.telegraph = 0;
+          return;
+        }
+        if (kit.special === "rending" && (e.specialCooldown || 0) <= 0 && distance < 4.2 && attackLineClear(e, p, this.worldFeatures || [], "rending")) {
+          e.cast = {
+            x: e.x,
+            y: e.y,
+            radius: 4.5 + s.size * 0.3,
+            angle: targetAngle,
+            shape: "cone",
+            remaining: 0.48,
+            total: 0.48,
+            kind: "rending",
+            isSpecial: true,
+            playerWasNear: true,
+          };
+          e.specialCooldown = 10.0 + this.random() * 3;
+          e.intent = "casting";
+          e.telegraph = 0;
+          return;
+        }
+        if (kit.special === "bulwark" && (e.specialCooldown || 0) <= 0 && distance < 7.0 && e.hp < e.maxHp * 0.75) {
+          e.cast = {
+            x: e.x,
+            y: e.y,
+            radius: 4.0,
+            angle: targetAngle,
+            shape: "circle",
+            remaining: 0.45,
+            total: 0.45,
+            kind: "bulwark",
+            isSpecial: true,
+            playerWasNear: true,
+          };
+          e.specialCooldown = 15.0;
+          e.intent = "casting";
+          e.telegraph = 0;
+          return;
+        }
+        if ((e.boss || e.eliteMutation) && (e.mutationCooldown || 0) <= 0) {
+          if (distance > 7 && distance < 22 && attackLineClear(e, p, this.worldFeatures || [], "venom")) {
+            e.cast = {
+              x: e.x,
+              y: e.y,
+              radius: 20,
+              angle: Math.atan2(p.y - e.y, p.x - e.x),
+              shape: "cone",
+              remaining: 0.5,
+              total: 0.5,
+              kind: "venomSpit",
+              isMutation: true,
+              playerWasNear: true,
+            };
+            e.mutationCooldown = 9.0;
+            e.intent = "casting";
+            e.telegraph = 0;
+            return;
+          } else if (distance < 5.5) {
+            e.cast = {
+              x: e.x,
+              y: e.y,
+              radius: 6.2,
+              angle: 0,
+              shape: "circle",
+              remaining: 0.52,
+              total: 0.52,
+              kind: "seismicSlam",
+              isMutation: true,
+              playerWasNear: true,
+            };
+            e.mutationCooldown = 11.0;
+            e.intent = "casting";
+            e.telegraph = 0;
+            return;
+          }
+        }
+      }
       if (
-        creatureKit(s).ability &&
+        kit.ability &&
         e.skillCooldown <= 0 &&
         distance < combat.range &&
         distance > range * 0.65 &&
@@ -1078,7 +1277,7 @@ export const Ecosystem = {
           e.telegraph = combat.windup;
       } else {
         e.intent = e.packId ? "flank" : "hunt";
-        move = 0.86 + (e.boss ? 0.12 : 0) + Math.min(0.12, this.time / 3600);
+        move = (0.86 + (e.boss ? 0.12 : 0) + Math.min(0.12, this.time / 3600)) * (e.speedBuff || 1.0);
       }
       if (e.telegraph > 0) {
         e.telegraph -= dt * (e.slowed > 0 ? 0.4 : 1);
@@ -1101,7 +1300,8 @@ export const Ecosystem = {
                   (s.tier === 0 ? 1.02 : 1.15 + s.tier * 0.05) *
                   this.rules.enemyDamage *
                   (e.boss ? 1.25 : 1) *
-                  (1 + this.ascensions * 0.2),
+                  (1 + this.ascensions * 0.2) *
+                  (e.damageBuff || 1.0),
                 `${e.boss ? "Alpha " : ""}${s.name}`,
               );
             }

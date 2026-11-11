@@ -1516,7 +1516,7 @@ function frame(now) {
         miniTimer = 0;
       }
     }
-    const menuView = !game;
+    const menuView = ui.view === "menu";
     // Keep a frozen world behind modal screens instead of drawing two WebGL
     // scenes every frame while inspecting a specimen or browsing the shop.
     if (!graphicsFailed && ui.view !== "island" &&

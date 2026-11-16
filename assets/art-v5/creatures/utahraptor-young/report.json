@@ -1,0 +1,189 @@
+{
+  "id": "utahraptor-young",
+  "family": "dromaeosaur",
+  "triangles": 30772,
+  "bones": 20,
+  "dimensions": [
+    5.105337619781494,
+    1.6241185665130615,
+    1.913062334060669
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (4 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 4
+      }
+    ],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 15570,
+        "faces": 30772,
+        "tris": 30772,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 92,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 24.6
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Sickle_claw",
+      "distance": 0.0359
+    },
+    {
+      "part": "Sickle_claw.001",
+      "distance": 0.0359
+    },
+    {
+      "part": "Forearm_primary",
+      "distance": 0.0468
+    },
+    {
+      "part": "Forearm_primary.001",
+      "distance": 0.039
+    },
+    {
+      "part": "Forearm_primary.002",
+      "distance": 0.0378
+    },
+    {
+      "part": "Forearm_primary.003",
+      "distance": 0.0423
+    },
+    {
+      "part": "Forearm_primary.004",
+      "distance": 0.0505
+    },
+    {
+      "part": "Forearm_primary.008",
+      "distance": 0.0605
+    },
+    {
+      "part": "Forearm_primary.009",
+      "distance": 0.0557
+    },
+    {
+      "part": "Forearm_primary.010",
+      "distance": 0.0573
+    },
+    {
+      "part": "Forearm_primary.011",
+      "distance": 0.0631
+    },
+    {
+      "part": "Forearm_primary.012",
+      "distance": 0.0588
+    }
+  ],
+  "bytes": 3969844,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 11076,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (1 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0011,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 1
+      }
+    ],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 5722,
+        "faces": 11076,
+        "tris": 11076,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 92,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.03,
+        "uv_coverage_pct": 23.5
+      }
+    }
+  }
+}

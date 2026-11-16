@@ -1,0 +1,151 @@
+{
+  "id": "triceratops",
+  "family": "ceratopsian",
+  "triangles": 24632,
+  "bones": 22,
+  "dimensions": [
+    4.116519927978516,
+    1.9194071292877197,
+    1.977266788482666
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 12388,
+        "faces": 24632,
+        "tris": 24632,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 36,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 38.5
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.008",
+      "distance": 0.0219
+    },
+    {
+      "part": "Frill_rim",
+      "distance": 0.0249
+    },
+    {
+      "part": "Frill_rim.004",
+      "distance": 0.0249
+    },
+    {
+      "part": "Brow_horn",
+      "distance": 0.0244
+    },
+    {
+      "part": "Brow_horn.001",
+      "distance": 0.0245
+    },
+    {
+      "part": "Nasal_horn",
+      "distance": 0.0016
+    }
+  ],
+  "bytes": 3513404,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 8866,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0012,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 4505,
+        "faces": 8866,
+        "tris": 8866,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 36,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.02,
+        "uv_coverage_pct": 37.5
+      }
+    }
+  }
+}

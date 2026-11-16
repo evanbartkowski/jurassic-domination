@@ -1,0 +1,213 @@
+{
+  "id": "yutyrannus",
+  "family": "tyrannosaur",
+  "triangles": 30362,
+  "bones": 20,
+  "dimensions": [
+    5.4723076820373535,
+    1.8779816627502441,
+    2.2754578590393066
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (13 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 13
+      }
+    ],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 15377,
+        "faces": 30362,
+        "tris": 30362,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 98,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 26.2
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0265
+    },
+    {
+      "part": "Lower_tooth.016",
+      "distance": 0.0263
+    },
+    {
+      "part": "Forearm_primary",
+      "distance": 0.1141
+    },
+    {
+      "part": "Forearm_primary.001",
+      "distance": 0.1039
+    },
+    {
+      "part": "Forearm_primary.002",
+      "distance": 0.0921
+    },
+    {
+      "part": "Forearm_primary.003",
+      "distance": 0.0816
+    },
+    {
+      "part": "Forearm_primary.004",
+      "distance": 0.0725
+    },
+    {
+      "part": "Forearm_primary.005",
+      "distance": 0.0642
+    },
+    {
+      "part": "Forearm_primary.006",
+      "distance": 0.0549
+    },
+    {
+      "part": "Forearm_primary.007",
+      "distance": 0.049
+    },
+    {
+      "part": "Forearm_primary.008",
+      "distance": 0.1173
+    },
+    {
+      "part": "Forearm_primary.009",
+      "distance": 0.1045
+    },
+    {
+      "part": "Forearm_primary.010",
+      "distance": 0.0926
+    },
+    {
+      "part": "Forearm_primary.011",
+      "distance": 0.0831
+    },
+    {
+      "part": "Forearm_primary.012",
+      "distance": 0.0747
+    },
+    {
+      "part": "Forearm_primary.013",
+      "distance": 0.0662
+    },
+    {
+      "part": "Forearm_primary.014",
+      "distance": 0.0568
+    },
+    {
+      "part": "Forearm_primary.015",
+      "distance": 0.0506
+    }
+  ],
+  "bytes": 3853564,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 10930,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (7 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0008,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 7
+      }
+    ],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 5661,
+        "faces": 10930,
+        "tris": 10930,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 98,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 25.3
+      }
+    }
+  }
+}

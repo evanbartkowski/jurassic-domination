@@ -1,0 +1,165 @@
+{
+  "id": "pachyrhinosaurus",
+  "family": "ceratopsian",
+  "triangles": 24212,
+  "bones": 22,
+  "dimensions": [
+    4.147197723388672,
+    1.8818166255950928,
+    1.9371750354766846
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (1 pairs) - delete to save tris",
+      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD0']"
+    ],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 1
+      }
+    ],
+    "enclosed": [
+      {
+        "object": "Surface_LOD0",
+        "island_verts": 146,
+        "center": [
+          1.561,
+          0.0,
+          0.675
+        ]
+      }
+    ],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 12172,
+        "faces": 24212,
+        "tris": 24212,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 33,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 39.4
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Frill_rim",
+      "distance": 0.0249
+    },
+    {
+      "part": "Frill_rim.004",
+      "distance": 0.0249
+    }
+  ],
+  "bytes": 3538628,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 8716,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD1']"
+    ],
+    "ground_z": -0.0011,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [
+      {
+        "object": "Surface_LOD1",
+        "island_verts": 33,
+        "center": [
+          1.56,
+          0.001,
+          0.675
+        ]
+      }
+    ],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 4424,
+        "faces": 8716,
+        "tris": 8716,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 33,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 38.4
+      }
+    }
+  }
+}

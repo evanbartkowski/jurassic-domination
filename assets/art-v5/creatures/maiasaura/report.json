@@ -1,0 +1,131 @@
+{
+  "id": "maiasaura",
+  "family": "hadrosaur",
+  "triangles": 23188,
+  "bones": 22,
+  "dimensions": [
+    5.751278877258301,
+    2.1649422645568848,
+    1.7793840169906616
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 11642,
+        "faces": 23188,
+        "tris": 23188,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 24,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 34.4
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.008",
+      "distance": 0.023
+    }
+  ],
+  "bytes": 3139764,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 8346,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0007,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 4221,
+        "faces": 8346,
+        "tris": 8346,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 24,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 33.4
+      }
+    }
+  }
+}

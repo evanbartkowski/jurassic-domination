@@ -110,9 +110,9 @@ try {
     assert.ok(artwork > 1000);
   });
 
-  await check('desktop policy permits v4 Blender models and their embedded PBR maps to load offline', async () => {
+  await check('desktop policy permits v5 Blender models and their embedded PBR maps to load offline', async () => {
     const header = await page.evaluate(async () => {
-      const response = await fetch(new URL('assets/models-v4/tyrannosaurus.glb', location.href));
+      const response = await fetch(new URL('assets/models-v5/tyrannosaurus.glb', location.href));
       const bytes=await response.arrayBuffer(),view=new DataView(bytes),gltf=JSON.parse(new TextDecoder().decode(new Uint8Array(bytes,20,view.getUint32(12,true))));
       for(const image of gltf.images){const b=gltf.bufferViews[image.bufferView],blob=new Blob([bytes.slice(28+view.getUint32(12,true)+b.byteOffset,28+view.getUint32(12,true)+b.byteOffset+b.byteLength)],{type:image.mimeType}),url=URL.createObjectURL(blob);try{const fetched=await fetch(url);const bitmap=await createImageBitmap(await fetched.blob());if(bitmap.width<256)throw Error('PBR map missing');bitmap.close();}finally{URL.revokeObjectURL(url);}}
       return view.getUint32(0,true);
@@ -276,7 +276,7 @@ try {
         );
         return;
       }
-      await page.keyboard.press("Shift");
+      await page.keyboard.press("KeyR");
       await page.waitForFunction(() =>
         /\d/.test(
           document.getElementById("hud-dash-cooldown")?.textContent || "",
@@ -285,10 +285,10 @@ try {
     },
   );
   await check(
-    "species technique uses its own R control and cooldown",
+    "species technique uses its own Ctrl control and cooldown",
     async () => {
       const techniqueAvailable = await page.locator("#hud-technique").isVisible();
-      await page.keyboard.press("KeyR");
+      await page.keyboard.press("ControlLeft");
       if (!techniqueAvailable) {
         assert.equal(await page.locator("#hud-technique-cooldown").textContent(), "READY");
         return;

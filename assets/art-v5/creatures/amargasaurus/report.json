@@ -1,0 +1,231 @@
+{
+  "id": "amargasaurus",
+  "family": "sauropod",
+  "triangles": 24740,
+  "bones": 22,
+  "dimensions": [
+    6.572179317474365,
+    2.907965660095215,
+    1.9985477924346924
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 12456,
+        "faces": 24740,
+        "tris": 24740,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 43,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 29.3
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.001",
+      "distance": 0.0243
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0218
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0215
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0214
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0243
+    },
+    {
+      "part": "Claw.009",
+      "distance": 0.0218
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0221
+    },
+    {
+      "part": "Claw.011",
+      "distance": 0.0214
+    },
+    {
+      "part": "Neural_spine",
+      "distance": 0.0502
+    },
+    {
+      "part": "Neural_spine.001",
+      "distance": 0.0502
+    },
+    {
+      "part": "Neural_spine.002",
+      "distance": 0.0528
+    },
+    {
+      "part": "Neural_spine.003",
+      "distance": 0.0527
+    },
+    {
+      "part": "Neural_spine.004",
+      "distance": 0.0484
+    },
+    {
+      "part": "Neural_spine.005",
+      "distance": 0.0484
+    },
+    {
+      "part": "Neural_spine.006",
+      "distance": 0.0469
+    },
+    {
+      "part": "Neural_spine.007",
+      "distance": 0.0468
+    },
+    {
+      "part": "Neural_spine.008",
+      "distance": 0.0528
+    },
+    {
+      "part": "Neural_spine.009",
+      "distance": 0.0527
+    },
+    {
+      "part": "Neural_spine.010",
+      "distance": 0.0507
+    },
+    {
+      "part": "Neural_spine.011",
+      "distance": 0.0502
+    },
+    {
+      "part": "Neural_spine.012",
+      "distance": 0.0524
+    },
+    {
+      "part": "Neural_spine.013",
+      "distance": 0.0516
+    },
+    {
+      "part": "Neural_spine.014",
+      "distance": 0.0672
+    },
+    {
+      "part": "Neural_spine.015",
+      "distance": 0.0669
+    },
+    {
+      "part": "Neural_spine.016",
+      "distance": 0.0442
+    },
+    {
+      "part": "Neural_spine.017",
+      "distance": 0.0446
+    }
+  ],
+  "bytes": 3235064,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 8906,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0006,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 4539,
+        "faces": 8906,
+        "tris": 8906,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 43,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 28.5
+      }
+    }
+  }
+}

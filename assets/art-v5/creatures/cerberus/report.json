@@ -1,0 +1,159 @@
+{
+  "id": "cerberus",
+  "family": "wolf",
+  "triangles": 32716,
+  "bones": 26,
+  "dimensions": [
+    3.755683660507202,
+    2.0450117588043213,
+    2.055391788482666
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 16636,
+        "faces": 32716,
+        "tris": 32716,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 139,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 21.1
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0288
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0286
+    },
+    {
+      "part": "Secondary_Pupil",
+      "distance": 0.0497
+    },
+    {
+      "part": "Secondary_Lower_tooth.007",
+      "distance": 0.0288
+    },
+    {
+      "part": "Secondary_Lower_tooth.015",
+      "distance": 0.0286
+    },
+    {
+      "part": "Secondary_Lower_tooth.023",
+      "distance": 0.0288
+    },
+    {
+      "part": "Secondary_Pupil.003",
+      "distance": 0.0503
+    },
+    {
+      "part": "Secondary_Lower_tooth.031",
+      "distance": 0.0286
+    }
+  ],
+  "bytes": 4278616,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 11776,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0011,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 6166,
+        "faces": 11776,
+        "tris": 11776,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 139,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 20.2
+      }
+    }
+  }
+}

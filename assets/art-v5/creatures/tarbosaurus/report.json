@@ -1,0 +1,171 @@
+{
+  "id": "tarbosaurus",
+  "family": "tyrannosaur",
+  "triangles": 25146,
+  "bones": 20,
+  "dimensions": [
+    5.624013900756836,
+    2.451880931854248,
+    1.6421468257904053
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 12711,
+        "faces": 25146,
+        "tris": 25146,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 69,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.06,
+        "uv_coverage_pct": 30.3
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.003",
+      "distance": 0.0243
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0263
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0308
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0243
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0264
+    },
+    {
+      "part": "Lower_tooth.016",
+      "distance": 0.0307
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0226
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.023
+    },
+    {
+      "part": "Finger.001",
+      "distance": 0.025
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0228
+    },
+    {
+      "part": "Finger.002",
+      "distance": 0.0259
+    }
+  ],
+  "bytes": 3521708,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 13830,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0003,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 7053,
+        "faces": 13830,
+        "tris": 13830,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 69,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.04,
+        "uv_coverage_pct": 29.9
+      }
+    }
+  }
+}

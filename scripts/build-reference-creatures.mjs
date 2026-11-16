@@ -1,0 +1,8 @@
+import {spawn} from 'node:child_process';
+import fs from 'node:fs/promises';
+import {createWriteStream} from 'node:fs';
+import {SPECIES} from '../src/data.js';
+const dir=process.env.JD_REFERENCE_BUILD_LOG_DIR||'artifacts/reference-overhaul/build';await fs.mkdir(dir,{recursive:true});
+const selected=process.argv.slice(2),ids=SPECIES.filter(s=>!selected.length||selected.includes(s.id)).map(s=>s.id),results=[];let cursor=0;
+async function worker(){while(cursor<ids.length){const id=ids[cursor++];const log=createWriteStream(`${dir}/${id}.txt`),started=Date.now();const code=await new Promise(resolve=>{const child=spawn(process.env.BLENDER_EXE||'C:/Program Files/Blender Foundation/Blender 5.3/blender.exe',['-b','--factory-startup','--threads','6','--python-exit-code','1','-P','scripts/blender/reference_creatures.py','--',id],{windowsHide:true});child.stdout.pipe(log,{end:false});child.stderr.pipe(log,{end:false});child.on('error',error=>{log.write(error.message);resolve(-1);});child.on('exit',resolve);});log.end();let report=null;try{report=JSON.parse(await fs.readFile(`assets/art-v5/creatures/${id}/report.json`,'utf8'));}catch{}let fresh=false;try{fresh=(await fs.stat(`assets/art-v5/creatures/${id}/report.json`)).mtimeMs>=started;}catch{}const ok=code===0&&fresh&&!!(report?.qa?.pass&&report?.lodQA?.pass);results.push({id,processCode:code,geometryPass:ok,seconds:(Date.now()-started)/1000});await fs.writeFile(`${dir}/progress.json`,JSON.stringify({total:ids.length,finished:results.length,results},null,2));console.log(`${results.length}/${ids.length} ${id}: ${ok?'GEOMETRY PASS':'REPAIR REQUIRED'} (${code})`);}}
+await Promise.all([worker(),worker()]);if(results.some(r=>!r.geometryPass))process.exitCode=1;

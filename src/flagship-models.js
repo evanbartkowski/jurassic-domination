@@ -5,6 +5,8 @@ import { SPECIES, SPECIES_BY_ID } from './data.js';
 import { SKINS } from './content.js';
 import { anatomyForSpecies } from './anatomy.js';
 import primevalAssets from './primeval-assets.json' with {type:'json'};
+import referenceAssets from './reference-assets.json' with {type:'json'};
+import {creatureAssetCandidates} from './creature-asset-paths.js';
 const primevalIds=new Set(primevalAssets);
 
 export const FLAGSHIP_SPECIES_IDS = new Set(['velociraptor','tyrannosaurus','triceratops','spinosaurus','ankylosaurus','stegosaurus','brachiosaurus','compsognathus','carnotaurus','dilophosaurus']);
@@ -51,16 +53,18 @@ function anatomicalBump(){
 
 export function getFlagshipGLTF(id, onLoaded) {
   if (typeof window === 'undefined' || !ANATOMY_SPECIES_IDS.has(id)) return;
-  const url = `${import.meta.env?.BASE_URL || './'}assets/models-v${primevalIds.has(id)?4:3}/${id}.glb`;
+  const candidates=creatureAssetCandidates(id,import.meta.env?.BASE_URL || './',referenceAssets);
+  const url=candidates[0];
   if (cache.has(url)) {const gltf=cache.get(url);cache.delete(url);cache.set(url,gltf);onLoaded?.(gltf);trimCache();return; }
   if (pending.has(url)) { if (onLoaded) pending.get(url).push(onLoaded); return; }
   pending.set(url, onLoaded ? [onLoaded] : []);
-  (loader ||= new GLTFLoader()).load(url, gltf => {
+  const attempt=(index)=> (loader ||= new GLTFLoader()).load(candidates[index], gltf => {
     cache.set(url, gltf);
     const callbacks = pending.get(url) || []; pending.delete(url);
     for (const callback of callbacks) callback(gltf);
     trimCache();
-  }, undefined, () => { pending.delete(url); });
+  }, undefined, () => { if(index+1<candidates.length)attempt(index+1);else pending.delete(url); });
+  attempt(0);
 }
 
 /** Independent skeletons; cached geometry/materials remain shared and read-only. */
@@ -121,12 +125,17 @@ export function cloneAnatomyMaterial(original,data,skin){
  return material;
 }
 
-export function updateFlagshipAnimation(asset, dt, speed = 0, attacking = false, sleeping = false, feeding = false) {
+export function updateFlagshipAnimation(asset, dt, speed = 0, attacking = false, sleeping = false, feeding = false, reaction={}) {
   const { mixer, actions } = asset;
   if(attacking&&!asset.wasAttacking&&actions.Attack){actions.Attack.reset().setLoop(THREE.LoopOnce,1).play();actions.Attack.clampWhenFinished=true;}
   asset.wasAttacking=attacking;
+  for(const [flag,clip] of [['hit','Hit'],['dead','Death']]){
+   if(reaction[flag]&&!asset['was_'+flag]&&actions[clip]){actions[clip].reset().setLoop(THREE.LoopOnce,1).play();actions[clip].clampWhenFinished=true;if(flag==='hit')asset.hitActive=true;}
+   asset['was_'+flag]=!!reaction[flag];
+  }
   const move = Math.min(1, speed), run = THREE.MathUtils.smoothstep(speed, .65, 1.3);
-  const weights = sleeping ? { Rest: 1 } : attacking && actions.Attack ? { Attack: 1 } : feeding && actions.Graze ? { Graze: 1 } : { Idle: 1 - move, Walk: move * (1 - run), Run: move * run };
+  if(asset.hitActive&&!actions.Hit?.isRunning())asset.hitActive=false;
+  const weights = reaction.dead&&actions.Death?{Death:1}:asset.hitActive?{Hit:1}:sleeping ? { Rest: 1 } : attacking && actions.Attack ? { Attack: 1 } : feeding && actions.Graze ? { Graze: 1 } : { Idle: 1 - move, Walk: move * (1 - run), Run: move * run };
   for (const [name, action] of Object.entries(actions)) action.setEffectiveWeight(THREE.MathUtils.damp(action.getEffectiveWeight(), weights[name] || 0, 10, dt));
   mixer.timeScale = attacking?(asset.version>=4?4.7:2.1):sleeping ? .7 : asset.gaitRate&&speed>.1?asset.gaitRate:.8 + Math.min(1.6, speed) * .45;
   mixer.update(Math.min(.1, dt));
@@ -192,7 +201,7 @@ export function animateFlagshipGLB(model, dt, time, speed, attacking, turn) {
   const d = model.userData;
   if (!d?.flagshipAsset) return;
   if(d.flagshipAsset.version>=4){const scale=model.getWorldScale(new THREE.Vector3()).x,stride=(d.anatomyProfile?.hip||1.3)*scale*2.4;d.flagshipAsset.gaitRate=THREE.MathUtils.clamp((d.worldSpeed||0)/Math.max(.1,stride)*2,.8,8);}
-  updateFlagshipAnimation(d.flagshipAsset, dt, speed, attacking, d.isSleeping, d.isFeeding);
+  updateFlagshipAnimation(d.flagshipAsset, dt, speed, attacking, d.isSleeping, d.isFeeding,{hit:d.hitReaction,dead:d.isDead});
   const root = d.glbContainer;
   root.rotation.y = THREE.MathUtils.damp(root.rotation.y, attacking&&d.combatKind==='tail-sweep'?Math.sin(d.flagshipAsset.mixer.time*8)*.65:-turn*.07, 8, dt);
   root.rotation.z = THREE.MathUtils.damp(root.rotation.z,d.combatWindup?-.035:0,8,dt);

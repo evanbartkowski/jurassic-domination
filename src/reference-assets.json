@@ -1,0 +1,650 @@
+{
+  "compsognathus": {
+    "file": "models-v5/compsognathus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "coelurosaur"
+  },
+  "microraptor": {
+    "file": "models-v5/microraptor.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "psittacosaurus": {
+    "file": "models-v5/psittacosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ceratopsian"
+  },
+  "heterodontosaurus": {
+    "file": "models-v5/heterodontosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "coelurosaur"
+  },
+  "velociraptor": {
+    "file": "models-v5/velociraptor.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "dilophosaurus": {
+    "file": "models-v5/dilophosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "coelurosaur"
+  },
+  "pachycephalosaurus": {
+    "file": "models-v5/pachycephalosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "pachycephalosaur"
+  },
+  "protoceratops": {
+    "file": "models-v5/protoceratops.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ceratopsian"
+  },
+  "ornithomimus": {
+    "file": "models-v5/ornithomimus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithomimid"
+  },
+  "deinonychus": {
+    "file": "models-v5/deinonychus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "ceratosaurus": {
+    "file": "models-v5/ceratosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "kentrosaurus": {
+    "file": "models-v5/kentrosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "stegosaur"
+  },
+  "baryonyx": {
+    "file": "models-v5/baryonyx.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "spinosaur"
+  },
+  "iguanodon": {
+    "file": "models-v5/iguanodon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "iguanodont"
+  },
+  "allosaurus": {
+    "file": "models-v5/allosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "carnotaurus": {
+    "file": "models-v5/carnotaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "abelisaur"
+  },
+  "stegosaurus": {
+    "file": "models-v5/stegosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "stegosaur"
+  },
+  "therizinosaurus": {
+    "file": "models-v5/therizinosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "therizinosaur"
+  },
+  "suchomimus": {
+    "file": "models-v5/suchomimus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "spinosaur"
+  },
+  "tyrannosaurus": {
+    "file": "models-v5/tyrannosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "tyrannosaur"
+  },
+  "triceratops": {
+    "file": "models-v5/triceratops.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ceratopsian"
+  },
+  "spinosaurus": {
+    "file": "models-v5/spinosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "spinosaur"
+  },
+  "ankylosaurus": {
+    "file": "models-v5/ankylosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ankylosaur"
+  },
+  "giganotosaurus": {
+    "file": "models-v5/giganotosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "carcharodontosaurus": {
+    "file": "models-v5/carcharodontosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "brachiosaurus": {
+    "file": "models-v5/brachiosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "sauropod"
+  },
+  "dreadnoughtus": {
+    "file": "models-v5/dreadnoughtus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "sauropod"
+  },
+  "wyvern": {
+    "file": "models-v5/wyvern.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dragon"
+  },
+  "basilisk": {
+    "file": "models-v5/basilisk.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "behemoth": {
+    "file": "models-v5/behemoth.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ankylosaur"
+  },
+  "quetzalcoatl": {
+    "file": "models-v5/quetzalcoatl.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dragon"
+  },
+  "elder-dragon": {
+    "file": "models-v5/elder-dragon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dragon"
+  },
+  "world-serpent": {
+    "file": "models-v5/world-serpent.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "primordial-titan": {
+    "file": "models-v5/primordial-titan.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "sauropod"
+  },
+  "phoenix": {
+    "file": "models-v5/phoenix.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "phoenix"
+  },
+  "coelophysis": {
+    "file": "models-v5/coelophysis.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "coelurosaur"
+  },
+  "sinosauropteryx": {
+    "file": "models-v5/sinosauropteryx.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "lesothosaurus": {
+    "file": "models-v5/lesothosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithopod"
+  },
+  "hypsilophodon": {
+    "file": "models-v5/hypsilophodon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithopod"
+  },
+  "dryosaurus": {
+    "file": "models-v5/dryosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithopod"
+  },
+  "archaeopteryx": {
+    "file": "models-v5/archaeopteryx.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "leaellynasaura": {
+    "file": "models-v5/leaellynasaura.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithopod"
+  },
+  "oviraptor": {
+    "file": "models-v5/oviraptor.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithomimid"
+  },
+  "gallimimus": {
+    "file": "models-v5/gallimimus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithomimid"
+  },
+  "troodon": {
+    "file": "models-v5/troodon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "mononykus": {
+    "file": "models-v5/mononykus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ornithomimid"
+  },
+  "stygimoloch": {
+    "file": "models-v5/stygimoloch.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "pachycephalosaur"
+  },
+  "minmi": {
+    "file": "models-v5/minmi.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ankylosaur"
+  },
+  "utahraptor-young": {
+    "file": "models-v5/utahraptor-young.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "utahraptor": {
+    "file": "models-v5/utahraptor.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "styracosaurus": {
+    "file": "models-v5/styracosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ceratopsian"
+  },
+  "parasaurolophus": {
+    "file": "models-v5/parasaurolophus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "hadrosaur"
+  },
+  "dimetrodon": {
+    "file": "models-v5/dimetrodon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "synapsid"
+  },
+  "diplophos": {
+    "file": "models-v5/diplophos.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "coelurosaur"
+  },
+  "euoplocephalus": {
+    "file": "models-v5/euoplocephalus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ankylosaur"
+  },
+  "dromaeosaurus": {
+    "file": "models-v5/dromaeosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dromaeosaur"
+  },
+  "megalosaurus": {
+    "file": "models-v5/megalosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "sarcosuchus": {
+    "file": "models-v5/sarcosuchus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "crocodilian"
+  },
+  "deinosuchus": {
+    "file": "models-v5/deinosuchus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "crocodilian"
+  },
+  "maiasaura": {
+    "file": "models-v5/maiasaura.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "hadrosaur"
+  },
+  "pachyrhinosaurus": {
+    "file": "models-v5/pachyrhinosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ceratopsian"
+  },
+  "yutyrannus": {
+    "file": "models-v5/yutyrannus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "tyrannosaur"
+  },
+  "australovenator": {
+    "file": "models-v5/australovenator.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "tarbosaurus": {
+    "file": "models-v5/tarbosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "tyrannosaur"
+  },
+  "albertosaurus": {
+    "file": "models-v5/albertosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "tyrannosaur"
+  },
+  "acrocanthosaurus": {
+    "file": "models-v5/acrocanthosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "edmontosaurus": {
+    "file": "models-v5/edmontosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "hadrosaur"
+  },
+  "amargasaurus": {
+    "file": "models-v5/amargasaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "sauropod"
+  },
+  "diplodocus": {
+    "file": "models-v5/diplodocus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "sauropod"
+  },
+  "quetzalcoatlus": {
+    "file": "models-v5/quetzalcoatlus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "pterosaur"
+  },
+  "mapusaurus": {
+    "file": "models-v5/mapusaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "torvosaurus": {
+    "file": "models-v5/torvosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "carnosaur"
+  },
+  "argentinosaurus": {
+    "file": "models-v5/argentinosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "sauropod"
+  },
+  "apatosaurus": {
+    "file": "models-v5/apatosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "sauropod"
+  },
+  "shantungosaurus": {
+    "file": "models-v5/shantungosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "hadrosaur"
+  },
+  "titanoboa": {
+    "file": "models-v5/titanoboa.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "hatzegopteryx": {
+    "file": "models-v5/hatzegopteryx.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "pterosaur"
+  },
+  "unicorn": {
+    "file": "models-v5/unicorn.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "equine"
+  },
+  "celestial-unicorn": {
+    "file": "models-v5/celestial-unicorn.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "equine"
+  },
+  "gryphon": {
+    "file": "models-v5/gryphon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "gryphon"
+  },
+  "hippogriff": {
+    "file": "models-v5/hippogriff.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "gryphon"
+  },
+  "frost-dragon": {
+    "file": "models-v5/frost-dragon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dragon"
+  },
+  "thunder-drake": {
+    "file": "models-v5/thunder-drake.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dragon"
+  },
+  "hydra": {
+    "file": "models-v5/hydra.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "cerberus": {
+    "file": "models-v5/cerberus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "wolf"
+  },
+  "jormungandr": {
+    "file": "models-v5/jormungandr.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "solar-unicorn": {
+    "file": "models-v5/solar-unicorn.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "equine"
+  },
+  "pegasus": {
+    "file": "models-v5/pegasus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "equine"
+  },
+  "leviathan": {
+    "file": "models-v5/leviathan.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "eastern-dragon": {
+    "file": "models-v5/eastern-dragon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "ancient-wyrm": {
+    "file": "models-v5/ancient-wyrm.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "serpent"
+  },
+  "thunderbird": {
+    "file": "models-v5/thunderbird.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "phoenix"
+  },
+  "fenrir": {
+    "file": "models-v5/fenrir.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "wolf"
+  },
+  "tideweaver": {
+    "file": "models-v5/tideweaver.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "plesiosaur"
+  },
+  "abyssal-kronosaur": {
+    "file": "models-v5/abyssal-kronosaur.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "pliosaur"
+  },
+  "ichthyosaurus": {
+    "file": "models-v5/ichthyosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ichthyosaur"
+  },
+  "archelon": {
+    "file": "models-v5/archelon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "turtle"
+  },
+  "elasmosaurus": {
+    "file": "models-v5/elasmosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "plesiosaur"
+  },
+  "dunkleosteus": {
+    "file": "models-v5/dunkleosteus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "armored-fish"
+  },
+  "mosasaurus": {
+    "file": "models-v5/mosasaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "mosasaur"
+  },
+  "megalodon": {
+    "file": "models-v5/megalodon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "shark"
+  },
+  "verdant-psittacosaurus": {
+    "file": "models-v5/verdant-psittacosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "ceratopsian"
+  },
+  "verdant-iguanodon": {
+    "file": "models-v5/verdant-iguanodon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "iguanodont"
+  },
+  "elderroot-therizinosaurus": {
+    "file": "models-v5/elderroot-therizinosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "therizinosaur"
+  },
+  "cinderfang-carnotaurus": {
+    "file": "models-v5/cinderfang-carnotaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "abelisaur"
+  },
+  "ashborn-tyrannosaurus": {
+    "file": "models-v5/ashborn-tyrannosaurus.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "tyrannosaur"
+  },
+  "eclipse-wyrm": {
+    "file": "models-v5/eclipse-wyrm.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dragon"
+  },
+  "stormcrown-dragon": {
+    "file": "models-v5/stormcrown-dragon.glb",
+    "enabled": true,
+    "sourceVersion": 5,
+    "family": "dragon"
+  }
+}

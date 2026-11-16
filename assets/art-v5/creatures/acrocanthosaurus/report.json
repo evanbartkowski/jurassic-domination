@@ -1,0 +1,183 @@
+{
+  "id": "acrocanthosaurus",
+  "family": "carnosaur",
+  "triangles": 26868,
+  "bones": 20,
+  "dimensions": [
+    5.81517219543457,
+    1.7200000286102295,
+    2.250924825668335
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 13602,
+        "faces": 26868,
+        "tris": 26868,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 84,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.07,
+        "uv_coverage_pct": 33.1
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0243
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0278
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0243
+    },
+    {
+      "part": "Lower_tooth.016",
+      "distance": 0.028
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0228
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0228
+    },
+    {
+      "part": "Neural_spine",
+      "distance": 0.011
+    },
+    {
+      "part": "Neural_spine.001",
+      "distance": 0.039
+    },
+    {
+      "part": "Neural_spine.002",
+      "distance": 0.0281
+    },
+    {
+      "part": "Neural_spine.004",
+      "distance": 0.0273
+    },
+    {
+      "part": "Neural_spine.005",
+      "distance": 0.0378
+    },
+    {
+      "part": "Neural_spine.006",
+      "distance": 0.034
+    },
+    {
+      "part": "Neural_spine.008",
+      "distance": 0.0026
+    },
+    {
+      "part": "Neural_spine.009",
+      "distance": 0.0161
+    }
+  ],
+  "bytes": 3543480,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 9672,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0007,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 5004,
+        "faces": 9672,
+        "tris": 9672,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 84,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.09,
+        "uv_coverage_pct": 32.4
+      }
+    }
+  }
+}

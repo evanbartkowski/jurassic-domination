@@ -1,0 +1,1022 @@
+[
+  {
+    "tier": 0,
+    "id": "compsognathus",
+    "name": "Compsognathus",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/Category:Compsognathus_life_restorations",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=compsognathus%20life%20restoration",
+    "design_notes": "Use the real taxon reference for anatomical proportions; create an original, cohesive semi-realistic presentation."
+  },
+  {
+    "tier": 0,
+    "id": "microraptor",
+    "name": "Microraptor",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/microraptor/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=microraptor%20life%20restoration",
+    "design_notes": "Four flight surfaces on arms AND hind legs, asymmetric flight feathers, long feathered tail."
+  },
+  {
+    "tier": 0,
+    "id": "psittacosaurus",
+    "name": "Psittacosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://upload.wikimedia.org/wikipedia/commons/4/42/Psittacosaurus_%28Vinther_et_al._2016%2C_cropped%29.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=psittacosaurus%20life%20restoration",
+    "design_notes": "Beaked ceratopsian; distinct cheek morphology, tail quills; avoid generic Triceratops head."
+  },
+  {
+    "tier": 0,
+    "id": "heterodontosaurus",
+    "name": "Heterodontosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://res.cloudinary.com/dk-find-out/image/upload/q_70%2Cc_pad%2Cw_1200%2Ch_630%2Cf_auto/heteradontosaurusSideLayers_uyzvx2.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=heterodontosaurus%20life%20restoration",
+    "design_notes": "Small beaked ornithischian with enlarged caniniform teeth; slender bipedal shape."
+  },
+  {
+    "tier": 1,
+    "id": "velociraptor",
+    "name": "Velociraptor",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/velociraptor/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=velociraptor%20life%20restoration",
+    "design_notes": "Fully feathered, compact small dromaeosaur; wing feathers, stiff tail and raised sickle toe claw; not movie-sized."
+  },
+  {
+    "tier": 1,
+    "id": "dilophosaurus",
+    "name": "Dilophosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://upload.wikimedia.org/wikipedia/commons/3/35/Life_reconstruction_of_Dilophosaurus_wetherilli.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=dilophosaurus%20life%20restoration",
+    "design_notes": "Two parallel cranial crests; no fictional pop-out frill; no obligatory venom spitting."
+  },
+  {
+    "tier": 1,
+    "id": "pachycephalosaurus",
+    "name": "Pachycephalosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/pachycephalosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=pachycephalosaurus%20life%20restoration",
+    "design_notes": "Thick cranial dome, correct bipedal body and tail posture."
+  },
+  {
+    "tier": 1,
+    "id": "protoceratops",
+    "name": "Protoceratops",
+    "category": "dinosaur",
+    "reference_url": "https://upload.wikimedia.org/wikipedia/commons/8/84/Protoceratops_andrewsi_Restoration.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=protoceratops%20life%20restoration",
+    "design_notes": "Low quadruped, parrot-like beak, broad frill, no three long Triceratops horns."
+  },
+  {
+    "tier": 1,
+    "id": "ornithomimus",
+    "name": "Ornithomimus",
+    "category": "dinosaur",
+    "reference_url": "https://www.paleo-nerd.com/wp-content/uploads/2023/04/Ornithomimus-by-Gabriel-Ugueto.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ornithomimus%20life%20restoration",
+    "design_notes": "Ostrich-like runner with toothless beak and feathered upper body."
+  },
+  {
+    "tier": 2,
+    "id": "deinonychus",
+    "name": "Deinonychus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/deinonychus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=deinonychus%20life%20restoration",
+    "design_notes": "Feathered large dromaeosaur with elevated sickle toe claw."
+  },
+  {
+    "tier": 2,
+    "id": "ceratosaurus",
+    "name": "Ceratosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/File:Life_reconstruction_of_Ceratosaurus_nasicornis.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ceratosaurus%20life%20restoration",
+    "design_notes": "Nasal horn, two orbital hornlets, elongated low skull; correct forearm size."
+  },
+  {
+    "tier": 2,
+    "id": "kentrosaurus",
+    "name": "Kentrosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/kentrosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=kentrosaurus%20life%20restoration",
+    "design_notes": "Smaller stegosaur with elongated shoulder/tail spikes and short body plates."
+  },
+  {
+    "tier": 2,
+    "id": "baryonyx",
+    "name": "Baryonyx",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/baryonyx/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=baryonyx%20life%20restoration",
+    "design_notes": "Narrow fish-catching snout with terminal rosette; massive thumb claw; no Spinosaurus sail."
+  },
+  {
+    "tier": 2,
+    "id": "iguanodon",
+    "name": "Iguanodon",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/iguanodon/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=iguanodon%20life%20restoration",
+    "design_notes": "Large thumb spike, robust forearms, horse-like herbivore skull; mix quadrupedal/bipedal poses."
+  },
+  {
+    "tier": 3,
+    "id": "allosaurus",
+    "name": "Allosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/allosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=allosaurus%20life%20restoration",
+    "design_notes": "Narrower triangular skull with eyebrow ridges and three-fingered hands."
+  },
+  {
+    "tier": 3,
+    "id": "carnotaurus",
+    "name": "Carnotaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/carnotaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=carnotaurus%20life%20restoration",
+    "design_notes": "Two brow horns, extremely tiny arms, deep snout, muscular running legs."
+  },
+  {
+    "tier": 3,
+    "id": "stegosaurus",
+    "name": "Stegosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/stegosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=stegosaurus%20life%20restoration",
+    "design_notes": "Two offset rows of tall dorsal plates and thagomizer spikes; beak."
+  },
+  {
+    "tier": 3,
+    "id": "therizinosaurus",
+    "name": "Therizinosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/therizinosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=therizinosaurus%20life%20restoration",
+    "design_notes": "Bulky feathered herbivorous theropod with exceptionally long hand claws."
+  },
+  {
+    "tier": 3,
+    "id": "suchomimus",
+    "name": "Suchomimus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/suchomimus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=suchomimus%20life%20restoration",
+    "design_notes": "Long crocodile-like snout, tall narrow body, muscular forearms and thumb claw."
+  },
+  {
+    "tier": 4,
+    "id": "tyrannosaurus",
+    "name": "Tyrannosaurus rex",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/tyrannosaurus-rex/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=tyrannosaurus%20rex%20life%20restoration",
+    "design_notes": "Massive deep skull, thick neck, two-fingered short arms, powerful hindquarters."
+  },
+  {
+    "tier": 4,
+    "id": "triceratops",
+    "name": "Triceratops",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/triceratops/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=triceratops%20life%20restoration",
+    "design_notes": "Three facial horns, broad frill and large robust body; avoid fantasy over-ornamentation."
+  },
+  {
+    "tier": 4,
+    "id": "spinosaurus",
+    "name": "Spinosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/spinosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=spinosaurus%20life%20restoration",
+    "design_notes": "Elongated crocodile-like skull, pronounced dorsal sail and deep paddle-like tail; reconstruction debated."
+  },
+  {
+    "tier": 4,
+    "id": "ankylosaurus",
+    "name": "Ankylosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/ankylosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ankylosaurus%20life%20restoration",
+    "design_notes": "Very low broad armored torso, osteoderms and real tail club."
+  },
+  {
+    "tier": 5,
+    "id": "giganotosaurus",
+    "name": "Giganotosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://cloudfront-us-east-1.images.arcpublishing.com/artear/NXNXFSBG7ZB2PG4SPNQSQIRXKU.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=giganotosaurus%20life%20restoration",
+    "design_notes": "Large carcharodontosaur with long lower skull; do not simply enlarge T. rex."
+  },
+  {
+    "tier": 5,
+    "id": "carcharodontosaurus",
+    "name": "Carcharodontosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/carcharodontosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=carcharodontosaurus%20life%20restoration",
+    "design_notes": "Deep blade-like serrated teeth, elongated skull, carcharodontosaur silhouette."
+  },
+  {
+    "tier": 5,
+    "id": "brachiosaurus",
+    "name": "Brachiosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/brachiosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=brachiosaurus%20life%20restoration",
+    "design_notes": "Forelimbs longer than hind limbs, upright high shoulders, very long neck."
+  },
+  {
+    "tier": 5,
+    "id": "dreadnoughtus",
+    "name": "Dreadnoughtus",
+    "category": "dinosaur",
+    "reference_url": "https://www.nhm.ac.uk/discover/dino-directory/dreadnoughtus.html",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=dreadnoughtus%20life%20restoration",
+    "design_notes": "Huge titanosaur quadruped; columnar limbs, wide chest and long tail."
+  },
+  {
+    "tier": 6,
+    "id": "wyvern",
+    "name": "Ember Wyvern",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=medieval%20wyvern%20creature%20concept%20art%20anatomy",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=medieval%20wyvern%20creature%20concept%20art%20anatomy%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "basilisk",
+    "name": "Jade Basilisk",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=basilisk%20lizard%20fantasy%20creature%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=basilisk%20lizard%20fantasy%20creature%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "behemoth",
+    "name": "Obsidian Behemoth",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ancient%20armored%20behemoth%20creature%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ancient%20armored%20behemoth%20creature%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "quetzalcoatl",
+    "name": "Quetzalcoatl",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=feathered%20serpent%20Quetzalcoatl%20mythological%20illustration",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=feathered%20serpent%20Quetzalcoatl%20mythological%20illustration%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "elder-dragon",
+    "name": "Elder Dragon",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=western%20dragon%20quadruped%20wings%20fantasy%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=western%20dragon%20quadruped%20wings%20fantasy%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "world-serpent",
+    "name": "World Serpent",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=Jormungandr%20giant%20world%20serpent%20fantasy%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=Jormungandr%20giant%20world%20serpent%20fantasy%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "primordial-titan",
+    "name": "Primordial Titan",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=colossal%20titanosaur%20fantasy%20stone%20armored%20concept",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=colossal%20titanosaur%20fantasy%20stone%20armored%20concept%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "phoenix",
+    "name": "Ashen Phoenix",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=phoenix%20firebird%20fantasy%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=phoenix%20firebird%20fantasy%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 0,
+    "id": "coelophysis",
+    "name": "Coelophysis",
+    "category": "dinosaur",
+    "reference_url": "https://doughstorys.com/images/coelophysis-triassic-theropod.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=coelophysis%20life%20restoration",
+    "design_notes": "Very slender early theropod; narrow long neck, lightly built feet and tail."
+  },
+  {
+    "tier": 0,
+    "id": "sinosauropteryx",
+    "name": "Sinosauropteryx",
+    "category": "dinosaur",
+    "reference_url": "https://cdn.sci.news/images/enlarge4/image_5368_1e-Sinosauropteryx-prima.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=sinosauropteryx%20life%20restoration",
+    "design_notes": "Small feathered carnivore with long banded tail, filament coat."
+  },
+  {
+    "tier": 0,
+    "id": "lesothosaurus",
+    "name": "Lesothosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinodata.de/images/dinosaurs/dino_l/~lesothosaurus/Leshotosaurus_diagnosticus_by_unlobogris.webp",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=lesothosaurus%20life%20restoration",
+    "design_notes": "Tiny agile early ornithischian with beak and proportionally long hind limbs."
+  },
+  {
+    "tier": 0,
+    "id": "hypsilophodon",
+    "name": "Hypsilophodon",
+    "category": "dinosaur",
+    "reference_url": "https://dinos101.com/images/species/hypsilophodon-foxii/hero.webp",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=hypsilophodon%20life%20restoration",
+    "design_notes": "Small fast ornithopod with deep torso, beak and long tail."
+  },
+  {
+    "tier": 0,
+    "id": "dryosaurus",
+    "name": "Dryosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=dryosaurus%20dinosaur%20life%20restoration%20paleoart",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/dryosaurus",
+    "design_notes": "Lightweight bipedal ornithopod with small head and long running legs."
+  },
+  {
+    "tier": 0,
+    "id": "archaeopteryx",
+    "name": "Archaeopteryx",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/archaeopteryx/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=archaeopteryx%20life%20restoration",
+    "design_notes": "Primitive avialan with long bony tail, flight feathers and three-clawed hands."
+  },
+  {
+    "tier": 0,
+    "id": "leaellynasaura",
+    "name": "Leaellynasaura",
+    "category": "dinosaur",
+    "reference_url": "https://media.australian.museum/media/dd/images/Some_image.95ef668d.fill-600x400.431f7c6.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=leaellynasaura%20life%20restoration",
+    "design_notes": "Small ornithopod; proportion uncertain, avoid invented oversized head/eyes."
+  },
+  {
+    "tier": 1,
+    "id": "oviraptor",
+    "name": "Oviraptor",
+    "category": "dinosaur",
+    "reference_url": "https://imagerenderer.com/images/rendered/default/print/8/6/break/images-medium-5/2-oviraptor-philoceratops-dinosaur-julius-t-csotonyiscience-photo-library.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=oviraptor%20life%20restoration",
+    "design_notes": "Feathered oviraptorosaur with beaked mouth and short deep skull."
+  },
+  {
+    "tier": 1,
+    "id": "gallimimus",
+    "name": "Gallimimus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/gallimimus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=gallimimus%20life%20restoration",
+    "design_notes": "Large ostrich-like runner, long neck, toothless beak, long shanks."
+  },
+  {
+    "tier": 1,
+    "id": "troodon",
+    "name": "Troodon",
+    "category": "dinosaur",
+    "reference_url": "https://dinob.uk/troodon/",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=troodon%20life%20restoration",
+    "design_notes": "Taxonomy disputed; use troodontid anatomy, feathered, large eyes and curved claw."
+  },
+  {
+    "tier": 1,
+    "id": "mononykus",
+    "name": "Mononykus",
+    "category": "dinosaur",
+    "reference_url": "https://upload.wikimedia.org/wikipedia/commons/e/e5/Mononykus_Restoration.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=mononykus%20life%20restoration",
+    "design_notes": "Short robust single-clawed forearms, narrow snout, feathery body and long running legs."
+  },
+  {
+    "tier": 1,
+    "id": "stygimoloch",
+    "name": "Stygimoloch",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=stygimoloch%20dinosaur%20life%20restoration%20paleoart",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/stygimoloch",
+    "design_notes": "Tall domed/pointed skull and thick neck; possibly juvenile Pachycephalosaurus."
+  },
+  {
+    "tier": 1,
+    "id": "minmi",
+    "name": "Minmi",
+    "category": "dinosaur",
+    "reference_url": "https://media.australian.museum/media/dd/thumbnails/images/Some_image.width-1200.height-900.19335c0.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=minmi%20life%20restoration",
+    "design_notes": "Compact small ankylosaur with low body and mosaic of osteoderms."
+  },
+  {
+    "tier": 1,
+    "id": "utahraptor-young",
+    "name": "Young Utahraptor",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/Category:Utahraptor_life_restorations",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=utahraptor%20young%20life%20restoration",
+    "design_notes": "Juvenile Utahraptor; inherited anatomy with age-appropriate proportions, not a separate unrelated species."
+  },
+  {
+    "tier": 2,
+    "id": "utahraptor",
+    "name": "Utahraptor",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/Category:Utahraptor_life_restorations",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=utahraptor%20life%20restoration",
+    "design_notes": "Stocky, large fully feathered dromaeosaur with broad feet and sickle claws."
+  },
+  {
+    "tier": 2,
+    "id": "styracosaurus",
+    "name": "Styracosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://cdn.fufu.gg/uploads/mntz64k2zaj9d.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=styracosaurus%20life%20restoration",
+    "design_notes": "Prominent nasal horn and six long marginal frill spikes."
+  },
+  {
+    "tier": 2,
+    "id": "parasaurolophus",
+    "name": "Parasaurolophus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/parasaurolophus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=parasaurolophus%20life%20restoration",
+    "design_notes": "Long swept-back hollow cranial crest, duckbill mouth, deep chest."
+  },
+  {
+    "tier": 2,
+    "id": "dimetrodon",
+    "name": "Dimetrodon",
+    "category": "other-prehistoric",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=dimetrodon%20prehistoric%20life%20reconstruction",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/dimetrodon",
+    "design_notes": "Permian synapsid, NOT dinosaur: sprawling limbs, low body and tall dorsal sail."
+  },
+  {
+    "tier": 2,
+    "id": "diplophos",
+    "name": "Crested Marsh Hunter",
+    "category": "fictional-prehistoric",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=diplophos%20prehistoric%20life%20reconstruction",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/diplophos",
+    "design_notes": "Fictional species; use Dilophosaurus as primary anatomy, but differentiate via original marsh adaptations."
+  },
+  {
+    "tier": 2,
+    "id": "euoplocephalus",
+    "name": "Euoplocephalus",
+    "category": "dinosaur",
+    "reference_url": "https://scitechdaily.com/images/Bloat-and-Float-Explains-Dinosaur-Mystery.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=euoplocephalus%20life%20restoration",
+    "design_notes": "Low ankylosaur with bony armor and expanded tail club."
+  },
+  {
+    "tier": 2,
+    "id": "dromaeosaurus",
+    "name": "Dromaeosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinodata.de/images/dinosaurs/dino_d/~dromaeosaurus/Dromaeosaurus_Raul_Martin.webp",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=dromaeosaurus%20life%20restoration",
+    "design_notes": "Feathered dromaeosaur with broad, deeper skull relative to Velociraptor."
+  },
+  {
+    "tier": 3,
+    "id": "megalosaurus",
+    "name": "Megalosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/File:1824_-_Megalosaurus.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=megalosaurus%20life%20restoration",
+    "design_notes": "Large basal theropod, medium broad skull, three-fingered grasping hands."
+  },
+  {
+    "tier": 3,
+    "id": "sarcosuchus",
+    "name": "Sarcosuchus",
+    "category": "other-prehistoric",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=sarcosuchus%20prehistoric%20life%20reconstruction",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/sarcosuchus",
+    "design_notes": "Giant crocodyliform (not dinosaur); flat long snout, low body, lateral tail, sprawling stance."
+  },
+  {
+    "tier": 3,
+    "id": "deinosuchus",
+    "name": "Deinosuchus",
+    "category": "other-prehistoric",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=deinosuchus%20prehistoric%20life%20reconstruction",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/deinosuchus",
+    "design_notes": "Large alligatoroid (not dinosaur); very broad jaws, heavy osteoderms, powerful tail."
+  },
+  {
+    "tier": 3,
+    "id": "maiasaura",
+    "name": "Maiasaura",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/maiasaura/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=maiasaura%20life%20restoration",
+    "design_notes": "Large hadrosaur duckbill with broad beak and bulky torso."
+  },
+  {
+    "tier": 3,
+    "id": "pachyrhinosaurus",
+    "name": "Pachyrhinosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://www.extinctanimals.org/wp-content/uploads/2019/04/Pachyrhinosaurus-Dinosaur.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=pachyrhinosaurus%20life%20restoration",
+    "design_notes": "Ceratopsian with enormous nasal boss, reduced horns and large frill."
+  },
+  {
+    "tier": 3,
+    "id": "yutyrannus",
+    "name": "Yutyrannus",
+    "category": "dinosaur",
+    "reference_url": "https://imgix.bustle.com/mic/vhrwel4jjrrhdl06kdxywia0x1xd5shxqtbbkglilypmjnejx2i4nwbfjrejsnv6.jpg?auto=format%2Ccompress&crop=faces&dpr=2&fit=crop&h=576&q=50&w=1020",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=yutyrannus%20life%20restoration",
+    "design_notes": "Large early tyrannosauroid with filamentous feather coat."
+  },
+  {
+    "tier": 3,
+    "id": "australovenator",
+    "name": "Australovenator",
+    "category": "dinosaur",
+    "reference_url": "https://museumsvictoria.com.au/media/12617/6118831.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=australovenator%20life%20restoration",
+    "design_notes": "Megaraptoran with long forearms and huge hand claws; gracile body."
+  },
+  {
+    "tier": 4,
+    "id": "tarbosaurus",
+    "name": "Tarbosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Tarbosaurus_baatar_paleoart_%282024%29.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=tarbosaurus%20life%20restoration",
+    "design_notes": "Longer/narrower skull than T. rex, robust tyrannosaur proportions."
+  },
+  {
+    "tier": 4,
+    "id": "albertosaurus",
+    "name": "Albertosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=albertosaurus%20dinosaur%20life%20restoration%20paleoart",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/albertosaurus",
+    "design_notes": "Slender lightly built tyrannosaur, longer running legs."
+  },
+  {
+    "tier": 4,
+    "id": "acrocanthosaurus",
+    "name": "Acrocanthosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://vignette.wikia.nocookie.net/jurassicworld-evolution/images/6/6a/AcroNull.png/revision/latest?cb=20190924010722",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=acrocanthosaurus%20life%20restoration",
+    "design_notes": "High neural spines over shoulders/back, robust carcharodontosaur body."
+  },
+  {
+    "tier": 4,
+    "id": "edmontosaurus",
+    "name": "Edmontosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://thefossilatlas.com/reconstructions/edmontosaurus.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=edmontosaurus%20life%20restoration",
+    "design_notes": "Large heavy duckbill; broad flattened muzzle, capable of bipedal/quadrupedal movement."
+  },
+  {
+    "tier": 4,
+    "id": "amargasaurus",
+    "name": "Amargasaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/amargasaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=amargasaurus%20life%20restoration",
+    "design_notes": "Double row of long neck neural spines; sail/keratin details uncertain."
+  },
+  {
+    "tier": 4,
+    "id": "diplodocus",
+    "name": "Diplodocus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/diplodocus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=diplodocus%20life%20restoration",
+    "design_notes": "Long narrow sauropod skull, horizontal neck, whip-like tail."
+  },
+  {
+    "tier": 4,
+    "id": "quetzalcoatlus",
+    "name": "Quetzalcoatlus",
+    "category": "other-prehistoric",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/quetzalcoatlus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=quetzalcoatlus%20life%20restoration",
+    "design_notes": "Giant azhdarchid pterosaur (not dinosaur); membrane wings and long toothless beak."
+  },
+  {
+    "tier": 5,
+    "id": "mapusaurus",
+    "name": "Mapusaurus",
+    "category": "dinosaur",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/mapusaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=mapusaurus%20life%20restoration",
+    "design_notes": "Large slender carcharodontosaur, long skull distinct from T. rex."
+  },
+  {
+    "tier": 5,
+    "id": "torvosaurus",
+    "name": "Torvosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Torvosaurus_tanneri_Reconstruction.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=torvosaurus%20life%20restoration",
+    "design_notes": "Huge megalosaurid with stout skull and three-fingered arms."
+  },
+  {
+    "tier": 5,
+    "id": "argentinosaurus",
+    "name": "Argentinosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://www.dinosauriatree.com/dinosaurs/argentinosaurus-huinculensis/",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=argentinosaurus%20life%20restoration",
+    "design_notes": "Massive wide-bodied titanosaur quadruped with pillar limbs."
+  },
+  {
+    "tier": 5,
+    "id": "apatosaurus",
+    "name": "Apatosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://thefossilatlas.com/reconstructions/apatosaurus.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=apatosaurus%20life%20restoration",
+    "design_notes": "Extremely robust cervical vertebrae, thick neck, low sauropod skull and whip-like tail."
+  },
+  {
+    "tier": 5,
+    "id": "shantungosaurus",
+    "name": "Shantungosaurus",
+    "category": "dinosaur",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=shantungosaurus%20dinosaur%20life%20restoration%20paleoart",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/shantungosaurus",
+    "design_notes": "Giant hadrosaur with deep barrel torso and large beaked head."
+  },
+  {
+    "tier": 5,
+    "id": "titanoboa",
+    "name": "Titanoboa",
+    "category": "other-prehistoric",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=titanoboa%20prehistoric%20life%20reconstruction",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://en.wikipedia.org/wiki/titanoboa",
+    "design_notes": "Giant constricting snake (not dinosaur); muscular continuous serpentine body, no limbs."
+  },
+  {
+    "tier": 5,
+    "id": "hatzegopteryx",
+    "name": "Hatzegopteryx",
+    "category": "other-prehistoric",
+    "reference_url": "https://dinolifepedia.com/en/dinosaurs/hatzegopteryx",
+    "reference_kind": "illustrated source page",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=hatzegopteryx%20life%20restoration",
+    "design_notes": "Giant azhdarchid pterosaur (not dinosaur), very large thick skull and robust neck."
+  },
+  {
+    "tier": 6,
+    "id": "unicorn",
+    "name": "Moonlit Unicorn",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=white%20unicorn%20fantasy%20horse%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=white%20unicorn%20fantasy%20horse%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "celestial-unicorn",
+    "name": "Celestial Unicorn",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=celestial%20unicorn%20fantasy%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=celestial%20unicorn%20fantasy%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "gryphon",
+    "name": "Royal Gryphon",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=gryphon%20griffin%20eagle%20lion%20fantasy%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=gryphon%20griffin%20eagle%20lion%20fantasy%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "hippogriff",
+    "name": "Hippogriff",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=hippogriff%20eagle%20horse%20creature%20anatomy",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=hippogriff%20eagle%20horse%20creature%20anatomy%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "frost-dragon",
+    "name": "Frost Dragon",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ice%20frost%20dragon%20fantasy%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ice%20frost%20dragon%20fantasy%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "thunder-drake",
+    "name": "Thunder Drake",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=lightning%20drake%20dragon%20fantasy%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=lightning%20drake%20dragon%20fantasy%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "hydra",
+    "name": "Ninefold Hydra",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=multi%20headed%20hydra%20fantasy%20creature%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=multi%20headed%20hydra%20fantasy%20creature%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 6,
+    "id": "cerberus",
+    "name": "Cerberus",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=cerberus%20three%20headed%20dog%20fantasy%20creature",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=cerberus%20three%20headed%20dog%20fantasy%20creature%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "jormungandr",
+    "name": "Jormungandr",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=jormungandr%20Norse%20giant%20serpent%20original%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=jormungandr%20Norse%20giant%20serpent%20original%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "solar-unicorn",
+    "name": "Solar Unicorn",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=golden%20solar%20unicorn%20fantasy%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=golden%20solar%20unicorn%20fantasy%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "pegasus",
+    "name": "Astral Pegasus",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=winged%20pegasus%20horse%20fantasy%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=winged%20pegasus%20horse%20fantasy%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "leviathan",
+    "name": "Abyssal Leviathan",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ocean%20leviathan%20sea%20monster%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ocean%20leviathan%20sea%20monster%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "eastern-dragon",
+    "name": "Azure Celestial Dragon",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=Chinese%20eastern%20dragon%20anatomy%20flowing%20long%20body%20artwork",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=Chinese%20eastern%20dragon%20anatomy%20flowing%20long%20body%20artwork%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "ancient-wyrm",
+    "name": "Ancient Wyrm",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ancient%20wyrm%20giant%20serpent%20dragon%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=ancient%20wyrm%20giant%20serpent%20dragon%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "thunderbird",
+    "name": "Thunderbird",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=thunderbird%20mythological%20giant%20eagle%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=thunderbird%20mythological%20giant%20eagle%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 7,
+    "id": "fenrir",
+    "name": "Fenrir",
+    "category": "fantasy",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=Fenrir%20gigantic%20Norse%20wolf%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=Fenrir%20gigantic%20Norse%20wolf%20concept%20art%20illustration",
+    "design_notes": "Original fantasy design informed by relevant real-animal anatomy; preserve a unique silhouette."
+  },
+  {
+    "tier": 2,
+    "id": "tideweaver",
+    "name": "Tideweaver Plesiosaur",
+    "category": "other-prehistoric",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/plesiosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=plesiosaurus%20life%20restoration",
+    "design_notes": "Plesiosaur (not dinosaur); long neck and small head with four flippers; use Plesiosaurus image."
+  },
+  {
+    "tier": 4,
+    "id": "abyssal-kronosaur",
+    "name": "Abyssal Kronosaur",
+    "category": "other-prehistoric",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/kronosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=kronosaurus%20life%20restoration",
+    "design_notes": "Pliosaur (not dinosaur); massive short neck, giant skull, four paddles; use Kronosaurus image."
+  },
+  {
+    "tier": 1,
+    "id": "verdant-psittacosaurus",
+    "name": "Verdant Psittacosaurus",
+    "category": "variant",
+    "reference_url": "https://upload.wikimedia.org/wikipedia/commons/4/42/Psittacosaurus_%28Vinther_et_al._2016%2C_cropped%29.png",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=psittacosaurus%20life%20restoration",
+    "design_notes": "Bloodline/skin variant of psittacosaurus; preserve skeletal topology/rig; add distinctive material, details and restrained gameplay VFX."
+  },
+  {
+    "tier": 2,
+    "id": "verdant-iguanodon",
+    "name": "Verdant Iguanodon",
+    "category": "variant",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/iguanodon/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=iguanodon%20life%20restoration",
+    "design_notes": "Bloodline/skin variant of iguanodon; preserve skeletal topology/rig; add distinctive material, details and restrained gameplay VFX."
+  },
+  {
+    "tier": 3,
+    "id": "elderroot-therizinosaurus",
+    "name": "Elderroot Sentinel",
+    "category": "variant",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/therizinosaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=therizinosaurus%20life%20restoration",
+    "design_notes": "Bloodline/skin variant of therizinosaurus; preserve skeletal topology/rig; add distinctive material, details and restrained gameplay VFX."
+  },
+  {
+    "tier": 4,
+    "id": "cinderfang-carnotaurus",
+    "name": "Cinderfang",
+    "category": "variant",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/carnotaurus/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=carnotaurus%20life%20restoration",
+    "design_notes": "Bloodline/skin variant of carnotaurus; preserve skeletal topology/rig; add distinctive material, details and restrained gameplay VFX."
+  },
+  {
+    "tier": 5,
+    "id": "ashborn-tyrannosaurus",
+    "name": "Ashborn Tyrant",
+    "category": "variant",
+    "reference_url": "https://dinoarabia.com/images/dinosaurs/tyrannosaurus-rex/reconstruction.jpg",
+    "reference_kind": "direct image",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=tyrannosaurus%20rex%20life%20restoration",
+    "design_notes": "Bloodline/skin variant of tyrannosaurus-rex; preserve skeletal topology/rig; add distinctive material, details and restrained gameplay VFX."
+  },
+  {
+    "tier": 6,
+    "id": "eclipse-wyrm",
+    "name": "Eclipse Wyrm",
+    "category": "variant",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=medieval%20wyvern%20creature%20concept%20art%20anatomy",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=medieval%20wyvern%20creature%20concept%20art%20anatomy",
+    "design_notes": "Bloodline/skin variant of wyvern; preserve skeletal topology/rig; add distinctive material, details and restrained gameplay VFX."
+  },
+  {
+    "tier": 7,
+    "id": "stormcrown-dragon",
+    "name": "Stormcrown Dragon",
+    "category": "variant",
+    "reference_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=western%20dragon%20quadruped%20wings%20fantasy%20concept%20art",
+    "reference_kind": "reference image gallery",
+    "backup_gallery_url": "https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=western%20dragon%20quadruped%20wings%20fantasy%20concept%20art",
+    "design_notes": "Bloodline/skin variant of elder-dragon; preserve skeletal topology/rig; add distinctive material, details and restrained gameplay VFX."
+  }
+]

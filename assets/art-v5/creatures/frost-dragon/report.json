@@ -1,0 +1,191 @@
+{
+  "id": "frost-dragon",
+  "family": "dragon",
+  "triangles": 32082,
+  "bones": 24,
+  "dimensions": [
+    6.452592372894287,
+    2.77347469329834,
+    5.700963973999023
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 16231,
+        "faces": 32082,
+        "tris": 32082,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 97,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 27.1
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.001",
+      "distance": 0.0256
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0362
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0329
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0284
+    },
+    {
+      "part": "Lower_tooth.008",
+      "distance": 0.0356
+    },
+    {
+      "part": "Lower_tooth.009",
+      "distance": 0.0318
+    },
+    {
+      "part": "Lower_tooth.010",
+      "distance": 0.0277
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0251
+    },
+    {
+      "part": "Lower_tooth.016",
+      "distance": 0.0371
+    },
+    {
+      "part": "Lower_tooth.017",
+      "distance": 0.0331
+    },
+    {
+      "part": "Lower_tooth.018",
+      "distance": 0.0287
+    },
+    {
+      "part": "Lower_tooth.019",
+      "distance": 0.0355
+    },
+    {
+      "part": "Lower_tooth.020",
+      "distance": 0.0313
+    },
+    {
+      "part": "Lower_tooth.021",
+      "distance": 0.0276
+    },
+    {
+      "part": "Swept_horn",
+      "distance": 0.0067
+    },
+    {
+      "part": "Swept_horn.001",
+      "distance": 0.0067
+    }
+  ],
+  "bytes": 4094512,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 11548,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0012,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 5964,
+        "faces": 11548,
+        "tris": 11548,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 97,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 26.5
+      }
+    }
+  }
+}

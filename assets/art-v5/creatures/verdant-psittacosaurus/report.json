@@ -1,0 +1,199 @@
+{
+  "id": "verdant-psittacosaurus",
+  "family": "ceratopsian",
+  "triangles": 25756,
+  "bones": 20,
+  "dimensions": [
+    4.365240097045898,
+    1.3760000467300415,
+    1.5182830095291138
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD0']"
+    ],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [
+      {
+        "object": "Surface_LOD0",
+        "island_verts": 146,
+        "center": [
+          1.44,
+          0.0,
+          0.944
+        ]
+      }
+    ],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 12964,
+        "faces": 25756,
+        "tris": 25756,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 43,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 34.3
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.003",
+      "distance": 0.0229
+    },
+    {
+      "part": "Tail_bristle",
+      "distance": 0.0363
+    },
+    {
+      "part": "Tail_bristle.001",
+      "distance": 0.0546
+    },
+    {
+      "part": "Tail_bristle.002",
+      "distance": 0.0728
+    },
+    {
+      "part": "Tail_bristle.003",
+      "distance": 0.0566
+    },
+    {
+      "part": "Tail_bristle.004",
+      "distance": 0.0416
+    },
+    {
+      "part": "Tail_bristle.005",
+      "distance": 0.0254
+    },
+    {
+      "part": "Tail_bristle.006",
+      "distance": 0.0084
+    },
+    {
+      "part": "Tail_bristle.008",
+      "distance": 0.0257
+    },
+    {
+      "part": "Tail_bristle.009",
+      "distance": 0.0434
+    },
+    {
+      "part": "Tail_bristle.010",
+      "distance": 0.0617
+    },
+    {
+      "part": "Tail_bristle.011",
+      "distance": 0.0802
+    }
+  ],
+  "bytes": 3407656,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 9272,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD1']"
+    ],
+    "ground_z": -0.0007,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [
+      {
+        "object": "Surface_LOD1",
+        "island_verts": 40,
+        "center": [
+          1.439,
+          0.0,
+          0.945
+        ]
+      }
+    ],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 4722,
+        "faces": 9272,
+        "tris": 9272,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 43,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 33.3
+      }
+    }
+  }
+}

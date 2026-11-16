@@ -101,7 +101,7 @@ try {
     await page.keyboard.press('Escape');
   });
   await check(
-    "portable hatch and Q/R/dodge controls execute real abilities",
+    "portable hatch and Q/Ctrl/R controls execute real abilities",
     async () => {
       await page.getByRole("button", { name: /BEGIN A NEW LIFE/ }).click();
       await page.locator("#hatch-button").waitFor();
@@ -109,16 +109,16 @@ try {
       await page.locator("#egg-prompt").waitFor({ state: "hidden" });
       for (const [code, id] of [
         ["KeyQ", "hud-ability-cooldown"],
-        ["KeyR", "hud-technique-cooldown"],
-        ["Shift", "hud-dash-cooldown"],
+        ["ControlLeft", "hud-technique-cooldown"],
+        ["KeyR", "hud-dash-cooldown"],
       ]) {
-        if (code !== "Shift" && !(await page.locator(`#${id}`).isVisible())) {
+        if (code !== "KeyR" && !(await page.locator(`#${id}`).isVisible())) {
           await page.keyboard.press(code);
           assert.equal(await page.locator(`#${id}`).textContent(), "READY");
           continue;
         }
         if (
-          code === "Shift" &&
+          code === "KeyR" &&
           (await page.locator("#dash-name").textContent()) === "NO DASH"
         ) {
           assert.equal(

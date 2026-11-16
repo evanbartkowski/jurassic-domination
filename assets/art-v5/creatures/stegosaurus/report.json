@@ -1,0 +1,177 @@
+{
+  "id": "stegosaurus",
+  "family": "stegosaur",
+  "triangles": 23752,
+  "bones": 22,
+  "dimensions": [
+    5.331212043762207,
+    2.832304000854492,
+    1.739588737487793
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest",
+    "Hit",
+    "Death"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (2 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 2
+      }
+    ],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 11952,
+        "faces": 23752,
+        "tris": 23752,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 38,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 35.7
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Stegosaur_plate",
+      "distance": 0.0026
+    },
+    {
+      "part": "Stegosaur_plate.001",
+      "distance": 0.0837
+    },
+    {
+      "part": "Stegosaur_plate.002",
+      "distance": 0.1358
+    },
+    {
+      "part": "Stegosaur_plate.003",
+      "distance": 0.1259
+    },
+    {
+      "part": "Stegosaur_plate.004",
+      "distance": 0.1061
+    },
+    {
+      "part": "Stegosaur_plate.005",
+      "distance": 0.0803
+    },
+    {
+      "part": "Stegosaur_plate.006",
+      "distance": 0.1107
+    },
+    {
+      "part": "Stegosaur_plate.007",
+      "distance": 0.0308
+    },
+    {
+      "part": "Stegosaur_plate.009",
+      "distance": 0.0082
+    }
+  ],
+  "bytes": 3421204,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 5,
+  "lodTriangles": 8550,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (2 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0008,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 2
+      }
+    ],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 4351,
+        "faces": 8550,
+        "tris": 8550,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 38,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 34.9
+      }
+    }
+  }
+}

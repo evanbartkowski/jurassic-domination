@@ -1276,6 +1276,8 @@ export class WorldRenderer {
         );
         player.position.y = elevationAt(p.x, p.y) + (p.submerged ? -.5 : p.crouching ? -.15 : 0);
         player.userData.isSleeping = p.sleeping > 0;
+        player.userData.hitReaction=player.userData.previousHealth!==undefined&&p.hp<player.userData.previousHealth;
+        player.userData.previousHealth=p.hp;player.userData.isDead=game.state==='dead';
         player.userData.isFeeding = game._eatCooldown > .1;
         player.userData.isWet = inWater(game, p);
         if (p.poisoned > 0) {
@@ -1489,6 +1491,7 @@ export class WorldRenderer {
         creature.userData.isFlying = !!e.isFlying;
         creature.userData.diveState = e.diveState;
         creature.userData.isSleeping = (e.sleeping > 0) || !!e.isSleeping;
+        creature.userData.hitReaction=e.hitFlash>0;creature.userData.isDead=!!e.dead;
         creature.userData.isFeeding = e.feedCooldown > 2.3 || e.intent === 'graze';
         creature.userData.isWet = inWater(game, e);
         if (e.poison > 0) {

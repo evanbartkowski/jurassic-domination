@@ -67,6 +67,14 @@ SPECIES.push(
   { ...species('tideweaver', 'Tideweaver Plesiosaur', 2, 'marine', 0x4d929d, 0xc1e7d3, 170, 33, 10.4, 1.42, 'Brine Ambush', 'ambush', 'A long-necked marine hunter with four rowing flippers. Follow the drowned carvings and learn to survive deep water.'), rarity:'rare', bloodline:'tidal-memory', technique:'camouflage', anatomy:'plesiosaur' },
   { ...species('abyssal-kronosaur', 'Abyssal Kronosaur', 4, 'marine', 0x3c6476, 0x9cdbd8, 380, 70, 10.0, 3.6, 'Abyssal Rend', 'blood', 'An immense short-necked marine predator. Its heavy skull, broad paddles and scarred dorsal ridge remember a drowned dynasty.'), rarity:'legendary', bloodline:'abyssal-dynasty', technique:'cleave', anatomy:'pliosaur' },
 );
+SPECIES.push(...[
+ ['ichthyosaurus','Ichthyosaurus',1,0x547b87,0xcddfd5,102,22,12.5,1.08,'Slipstream Dive','ambush','ichthyosaur','A swift fish-shaped reptile with a pointed snout, vertical tail fluke and four small flippers.'],
+ ['archelon','Archelon',1,0x697952,0xd6c8a0,155,14,6.5,1.15,'Shell Guard','stomp','turtle','A giant sea turtle. Broad rowing flippers and a heavy carapace favor endurance over pursuit.'],
+ ['elasmosaurus','Elasmosaurus',2,0x507f83,0xd0e6da,188,31,9.5,1.4,'Longneck Ambush','ambush','plesiosaur','An exceptionally long neck carries small jaws ahead of a four-flippered body.'],
+ ['dunkleosteus','Dunkleosteus',2,0x606d70,0xc8bea6,245,43,7.2,1.45,'Armor Shear','blood','armored-fish','An armored fish with a broad plated skull and bone blades in place of ordinary teeth.'],
+ ['mosasaurus','Mosasaurus',3,0x496a70,0xcbdac7,310,58,9.6,1.9,'Seaway Lunge','ambush','mosasaur','A long-bodied marine lizard with a powerful fluked tail and four steering paddles.'],
+ ['megalodon','Megalodon',4,0x5b6e7a,0xe1ddd2,460,86,10.2,2.3,'Serrated Breach','blood','shark','A broad-jawed shark with a high dorsal fin. Its circling approach ends in a committed burst.']
+].map(([id,name,tier,color,accent,hp,damage,speed,size,ability,type,anatomy,description])=>({...species(id,name,tier,'marine',color,accent,hp,damage,speed,size,ability,type,description),anatomy,wildOnly:true,rarity:'regular'})));
 const variants=[
  ['verdant-psittacosaurus','Verdant Psittacosaurus','psittacosaurus',1,'rare','verdant-seed',0x4a9e6b,'heal','Verdant Bloom'],
  ['verdant-iguanodon','Verdant Iguanodon','iguanodon',2,'epic','verdant-guard',0x398866,'heal','Elderroot Mending'],
@@ -97,13 +105,13 @@ for(const s of SPECIES){
 }
 // Clear tier silhouettes and a stronger reward for each step up the food chain.
 // High-tier titans and primordial evolutions are truly massive, towering creatures.
-const sizeBands = [[.70,.83],[1.10,1.24],[1.48,1.67],[1.98,2.23],[2.56,2.92],[3.35,4.45],[4.80,5.85],[6.40,8.20]];
+const sizeBands = [[.70,.83],[1.10,1.24],[1.48,1.67],[1.98,2.23],[2.82,3.14],[3.95,4.65],[6.00,6.95],[8.30,10.10]];
 const compactForms = new Set(['deinonychus','basilisk','unicorn']);
 for (let tier=0;tier<8;tier++) {
   const forms=SPECIES.filter(s=>s.tier===tier), min=Math.min(...forms.map(s=>s.size)), max=Math.max(...forms.map(s=>s.size));
   for (const s of forms) {
     const [small,large]=sizeBands[tier], variation=max>min?(s.size-min)/(max-min):.5;
-    s.size=Number((small+(large-small)*variation).toFixed(3));
+    s.size=Number(((small+(large-small)*variation)*(/^(tyrannosaurus|giganotosaurus|carcharodontosaurus|spinosaurus|deinosuchus|sarcosuchus)$/.test(s.id)?1.28:/^(ashborn-tyrannosaurus|elder-dragon|stormcrown-dragon|primordial-titan)$/.test(s.id)?1.18:1)).toFixed(3));
     s.compactEvolution=compactForms.has(s.id) && s.rarity==='rare';
     if (s.compactEvolution) s.size=Number((s.size*.74).toFixed(3));
     s.hp=Math.round(s.hp*(1+tier*.06));

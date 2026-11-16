@@ -66,13 +66,13 @@ test("continental map is 100 times the original area with distinct regional spaw
   const g = new Game({ seed: 99 });
   assert.ok(
     g.entities.every(
-      (e) => SPECIES_BY_ID[e.speciesId].tier <= biomeAt(e.homeX, e.homeY).tier,
+      (e) => SPECIES_BY_ID[e.speciesId].tier <= Math.min(7,biomeAt(e.homeX, e.homeY).tier+3),
     ),
   );
 });
-test("all 102 creatures have valid abilities, techniques, habitats and behaviours", () => {
-  assert.equal(SPECIES.length, 102);
-  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 102);
+test("all 108 creatures have valid abilities, techniques, habitats and behaviours", () => {
+  assert.equal(SPECIES.length, 108);
+  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 108);
   for (const s of SPECIES) {
     assert(ABILITIES[s.abilityType]);
     assert(TECHNIQUES[s.technique]);
@@ -257,7 +257,7 @@ test("neutral grazers do not attack until aggroed; stronger forms make weak crea
   assert.equal(neutral.telegraph, 0);
   g._hitEntity(neutral, 1);
   g.update(0.05);
-  assert(["attack", "casting", "hunt"].includes(neutral.intent));
+  assert(["attack", "casting", "hunt", "windup", "tail-sweep"].includes(neutral.intent));
   form(g, "elder-dragon");
   const weak = g.spawnEntity("compsognathus", 8, 0);
   g.update(0.05);

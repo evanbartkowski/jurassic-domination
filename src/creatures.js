@@ -2,6 +2,9 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { SKINS } from "./content.js";
 import { phenotype } from './genetics.js';
+import { creatureArtDirection } from './creature-art-direction.js';
+import { tryAttachFlagshipGLB, animateFlagshipGLB } from './flagship-models.js';
+export {flagshipCacheStats} from './flagship-models.js';
 export function genomeAppearanceKey(genome) {
   const p = phenotype(genome);
   return `${Math.round(p.hue / .0225)}:${p.markings === 'speckled' ? 'speckled' : p.markings === 'banded' ? 'banded' : 'skin'}`;
@@ -227,16 +230,16 @@ function skinTexture(kind) {
 function mat(color, kind = "skin", glow = false, isPredator = true) {
   const key = `${color}:${kind}:${glow}:${isPredator}`;
   if (!materialCache.has(key)) {
-    const isEye = kind === "eye";
+    const isEye = kind === "eye" || kind === 'herbivore-eye';
     const isHorn = kind === "horn";
     const hasSkinTex = ["skin", "feather", "speckled", "banded"].includes(kind);
     const m = new THREE.MeshStandardMaterial({
       color: isEye ? 0xffffff : color,
-      roughness: isEye ? 0.06 : isHorn ? 0.36 : 0.60,
-      metalness: isHorn ? 0.08 : isEye ? 0.04 : 0.03,
-      map: isEye ? eyeTexture(isPredator) : (hasSkinTex ? skinTexture(kind) : null),
+      roughness: isEye ? 0.12 : isHorn ? 0.48 : 0.79,
+      metalness: 0,
+      map: isEye ? eyeTexture(kind === 'eye' && isPredator) : (hasSkinTex ? skinTexture(kind) : null),
       bumpMap: isEye ? null : (hasSkinTex ? skinBumpTexture(kind) : null),
-      bumpScale: 0.065,
+      bumpScale: kind === 'feather' ? 0.009 : 0.018,
       emissive: glow ? color : isEye ? 0x181005 : 0,
       emissiveIntensity: glow ? 0.38 : isEye ? 0.12 : 0,
       side: kind === "membrane" ? THREE.DoubleSide : THREE.FrontSide,
@@ -386,6 +389,7 @@ export function createDinosaur(
   decorative = false,
   skinId = "natural",
   genome = null,
+  eventLook = null,
 ) {
   const root = new THREE.Group(),
     body = new THREE.Group();
@@ -403,6 +407,7 @@ export function createDinosaur(
     tails = [],
     eyes = [],
     arms = [];
+  const art = creatureArtDirection(species);
   const type = species.body,
     name = species.id;
   const marine = type === "marine", longSwimmer = species.anatomy === "plesiosaur",
@@ -434,9 +439,9 @@ export function createDinosaur(
   const torso = profileGeometry([
     [-bodyLength - 0.15, h, 0.03, 0.03],
     [-bodyLength, h, 0.32, 0.3],
-    [-0.8, h + 0.03, thickness, 0.56],
-    [-0.1, h, thickness * 0.96, 0.6],
-    [0.65, h + 0.08, thickness * 0.78, 0.47],
+    [-0.8, h + 0.03, thickness, 0.56 * art.torsoWidth],
+    [-0.1, h, thickness * 0.96, 0.6 * art.torsoWidth],
+    [0.65, h + 0.08, thickness * 0.78, 0.47 * art.torsoWidth],
     [1.1, h + 0.18, 0.3, 0.3],
     [1.3, h + 0.24, 0.02, 0.02],
   ]);
@@ -490,7 +495,7 @@ export function createDinosaur(
   head.position.set(headX, headY, 0);
   body.add(head);
   const rex = type === "rex" || dragon || (marine && !longSwimmer),
-    headLength = marine ? (longSwimmer ? .52 : 1.16) : croc ? 1.18 : rex ? 0.84 : horse ? 0.62 : 0.55;
+    headLength = marine ? (longSwimmer ? .52 : 1.16) : art.headLength ?? (croc ? 1.18 : rex ? 0.84 : horse ? 0.62 : 0.55);
   if (horse) {
     organic(head, c, [0.07, 0.05, 0], [0.26, 0.42, 0.23], [0, 0, 0.3], "fur");
     organic(head, c, [0.44, -0.26, 0], [0.45, 0.23, 0.21], [0, 0, -0.4], "fur");
@@ -509,8 +514,8 @@ export function createDinosaur(
       [-0.32, 0.02, 0.03, 0.03],
       [-0.19, 0.08, 0.28, 0.28],
       [0.12, 0.09, 0.35, 0.34],
-      [headLength * 0.65, 0.035, croc ? 0.16 : 0.24, croc ? 0.36 : 0.29],
-      [headLength * 1.26, -0.02, croc ? 0.13 : 0.17, croc ? 0.28 : 0.23],
+      [headLength * 0.65, 0.035, (croc ? 0.16 : 0.24) * art.muzzleDepth, croc ? 0.36 : 0.29],
+      [headLength * 1.26, -0.02, (croc ? 0.13 : 0.17) * art.muzzleDepth, croc ? 0.28 : 0.23],
       [headLength * 1.35, -0.02, 0.025, 0.025],
     ]);
     owned.add(skull);
@@ -568,7 +573,7 @@ export function createDinosaur(
       [0.045, 0.215, side * (horse ? 0.235 : 0.337)],
       [0.052, 0.050, 0.028],
       null,
-      "eye",
+      isCarnivore ? "eye" : "herbivore-eye",
     );
     eyes.push(eye);
     organic(
@@ -1200,13 +1205,16 @@ export function createDinosaur(
     },
   };
   root.userData.genomeKey = genomeAppearanceKey(genome);
+  root.userData.eventLook = eventLook;
   if (skinId === 'natural') {
-    const pattern = root.userData.genomeKey.split(':')[1];
+    const inheritedPattern = root.userData.genomeKey.split(':')[1];
+    const pattern = inheritedPattern === 'skin' ? art.pattern : inheritedPattern;
     if (pattern !== 'skin') root.traverse(obj => {
       const surface = material => material?.userData.surface === 'skin' ? mat(material.color.getHex(), pattern) : material;
       if (obj.material) obj.material = Array.isArray(obj.material) ? obj.material.map(surface) : surface(obj.material);
     });
   }
+  tryAttachFlagshipGLB(root,species.id);
   return root;
 }
 
@@ -1218,12 +1226,13 @@ export function animateCreature(
   attacking = false,
   turn = 0,
 ) {
+  if(model.userData?.flagshipAsset){animateFlagshipGLB(model,dt,time,speed,attacking,turn);return;}
   const d = model.userData,
     { body, head, jaw, legs, wings, tails, species } = d;
   const isJuv = d.isJuvenile || ((model.scale.x || 1) / (d.baseScale || 1)) < 0.68;
   const headScale = isJuv ? 1.32 : 1.0;
   head.scale.setScalar(headScale);
-  jaw.scale.setScalar(headScale);
+  jaw.scale.setScalar(1);
   const strideRate = isJuv ? 1.5 : 1.0;
   d.speed = THREE.MathUtils.damp(d.speed, Math.min(1.6, speed), 8, dt);
   d.phase +=
@@ -1324,6 +1333,9 @@ export function animateCreature(
     head.rotation.z += 0.08;
     body.position.y -= 0.12;
   }
+  // The fallback neck is fixed geometry: articulation rotates at its root and
+  // moves the complete animal, never detaches the skull or double-scales jaws.
+  head.position.set(baseHX,baseHY,d.headBaseZ||0);
 
   for (const { arm, side } of d.arms || []) {
     arm.rotation.z = -strike * 0.95;

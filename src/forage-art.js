@@ -1,19 +1,21 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { plantDefinition } from "./forage.js";
+import {BOTANY} from './botany.js';
+import {naturalMaterial} from './natural-materials.js';
 
 // Each forage variety uses one shared, vertex-colored mesh. Eating or streaming
 // a plant removes only its instance; the twelve small geometry templates survive.
 const geometries = new Map();
 const materials = new Map();
 function material(definition) {
-  const kind = definition.id === "crystal-fruit" ? "crystal" : definition.group;
+  const kind = definition.id === 'ginkgo' ? 'broadleaf' : definition.id === "crystal-fruit" ? "crystal" : definition.group;
   if (!materials.has(kind)) {
-    const mat = new THREE.MeshStandardMaterial({
-      vertexColors: true,
+    const mat = naturalMaterial(definition.id==='ginkgo'?'broadleaf':'leaf',0xffffff,{
+      vertexColors: definition.id!=='ginkgo',
       side: THREE.DoubleSide,
       roughness: kind === "fruit" || kind === "crystal" ? 0.56 : 0.86,
-      metalness: kind === "crystal" ? 0.22 : 0,
+      metalness: 0,
       emissive: kind === "crystal" ? 0x51427b : 0,
       emissiveIntensity: kind === "crystal" ? 0.22 : 0,
     });
@@ -23,6 +25,7 @@ function material(definition) {
   return materials.get(kind);
 }
 function build(definition) {
+  if(['fern','horsetail','cycad','ginkgo'].includes(definition.id)){const g=BOTANY[definition.id][1].clone();if(definition.id==='ginkgo')g.scale(.45,.45,.45);return g;}
   const parts = [],
     green = 0x5a8c47,
     stem = 0x6c7547,

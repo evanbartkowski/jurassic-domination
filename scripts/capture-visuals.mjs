@@ -26,7 +26,7 @@ try {
   console.log("Captured 01-title.png");
 
   // 2. Encyclopedia
-  await page.getByRole("button", { name: /ENCYCLOPEDIA/ }).click();
+  await page.locator('[data-action="guide"]').click();
   await page.waitForFunction(() => window.__JD.specimen);
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${targetDir}/02-encyclopedia.png` });
@@ -57,7 +57,7 @@ try {
   console.log("Captured 05-evolution.png");
 
   // 5. Evolved Gameplay (Velociraptor)
-  await page.locator("[data-species]").first().click();
+  await page.locator("[data-species]").first().focus();
   await page.locator("[data-mutation]").first().click();
   await page.getByRole("button", { name: /^EMBRACE EVOLUTION/ }).click();
   await page.waitForFunction(() => window.__JD.game.tier === 1 && window.__JD.ui.view === "hud");

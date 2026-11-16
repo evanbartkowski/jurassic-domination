@@ -7,7 +7,10 @@ import "./ancestry.css";
 import "./living-wild.css";
 import "./foundation.css";
 import './immersion.css';
-import './indie-polishing.css';
+import './presentation.css';
+import './player-polish.css';
+import './grimwild.css';
+import './frontier.css';
 import { actionHeld, gamepadIntent, keyLabel, DEFAULT_BINDINGS } from "./controls.js";
 import { ancestryOptions } from './ancestry.js';
 import { worldStatus } from './world-events.js';
@@ -24,6 +27,8 @@ import { SPECIES, SPECIES_BY_ID } from "./data.js";
 import { canEatFood, foodLabel } from "./forage.js";
 import { WorldRenderer } from "./renderer.js";
 import { UI } from "./ui.js";
+import { presentationIcon } from './presentation.js';
+import { FramePacer,advanceLearning,normalizeLearning,LESSONS } from './player-experience.js';
 import { AudioEngine } from "./audio.js";
 import {
   purchaseUpgrade,
@@ -65,6 +70,7 @@ try {
     },
   };
 }
+document.dispatchEvent(new CustomEvent('jd:boot-stage',{detail:'Restoring your lineage and preferences…'}));
 const saves = new SaveStore(storage);
 let { profile, settings, run: savedRun, failed: storageFailed, recovered: recoveredSave, error: loadError } = saves.load();
 let suspendedGame = null, resumeFailure = "";
@@ -88,6 +94,15 @@ const pointer = {
   moved: false,
 };
 let ui;
+let pointerBlockUntil=0,controllerSuppressed=false,renderSettingsSignature='',lessonDistance=0;
+const pacer=new FramePacer();
+function clearInputs(){keys.clear();pending.clear();pointer.down=false;controllerSuppressed=true;}
+function learn(facts){
+  const current=profile.onboarding;
+  if(current.skipped||current.completed.length===LESSONS.length)return;
+  const next=advanceLearning(current,facts);
+  if(next.completed.length!==current.completed.length){profile.onboarding=next;pendingSave=true;}
+}
 let specimen = null;
 let productViewer = null,
   islandScene = null,
@@ -277,7 +292,7 @@ function islandAction(action, payload = {}) {
 }
 function runSummary() {
   const current = game?.state !== "dead" ? game || suspendedGame : null;
-  return current && ["egg", "playing", "evolution"].includes(current.state) ? {
+  return current && ["egg", "playing", "evolution", "mutation-choice"].includes(current.state) ? {
     name: current.state === "egg" ? "Unhatched life" : current.species.name,
     tier: current.tier, time: current.time, difficulty: current.difficulty,
   } : null;
@@ -353,7 +368,8 @@ function unlock() {
 function start(mode = "survival") {
   if (graphicsFailed) return;
   unlock();
-  world?.resetRun();
+  clearWorldFeedback();
+  audio.resetRun();lessonDistance=0;clearInputs();
   const previousId = (game?.state !== "dead" ? game || suspendedGame : null)?.runId;
   difficulty = mode;
   game = new Game({
@@ -380,12 +396,10 @@ function start(mode = "survival") {
   persist({ terminalRunId: previousId || null });
   ui.toast("An egg. A new beginning. Press E to hatch.");
 }
-function pause() {
+function pause(reason='manual') {
   if (game && ["egg", "playing"].includes(game.state) && ui.view === "hud") {
     paused = true;
-    keys.clear();
-    pending.clear();
-    pointer.down = false;
+    clearInputs();if(reason==='manual')learn({pause:true});
     ui.showPause();
     audio.setMode("paused");
     persist();
@@ -394,8 +408,7 @@ function pause() {
 function resume() {
   if (!game) return;
   paused = false;
-  keys.clear();
-  pending.clear();
+  clearInputs();
   ui.showHUD();
   audio.setMode("playing");
 }
@@ -418,6 +431,7 @@ function clearWorldFeedback() {
   labels.clear();
   clearTimeout(ui?.toastTimer);
   document.getElementById("toast").classList.remove("visible");
+  clearTimeout(ui?.captionTimer);const caption=document.getElementById('cue-caption');if(caption)caption.hidden=true;
 }
 function completeDeath() {
   if (!game || game.state !== "dead" || recorded) return;
@@ -449,6 +463,9 @@ async function fullscreen() {
 }
 ui = new UI(
   {
+    transition:()=>{clearInputs();pointerBlockUntil=performance.now()+120;},
+    learning:action=>{profile.onboarding=action==='reset'?normalizeLearning():{...profile.onboarding,skipped:true};persist();},
+    checkpoint:()=>persist(),
     start,
     continue: continueLife,
     resume,
@@ -524,6 +541,7 @@ ui = new UI(
       applySettings();
       ui.refreshControlLabels();
       clearTimeout(settingsSaveTimer);
+      ui.setSaveStatus('Saving preferences…');
       settingsSaveTimer = setTimeout(() => persist(), 180);
     },
     backups: () => {
@@ -643,23 +661,35 @@ try {
     "Jurassic Domination requires a graphics device with WebGL 2 support.",
   );
 }
-ui.showMenu(profile);
+ui.showStart();
 ui.setSavedRun(runSummary());
 function applySettings() {
   const quietMotion = settings.reducedMotion || matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.documentElement.style.setProperty("--ui-scale", String(settings.uiScale || 1));
   document.body.classList.toggle("reduced-motion", quietMotion);
+  document.body.classList.toggle('high-contrast',settings.highContrast);
+  document.body.classList.toggle('no-flashes',!settings.flashes);
+  document.body.classList.toggle('hide-interactions',!settings.interactionPrompts);
   audio.configure(settings);
-  world?.configure({ ...settings, shake: settings.shake && !quietMotion });
+  const next={...settings,reducedMotion:quietMotion,shake:settings.shake&&!quietMotion};
+  const signature=JSON.stringify([next.quality,next.renderScale,next.particles,next.cameraSmoothing,next.shake,next.reducedMotion,next.flashes]);
+  if(signature!==renderSettingsSignature){world?.configure(next);renderSettingsSignature=signature;}else if(world)world.settings=next;
+  specimen?.configure(next);productViewer?.configure(next);
 }
 applySettings();
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',applySettings);
+const appRoot=document.getElementById('app');
+window.addEventListener('pointerdown',()=>unlock(),{passive:true});
+window.addEventListener('keydown',event=>{if(!event.repeat)unlock();},{passive:true});
+appRoot.addEventListener('click',event=>{if(event.target.closest('button,input,select'))audio.uiCue('click');});
+appRoot.addEventListener('pointerover',event=>{if(event.target.closest('button')&&!event.target.closest('button')?.disabled)audio.uiCue('hover');});
+appRoot.addEventListener('focusin',()=>audio.uiCue('hover'));
 if (storageFailed)
   ui.toast(
     loadError || "Some local data could not be read. Valid legacy progress was preserved.",
   );
 if (recoveredSave && !storageFailed) ui.toast(savedRun ? "A previous valid checkpoint was recovered. Continue your life from the title screen." : "Permanent progress was recovered. No living expedition was restored.");
 if (resumeFailure) ui.toast(`Permanent progress loaded, but the expedition needs a compatible backup: ${resumeFailure}`);
-document.addEventListener("pointerdown", () => unlock(), { once: true });
 window.addEventListener("resize", () => {
   world?.resize();
   specimen?.resize();
@@ -677,12 +707,13 @@ window.addEventListener("pointermove", (event) => {
 window.addEventListener("pointerdown", (event) => {
   if (ui.view === "hud" && event.button === 1) {
     event.preventDefault();
-    pending.add("KeyC");
+    pending.add('RoarPointer');
   }
   if (
     ui.view === "hud" &&
+    performance.now()>=pointerBlockUntil &&
     event.button === 0 &&
-    !event.target.closest("button,input,select,.minimap-wrap")
+    !event.target.closest("button,input,select,.minimap-wrap,.hud-top-left-cluster,.abilities,.hud-top-right-cluster,.hud-bottom")
   ) {
     pointer.down = true;
     pending.add("Mouse0");
@@ -690,15 +721,13 @@ window.addEventListener("pointerdown", (event) => {
 });
 window.addEventListener("pointerup", () => (pointer.down = false));
 window.addEventListener("blur", () => {
-  keys.clear();
-  pointer.down = false;
-  pause();
+  clearInputs();audio.setFocused(false);if(settings.autoPause)pause('focus');else persist();
 });
+window.addEventListener('focus',()=>audio.setFocused(true));
 document.addEventListener("visibilitychange", () => {
+  audio.setFocused(!document.hidden&&document.hasFocus());
   if (document.hidden) {
-    keys.clear();
-    pointer.down = false;
-    pause();
+    clearInputs();if(settings.autoPause)pause('focus');else persist();
   }
 });
 let exitCheckpointSaved = false;
@@ -806,7 +835,7 @@ window.addEventListener("keydown", (event) => {
       ui.selectStarter?.(game.starterChoices[2]);
       return;
     }
-    if (key === "Enter" || key === "Space" || key === "KeyE") {
+    if (key === "Enter" || key === "Space" || key === bindings.eat) {
       ui.callbacks.hatch(ui.selectedStarterId || game.starterChoices?.[0]);
       return;
     }
@@ -815,7 +844,7 @@ window.addEventListener("keydown", (event) => {
     ui.callbacks.evolution();
     return;
   }
-  if (key === "KeyB" && !event.repeat) {
+  if (key === bindings.build && !event.repeat) {
     if (ui.view === "build-sheet") {
       resume();
       return;
@@ -844,6 +873,7 @@ window.addEventListener("keydown", (event) => {
     mapExpanded = !mapExpanded;
     const map = document.getElementById("minimap");
     if (map) map.classList.toggle("expanded", mapExpanded);
+    if(mapExpanded)learn({map:true});
     return;
   }
   if (key === bindings.guide && ui.view === "hud" && !event.repeat) {
@@ -886,7 +916,8 @@ const expedition = document.createElement("div");
 const environmentPanel = document.createElement('div');
 environmentPanel.className = 'environment-panel';
 environmentPanel.innerHTML = '<button id="field-journal-button" class="field-journal-button">FIELD JOURNAL · L</button><span id="environment-weather"></span><strong id="environment-body"></strong><span id="environment-discovery"></span>';
-document.getElementById('hud').append(environmentPanel);
+document.querySelector('.hud-top-left-cluster').append(environmentPanel);
+const performanceMeter=document.createElement('output');performanceMeter.id='performance-meter';performanceMeter.setAttribute('aria-label','Measured frame rate');document.getElementById('app').append(performanceMeter);
 document.getElementById('field-journal-button').onclick = () => { pause(); ui.showFieldJournal(game); };
 const mapTooltip = document.createElement("div");
 mapTooltip.id = "map-tooltip";
@@ -896,6 +927,7 @@ expedition.className = "expedition-hud";
 expedition.innerHTML =
   '<div id="region-route"></div><div id="active-buffs"></div><div id="discovered-skills"></div><div id="pickup-prompt"></div>';
 document.getElementById("hud").append(expedition);
+document.querySelector('.minimap-wrap').append(document.getElementById('region-route'));
 const techniqueKey = document.createElement("div");
 techniqueKey.className = "ability-key technique-key";
 techniqueKey.innerHTML =
@@ -904,13 +936,14 @@ document.querySelector(".abilities").append(techniqueKey);
 const roarDock = document.createElement("div");
 roarDock.id = "hud-roar-dock";
 roarDock.className = "hud-roar-dock";
-const roarKey = document.createElement("div");
+const roarKey = document.createElement("button");
+roarKey.type='button';
 roarKey.className = "ability-key roar-key roar-corner-btn";
 roarKey.innerHTML =
   '<kbd>Z</kbd><span id="hud-roar">ROAR</span><b id="hud-roar-cooldown">READY</b>';
 roarKey.addEventListener("click", () => { if (game) game.roar(); });
 roarDock.append(roarKey);
-document.getElementById("hud").append(roarDock);
+document.querySelector('.abilities').append(roarDock);
 ui.refreshControlLabels();
 document.getElementById("minimap").addEventListener("click", (event) => {
   if (!game) return;
@@ -960,7 +993,7 @@ let nextWorldUI = 0;
 function updateWorldUI() {
   const visible = game && ui.view === "hud" && game.state === "playing";
   labelLayer.style.display = visible ? "" : "none";
-  lowHealth.style.opacity = visible
+  lowHealth.style.opacity = visible&&settings.flashes
     ? Math.max(0, (0.4 - game.player.hp / game.player.maxHp) * 2.2)
     : 0;
   alphaBar.hidden = !visible || !game.boss;
@@ -1027,7 +1060,8 @@ function updateWorldUI() {
   if (p0.burning > 0) buffs.push(`BURNING · ${Math.ceil(p0.burning)}s`);
   if (p0.sleeping > 0) buffs.push(`DROWSY · ${Math.ceil(p0.sleeping)}s`);
   if (p0.chilled > 0) buffs.push(`SLOWED · ${Math.ceil(p0.chilled)}s`);
-  document.getElementById("active-buffs").textContent = buffs.join("   /   ");
+  const buffPanel=document.getElementById('active-buffs');buffPanel.textContent=buffs.join('   /   ');
+  buffPanel.title=Object.entries(game.buffs).filter(([,v])=>v>0).map(([id])=>{const b=POWERUPS.find(b=>b.id===id);return b?b.name+': '+b.description:id;}).join('\n');
   const skillSignature = game.runSkills
     .map((s) => `${s.id}:${Math.ceil(s.cooldown)}`)
     .join("|");
@@ -1038,6 +1072,7 @@ function updateWorldUI() {
       ...game.runSkills.map((slot, i) => {
         const el = document.createElement("span"),
           key = document.createElement("kbd");
+        el.title=RUN_SKILLS.find(s=>s.id===slot.id)?.description||'';
         key.textContent = keyLabel(settings.controls?.["skill" + i] || DEFAULT_BINDINGS["skill" + i]);
         el.append(
           key,
@@ -1134,7 +1169,8 @@ function updateCreatureLabels() {
 
     const threatPill = element.querySelector(".threat-pill");
     if (threatPill) {
-      threatPill.textContent = `${threat.symbol} ${threat.threatLabel}`;
+      // Build the stable SVG only when threat changes, not every frame.
+      if(threatPill.dataset.label!==threat.threatLabel){threatPill.dataset.label=threat.threatLabel;threatPill.innerHTML=presentationIcon(threat.isApex?'crown':'claw');threatPill.append(document.createTextNode(' '+threat.threatLabel));}
       threatPill.className = `threat-pill ${threat.badgeClass}`;
     }
     const behaviorPill = element.querySelector(".behavior-pill");
@@ -1276,6 +1312,8 @@ function float(event) {
 }
 function processEvents() {
   for (const event of game.consumeEvents()) {
+    if(settings.captions){const labels={roar:'A creature roars nearby',warning:'Danger warning',thunder:'Thunder',evolve:'Evolution complete','enemy-ability':'Nearby creature uses a skill','world-event':'Weather changes','water-enter':'Entering water'};
+      if(labels[event.type]&&(!Number.isFinite(event.x)||Math.hypot(event.x-game.player.x,event.y-game.player.y)<38))ui.caption(labels[event.type]);}
     if (
       event.type === "dna-find" &&
       awardRareDNA(profile, event.receipt, event.amount)
@@ -1341,6 +1379,7 @@ function processEvents() {
       pointer.down = false;
       ui.showMutationChoice(game, event);
       audio.setMode("paused");
+      persist();
     }
     if (event.type === "mutation-applied") {
       ui.toast(event.text || "MUTATION ADAPTED!");
@@ -1350,6 +1389,7 @@ function processEvents() {
     }
     try {
     world?.event(event);
+    if(event.type==='incident-warning')ui.toast(event.text);
     const sound =
       {
         powerup: "eat",
@@ -1361,6 +1401,10 @@ function processEvents() {
         'discovery': 'evolve',
         'adaptation': 'evolve',
         'world-event': 'warning',
+        'incident-warning':'warning',
+        'meteor-impact':'thunder',
+        'lightning-strike':'thunder',
+        'obstacle-demolished': 'demolish',
       }[event.type] || event.type;
     if (
       !Number.isFinite(event.x) ||
@@ -1399,7 +1443,7 @@ function events() {
   try { processEvents(); }
   finally {
     handlingEvents = false;
-    if (pendingSave && game.state !== "dead") persist();
+    if (pendingSave && !lastSaveFailed && game.state !== "dead") persist();
   }
 }
 let last = performance.now(),
@@ -1414,33 +1458,44 @@ let previousPad = { pause: false, evolve: false, map: false };
 function controllerInput() {
   if (settings.gamepad === false || document.hidden || !document.hasFocus()) return gamepadIntent(null);
   const devices = navigator.getGamepads?.() || [];
-  for (const device of devices) if (device?.connected && device.mapping === "standard") return gamepadIntent(device);
+  for (const device of devices) if (device?.connected && device.mapping === "standard") return gamepadIntent(device,settings.deadzone);
   return gamepadIntent(null);
 }
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+  if(!pacer.ready(now,settings.fpsLimit))return;
+  const rawDt=Math.max(0,(now-last)/1000),dt = Math.min(0.1,rawDt);
   last = now;
   frames++;
-  fpsTime += dt;
+  fpsTime += rawDt;
   if (fpsTime >= 1) {
     fps = Math.round(frames / fpsTime);
     frames = 0;
     fpsTime = 0;
+    performanceMeter.textContent=fps+' FPS';
   }
+  performanceMeter.hidden=!settings.showFPS;
   try {
-    const pad = controllerInput();
+    const rawPad=controllerInput();
+    if(previousPad.connected&&!rawPad.connected&&settings.gamepad){clearInputs();pause('controller');ui.toast('Controller disconnected. Keyboard controls are available; resume when ready.');}
+    const menuInput=(ui.view!=='hud'||game?.state==='egg')&&ui.handleController(rawPad,now);
+    const inputStatus=document.getElementById('input-device-status');if(inputStatus){const text=rawPad.connected?'Controller connected · A confirms / B goes back':'Keyboard and mouse · connect a standard controller at any time';if(inputStatus.textContent!==text)inputStatus.textContent=text;}
+    if(menuInput)controllerSuppressed=true;
+    if(controllerSuppressed&&!rawPad.anyButton)controllerSuppressed=false;
+    const pad=controllerSuppressed&&ui.view==='hud'?gamepadIntent(null):rawPad;
     if (pad.pause && !previousPad.pause) {
       if (ui.view === "hud") pause();
       else if (ui.view === "pause") resume();
       else if (ui.view === "evolution") ui.callbacks.postpone();
+      else ui.back();
     }
     if (pad.evolve && !previousPad.evolve && ui.view === "hud") ui.callbacks.evolution();
     if (pad.map && !previousPad.map && ui.view === "hud") {
       mapExpanded = !mapExpanded;
       document.getElementById("minimap").classList.toggle("expanded", mapExpanded);
+      if(mapExpanded)learn({map:true});
     }
-    previousPad = pad;
+    previousPad = rawPad;
     const active =
       game &&
       !paused &&
@@ -1458,6 +1513,7 @@ function frame(now) {
             : game.player.angle;
       accumulator += dt;
       while (accumulator >= 1 / 60) {
+        const beforeX=game.player.x,beforeY=game.player.y;
         const tickResult = authority.step({
           x,
           y,
@@ -1466,7 +1522,7 @@ function frame(now) {
           ability: held("ability") || pad.ability,
           special: held("special") || pad.special,
           technique: held("technique") || pad.technique,
-          roar: held("roar") || pad.roar || pending.has("KeyZ") || pending.has("KeyC") || false,
+          roar: held("roar") || pad.roar || pending.has('RoarPointer'),
           skill: [0, 1, 2, 3, 4, 5].findIndex((slot) => held("skill" + slot)),
           sprint: held("sprint") || pad.sprint,
           crouch: held('crouch') || pad.crouch || false,
@@ -1474,13 +1530,15 @@ function frame(now) {
           eat: held("eat") || pad.eat,
         });
         if (!tickResult.ok) throw Error(`Simulation command failed: ${tickResult.error}`);
+        lessonDistance+=Math.hypot(game.player.x-beforeX,game.player.y-beforeY);
         pending.clear();
         accumulator -= 1 / 60;
-        if (game.state === "dead" || game.state === "evolution") break;
+        if (!['playing','egg'].includes(game.state)) break;
       }
     } else accumulator = 0;
     if (game) {
       events();
+      learn({hatch:game.state==='playing',move:lessonDistance>=2,feed:game.player.nutrients>0,attack:game.player.attackCooldown>0||game.player.attacking>0,roar:!!game._hasRoared,evolve:game.tier>0});
       if (game.state === "evolution" && ui.view !== "evolution") {
         keys.clear();
         pointer.down = false;
@@ -1497,7 +1555,7 @@ function frame(now) {
     }
     if (active || lastSaveFailed) {
       autosaveElapsed += dt;
-      if (autosaveElapsed >= 10) persist({ terminalRunId: game?.state === "dead" ? game.runId : null });
+      if (autosaveElapsed >= settings.autosaveInterval) persist({ terminalRunId: game?.state === "dead" ? game.runId : null });
     }
     if (game) {
       uiTimer += dt;
@@ -1516,12 +1574,14 @@ function frame(now) {
         miniTimer = 0;
       }
     }
-    const menuView = ui.view === "menu";
+    const titleView=['menu','start'].includes(ui.view);
+    const menuView = !game || titleView;
+    if(titleView&&(lastRenderedWorldView!==ui.view||world?.menuVisit!==ui.menuVisit)){world?.nextMenuCreature?.();if(world)world.menuVisit=ui.menuVisit;}
     // Keep a frozen world behind modal screens instead of drawing two WebGL
     // scenes every frame while inspecting a specimen or browsing the shop.
     if (!graphicsFailed && ui.view !== "island" &&
-      (["menu", "hud"].includes(ui.view) || ui.view !== lastRenderedWorldView)) {
-      world?.render(game, active || ui.view === "menu" ? dt : 0, menuView);
+      (["menu", "start", "hud"].includes(ui.view) || ui.view !== lastRenderedWorldView)) {
+      if(ui.view==='start')world?.renderStart(dt);else world?.render(game, active || titleView ? dt : 0, menuView);
       lastRenderedWorldView = ui.view;
     }
     const shopCanvas =
@@ -1535,7 +1595,7 @@ function frame(now) {
       if (item) {
         const key = `${item.sku}:${profile.equippedSkin}:${profile.equippedCosmetic}`;
         if (!productViewer)
-          productViewer = new CollectionViewer(shopCanvas, item, profile);
+          productViewer = new CollectionViewer(shopCanvas, item, profile,{...settings,reducedMotion:document.body.classList.contains('reduced-motion')});
         if (productViewer.appearanceKey !== key) {
           productViewer.setProduct(item, profile);
           productViewer.appearanceKey = key;
@@ -1585,7 +1645,7 @@ function frame(now) {
       islandScene.render(dt);
     }
     const specimenCanvas =
-      ui.view === "guide" ? document.getElementById("specimen-canvas") : null;
+      ["guide", "compendium"].includes(ui.view) ? document.getElementById("specimen-canvas") : null;
     if (specimen && specimen.canvas !== specimenCanvas) {
       specimen.dispose();
       specimen = null;
@@ -1598,6 +1658,7 @@ function frame(now) {
           specimenCanvas,
           selected,
           profile.equippedSkin,
+          {...settings,reducedMotion:document.body.classList.contains('reduced-motion')},
         );
       else if (specimen.speciesId !== selected.id)
         specimen.setSpecies(selected, profile.equippedSkin);
@@ -1631,6 +1692,7 @@ function frame(now) {
   }
 }
 requestAnimationFrame(frame);
+document.dispatchEvent(new Event('jd:boot-ready'));
 // Local development diagnostics are excluded from the production build.
 if (import.meta.env.DEV) {
   window.__JD = {

@@ -2,6 +2,7 @@ import { SKINS, PERMANENT_MODIFIERS } from "./content.js";
 import { normalizeCollection, checkAchievements } from "./collections.js";
 import { normalizeBindings } from "./controls.js";
 import { newAncestry, normalizeAncestry, recordAncestryRun } from "./ancestry.js";
+import { normalizeLearning } from './player-experience.js';
 export const PROFILE_KEY = "jurassic-domination.profile.v1";
 export const PROFILE_VERSION = 4;
 export const SETTINGS_KEY = "jurassic-domination.settings.v1";
@@ -17,6 +18,11 @@ export const DEFAULT_SETTINGS = {
   uiScale: 1,
   reducedMotion: false,
   gamepad: true,
+  ambient: .55, uiVolume: .65, muted: false, muteUnfocused: true,
+  autoPause: true, fpsLimit: 60, renderScale: 1, particles: 1,
+  cameraSmoothing: true, showFPS: false, deadzone: .18,
+  highContrast: false, flashes: true, captions: false,
+  tutorialHints: true, interactionPrompts: true, autosaveInterval: 10,
 };
 export const UPGRADE_IDS = ["vitality", "instinct", "metabolism"];
 export function newProfile() {
@@ -39,6 +45,7 @@ export function newProfile() {
     activeFindClaims: [],
     achievements: [],
     ancestry: newAncestry(),
+    onboarding:normalizeLearning(),
     ...normalizeCollection(),
   };
 }
@@ -121,20 +128,25 @@ export function normalizeProfile(raw) {
     (id) => typeof id === "string" && id.length > 0 && id.length <= 160,
   ))];
   p.ancestry = normalizeAncestry(raw.ancestry);
+  p.onboarding=normalizeLearning(raw.onboarding||{skipped:p.runs>0||p.unlocked.length>0});
   return p;
 }
 export function normalizeSettings(raw) {
   const s = { ...DEFAULT_SETTINGS, controls: normalizeBindings() };
   if (!raw || typeof raw !== "object") return s;
-  for (const k of ["master", "music", "sfx"])
+  for (const k of ["master", "music", "sfx",'ambient','uiVolume','particles'])
     if (Number.isFinite(raw[k])) s[k] = Math.max(0, Math.min(1, raw[k]));
   if (["low", "medium", "high"].includes(raw.quality)) s.quality = raw.quality;
   for (const k of ["shake", "showDamage"])
     if (typeof raw[k] === "boolean") s[k] = raw[k];
   s.controls = normalizeBindings(raw.controls);
   if (Number.isFinite(raw.uiScale)) s.uiScale = Math.max(0.85, Math.min(1.25, raw.uiScale));
-  for (const k of ["reducedMotion", "gamepad"])
+  for (const k of ["reducedMotion", "gamepad",'muted','muteUnfocused','autoPause','cameraSmoothing','showFPS','highContrast','flashes','captions','tutorialHints','interactionPrompts'])
     if (typeof raw[k] === "boolean") s[k] = raw[k];
+  if([0,30,60,120,144].includes(raw.fpsLimit))s.fpsLimit=raw.fpsLimit;
+  if(Number.isFinite(raw.renderScale))s.renderScale=Math.max(.5,Math.min(1.25,raw.renderScale));
+  if(Number.isFinite(raw.deadzone))s.deadzone=Math.max(.05,Math.min(.4,raw.deadzone));
+  if([5,10,30,60].includes(raw.autosaveInterval))s.autosaveInterval=raw.autosaveInterval;
   return s;
 }
 export function loadData(storage) {

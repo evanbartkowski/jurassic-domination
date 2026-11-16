@@ -1,0 +1,16 @@
+import{chromium}from'@playwright/test';import assert from'node:assert/strict';import{writeFile}from'node:fs/promises';
+const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+try{const page=await browser.newPage();await page.goto('http://127.0.0.1:5173/assets/boot.css');
+ const result=await page.evaluate(async()=>{
+  const T=await import('/node_modules/three/build/three.module.js'),{SPECIES_BY_ID}=await import('/src/data.js'),{createDinosaur,animateCreature}=await import('/src/creatures.js'),{applyCosmetic}=await import('/src/collection-art.js'),{fitSpecimenCamera}=await import('/src/specimen-framing.js');
+  const model=createDinosaur(SPECIES_BY_ID.tyrannosaurus,true);applyCosmetic(model,'royal-crown');await new Promise((resolve,reject)=>{const end=performance.now()+15000;const poll=()=>model.userData.flagshipAsset?resolve():performance.now()>end?reject(Error('Asset load timeout')):setTimeout(poll,20);poll();});
+  const d=model.userData,first=d.cosmetic.position.y;applyCosmetic(model,'top-hat');const second=d.cosmetic.position.y;applyCosmetic(model,'royal-crown');
+  const scene=new T.Scene();scene.add(model,new T.HemisphereLight(0xe1edf3,0x453b32,2.2));const key=new T.DirectionalLight(0xffe0b0,3.2);key.position.set(5,8,6);scene.add(key);
+  const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(640,420);renderer.setClearColor(0x151820);renderer.toneMapping=T.ACESFilmicToneMapping;model.rotation.y=-.5;
+  for(let i=0;i<20;i++)animateCreature(model,1/60,i/60,0,true,0);const camera=new T.PerspectiveCamera(32,640/420,.01,1000);fitSpecimenCamera(camera,model,{padding:1.12});renderer.render(scene,camera);
+  model.updateMatrixWorld(true);const skins=[];model.traverse(o=>{if(o.isSkinnedMesh){o.skeleton.update();skins.push(o);}});const cb=new T.Box3().setFromObject(d.cosmetic),cc=cb.getCenter(new T.Vector3());cc.y+=10;const scalp=new T.Raycaster(cc,new T.Vector3(0,-1,0)).intersectObjects(skins,true)[0];
+  const out={gap:scalp?cb.min.y-scalp.point.y:null,first,second,attached:d.cosmetic.parent===d.cosmeticAnchor,headBone:d.cosmeticAnchor.parent.name,png:renderer.domElement.toDataURL().split(',')[1]};model.userData.dispose();renderer.dispose();return out;
+ });assert.ok(result.gap>=-.3&&result.gap<=.05,'crown seats against the animated scalp');assert.equal(result.first,-.05);assert.equal(result.second,-.05);assert.ok(result.attached);assert.equal(result.headBone,'head');await writeFile('artifacts/primeval/after/crowned-tyrant.png',Buffer.from(result.png,'base64'));
+ await writeFile('artifacts/primeval/after/cosmetics-qa.json',JSON.stringify({scalpGap:result.gap,checks:['wearables loaded before the GLB seat on its skull','changing wearables after the GLB keeps the head-bone attachment'],errors:[]},null,2));console.log('2 anatomical cosmetic checks passed');
+ await page.goto('http://127.0.0.1:5173');await page.waitForFunction(()=>window.__JD?.ui);await page.locator('[data-action="enter"]').click();await page.setViewportSize({width:360,height:800});await page.screenshot({path:'artifacts/primeval/after/home-360.png'});
+}finally{await browser.close();}

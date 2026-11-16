@@ -1,0 +1,112 @@
+{
+  "id": "euoplocephalus",
+  "family": "ankylosaur",
+  "triangles": 28274,
+  "bones": 22,
+  "dimensions": [
+    4.858883857727051,
+    2.199205160140991,
+    1.1911076307296753
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.054": {
+        "verts": 14257,
+        "faces": 28274,
+        "tris": 28274,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 60,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 27.8
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.001",
+      "distance": 0.0368
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0238
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0228
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0364
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0228
+    },
+    {
+      "part": "Claw.011",
+      "distance": 0.0238
+    },
+    {
+      "part": "Dermal_armor",
+      "distance": 0.0436
+    },
+    {
+      "part": "Dermal_armor.001",
+      "distance": 0.0235
+    },
+    {
+      "part": "Dermal_armor.002",
+      "distance": 0.0437
+    },
+    {
+      "part": "Flank_spike.002",
+      "distance": 0.008
+    },
+    {
+      "part": "Flank_spike.007",
+      "distance": 0.0081
+    },
+    {
+      "part": "Tail_club",
+      "distance": 0.0057
+    }
+  ],
+  "bytes": 1583156
+}

@@ -5,6 +5,8 @@ import {
   CHUNK_SIZE,
   WORLD_RADIUS,
 } from "./world-data.js";
+import {frontierFeatures,blockedFrontierPoint,pathDistance,LOCATIONS} from './frontier-map.js';
+import {MARINE_TRAITS,marineRoster,marineBodyLength} from './marine-ecology.js';
 export function worldFeatures(seed, cx, cy) {
   const random = seeded(chunkSeed(seed, cx, cy) ^ 0x6a983b),
     items = [];
@@ -57,7 +59,7 @@ export function worldFeatures(seed, cx, cy) {
       phase: random() * 6.28,
     });
   }
-  return items.filter(
+  const visible=items.filter(
     (f) =>
       ["water", "volcano"].includes(f.type) ||
       !items.some(
@@ -66,10 +68,15 @@ export function worldFeatures(seed, cx, cy) {
           Math.hypot(f.x - other.x, f.y - other.y) <
             other.radius + f.radius + 2,
       ),
-  );
+  ).filter(f=>!(f.type==='water'&&blockedFrontierPoint(seed,f.x,f.y,f.radius+2))&&!(f.solid&&pathDistance(f.x,f.y)<12)&&!LOCATIONS.some(s=>s.kind!=='lagoon'&&Math.hypot(f.x-s.x,f.y-s.y)<s.radius));
+  return [...visible,...frontierFeatures(seed,cx,cy).filter(f=>f.type!=='shelter'||!visible.some(w=>w.type==='water'&&Math.hypot(f.x-w.x,f.y-w.y)<w.radius+8))];
 }
 export function resolveObstacles(actor, size, features, onDemolish) {
   for (const f of features) {
+    if(f.type==='shelter'){
+      const padding=Math.min(.8,size*.25);
+      for(const side of [-1,1]){const dx=actor.x-f.x-side*4.4,dy=actor.y-f.y;if(Math.abs(dx)<1.5+padding&&Math.abs(dy)<4.2+padding)actor.x=f.x+side*4.4+Math.sign(dx||-side)*(1.5+padding);}
+    }
     if (!f.solid || f.destroyed) continue;
     const dx = actor.x - f.x,
       dy = actor.y - f.y,
@@ -90,6 +97,16 @@ export function resolveObstacles(actor, size, features, onDemolish) {
   }
 }
 export const MARINE_SWIMMERS = 3;
+/** Demolition rewards use the same IDs, age and types as all other run loot. */
+export function spawnDemolitionLoot(game, feature) {
+  if (feature.type === 'fallen-log') {
+    for (let i = 0; i < 3; i++) game.spawnFood('meat', feature.x + (i - 1) * 1.2,
+      feature.y + ((i % 2) - .5) * 1.2, 20, { source: 'log-grubs', name: 'Log Grubs' });
+  } else if (feature.type === 'boulder') {
+    game.spawnFood('essence', feature.x, feature.y, 45, { source: 'amber-geode', name: 'Amber Essence' });
+  }
+  game.emit('obstacle-demolished', { feature });
+}
 export function marineSpeed(f, index, hunting = false) {
   return (hunting ? 5.2 : 3.2) + Math.min(7, f.tier || 0) * 0.25 + index * 0.24;
 }
@@ -113,15 +130,14 @@ function swim(f, game, dt) {
     state = {
       swimmers: Array.from({ length: MARINE_SWIMMERS }, (_, i) => {
         const pose = marinePose(f, Math.max(0, game.time - dt), i);
-        const maxHp = 50 + (f.tier || 0) * 35;
-        const isKronosaur = (i + (f.tier || 0)) % 2 === 1;
+        const speciesId=marineRoster(f)[i],traits=MARINE_TRAITS[speciesId]||{},maxHp=(50+(f.tier||0)*35)*(traits.hp||1);
         return {
           ...pose,
           id: `${f.id}:swimmer:${i}`,
           poolId: f.id,
           index: i,
-          speciesId: isKronosaur ? "abyssal-kronosaur" : "tideweaver",
-          name: isKronosaur ? "Abyssal Hunter" : "Tideweaver Plesiosaur",
+          speciesId,
+          name: speciesId.split('-').map(s=>s[0].toUpperCase()+s.slice(1)).join(' '),
           hp: maxHp,
           maxHp,
           tier: f.tier || 0,
@@ -140,19 +156,20 @@ function swim(f, game, dt) {
     if (fish.dead) {
       if (game.time >= (fish.respawnAt || 0)) {
         fish.dead = false;
-        fish.maxHp = 50 + (f.tier || 0) * 35;
+        fish.maxHp = (50 + (f.tier || 0) * 35)*(MARINE_TRAITS[fish.speciesId]?.hp||1);
         fish.hp = fish.maxHp;
       } else {
         continue;
       }
     }
+    const canHunt=!MARINE_TRAITS[fish.speciesId]?.passive||(fish.angeredUntil||0)>game.time;
     const patrol = marinePose(f, game.time, i),
-      target = hunting ? p : patrol;
+      target = hunting&&canHunt ? p : patrol;
     let tx = target.x - f.x,
       ty = target.y - f.y;
     // Keep the entire predator strictly submerged in its pool, away from the dry bank.
     const targetRadius = Math.hypot(tx, ty),
-      limit = Math.max(1, f.radius - 3.0);
+      limit = Math.max(1, f.radius - Math.max(3,marineBodyLength(f,i)*.55));
     if (targetRadius > limit) {
       tx *= limit / targetRadius;
       ty *= limit / targetRadius;
@@ -163,8 +180,8 @@ function swim(f, game, dt) {
       desired = Math.atan2(dy, dx),
       turn = Math.atan2(Math.sin(desired - fish.angle), Math.cos(desired - fish.angle)),
       maxTurn = dt * (hunting ? 2.8 : 1.9);
-    fish.angle += Math.max(-maxTurn, Math.min(maxTurn, turn));
-    const step = Math.min(distance, marineSpeed(f, i, hunting) * dt),
+    if(!(fish.attackWindup>0)&&!(fish.biteReadyUntil>game.time))fish.angle += Math.max(-maxTurn, Math.min(maxTurn, turn));
+    const step = Math.min(distance, marineSpeed(f, i, hunting)*(MARINE_TRAITS[fish.speciesId]?.speed||1) * dt * (fish.attackWindup>0?.15:1)),
       nx = fish.x + Math.cos(fish.angle) * step,
       ny = fish.y + Math.sin(fish.angle) * step;
     // Reject an outward step instead of snapping back to the water boundary.
@@ -172,47 +189,18 @@ function swim(f, game, dt) {
       fish.x = nx;
       fish.y = ny;
     }
-    fish.hunting = hunting;
+    fish.hunting = hunting&&canHunt;
+    fish.attackCooldown=Math.max(0,(fish.attackCooldown||0)-dt);
+    if(fish.hunting&&Math.hypot(fish.x-p.x,fish.y-p.y)<marineBodyLength(f,i)*.42+3&&fish.attackCooldown===0&&!fish.attackWindup){fish.attackWindup=.48;fish.attackAngle=fish.angle;}
+    if(fish.attackWindup>0){fish.attackWindup=Math.max(0,fish.attackWindup-dt);if(fish.attackWindup===0){fish.biteReadyUntil=game.time+.18;fish.attackCooldown=1.5;}}
   }
   return state;
 }
 export function updateWildlife(game, dt) {
   const p = game.player,
     features = game.worldFeatures || [];
-  resolveObstacles(p, game.effectiveSize || game.species.size, features, (f, actor) => {
-    try {
-      game.sound?.play?.("demolish");
-    } catch {}
-    if (f.type === "fallen-log") {
-      game.notifications?.push?.({ text: "🪵 Hollow Log Smashed! Insects scattered!", color: "#ca8a04", time: 3 });
-      if (Array.isArray(game.foods)) {
-        for (let i = 0; i < 3; i++) {
-          game.foods.push({
-            id: `demolish_grub_${f.id}_${i}_${Math.floor((game.time || 0) * 100)}`,
-            type: "insect",
-            x: f.x + (i - 1) * 1.2,
-            y: f.y + ((i % 2) - 0.5) * 1.2,
-            value: 20,
-            nutrition: 25,
-            spawned: game.time || 0,
-          });
-        }
-      }
-    } else if (f.type === "boulder") {
-      game.notifications?.push?.({ text: "💎 Amber Geode Shattered! Essence exposed!", color: "#f59e0b", time: 3 });
-      if (Array.isArray(game.foods)) {
-        game.foods.push({
-          id: `demolish_amber_${f.id}_${Math.floor((game.time || 0) * 100)}`,
-          type: "amber",
-          x: f.x,
-          y: f.y,
-          value: 45,
-          nutrition: 15,
-          spawned: game.time || 0,
-        });
-      }
-    }
-  });
+  resolveObstacles(p, game.effectiveSize || game.species.size, features,
+    feature => spawnDemolitionLoot(game, feature));
   game._hazardCooldown = Math.max(0, (game._hazardCooldown || 0) - dt);
   game.hazardHint = "";
   const activePools = new Set();
@@ -222,29 +210,31 @@ export function updateWildlife(game, dt) {
       swim(f, game, Math.max(0, Math.min(0.1, dt)));
     }
     const d = Math.hypot(p.x - f.x, p.y - f.y);
-    if (d > f.radius + 8) continue;
+    if (d > f.radius + 8 && !f.attackDueAt) continue;
     if (f.type === "water" && d < f.radius) {
       const aquatic = game.species.body === 'marine', amphibious = game.species.body === 'croc';
       const drag = aquatic ? .2 : amphibious ? .7 : 2.7;
       p.vx *= Math.exp(-dt * drag);
       p.vy *= Math.exp(-dt * drag);
       game.hazardHint = p.submerged ? 'SUBMERGED · QUIET MOVEMENT' : "DEEP WATER · MARINE PREDATORS";
+      let contactingDamage=1;
       if (
         game._hazardCooldown === 0 &&
         d <= f.radius - 2.0 &&
         [0, 1, 2].some((i) => {
           const fish = marinePose(f, game.time, i, p, game.marineState);
-          if (!fish || fish.dead) return false;
-          return (
+          if (!fish || fish.dead||!fish.hunting||!(fish.biteReadyUntil>0)||fish.biteReadyUntil<game.time) return false;
+          const contact=(
             Math.hypot(
-              fish.x + Math.cos(fish.angle) * 1.6 - p.x,
-              fish.y + Math.sin(fish.angle) * 1.6 - p.y,
+              fish.x + Math.cos(fish.angle) * marineBodyLength(f,i)*.36 - p.x,
+              fish.y + Math.sin(fish.angle) * marineBodyLength(f,i)*.36 - p.y,
             ) < 1.35 + (game.effectiveSize || game.species.size) * 0.3
           );
+          if(contact)contactingDamage=MARINE_TRAITS[fish.speciesId]?.damage||1;return contact;
         })
       ) {
         game.damagePlayer(
-          (11 + f.tier * 6) * game.rules.enemyDamage * (aquatic ? p.submerged ? .25 : .5 : amphibious ? .7 : 1),
+          (11 + f.tier * 6) * contactingDamage * game.rules.enemyDamage * (aquatic ? p.submerged ? .25 : .5 : amphibious ? .7 : 1),
           "Marine predator bite",
         );
         game._hazardCooldown = 1.0;
@@ -256,17 +246,23 @@ export function updateWildlife(game, dt) {
         f.type === "mushrooms" ? "TOXIC SPORES" : "POISONOUS BLOOM";
       p.poisoned = Math.max(p.poisoned, 4);
     }
-    if (f.type === "carnivore" && !f.dead && d < f.radius + 5) {
-      game.hazardHint = "CARNIVOROUS PLANT";
-      if (d < f.radius + 3.2 && game._hazardCooldown === 0) {
-        game.damagePlayer(
-          (9 + f.tier * 5) * game.rules.enemyDamage,
-          "Snapjaw pitcher",
-        );
-        p.poisoned = 3;
-        game._hazardCooldown = 0.85;
+    if (f.type === "carnivore" && !f.dead) {
+      if (d < f.radius + 5) game.hazardHint = f.attackDueAt ? "SNAPJAW WINDUP � SIDESTEP" : "CARNIVOROUS PLANT";
+      if (f.attackDueAt && game.time >= f.attackDueAt) {
+        f.attackDueAt = 0;
         f.lastStrike = game.time;
+        f.nextAttackAt = game.time + 1.6;
+        const angle = Math.atan2(p.y-f.y,p.x-f.x);
+        const delta = Math.atan2(Math.sin(angle-f.attackAngle),Math.cos(angle-f.attackAngle));
+        if (d < f.radius + 3.2 && Math.abs(delta) < .55 && !(p.invulnerable > 0)) {
+          game.damagePlayer((9 + f.tier * 5) * game.rules.enemyDamage, "Snapjaw pitcher");
+          p.poisoned = 3;
+        }
         game.emit("plant-bite", { x: f.x, y: f.y });
+      } else if (!f.attackDueAt && d < f.radius + 3.2 && game.time >= (f.nextAttackAt || 0)) {
+        f.attackStartedAt = game.time;
+        f.attackDueAt = game.time + .8;
+        f.attackAngle = Math.atan2(p.y-f.y,p.x-f.x);
       }
     }
     if (f.type === "volcano" && d < f.radius) {

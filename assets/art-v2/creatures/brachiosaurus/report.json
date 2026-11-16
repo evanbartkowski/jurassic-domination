@@ -1,0 +1,17 @@
+{
+  "id": "brachiosaurus",
+  "source": "assets\\art-v2\\creatures\\brachiosaurus\\brachiosaurus.blend",
+  "export": "public\\assets\\models-v2\\brachiosaurus\\brachiosaurus.glb",
+  "triangles": 38024,
+  "bones": 16,
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "meshes": 1,
+  "bytes": 1690096
+}

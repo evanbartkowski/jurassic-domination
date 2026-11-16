@@ -48,7 +48,7 @@ test("player attack demolishes nearby fallen logs and spawns insects", () => {
   assert.ok(logFeature.destroyed, "Fallen log should be destroyed after attack");
   assert.ok(!logFeature.solid, "Destroyed log should no longer be solid");
   assert.ok(g.foods.length > initialFoodCount, "Insects/food should spawn from smashed log");
-  const grubs = g.foods.filter((f) => String(f.id).includes("demolish_grub") || f.type === "insect");
+  const grubs = g.foods.filter((f) => f.type === 'meat' && f.source === 'log-grubs');
   assert.ok(grubs.length >= 1, "Should spawn demolish grubs");
 });
 
@@ -74,7 +74,7 @@ test("player attack smashes amber boulders into essence", () => {
 
   assert.ok(boulderFeature.destroyed, "Boulder should be shattered");
   assert.ok(!boulderFeature.solid, "Shattered boulder should not be solid");
-  const amber = g.foods.filter((f) => f.type === "amber");
+  const amber = g.foods.filter((f) => f.type === 'essence' && f.source === 'amber-geode');
   assert.ok(amber.length >= 1, "Should spawn amber essence on boulder smash");
 });
 

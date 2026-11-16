@@ -3,8 +3,56 @@ import assert from "node:assert/strict";
 import { Game } from "../src/game.js";
 import { snapshotGame, restoreGame, validateSnapshot } from "../src/run-state.js";
 import { LocalAuthority, FIXED_DELTA, normalizeInput, replayCommands } from "../src/simulation.js";
+import { updateWildlife } from '../src/wilderness.js';
 
 const make = (seed = 401) => new Game({ seed, runId: `test-run-${seed}` });
+test('a restored egg keeps its offered starters and a tier-two hatchling can checkpoint', () => {
+  const egg = make(401), restored = restoreGame(snapshotGame(egg));
+  assert.deepEqual(restored.starterChoices, egg.starterChoices);
+  const chosenSpeciesId = 'stygimoloch';
+  assert.ok(restored.starterChoices.includes(chosenSpeciesId));
+  assert.ok(new LocalAuthority(restored).dispatch({ type: 'hatch', chosenSpeciesId }).ok);
+  assert.equal(restored.tier, restored.species.tier);
+  assert.doesNotThrow(() => snapshotGame(restored));
+});
+test('a consumed catalyst keeps its exact offered reward across a checkpoint and applies once', () => {
+  const g = make(410); g.hatch(); g.openMutationDrop('rare'); g.consumeEvents();
+  const offers = [...g.pendingMutationChoices], saved = snapshotGame(g), peer = restoreGame(saved);
+  assert.deepEqual(peer.pendingMutationChoices, offers);
+  assert.equal(peer.mutationDropRarity, 'rare');
+  assert.deepEqual(snapshotGame(peer), saved);
+  const authority = new LocalAuthority(peer);
+  assert.ok(authority.dispatch({ type: 'apply-mutation', mutationId: offers[0] }).ok);
+  assert.equal(authority.dispatch({ type: 'apply-mutation', mutationId: offers[0] }).ok, false);
+  assert.equal(peer.state, 'playing');
+});
+test('older catalyst checkpoints with missing offers recover a usable reward without changing the PRNG', () => {
+  const g = make(411); g.hatch(); g.openMutationDrop('rare'); g.consumeEvents();
+  const saved = snapshotGame(g); delete saved.game.pendingMutationChoices;
+  delete saved.game.mutationDropRarity; delete saved.game.starterChoices;
+  const peer = restoreGame(saved);
+  assert.equal(peer._randomState, g._randomState);
+  assert.equal(peer._recoveredMutationChoices, true);
+  assert.ok(peer.pendingMutationChoices.length);
+  assert.ok(new LocalAuthority(peer).dispatch({ type: 'apply-mutation', mutationId: peer.pendingMutationChoices[0] }).ok);
+});
+test('biting and charging through logs and boulders leave ageable loot and restorable checkpoints', () => {
+  for (const method of ['bite', 'charge']) for (const type of ['fallen-log', 'boulder']) {
+    const g = make(401); g.hatch(); g.entities = []; g.foods = [];
+    const feature = g.worldFeatures.find(f => f.type === type);
+    assert.ok(feature);
+    g.worldFeatures = [feature]; feature.hits = 1;
+    g.player.x = feature.x - 2; g.player.y = feature.y; g.player.angle = 0;
+    if (method === 'bite') g.attack();
+    else { g.player.sprinting = true; updateWildlife(g, FIXED_DELTA); }
+    assert.equal(feature.destroyed, true, `${method} ${type}`);
+    assert.equal(g.foods.length, type === 'fallen-log' ? 3 : 1);
+    assert.ok(g.foods.every(f => Number.isSafeInteger(f.id) && Number.isFinite(f.age)), `${method} ${type} loot must use the food schema`);
+    const authority = new LocalAuthority(g); assert.ok(authority.step({}).ok);
+    const saved = snapshotGame(g);
+    assert.deepEqual(snapshotGame(restoreGame(saved)), saved);
+  }
+});
 test("checkpoint restores PRNG, inactive chunks, loot, pending rewards and the same next ticks", () => {
   const g = make(), authority = new LocalAuthority(g);
   authority.dispatch({ type: "hatch" });
@@ -91,6 +139,9 @@ test("malformed or future snapshots fail closed before runtime mutation", () => 
     (s) => { s.game.projectiles.push({ id: "bad", x: 0 }); },
     (s) => { s.game.lairs[0].respawnAt = null; },
     (s) => { s.game.runSkills.push({ id: "fake", cooldown: 0 }); },
+    (s) => { s.game.pendingMutationChoices = ['fake']; },
+    (s) => { s.game.pendingMutationChoices = ['razor', 'razor']; },
+    (s) => { s.game.starterChoices = ['fake']; },
     (s) => { s.game.activeChunks.push(s.game.activeChunks[0]); },
     (s) => { s.game.worldFeatures[0].phase = null; },
     (s) => { Object.defineProperty(s.game.player, "__proto__", { value: { evil: true }, enumerable: true }); },

@@ -4,6 +4,8 @@ import { animateCreature } from "./creatures.js";
 import { CATALOG, PETS } from "./collection-data.js";
 import { seeded } from "./world-data.js";
 import { placementValid } from "./collections.js";
+import { poolMaterial } from './environment-presentation.js';
+import {naturalMaterial,naturalTextures,createNaturalEnvironment} from './natural-materials.js';
 
 export class IslandScene {
   constructor(canvas, profile, callbacks, settings) {
@@ -33,17 +35,18 @@ export class IslandScene {
       powerPreference: "high-performance",
     });
     this.renderer.setPixelRatio(
-      Math.min(devicePixelRatio, settings.quality === "low" ? 1 : 1.6),
+      (settings.renderScale??1)*Math.min(devicePixelRatio, settings.quality === "low" ? 1 : 1.6),
     );
-    this.renderer.setClearColor(0x547e87);
+    this.renderer.setClearColor(0x607c7e);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.toneMappingExposure = 1.03;
     this.renderer.shadowMap.enabled = settings.quality !== "low";
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.scene = new THREE.Scene();
+    this.naturalEnvironment=createNaturalEnvironment(this.renderer);this.scene.environment=this.naturalEnvironment.texture;this.scene.environmentIntensity=.24;
     this.scene.fog = new THREE.Fog(0x769aa0, 135, 290);
-    this.scene.add(new THREE.HemisphereLight(0xe1efdd, 0x466573, 2.2));
-    this.sun = new THREE.DirectionalLight(0xffdbab, 3.5);
+    this.scene.add(new THREE.HemisphereLight(0xd3dfda, 0x4d5546, 1.85));
+    this.sun = new THREE.DirectionalLight(0xffedcf, 2.8);
     this.sun.position.set(-30, 70, 25);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
@@ -77,7 +80,7 @@ export class IslandScene {
       return mesh;
     };
     const sand = new THREE.MeshStandardMaterial({
-      color: 0xc6bd93,
+      color: 0xa79e85,
       roughness: 1,
     });
     const earth = new THREE.MeshStandardMaterial({
@@ -92,8 +95,8 @@ export class IslandScene {
     for (let i = 0; i < v.count; i++) {
       const x = v.getX(i),
         z = v.getY(i);
-      const c = new THREE.Color(0x64824f).lerp(
-        new THREE.Color(0x9fba70),
+      const c = new THREE.Color(0x647961).lerp(
+        new THREE.Color(0x949775),
         0.35 + 0.25 * Math.sin(x * 0.17) * Math.cos(z * 0.22),
       );
       colors.push(c.r, c.g, c.b);
@@ -129,19 +132,19 @@ export class IslandScene {
     map.repeat.set(5, 5);
     map.anisotropy = 8;
     map.colorSpace = THREE.SRGBColorSpace;
-    this.ground.material.map = map;
+    const soil=naturalTextures('soil');Object.assign(this.ground.material,soil);const groundUV=this.ground.geometry.attributes.uv;for(let i=0;i<groundUV.count;i++)groundUV.setXY(i,groundUV.getX(i)*18,groundUV.getY(i)*18);
     this.ground.material.needsUpdate = true;
     this.groundMap = map;
     this.ocean = add(
-      new THREE.PlaneGeometry(600, 600, 48, 48),
-      new THREE.MeshStandardMaterial({
-        color: 0x4b9da8,
-        metalness: 0.23,
-        roughness: 0.28,
-      }),
+      new THREE.PlaneGeometry(600, 600),
+      poolMaterial(300,0x416c70,40),
       [0, -0.3, 0],
       [-Math.PI / 2, 0, 0],
     );
+    // Island time is independent of expedition time; uniforms must not share clocks.
+    this.ocean.material.uniforms.uTime={value:0};
+    this.ocean.material.uniforms.uSky={value:new THREE.Color(0x8daba6)};
+    this.ocean.material.uniforms.uSun={value:new THREE.Color(0xe6d6b3)};
     this.grid = new THREE.GridHelper(64, 64, 0xc5d1ab, 0x9eaf8d);
     this.grid.position.y = 0.34;
     this.grid.material.transparent = true;
@@ -626,15 +629,7 @@ export class IslandScene {
       m.material.opacity = 0.16 + Math.sin(this.time * 0.8 + i) * 0.08;
       m.scale.setScalar(1 + Math.sin(this.time * 0.35 + i) * 0.014);
     });
-    const sea = this.ocean.geometry.attributes.position;
-    for (let i = 0; i < sea.count; i++)
-      sea.setZ(
-        i,
-        Math.sin(sea.getX(i) * 0.045 + this.time * 0.5) * 0.12 +
-          Math.cos(sea.getY(i) * 0.07 + this.time * 0.35) * 0.09,
-      );
-    sea.needsUpdate = true;
-    this.ocean.material.roughness = 0.28 + Math.sin(this.time * 0.4) * 0.035;
+    this.ocean.material.uniforms.uTime.value=this.time;
     this.renderer.render(this.scene, this.camera);
   }
   dispose() {
@@ -650,6 +645,7 @@ export class IslandScene {
     this.selection.geometry.dispose();
     this.selection.material.dispose();
     this.groundMap.dispose();
+    this.naturalEnvironment?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     this.canvas.onpointerdown =

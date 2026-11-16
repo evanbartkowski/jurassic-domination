@@ -1,0 +1,136 @@
+{
+  "id": "dimetrodon",
+  "family": "synapsid",
+  "triangles": 21020,
+  "bones": 22,
+  "dimensions": [
+    4.522076606750488,
+    2.193878173828125,
+    1.960701584815979
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.052": {
+        "verts": 10622,
+        "faces": 21020,
+        "tris": 21020,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 56,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 33.8
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0279
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0401
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0363
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0395
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.028
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0399
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0364
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.04
+    },
+    {
+      "part": "Claw",
+      "distance": 0.0357
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.033
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0325
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0245
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0219
+    },
+    {
+      "part": "Claw.006",
+      "distance": 0.0325
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0331
+    },
+    {
+      "part": "Claw.008",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.022
+    },
+    {
+      "part": "Claw.011",
+      "distance": 0.0245
+    }
+  ],
+  "bytes": 1215556
+}

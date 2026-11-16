@@ -1,0 +1,17 @@
+{
+  "id": "tyrannosaurus",
+  "source": "assets\\art-v2\\creatures\\tyrannosaurus\\tyrannosaurus.blend",
+  "export": "public\\assets\\models-v2\\tyrannosaurus\\tyrannosaurus.glb",
+  "triangles": 36516,
+  "bones": 12,
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "meshes": 1,
+  "bytes": 1737596
+}

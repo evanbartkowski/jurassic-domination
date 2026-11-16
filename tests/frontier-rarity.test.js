@@ -1,0 +1,5 @@
+import test from'node:test';import assert from'node:assert/strict';import{Game}from'../src/game.js';import{MUTATIONS}from'../src/data.js';
+const rules=await import('../src/mutation-rarity.js').catch(()=>({}));
+test('common and rare catalysts cannot leak legendary abilities through filler slots',()=>{for(let i=1;i<=60;i++){const g=new Game({seed:i});g.hatch();g.openMutationDrop(i%2?'common':'rare');assert.ok(g.pendingMutationChoices.every(id=>MUTATIONS.find(m=>m.id===id).rarity!=='legendary'));}});
+test('legendary catalysts remain an explicit source of legendary choices',()=>{const g=new Game({seed:34});g.hatch();g.openMutationDrop('legendary');assert.ok(g.pendingMutationChoices.some(id=>MUTATIONS.find(m=>m.id===id).rarity==='legendary'));});
+test('legendary kill drops are genuinely rare even from bosses',()=>{assert.equal(typeof rules.mutationRarityFromKill,'function');let boss=0,elite=0;for(let i=0;i<10000;i++){boss+=rules.mutationRarityFromKill(6,true,i/10000)==='legendary';elite+=rules.mutationRarityFromKill(5,false,i/10000)==='legendary';}assert.ok(boss<=350&&elite<=60);});

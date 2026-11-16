@@ -1,0 +1,124 @@
+{
+  "id": "stegosaurus",
+  "family": "stegosaur",
+  "triangles": 21582,
+  "bones": 22,
+  "dimensions": [
+    5.34032678604126,
+    1.6456899642944336,
+    2.430659770965576
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.016": {
+        "verts": 10867,
+        "faces": 21582,
+        "tris": 21582,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 38,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 5,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.04,
+        "uv_coverage_pct": 31.3
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw",
+      "distance": 0.0342
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0231
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0206
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0352
+    },
+    {
+      "part": "Claw.008",
+      "distance": 0.0324
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0232
+    },
+    {
+      "part": "Claw.011",
+      "distance": 0.0245
+    },
+    {
+      "part": "Stegosaur_plate.003",
+      "distance": 0.0074
+    },
+    {
+      "part": "Stegosaur_plate.004",
+      "distance": 0.0114
+    },
+    {
+      "part": "Stegosaur_plate.005",
+      "distance": 0.0079
+    },
+    {
+      "part": "Stegosaur_plate.006",
+      "distance": 0.038
+    },
+    {
+      "part": "Stegosaur_plate.007",
+      "distance": 0.0273
+    },
+    {
+      "part": "Thagomizer",
+      "distance": 0.0273
+    },
+    {
+      "part": "Thagomizer.002",
+      "distance": 0.0277
+    }
+  ],
+  "bytes": 1215128
+}

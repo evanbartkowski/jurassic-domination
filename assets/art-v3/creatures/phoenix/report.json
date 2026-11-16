@@ -1,0 +1,84 @@
+{
+  "id": "phoenix",
+  "family": "phoenix",
+  "triangles": 30908,
+  "bones": 22,
+  "dimensions": [
+    4.56389856338501,
+    6.027859210968018,
+    2.782518148422241
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.034": {
+        "verts": 15588,
+        "faces": 30908,
+        "tris": 30908,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 67,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.04,
+        "uv_coverage_pct": 27.6
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.001",
+      "distance": 0.0368
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0352
+    },
+    {
+      "part": "Dorsal_feather",
+      "distance": 0.2164
+    },
+    {
+      "part": "Dorsal_feather.001",
+      "distance": 0.1706
+    },
+    {
+      "part": "Dorsal_feather.002",
+      "distance": 0.0797
+    }
+  ],
+  "bytes": 1640580
+}

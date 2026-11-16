@@ -16,7 +16,7 @@ test("physical keys obey remaps, retain movement alternatives and release cleanl
   assert.equal(actionHeld("attack", new Set(["Space"]), null, controls), false);
   assert.equal(actionHeld("attack", new Set(), new Set(["KeyZ"]), controls), true);
   assert.equal(actionHeld("left", new Set(["ArrowLeft"]), null, controls), true);
-  assert.equal(actionHeld("sprint", new Set(["ControlRight"]), null, controls), true);
+  assert.equal(actionHeld("sprint", new Set(["ShiftRight"]), null, controls), true);
   assert.equal(actionHeld("attack", new Set(), null, controls), false);
 });
 test("standard controller axes have a deadzone and buttons map to distinct intents", () => {
@@ -28,3 +28,18 @@ test("standard controller axes have a deadzone and buttons map to distinct inten
   assert.equal(gamepadIntent({ ...pad, connected: false }).attack, false);
   assert.equal(gamepadIntent({ ...pad, mapping: "" }).x, 0);
 });
+
+test('rebinding sprint removes its old Shift alternative and build keys never duplicate relics',()=>{
+ const changed=rebind(DEFAULT_BINDINGS,'sprint','KeyK');
+ assert.equal(actionHeld('sprint',new Set(['ShiftLeft']),null,changed),false);
+ assert.ok(DEFAULT_BINDINGS.build,'build sheet has a remappable action');
+ const legacy={...DEFAULT_BINDINGS,skill4:'KeyB'};delete legacy.build;
+ const imported=normalizeBindings(legacy);assert.equal(imported.build,'KeyB');assert.notEqual(imported.skill4,imported.build);assert.equal(new Set(Object.values(imported)).size,ACTIONS.length);
+});
+test('the legacy C roar shortcut follows rebinding and cannot bypass a new roar key',()=>{
+ assert.equal(actionHeld('roar',new Set(['KeyC']),null,DEFAULT_BINDINGS),true);
+ const changed=rebind(DEFAULT_BINDINGS,'roar','KeyP');
+ assert.equal(actionHeld('roar',new Set(['KeyC']),null,changed),false);
+ assert.equal(actionHeld('roar',new Set(['KeyP']),null,changed),true);
+});
+test('old default control trio migrates while custom bindings survive',()=>{const old={...DEFAULT_BINDINGS,dash:'ShiftLeft',sprint:'ControlLeft',technique:'KeyR'};assert.deepEqual(normalizeBindings(old),DEFAULT_BINDINGS);const custom=rebind(DEFAULT_BINDINGS,'dash','KeyK');assert.deepEqual(normalizeBindings(custom),custom);});

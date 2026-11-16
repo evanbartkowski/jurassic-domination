@@ -1,0 +1,136 @@
+{
+  "id": "megalodon",
+  "family": "shark",
+  "triangles": 23228,
+  "bones": 12,
+  "dimensions": [
+    5.016167640686035,
+    3.072732925415039,
+    1.990278720855713
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.001": {
+        "verts": 11730,
+        "faces": 23228,
+        "tris": 23228,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 58,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 44.7
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.001",
+      "distance": 0.0238
+    },
+    {
+      "part": "Lower_tooth.003",
+      "distance": 0.0238
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0307
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0442
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0394
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0408
+    },
+    {
+      "part": "Lower_tooth.009",
+      "distance": 0.0236
+    },
+    {
+      "part": "Lower_tooth.011",
+      "distance": 0.0239
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0306
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0443
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0394
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0413
+    },
+    {
+      "part": "Dorsal_fin",
+      "distance": 0.0502
+    },
+    {
+      "part": "Caudal_fluke",
+      "distance": 0.0128
+    },
+    {
+      "part": "Gill_slit",
+      "distance": 0.0456
+    },
+    {
+      "part": "Gill_slit.005",
+      "distance": 0.0456
+    },
+    {
+      "part": "Swept_pectoral_fin",
+      "distance": 0.0555
+    },
+    {
+      "part": "Swept_pectoral_fin.001",
+      "distance": 0.0553
+    }
+  ],
+  "bytes": 1149940
+}

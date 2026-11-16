@@ -1,0 +1,100 @@
+{
+  "id": "mononykus",
+  "family": "ornithomimid",
+  "triangles": 23764,
+  "bones": 20,
+  "dimensions": [
+    4.640766143798828,
+    1.077695369720459,
+    2.4137227535247803
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.045": {
+        "verts": 11952,
+        "faces": 23764,
+        "tris": 23764,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 35,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 35.9
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw",
+      "distance": 0.0324
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0366
+    },
+    {
+      "part": "Finger",
+      "distance": 0.0257
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0342
+    },
+    {
+      "part": "Finger.001",
+      "distance": 0.0263
+    },
+    {
+      "part": "Dorsal_feather",
+      "distance": 0.1697
+    },
+    {
+      "part": "Dorsal_feather.001",
+      "distance": 0.1383
+    },
+    {
+      "part": "Dorsal_feather.002",
+      "distance": 0.0622
+    }
+  ],
+  "bytes": 1266084
+}

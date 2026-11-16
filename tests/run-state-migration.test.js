@@ -85,7 +85,8 @@ test("v1 migrations and their continued authoritative ticks reproduce exactly", 
     assert.equal(a.step(input).ok, true); assert.equal(b.step(input).ok, true);
   }
   assert.deepEqual(snapshotGame(a.game), snapshotGame(b.game));
-  assert.equal(a.game.worldState.clock > 2.9, true);
+  assert.ok(a.game.worldState.clock>2.5);
+  assert.ok(Math.abs(a.game.worldState.clock-(a.game.time-legacy.game.time))<1e-8,'world and simulation clocks advance together through hit-stop');
   assert.ok(a.game.time > legacy.game.time);
 });
 

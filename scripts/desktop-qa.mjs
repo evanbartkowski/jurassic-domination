@@ -1,9 +1,11 @@
+import {enterTitle} from './enter-title.mjs';
 import { _electron as electron } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, access, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import packageInfo from '../package.json' with { type: 'json' };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const executable = process.env.JD_QA_EXE
@@ -84,6 +86,7 @@ try {
     if (/^https?:/i.test(request.url())) externalRequests.push(request.url());
   });
 
+  await enterTitle(page);
   await check(
     "desktop profile is isolated from existing player data",
     async () => {
@@ -105,6 +108,27 @@ try {
       return image.naturalWidth;
     });
     assert.ok(artwork > 1000);
+  });
+
+  await check('desktop policy permits v4 Blender models and their embedded PBR maps to load offline', async () => {
+    const header = await page.evaluate(async () => {
+      const response = await fetch(new URL('assets/models-v4/tyrannosaurus.glb', location.href));
+      const bytes=await response.arrayBuffer(),view=new DataView(bytes),gltf=JSON.parse(new TextDecoder().decode(new Uint8Array(bytes,20,view.getUint32(12,true))));
+      for(const image of gltf.images){const b=gltf.bufferViews[image.bufferView],blob=new Blob([bytes.slice(28+view.getUint32(12,true)+b.byteOffset,28+view.getUint32(12,true)+b.byteOffset+b.byteLength)],{type:image.mimeType}),url=URL.createObjectURL(blob);try{const fetched=await fetch(url);const bitmap=await createImageBitmap(await fetched.blob());if(bitmap.width<256)throw Error('PBR map missing');bitmap.close();}finally{URL.revokeObjectURL(url);}}
+      return view.getUint32(0,true);
+    });
+    assert.equal(header, 0x46546c67);
+  });
+
+  await check('native startup recovery assets and factual credits load from the packaged files', async () => {
+    await page.locator('#boot-screen').waitFor({ state: 'hidden' });
+    assert.ok(await page.evaluate(() => [...document.scripts].some(s => /assets\/boot\.js$/.test(s.src))));
+    await page.locator('[data-action="credits"]').click();
+    assert.match(await page.locator('.credits-panel').textContent(), new RegExp(packageInfo.version.replaceAll('.', '\\.')));
+    await page.locator('[data-action="license"]').click();
+    await page.waitForFunction(() => document.getElementById('license-text')?.textContent.includes('Permission is hereby granted'));
+    await page.screenshot({ path: 'artifacts/player-polish/after/desktop-credits.png' });
+    await page.keyboard.press('Escape');
   });
 
   await check(
@@ -151,8 +175,8 @@ try {
         localStorage.setItem("jurassic-domination.profile.v1", JSON.stringify({ version: 3, dna: 30 }));
         sessionStorage.setItem("jd-qa-legacy-profile-seeded", "1");
       });
-      await page.reload();
-      await page.getByRole("button", { name: /DNA SHOP/ }).click();
+      await page.reload();await enterTitle(page);
+    await page.locator('[data-action="shop"]').click();
       await page.locator('[data-shop-category="pet"]').click();
       await page.locator('[data-product="pet:compy"]').click();
       await page.locator("[data-buy]").click();
@@ -173,8 +197,8 @@ try {
       assert.equal(saved.dna, 24);
       assert.equal(saved.activePet, "compy");
       await page.screenshot({ path: "artifacts/desktop-island.png" });
-      await page.reload();
-      await page.getByRole("button", { name: /MY DINOSAUR ISLAND/ }).click();
+      await page.reload();await enterTitle(page);
+      await page.locator('[data-action="island"]').click();
       await page.locator("#build-toggle").click();
       await page.locator('[data-island-companion="compy"]').waitFor();
       assert.match(
@@ -288,7 +312,7 @@ try {
         );
       }
       await page.keyboard.press("KeyJ");
-      await page.locator(".bloodline-panel").waitFor();
+      await page.locator(".bloodlines-wrap").waitFor();
       assert.equal(await page.locator(".bloodline-grid article").count(), 9);
       await page.keyboard.press("Escape");
       await page.keyboard.press("Escape");
@@ -307,7 +331,10 @@ try {
       await page.locator("#setting-master").fill("0.25");
       await page.locator("#setting-master").dispatchEvent("input");
       assert.equal(await page.locator("#output-master").textContent(), "25%");
-      await page.keyboard.press("Escape");
+      await page.locator('[data-action="controls"]').click();
+      await page.locator('[data-action="back"]').last().click();
+      await page.locator('#setting-master').waitFor();
+      await page.locator('[data-action="back"]').last().click();
       await page.getByRole("button", { name: /RESUME THE HUNT/ }).waitFor();
       await page.keyboard.press("Escape");
       await page.locator("#overlay").waitFor({ state: "hidden" });
@@ -318,7 +345,7 @@ try {
     await page.waitForFunction(() => document.getElementById('environment-body')?.textContent.includes('STALKING'));
     await page.keyboard.up('KeyH');
     await page.keyboard.press('KeyL');
-    await page.locator('.wide-panel.field-journal').waitFor();
+    await page.locator('.wide-panel.compendium-panel').waitFor();
     assert.equal(await page.locator('.field-site').count(), 10);
     assert.equal(await page.locator('.field-adaptation').count(), 4);
     await page.waitForFunction(() => document.querySelector('.field-hero img')?.naturalWidth > 0);
@@ -413,6 +440,7 @@ try {
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
     page.on("request", (request) => { if (/^https?:/i.test(request.url())) externalRequests.push(request.url()); });
+    await enterTitle(page);
     await page.locator('[data-action="continue"]').click();
     await page.locator('[data-action="resume"]').waitFor();
     assert.match(await page.locator("#pause-save-status").textContent(), /RESTORED/);

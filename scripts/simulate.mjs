@@ -28,6 +28,13 @@ const report = { version: 1, generatedAt: new Date().toISOString(), options, pol
 ], attempts: [], failures: [], summary: {} };
 const globalStart = performance.now(), ticks = [];
 const sq = (a, b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+function nonfinitePaths(value, location = 'game', seen = new Set()) {
+  if (typeof value === 'number') return Number.isFinite(value) ? [] : [location];
+  if (!value || typeof value !== 'object' || seen.has(value)) return [];
+  seen.add(value);
+  const entries = value instanceof Map || value instanceof Set ? [...value.entries()] : Object.entries(value);
+  return entries.flatMap(([key, child]) => nonfinitePaths(child, `${location}.${key}`, seen));
+}
 function intent(g, brain) {
   const p = g.player;
   let meal = null, mealScore = Infinity, prey = null, preyScore = Infinity, threat = null, threatDistance = Infinity;
@@ -65,6 +72,14 @@ for (let attempt = 0; attempt < options.runs; attempt++) {
     const recorder = createBalanceRecorder(g);
     const limit = Math.round(options.seconds * TICK_RATE);
     for (let tick = 0; tick < limit && g.state !== "dead"; tick++) {
+      if (g.state === "mutation-choice") {
+        const mutationId = g.pendingMutationChoices?.[0];
+        const result = authority.dispatch(mutationId
+          ? { type: "apply-mutation", mutationId }
+          : { type: "close-mutation-choice" });
+        if (!result.ok) throw Error("Valid offered mutation reward rejected");
+        recorder.sample(g, g.consumeEvents());
+      }
       if (g.evolutionReady && authority.dispatch({ type: "open-evolution" }).ok) {
         recorder.sample(g);
         const speciesId = [...g.evolutionChoices].sort((a, b) => {
@@ -88,7 +103,17 @@ for (let attempt = 0; attempt < options.runs; attempt++) {
     if (!row.restoreParity) throw Error("Checkpoint roundtrip differs");
     Object.assign(row, { tier: g.tier + 1, kills: g.player.kills, survivedSeconds: g.time, cause: g.state === "dead" ? g.cause : "time limit", storedChunks: g.chunks.size });
     row.balance = recorder.finish(g);
-  } catch (error) { report.failures.push({ seed, error: error.message }); row.error = error.message; }
+  } catch (error) {
+    Object.assign(row, { state: g.state, tier: g.tier + 1, kills: g.player.kills, survivedSeconds: g.time, storedChunks: g.chunks.size });
+    report.failures.push({ seed, state: g.state, simulatedSeconds: g.time, error: error.message });
+    row.error = error.message;
+    row.nonfinitePaths = nonfinitePaths(g);
+    if (error.message === 'Run state cannot be saved safely') {
+      await fs.mkdir(path.dirname(path.resolve(options.report)), { recursive: true });
+      await fs.writeFile(options.report + '.state.json', JSON.stringify(g, (_key, value) =>
+        value instanceof Map || value instanceof Set ? [...value] : value));
+    }
+  }
   report.attempts.push(row);
   if ((attempt + 1) % Math.max(1, Math.floor(options.runs / 10)) === 0) console.log(`${attempt + 1}/${options.runs} seeded attempts complete`);
 }

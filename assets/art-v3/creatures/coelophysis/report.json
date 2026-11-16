@@ -1,0 +1,96 @@
+{
+  "id": "coelophysis",
+  "family": "coelurosaur",
+  "triangles": 22192,
+  "bones": 20,
+  "dimensions": [
+    5.067293643951416,
+    1.3199999332427979,
+    1.85695219039917
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.035": {
+        "verts": 11218,
+        "faces": 22192,
+        "tris": 22192,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 62,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.11,
+        "uv_coverage_pct": 28.9
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0253
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.023
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0274
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0254
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0231
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0273
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0352
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0364
+    }
+  ],
+  "bytes": 1253848
+}

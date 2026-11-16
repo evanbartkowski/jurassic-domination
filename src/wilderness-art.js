@@ -1,18 +1,27 @@
+import{createDinosaur,animateCreature}from'./creatures.js';
+import{SPECIES_BY_ID}from'./data.js';
+import{marineRoster,marineBodyLength}from'./marine-ecology.js';
+import{anatomyForSpecies}from'./anatomy.js';
 import * as THREE from "three";
+import {naturalMaterial} from './natural-materials.js';
+import {createFrontierFeature} from './frontier-art.js';
+import { BOTANY } from './botany.js';
+import { poolMaterial, biomeLook } from './environment-presentation.js';
+import { biomeAt } from './world-data.js';
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { marinePose } from "./wilderness.js";
 import { createDecoration } from "./collection-art.js";
 export function createWildFeature(f, elevation = 0) {
+  if(['frontier-rock','frontier-site','shelter'].includes(f.type))return createFrontierFeature(f);
   const root = new THREE.Group(),
     owned = [],
     materials = [];
   root.position.set(f.x, elevation, f.y);
   root.userData.feature = f;
   function mesh(geo, color, pos, scale) {
-    const mat = new THREE.MeshStandardMaterial({
-      color,
+    const mat = naturalMaterial(f.type==='fallen-log'?'wood':f.type==='carnivore'||f.type==='toxic-bloom'?'leaf':'stone',color,{
       roughness: 0.78,
-      metalness: 0.04,
+      metalness: 0,
     });
     const m = new THREE.Mesh(geo, mat);
     m.position.set(...pos);
@@ -25,13 +34,15 @@ export function createWildFeature(f, elevation = 0) {
     return m;
   }
   const sphere = () => new THREE.SphereGeometry(1, 20, 14);
+  const rockTint=new THREE.Color(biomeLook(biomeAt(f.x,f.y).id).ground).lerp(new THREE.Color(0x9a9b8f),.65);
   if (f.type === "boulder") {
     mesh(
-      new THREE.DodecahedronGeometry(1, 2),
-      0x787c6d,
-      [0, f.radius * 0.48, 0],
+      BOTANY.rock[0].clone(),
+      rockTint,
+      [0, 0, 0],
       [f.radius, f.radius * 0.65, f.radius * 0.8],
     );
+    root.children[0].material.vertexColors = true;
     for (let i = 0; i < 5; i++)
       mesh(
         sphere(),
@@ -45,11 +56,11 @@ export function createWildFeature(f, elevation = 0) {
       );
   } else if (f.type === "fallen-log") {
     const log = mesh(
-      new THREE.CylinderGeometry(0.8, 1, 7, 20),
-      0x5c4934,
-      [0, 0.75, 0],
+      BOTANY.log[0].clone(),
+      0xffffff,
+      [0, 0, 0],
     );
-    log.rotation.z = Math.PI / 2;
+    log.material.vertexColors = true;
     for (let i = 0; i < 4; i++) {
       const ring = mesh(
         new THREE.TorusGeometry(0.55 - i * 0.1, 0.025, 5, 32),
@@ -112,102 +123,23 @@ export function createWildFeature(f, elevation = 0) {
       [0, 0.1, 0],
     );
     water.rotation.x = -Math.PI / 2;
-    water.material.metalness = 0.4;
-    water.material.roughness = 0.26;
-    const deep = mesh(
-      new THREE.CircleGeometry(f.radius * 0.74, 48),
-      0x153d50,
-      [0, 0.115, 0],
-    );
-    deep.rotation.x = -Math.PI / 2;
-    deep.material.roughness = 0.32;
+    water.material = poolMaterial(f.radius,biomeLook(biomeAt(f.x,f.y).id).water); materials.push(water.material);
+    water.castShadow = false; water.receiveShadow = false;
+    root.userData.waterSurface = water;
     const shore = mesh(
       new THREE.RingGeometry(f.radius, f.radius + 1.1, 64),
       0x827e58,
       [0, 0.08, 0],
     );
     shore.rotation.x = -Math.PI / 2;
-    shore.material.roughness = 1;
+    shore.material.roughness = .38;
+    shore.material.color.setHex(0x65705c);
     root.userData.ripples = [];
-    for (let i = 0; i < 3; i++) {
-      const ripple = mesh(
-        new THREE.RingGeometry(f.radius * (0.5 + i * 0.17), f.radius * (0.5 + i * 0.17) + 0.045, 48),
-        0x78c5c3,
-        [0, 0.13 + i * 0.002, 0],
-      );
-      ripple.rotation.x = -Math.PI / 2;
-      ripple.material.transparent = true;
-      ripple.material.opacity = 0.18;
-      ripple.material.depthWrite = false;
-      ripple.castShadow = false;
-      root.userData.ripples.push(ripple);
-    }
-    // A small palette of real silhouettes: reef shark, armored gar and long sea eel.
-    // Static body parts are merged by material to keep the swimming schools inexpensive.
-    root.userData.swimmers = [];
-    for (let i = 0; i < 3; i++) {
-      const fish = new THREE.Group(),
-        type = (i + (f.tier || 0)) % 3,
-        long = type === 2,
-        bodyMaterial = new THREE.MeshStandardMaterial({
-          color: [0x406c7c, 0x687e72, 0x38535f][type],
-          roughness: 0.4,
-          metalness: 0.17,
-        }),
-        bellyMaterial = new THREE.MeshStandardMaterial({ color: 0xb9c9b6, roughness: 0.54 }),
-        eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xf5cd70, emissive: 0xdb8e2a, emissiveIntensity: 0.6 });
-      materials.push(bodyMaterial, bellyMaterial, eyeMaterial);
-      const shape = (geo, pos, scale, rotation = [0, 0, 0]) => {
-        geo.scale(...scale);
-        geo.rotateX(rotation[0]);
-        geo.rotateY(rotation[1]);
-        geo.rotateZ(rotation[2]);
-        geo.translate(...pos);
-        return geo;
-      };
-      const ellipsoid = (pos, scale) => shape(new THREE.SphereGeometry(1, 16, 10), pos, scale),
-        fin = (pos, scale, rotation = [0, 0, 0]) =>
-          shape(new THREE.ConeGeometry(1, 1, 3), pos, scale, rotation),
-        addMerged = (parts, mat, parent = fish) => {
-          const geo = mergeGeometries(parts);
-          parts.forEach((g) => g.dispose());
-          owned.push(geo);
-          const m = new THREE.Mesh(geo, mat);
-          m.castShadow = false;
-          parent.add(m);
-          return m;
-        };
-      const main = [
-        ellipsoid([0, 0, 0], [long ? 2.25 : 1.65, long ? 0.26 : 0.4, long ? 0.35 : 0.58]),
-        ellipsoid([1.35, 0.03, 0], [type === 1 ? 1.0 : 0.72, 0.24, type === 1 ? 0.25 : 0.4]),
-      ];
-      if (!long) {
-        main.push(fin([-0.25, 0.63, 0], [0.5, 1.05, 0.08], [0, 0, -0.22]));
-        for (const side of [-1, 1])
-          main.push(fin([0.25, -0.02, side * 0.68], [0.38, 1.2, 0.07], [side * Math.PI / 2, 0, -0.45]));
-      } else {
-        for (let n = 0; n < 4; n++)
-          main.push(fin([-1.3 + n * 0.65, 0.3, 0], [0.24, 0.42, 0.05]));
-      }
-      addMerged(main, bodyMaterial);
-      addMerged([
-        ellipsoid([0.3, -0.18, 0], [1.45, 0.17, long ? 0.28 : 0.49]),
-        ellipsoid([1.5, -0.08, 0], [0.54, 0.065, 0.32]),
-      ], bellyMaterial);
-      addMerged([-1, 1].map((side) => ellipsoid([1.5, 0.14, side * (type === 1 ? 0.22 : 0.33)], [0.08, 0.08, 0.055])), eyeMaterial);
-      const tail = new THREE.Group();
-      tail.position.x = long ? -1.85 : -1.45;
-      fish.add(tail);
-      addMerged([
-        ellipsoid([-0.38, 0, 0], [0.78, 0.18, 0.2]),
-        fin([-0.9, 0, 0], [0.62, long ? 1.05 : 1.5, 0.07], [0, 0, -0.25]),
-      ], bodyMaterial, tail);
-      fish.userData.tail = tail;
-      fish.userData.eyes = eyeMaterial;
-      fish.userData.kind = type;
-      root.add(fish);
-      root.userData.swimmers.push(fish);
-    }
+    // Waves, foam and contact ripples share the water shader rather than rings.
+    root.userData.swimmers=[];
+    const makeMarine=(wrapper,id,index)=>{wrapper.userData.model?.userData.dispose();wrapper.clear();const species=SPECIES_BY_ID[id]||SPECIES_BY_ID.tideweaver,model=createDinosaur(species,true),profile=anatomyForSpecies(species),scale=marineBodyLength(f,index)/profile.length;model.scale.setScalar(scale);model.position.y=-Math.max(.5,Math.max(profile.head[1]+profile.skull[2],profile.hip+profile.depth)*scale*.75);wrapper.add(model);wrapper.userData.model=model;wrapper.userData.speciesId=species.id;};
+    root.userData.makeMarine=makeMarine;
+    for(let i=0;i<3;i++){const wrapper=new THREE.Group();makeMarine(wrapper,marineRoster(f)[i],i);root.add(wrapper);root.userData.swimmers.push(wrapper);}
   } else if (f.type === "volcano") {
     // Majestic prehistoric obsidian caldera with jagged rim crags
     const mountain = mesh(
@@ -314,7 +246,9 @@ export function createWildFeature(f, elevation = 0) {
     head.position.y = 2.6;
     root.add(head);
     root.userData.jaw = head;
+    root.userData.jawHalves = [];
     for (const side of [-1, 1]) {
+      const half = new THREE.Group();head.add(half);root.userData.jawHalves.push(half);
       const m = mesh(
         sphere(),
         f.type === "carnivore" ? 0x903f44 : 0xb9815b,
@@ -322,32 +256,27 @@ export function createWildFeature(f, elevation = 0) {
         [0.95, 0.42, 0.65],
       );
       root.attach(m);
-      head.attach(m);
+      half.attach(m);
       for (let i = 0; i < 6; i++) {
         const tooth = mesh(new THREE.ConeGeometry(0.09, 0.42, 8), 0xded6ae, [
           (i - 2.5) * 0.29,
           2.9,
           side * 0.7,
         ]);
-        head.attach(tooth);
+        half.attach(tooth);
       }
     }
   }
+  if(f.type === 'carnivore') {
+    const warning = mesh(new THREE.RingGeometry(.3,f.radius+3.2,48,1,-.55,1.1),0xff773f,[0,.12,0]);
+    warning.rotation.x=-Math.PI/2;warning.material.emissive.setHex(0xff6622);warning.material.emissiveIntensity=1.3;warning.material.transparent=true;warning.material.opacity=.35;warning.material.depthWrite=false;warning.material.side=THREE.DoubleSide;
+    warning.visible=false;root.userData.attackWarning=warning;
+  }
   root.userData.animate = (t, player, marineState) => {
-    root.userData.swimmers?.forEach((m, i) => {
-      const pose = marinePose(f, t, i, player, marineState);
-      if (pose.dead) {
-        m.position.set(pose.x - f.x, -0.65, pose.y - f.y);
-        m.rotation.z = Math.PI * 0.9;
-        m.userData.eyes.emissiveIntensity = 0;
-        return;
-      }
-      m.position.set(pose.x - f.x, 0.22 + Math.sin(t * 2 + i) * 0.055, pose.y - f.y);
-      m.rotation.y = -pose.angle;
-      m.rotation.z = Math.sin(t * 2.2 + i) * 0.035;
-      m.userData.tail.rotation.y = Math.sin(t * (pose.hunting ? 9 : 5) + i * 2.1) * 0.38;
-      m.userData.eyes.emissiveIntensity = pose.hunting ? 1.5 : 0.55;
-    });
+    if(root.userData.attackWarning){const w=root.userData.attackWarning;w.visible=!f.dead&&!!f.attackDueAt;w.rotation.z=-(f.attackAngle||0);w.material.opacity=.22+(Math.sin(t*16)+1)*.13;}
+    root.userData.waterSurface?.material.userData.update(t,player,f);
+    const marineDt=Math.max(0,Math.min(.1,t-(root.userData.lastMarineT??t)));root.userData.lastMarineT=t;
+    root.userData.swimmers?.forEach((m,i)=>{const pose=marinePose(f,t,i,player,marineState);if(pose.speciesId&&pose.speciesId!==m.userData.speciesId)root.userData.makeMarine(m,pose.speciesId,i);m.position.set(pose.x-f.x,.06,pose.y-f.y);m.rotation.y=-pose.angle;m.rotation.z=pose.dead?1.7:0;animateCreature(m.userData.model,marineDt,t,pose.dead?0:pose.hunting?1.3:.45,!!pose.attackWindup,0);});
     root.userData.ripples?.forEach((m, i) => {
       m.scale.setScalar(1 + Math.sin(t * 0.75 + i * 2.1 + f.phase) * 0.025);
       m.material.opacity = 0.1 + (Math.sin(t * 0.65 + i) + 1) * 0.055;
@@ -380,10 +309,13 @@ export function createWildFeature(f, elevation = 0) {
         const near = dPlayer < f.radius + 4.5;
         const striking = f.lastStrike && (t - f.lastStrike) < 0.45;
         const strikeProg = striking ? 1 - (t - f.lastStrike) / 0.45 : 0;
-        const aimAngle = near ? Math.atan2(pz - f.y, px - f.x) : f.phase;
+        const winding = !!f.attackDueAt;
+        const windup = winding ? THREE.MathUtils.clamp((t-f.attackStartedAt)/.8,0,1) : 0;
+        const aimAngle = winding || striking ? f.attackAngle : near ? Math.atan2(pz - f.y, px - f.x) : f.phase;
+        root.userData.jawHalves?.forEach((half,i)=>{half.position.z=(i===0?-1:1)*(winding?.25+windup*.55:striking?-.12:.1);});
         
         root.userData.jaw.rotation.y = THREE.MathUtils.damp(root.userData.jaw.rotation.y, -aimAngle, 6, 1/60);
-        const lunge = striking ? Math.sin(strikeProg * Math.PI) * 1.4 : near ? 0.35 : 0;
+        const lunge = striking ? Math.sin(strikeProg * Math.PI) * (f.radius+2) : winding ? -.5*windup : near ? 0.35 : 0;
         root.userData.jaw.position.x = Math.cos(aimAngle) * lunge;
         root.userData.jaw.position.z = Math.sin(aimAngle) * lunge;
         root.userData.jaw.rotation.z = striking
@@ -399,6 +331,7 @@ export function createWildFeature(f, elevation = 0) {
       root.userData.spore.position.y = 1 + Math.sin(t * 0.8 + f.phase) * 0.3;
   };
   root.userData.dispose = () => {
+    root.userData.swimmers?.forEach(m=>m.userData.model.userData.dispose());
     owned.forEach((g) => g.dispose());
     materials.forEach((m) => m.dispose());
     root.userData.prop?.userData.dispose();

@@ -120,6 +120,14 @@ function installContext(t, value = Context) {
   });
 }
 
+test('mute and focus silence every bus immediately while retaining independent levels',async t=>{
+ installContext(t);const engine=new AudioEngine({master:.6,music:.4,sfx:.8,ambient:.2,uiVolume:.3,muteUnfocused:true});await engine.unlock();
+ assert.equal(engine.ambient?.gain.value,.2);assert.equal(engine.ui?.gain.value,.3);
+ engine.configure({muted:true});assert.equal(engine.master.gain.value,0);assert.equal(engine.settings.master,.6);
+ engine.configure({muted:false});assert.equal(engine.master.gain.value,.6);
+ assert.equal(typeof engine.setFocused,'function');engine.setFocused(false);assert.equal(engine.master.gain.value,0);engine.setFocused(true);assert.equal(engine.master.gain.value,.6);engine.dispose();
+});
+
 test("audio stays locked until a gesture unlocks it and reuses its output context", async (t) => {
   installContext(t);
   const engine = new AudioEngine();

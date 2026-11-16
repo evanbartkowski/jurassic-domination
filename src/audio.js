@@ -1,4 +1,5 @@
 import { SPECIES_BY_ID } from "./data.js";
+import { MusicDirector } from './music-director.js';
 import { conditionsAt, getTimeOfDay } from './world-events.js';
 const MAX_VOICES = 112;
 const MAX_EFFECT_VOICES = 44;
@@ -52,11 +53,13 @@ const SCORE_THEMES = {
   peaks: { transpose: -2, color: "ember", motif: [12, 19, 22, 24, null, 19, 15, null] },
   origin: { transpose: -5, color: "crystal", motif: [12, 19, null, 24, 27, 24, 19, null] },
 };
-/** Original adaptive score and creature sound design. No recordings or runtime downloads. */
+/** Local recordings, synthesized fallback score and creature sound design. */
 export class AudioEngine {
   constructor(settings = {}) {
-    this.settings = { master: 0.7, music: 0.55, sfx: 0.8, ...settings };
+    this.settings = { master: 0.7, music: 0.55, sfx: 0.8, ambient:.55,uiVolume:.65,muteUnfocused:true,muted:false,...settings };
+    this.focused=true;this.sampleLevels=new Map();this.ambientMix=new Map();this.voiceDestinations=new Map();
     this.mode = "menu";
+    this.recordedMusic=new MusicDirector();this.unlocked=false;
     this.context = null;
     this.nodes = new Set();
     this.beat = 0;
@@ -79,9 +82,8 @@ export class AudioEngine {
     const path = SAMPLES[key];
     if (!path) return;
     try {
-      const masterVol = Number(this.settings.master) || 0;
-      const busVol = Number(isMusic ? this.settings.music : this.settings.sfx) || 0;
-      const finalVol = Math.max(0, Math.min(1, volume * masterVol * busVol));
+      const bus=key==='uiClick'?'uiVolume':isMusic?'music':'sfx';
+      const finalVol = this.sampleGain(volume,bus);
       if (finalVol <= 0.001) return;
 
       const now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
@@ -123,6 +125,7 @@ export class AudioEngine {
         this.samplePool.set(key, snd);
       }
       snd.volume = finalVol;
+      this.sampleLevels.set(key,{base:volume,bus});
       snd.currentTime = 0;
       snd.play().catch(() => {});
     } catch {
@@ -141,12 +144,6 @@ export class AudioEngine {
     else targetTrack = "dayAmbience";
 
     if (this.currentAmbienceKey !== targetTrack) {
-      if (this.currentAmbience) {
-        try {
-          this.currentAmbience.pause();
-          this.currentAmbience.currentTime = 0;
-        } catch {}
-      }
       this.currentAmbienceKey = targetTrack;
       const path = SAMPLES[targetTrack];
       if (path) {
@@ -157,18 +154,43 @@ export class AudioEngine {
             this.samplePool.set(targetTrack, snd);
           }
           snd.loop = true;
-          const masterVol = Number(this.settings.master) || 0;
-          const musicVol = Number(this.settings.music) || 0;
-          snd.volume = Math.max(0, Math.min(0.35, 0.28 * masterVol * musicVol * (this.mode === "paused" ? 0.3 : 1)));
+          snd.volume=0;
+          if(!this.ambientMix.has(targetTrack))this.ambientMix.set(targetTrack,0);
+          this.sampleLevels.set(targetTrack,{base:0,bus:'ambient'});
           snd.play().catch(() => {});
           this.currentAmbience = snd;
         } catch {}
       }
-    } else if (this.currentAmbience) {
-      const masterVol = Number(this.settings.master) || 0;
-      const musicVol = Number(this.settings.music) || 0;
-      this.currentAmbience.volume = Math.max(0, Math.min(0.35, 0.28 * masterVol * musicVol * (this.mode === "paused" ? 0.3 : 1)));
     }
+  }
+
+  sampleGain(base,bus){
+    if(this.settings.muted||(!this.focused&&this.settings.muteUnfocused))return 0;
+    const level=n=>Math.max(0,Math.min(1,Number(n)||0));
+    return level(base*level(this.settings.master)*level(this.settings[bus]));
+  }
+  setFocused(focused){this.focused=!!focused;this.configure();}
+  fadeAmbience(dt){
+    for(const [key,mix] of this.ambientMix){
+      const target=key===this.currentAmbienceKey?1:0;
+      const next=mix+(target-mix)*Math.min(1,Math.max(0,dt)*3);
+      this.ambientMix.set(key,next);
+      const sample=this.samplePool.get(key);if(!sample)continue;
+      const base=.28*next*(this.mode==='paused'?.3:1);
+      this.sampleLevels.set(key,{base,bus:'ambient'});sample.volume=this.sampleGain(base,'ambient');
+      if(target===0&&next<.005){sample.pause();this.ambientMix.delete(key);this.sampleLevels.delete(key);}
+    }
+  }
+  uiCue(kind='click'){
+    if(!this.context||this.context.state!=='running'||this.disposed||this.settings.muted)return;
+    const now=this.context.currentTime,key='ui-'+kind;if(now-(this.effectTimes.get(key)??-1)<.07)return;this.effectTimes.set(key,now);
+    this.tone(kind==='hover'?420:640,now,.055,kind==='hover'?.015:.035,'sine',kind==='hover'?460:420,this.ui);
+  }
+  resetRun(){
+    this.combatMusicHold=0;
+    for(const [key,sample] of this.samplePool)if(!sample.loop){sample.pause();sample.currentTime=0;this.sampleLevels.delete(key);}
+    for(const source of [...this.nodes])if(this.voiceDestinations.get(source)!==this.music){try{source.stop();}catch{}this.cleanups.get(source)?.();}
+    this.motionSamples?.clear();this.sampleCooldowns.clear();this.nextSoundscape=0;
   }
 
   async unlock() {
@@ -182,12 +204,14 @@ export class AudioEngine {
         this.master = this.context.createGain();
         this.music = this.context.createGain();
         this.sfx = this.context.createGain();
+        this.ambient=this.context.createGain();this.ui=this.context.createGain();
         this.compressor = this.context.createDynamicsCompressor();
         this.compressor.threshold.value = -15;
         this.compressor.knee.value = 22;
         this.compressor.ratio.value = 5;
         this.music.connect(this.master);
         this.sfx.connect(this.master);
+        this.ambient.connect(this.master);this.ui.connect(this.master);
         this.master.connect(this.compressor);
         this.compressor.connect(this.context.destination);
         const seconds = 2;
@@ -206,6 +230,7 @@ export class AudioEngine {
         this.configure(this.settings);
       }
       if (this.context.state === "suspended") await this.context.resume();
+      this.unlocked=true;this.recordedMusic.setScene(this.mode);
     } catch {
       // A missing or unavailable audio output must never prevent a run.
     }
@@ -213,21 +238,29 @@ export class AudioEngine {
 
   configure(settings = {}) {
     this.settings = { ...this.settings, ...settings };
+    this.recordedMusic.applyGain(this.sampleGain(1,'music'));
+    for(const [key,level] of this.sampleLevels){const sample=this.samplePool.get(key);if(sample)sample.volume=this.sampleGain(level.base,level.bus);}
     if (!this.context) return;
     const now = this.context.currentTime;
     const volume = (value) => Math.max(0, Math.min(1, Number(value) || 0));
-    this.master.gain.setTargetAtTime(volume(this.settings.master), now, 0.08);
+    const silent=this.settings.muted||(!this.focused&&this.settings.muteUnfocused);
+    if(silent){this.master.gain.cancelScheduledValues?.(now);this.master.gain.setValueAtTime(0,now);}
+    else this.master.gain.setTargetAtTime(volume(this.settings.master), now, 0.08);
     this.music.gain.setTargetAtTime(
-      volume(this.settings.music) * (this.mode === "paused" ? 0.3 : 1),
+      volume(this.settings.music) * (this.recordedMusic.current ? .08 : 1) * (this.mode === "paused" ? 0.3 : 1),
       now,
       0.12,
     );
     this.sfx.gain.setTargetAtTime(volume(this.settings.sfx), now, 0.08);
+    this.ambient.gain.setTargetAtTime(volume(this.settings.ambient),now,.12);
+    this.ui.gain.setTargetAtTime(volume(this.settings.uiVolume),now,.05);
   }
 
   setMode(mode) {
     if (this.mode === mode) return;
     this.mode = mode;
+    if(this.unlocked)this.recordedMusic.setScene(mode);
+    if(['menu','dead'].includes(mode))this.currentAmbienceKey='';
     this.configure();
     if (mode === "dead") this.play("death");
   }
@@ -275,11 +308,13 @@ export class AudioEngine {
 
   trackVoice(source, destination, cleanup) {
     this.nodes.add(source);
+    this.voiceDestinations.set(source,destination);
     if (destination === this.sfx) this.effectVoices++;
     const release = () => {
       if (!this.nodes.delete(source)) return;
       if (destination === this.sfx) this.effectVoices--;
       this.cleanups.delete(source);
+      this.voiceDestinations.delete(source);
       cleanup();
     };
     this.cleanups.set(source, release);
@@ -315,6 +350,13 @@ export class AudioEngine {
   }
 
   update(_dt, game) {
+    this.fadeAmbience(_dt);
+    if(['playing','danger'].includes(this.mode)&&game?.state==='playing'){
+      const p=game.player,threat=game.entities?.some(e=>e.hp>0&&(e.aggro>0||e.telegraph>0||e.cast||e.charging>0)&&Math.hypot(e.x-p.x,e.y-p.y)<36);
+      this.combatMusicHold=threat?8:Math.max(0,(this.combatMusicHold||0)-_dt);
+      this.setMode(this.combatMusicHold>0?'danger':'playing');
+    }
+    if(this.unlocked){this.recordedMusic.update(_dt,this.sampleGain(1,'music'));const active=!!this.recordedMusic.current;if(active!==this.hadRecording){this.hadRecording=active;this.configure();}}
     if (!this.context || this.context.state !== "running" || this.disposed)
       return;
     this.intensity =
@@ -343,9 +385,9 @@ export class AudioEngine {
       if (game.worldState && now >= (this.nextWeatherSound || 0)) {
         const weather = conditionsAt(game, game.player.x, game.player.y);
         if (weather.phase === 'active') {
-          if (['rain', 'flood'].includes(weather.event)) this.rustle(now, 2.7, .035, 1800);
-          else if (['ashfall', 'fire', 'eruption'].includes(weather.event)) this.rustle(now, 2.4, .025, 330);
-          else if (weather.event === 'frost') this.rustle(now, 2.8, .022, 700);
+          if (['rain', 'flood'].includes(weather.event)) this.rustle(now, 2.7, .035, 1800,this.ambient);
+          else if (['ashfall', 'fire', 'eruption'].includes(weather.event)) this.rustle(now, 2.4, .025, 330,this.ambient);
+          else if (weather.event === 'frost') this.rustle(now, 2.8, .022, 700,this.ambient);
         }
         this.nextWeatherSound = now + 3;
       }
@@ -818,6 +860,7 @@ export class AudioEngine {
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
+    this.recordedMusic.dispose();
     if (this.currentAmbience) {
       try { this.currentAmbience.pause(); } catch {}
       this.currentAmbience = null;
@@ -845,6 +888,7 @@ export class AudioEngine {
     this.master?.disconnect();
     this.music?.disconnect();
     this.sfx?.disconnect();
+    this.ambient?.disconnect();this.ui?.disconnect();this.sampleLevels.clear();this.ambientMix.clear();this.voiceDestinations.clear();
     this.compressor?.disconnect();
     if (this.context) this.context.close().catch(() => {});
     this.context = null;

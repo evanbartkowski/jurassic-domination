@@ -2,7 +2,9 @@
 
 A single-player prehistoric survival roguelite. Crack your egg, hatch into a fragile starter species, hunt and forage across a living, weather-swept continent, and evolve into apex predators and mythological titans. Death ends the run; rare DNA and discovered bloodlines fund your permanent collection and next generation.
 
-This is a polished, offline, playable desktop game built with Three.js and Electron. It features original procedural 3D creatures and environments, an authentic 66-sound audio landscape, dynamic weather and diurnal cycles, sensory perception ecology, deep combat with status effects, persistent multi-generational ancestry, and complete controller and keyboard/mouse support.
+An offline, playable desktop game built with Three.js and Electron. It combines procedural and authored Blender creatures and environments, bundled recordings and synthesized audio, dynamic weather, sensory ecology, status effects and persistent ancestry. Keyboard/mouse controls are remappable; standard-mapping controllers support gameplay and menu navigation.
+
+Current visual release: **Primeval v0.12.0**. [Before/after gallery](artifacts/primeval/review.html) | [Windows portable](release/primeval/Jurassic%20Domination-0.12.0-portable.exe) | [Art and verification report](docs/PRIMEVAL_VISUAL_OVERHAUL.md).
 
 ![Jurassic Domination Title Screen](docs/screenshots/title.png)
 
@@ -22,8 +24,16 @@ Play Jurassic Domination.cmd
 This automatically verifies dependencies and launches the full game in desktop mode.
 
 ### Packaged & Portable Releases
-- **Standalone Unpacked**: Launch `release/win-unpacked/Jurassic Domination.exe`. Keep that entire folder intact.
-- **Single-File Portable**: Run `release/Jurassic Domination-0.8.0-portable.exe` directly without installation.
+- **Standalone Unpacked**: Launch `release/frontier/win-unpacked/Jurassic Domination.exe`. Keep that entire folder intact.
+- **Single-File Portable**: Run `release/frontier/Jurassic Domination-0.11.0-portable.exe` directly without installation.
+
+Version 0.11.0 adds meteor and lightning encounters with shelter counterplay, lava predators, great migrations, mountain passes, five named locations and six new marine creatures. Menus have clearer type, visible borders and a separate Start scene. See [the Frontier report](docs/FRONTIER_EXPANSION.md) and [visual review](artifacts/frontier/review.html).
+
+Version 0.10.0 rebuilds all 102 creature assets and their framing, adds centered
+vitals, a darker Start/title/pause/death presentation, quiet supplied music,
+actual build identities and committed enemy attacks. See the
+[Grimwild report](docs/GRIMWILD_OVERHAUL.md) and
+[before/after gallery](artifacts/grimwild/review.html).
 
 ### Run from Source
 Requires Node.js 24 LTS or newer:
@@ -48,7 +58,7 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 | **Move** | `W`, `A`, `S`, `D` or Arrow Keys | Left Analog Stick |
 | **Aim** | Mouse Cursor | Right Analog Stick |
 | **Bite / Primary Attack** | Left Mouse Button or `Space` | Right Trigger (`RT`) |
-| **Primal Roar** | `C` or Middle Mouse Click | Right Stick Click |
+| **Primal Roar** | `Z` (`C` also works with default bindings) or Middle Mouse Click | Right Stick Click |
 | **Species Ability** | `Q` | Right Bumper (`RB`) |
 | **Species Technique** | `R` | Left Bumper (`LB`) |
 | **Anatomy Skill** (when available) | `X` | `Y` Button |
@@ -56,17 +66,23 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 | **Dodge / Dash** (agile forms) | `Shift` | `A` Button |
 | **Eat / Forage / Collect** | `E` | `X` Button |
 | **Evolution Menu / Postpone** | `T` / `Escape` | `B` Button |
-| **Field Journal & Ancestry** | `L` | D-Pad Down |
-| **Bloodline Conditions** | `J` | D-Pad Up |
+| **Field Journal & Ancestry** | `L` | Open from menus |
+| **Bloodline Conditions** | `J` | Open from menus |
 | **Continental World Map** | `M` | View / Select Button |
-| **3D Dinosaur Encyclopedia** | `Tab` | D-Pad Right |
+| **3D Dinosaur Encyclopedia** | `Tab` | Open from menus |
+| **Mutation Builds** | `B` | — |
 | **Sprint** | Hold `Ctrl` | Left Stick Click |
 | **Pause / Back** | `Escape` | Menu / Start Button |
 | **Toggle Fullscreen** | `F11` (or in Settings) | — |
-| **Ancient Relic Skills** | `F`, `G`, `C`, `V`, `B`, `N` | — |
+| **Ancient Relic Skills** | `F`, `G`, `Y`, `V`, `U`, `N` | — |
 
 > [!TIP]
-> **Fully Remappable:** Customize all gameplay keybindings in **Settings → Customize Controls**. Conflicting keys swap automatically. Standard Xbox and PlayStation controllers are supported natively with deadzone filtering.
+> **Fully Remappable:** Customize gameplay keybindings in **Settings → Customize Controls**. Conflicting keys swap automatically. Standard-mapping controllers use configurable deadzone filtering.
+
+In menus, use the left stick or D-pad to move focus, **A / Cross** to accept and
+**B / Circle** to go back. Use left/right to adjust a focused slider or choice.
+Relic skills retain keyboard controls. Physical device compatibility still needs
+testing beyond the automated standard-mapping adapter checks.
 
 ---
 

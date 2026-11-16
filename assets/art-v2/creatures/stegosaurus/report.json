@@ -1,0 +1,17 @@
+{
+  "id": "stegosaurus",
+  "source": "assets\\art-v2\\creatures\\stegosaurus\\stegosaurus.blend",
+  "export": "public\\assets\\models-v2\\stegosaurus\\stegosaurus.glb",
+  "triangles": 31296,
+  "bones": 16,
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "meshes": 1,
+  "bytes": 1422444
+}

@@ -1,0 +1,161 @@
+{
+  "id": "stegosaurus",
+  "family": "stegosaur",
+  "triangles": 19916,
+  "bones": 22,
+  "dimensions": [
+    5.449021816253662,
+    1.8327155113220215,
+    2.4175448417663574
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 10034,
+        "faces": 19916,
+        "tris": 19916,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 38,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.13,
+        "uv_coverage_pct": 27.6
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.001",
+      "distance": 0.0226
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0232
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0226
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0232
+    },
+    {
+      "part": "Stegosaur_plate.002",
+      "distance": 0.0419
+    },
+    {
+      "part": "Stegosaur_plate.003",
+      "distance": 0.0261
+    },
+    {
+      "part": "Stegosaur_plate.004",
+      "distance": 0.0017
+    },
+    {
+      "part": "Stegosaur_plate.006",
+      "distance": 0.0178
+    },
+    {
+      "part": "Stegosaur_plate.007",
+      "distance": 0.034
+    }
+  ],
+  "bytes": 2413268,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 512,
+      "height": 512,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 4,
+  "lodTriangles": 7168,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0002,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 3660,
+        "faces": 7168,
+        "tris": 7168,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 38,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.11,
+        "uv_coverage_pct": 26.8
+      }
+    }
+  }
+}

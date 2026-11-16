@@ -1,0 +1,149 @@
+{
+  "id": "ceratosaurus",
+  "family": "carnosaur",
+  "triangles": 20608,
+  "bones": 20,
+  "dimensions": [
+    5.796300411224365,
+    1.7788000106811523,
+    2.1849260330200195
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 10430,
+        "faces": 20608,
+        "tris": 20608,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 63,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.09,
+        "uv_coverage_pct": 32.3
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0262
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0263
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0235
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0242
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0238
+    },
+    {
+      "part": "Nasal_horn",
+      "distance": 0.0124
+    }
+  ],
+  "bytes": 2381700,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 512,
+      "height": 512,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 4,
+  "lodTriangles": 7418,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.001,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 3835,
+        "faces": 7418,
+        "tris": 7418,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 63,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.1,
+        "uv_coverage_pct": 31.4
+      }
+    }
+  }
+}

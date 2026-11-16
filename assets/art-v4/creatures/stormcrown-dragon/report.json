@@ -1,0 +1,181 @@
+{
+  "id": "stormcrown-dragon",
+  "family": "dragon",
+  "triangles": 26940,
+  "bones": 24,
+  "dimensions": [
+    6.014225959777832,
+    6.027640342712402,
+    2.8348331451416016
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 13640,
+        "faces": 26940,
+        "tris": 26940,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 86,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 24.9
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.003",
+      "distance": 0.0288
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0277
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0357
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0302
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0278
+    },
+    {
+      "part": "Lower_tooth.011",
+      "distance": 0.0285
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0285
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0347
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0301
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0278
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0217
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0232
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0217
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0232
+    }
+  ],
+  "bytes": 2994844,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 512,
+      "height": 512,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 4,
+  "lodTriangles": 9698,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0005,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 5019,
+        "faces": 9698,
+        "tris": 9698,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 86,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 24.1
+      }
+    }
+  }
+}

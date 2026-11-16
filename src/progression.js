@@ -5,7 +5,7 @@ export const EVOLUTION_RARITIES = {
   regular: { name: "Regular", color: "#b9cbb0", weight: 1 },
   rare: { name: "Rare", color: "#77bced", weight: 0.08 },
   epic: { name: "Epic", color: "#c997f0", weight: 0.025 },
-  legendary: { name: "Legendary", color: "#f2c76d", weight: 0.006 },
+  legendary: { name: "Legendary", color: "#f2c76d", weight: 0.001 },
 };
 export const BLOODLINES = [
   {
@@ -102,7 +102,7 @@ export function eligibleBloodlines(g) {
 }
 export function evolutionPool(g) {
   return SPECIES.filter(
-    (s) => s.tier === Math.min(7, g.tier + 1) && !s.bloodline,
+    (s) => s.tier === Math.min(7, g.tier + 1) && !s.bloodline&&!s.wildOnly,
   );
 }
 export const BEHAVIOR_AFFINITIES = {
@@ -169,7 +169,7 @@ export function chooseEvolutions(g) {
   for (let i = 0; i < 3; i++) {
     const roll = g.random(),
       rarity =
-        roll < 0.006
+        roll < 0.001
           ? "legendary"
           : roll < 0.031
             ? "epic"
@@ -246,63 +246,75 @@ export const EVOLUTION_ARCHETYPES = {
     id: "ambush",
     name: "Ambush Predator",
     tagline: "Stalk from brush, lethal first strike",
-    pros: "+35% burst damage on sneak/behind attacks, +15% sprint burst",
+    pros: "+25% bite damage, +8% movement speed",
     cons: "-15% maximum HP",
     icon: "🗡️",
     damageMultiplier: 1.25,
-    speedBonus: 1.15,
+    speedBonus: 1.08,
     hpMultiplier: 0.85,
   },
   titan: {
     id: "titan",
     name: "Armored Titan",
     tagline: "Unstoppable living fortress",
-    pros: "+35% maximum HP, heavy knockback resistance, +20% armor defense",
-    cons: "-15% movement speed",
+    pros: "+42% maximum HP and +20% armor",
+    cons: "-20% movement speed, -12% bite damage",
     icon: "🛡️",
-    damageMultiplier: 0.95,
-    speedBonus: 0.85,
-    hpMultiplier: 1.35,
+    damageMultiplier: 0.88,
+    speedBonus: 0.80,
+    hpMultiplier: 1.42,
     armorBonus: 0.20,
   },
   pack: {
     id: "pack",
     name: "Pack Hunter",
     tagline: "Coordinated swarm tactics",
-    pros: "+20% movement speed near allies, roar rallies packmates",
-    cons: "Relies on flank positioning",
+    pros: "+15% movement speed, 12% faster bites",
+    cons: "-5% maximum HP",
     icon: "🐺",
     damageMultiplier: 1.05,
     speedBonus: 1.15,
-    hpMultiplier: 1.0,
+    hpMultiplier: 0.95,
+    attackInterval: .88,
   },
   venom: {
     id: "venom",
     name: "Venom Specialist",
     tagline: "Slow-acting corrosive toxins",
-    pros: "Inflicts stacking poison & slow, immune to toxins",
-    cons: "-15% direct impact damage",
+    pros: "Poisonous bites, 65% less poison damage",
+    cons: "-18% direct damage and -10% maximum HP",
     icon: "🧪",
-    damageMultiplier: 0.85,
+    damageMultiplier: 0.82,
     speedBonus: 1.05,
-    hpMultiplier: 0.95,
+    hpMultiplier: 0.90,
+    toxinResistance: .65,
   },
   apex: {
     id: "apex",
     name: "Apex Destroyer",
     tagline: "Colossal territorial overlord",
-    pros: "+25% scale & attack reach, ground trample damage, terrifying roar",
-    cons: "+30% hunger depletion rate",
+    pros: "+25% bite damage and +20% maximum HP",
+    cons: "-8% movement speed, +20% hunger drain",
     icon: "👑",
-    damageMultiplier: 1.35,
-    speedBonus: 0.95,
-    hpMultiplier: 1.25,
-    hungerDrainMult: 1.30,
+    damageMultiplier: 1.25,
+    speedBonus: 0.92,
+    hpMultiplier: 1.20,
+    hungerDrainMult: 1.20,
   },
+  glass:{id:'glass',name:'Glass Cannon',tagline:'A lethal strike in a fragile body',pros:'+42% bite damage, +8% movement speed',cons:'-30% maximum HP',icon:'claw',damageMultiplier:1.42,speedBonus:1.08,hpMultiplier:.70},
+  sprinter:{id:'sprinter',name:'Fleetfoot',tagline:'Survive by outrunning the jaws',pros:'+28% speed, +35% stamina recovery',cons:'-22% maximum HP, -10% bite damage',icon:'bolt',damageMultiplier:.90,speedBonus:1.28,hpMultiplier:.78,staminaRecovery:1.35,staminaCost:.78},
+  burst:{id:'burst',name:'Burst Hunter',tagline:'Commit, devastate, disengage',pros:'+40% species-ability damage, +12% bite damage',cons:'Species ability recharges 25% slower; -8% HP',icon:'flame',damageMultiplier:1.12,speedBonus:1.06,hpMultiplier:.92,abilityPower:1.40,abilityInterval:1.25},
+  colossus:{id:'colossus',name:'Enduring Colossus',tagline:'An immovable wall of muscle',pros:'+48% maximum HP, +12% armor',cons:'-22% movement speed, -20% bite damage',icon:'shield',damageMultiplier:.80,speedBonus:.78,hpMultiplier:1.48,armorBonus:.12},
 };
 
 export function archetypeForSpecies(s) {
   if (!s) return EVOLUTION_ARCHETYPES.ambush;
+  if(s.body==='serpent'||s.abilityType==='venom')return EVOLUTION_ARCHETYPES.venom;
+  if(/phoenix|carcharodontosaurus|hatzegopteryx|dilophosaurus|archaeopteryx/.test(s.id))return EVOLUTION_ARCHETYPES.glass;
+  if(/ornithomimus|gallimimus|dryosaurus|lesothosaurus|hypsilophodon|mononykus|leaellynasaura/.test(s.id))return EVOLUTION_ARCHETYPES.sprinter;
+  if(/carnotaurus|baryonyx|acrocanthosaurus|wyvern|gryphon|thunder-drake/.test(s.id))return EVOLUTION_ARCHETYPES.burst;
+  if(s.body==='longneck')return EVOLUTION_ARCHETYPES.colossus;
+  if(/ankylosaurus|euoplocephalus|minmi|triceratops|styracosaurus|pachyrhinosaurus|behemoth/.test(s.id))return EVOLUTION_ARCHETYPES.titan;
   if ((s.tier >= 4 && ["rex", "dragon", "longneck"].includes(s.body)) || s.tier >= 5) return EVOLUTION_ARCHETYPES.apex;
   if (["quad", "croc"].includes(s.body) || /ankylo|stego|tricer/.test(s.id)) return EVOLUTION_ARCHETYPES.titan;
   if (s.temperament === "pack" || /raptor|compsognathus/.test(s.id)) return EVOLUTION_ARCHETYPES.pack;

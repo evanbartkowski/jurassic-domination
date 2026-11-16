@@ -4,8 +4,11 @@ import { createDinosaur, animateCreature } from "./creatures.js";
 import { SPECIES_BY_ID } from "./data.js";
 import { COSMETICS, DECORATIONS, PETS } from "./collection-data.js";
 import { SpecimenViewer } from "./specimen.js";
+import {BOTANY} from './botany.js';
+import {naturalMaterial} from './natural-materials.js';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 const ball = new THREE.SphereGeometry(1, 24, 18),
-  box = new THREE.BoxGeometry(1, 1, 1),
+  box = new RoundedBoxGeometry(1,1,1,2,.055),
   cone = new THREE.ConeGeometry(1, 1, 20),
   cylinder = new THREE.CylinderGeometry(1, 1, 1, 24);
 const shared = new Set([ball, box, cone, cylinder]),
@@ -19,12 +22,12 @@ function mat(color, glow = false) {
         color,
         roughness: [0xe4bb64, 0xe7c875, 0xc9ad65, 0xe1bb67].includes(color)
           ? 0.25
-          : 0.69,
+          : 0.82,
         metalness: glow
           ? 0.38
           : [0xe4bb64, 0xe7c875, 0xc9ad65, 0xe1bb67].includes(color)
             ? 0.78
-            : 0.08,
+            : 0,
         emissive: glow ? color : 0,
         emissiveIntensity: glow ? 0.4 : 0,
       }),
@@ -168,7 +171,7 @@ export function applyCosmetic(model, id = "none") {
   const d = model.userData;
   if (d.cosmeticId === id) return;
   if (d.cosmetic) {
-    d.head.remove(d.cosmetic);
+    d.cosmetic.removeFromParent();
     d.cosmetic.userData.dispose();
   }
   d.baseDispose ||= d.dispose;
@@ -176,7 +179,8 @@ export function applyCosmetic(model, id = "none") {
   d.cosmetic = null;
   if (id !== "none") {
     d.cosmetic = createCosmetic(id);
-    d.head.add(d.cosmetic);
+    if(d.cosmeticAnchor)d.cosmetic.position.y=-.05;
+    (d.cosmeticAnchor||d.head).add(d.cosmetic);
   }
   d.dispose = () => {
     d.cosmetic?.userData.dispose();
@@ -202,6 +206,12 @@ export function createDecoration(id) {
   const item = DECORATIONS.find((d) => d.id === id) || DECORATIONS[0],
     root = new THREE.Group(),
     c = item.color;
+  if(['fern','flowers','palm','tree','rocks'].includes(item.style)){
+    const kind={fern:'fern',flowers:'flower',palm:'cycad',tree:'ginkgo',rocks:'rock'}[item.style],material=naturalMaterial(kind==='ginkgo'?'broadleaf':kind==='rock'?'stone':'leaf',0xffffff,{vertexColors:kind!=='ginkgo'}),geometry=BOTANY[kind][0].clone();
+    const count=item.style==='rocks'?4:item.style==='flowers'?3:1;
+    for(let i=0;i<count;i++){const mesh=new THREE.Mesh(geometry,material),scale=item.style==='tree'?1.65:item.style==='palm'?2.3:item.style==='rocks'?.7+i*.23:1;mesh.scale.setScalar(scale);mesh.position.set(count===1?0:Math.cos(i*2.4)*.7,0,count===1?0:Math.sin(i*2.4)*.7);mesh.rotation.y=i*2.4;mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);}
+    root.userData.dispose=()=>{geometry.dispose();material.dispose();};return root;
+  }
   const ring = (radius, tube, y, color = c) =>
     piece(
       root,
@@ -418,15 +428,14 @@ export function createDecoration(id) {
     );
   } else if (item.style === "statue") {
     piece(root, box, c, [0, 0.35, 0], [3.2, 0.7, 2.2]);
+    finalize(root);const disposeBase=root.userData.dispose;
     const d = createDinosaur(SPECIES_BY_ID.tyrannosaurus, true);
     d.scale.setScalar(0.72);
     d.position.y = 0.7;
-    d.traverse((m) => {
-      if (m.isMesh) m.material = mat(c);
-    });
+    const stone=()=>d.traverse((m)=>{if(m.isMesh)m.material=mat(c);});
+    stone();d.userData.onAssetReady=()=>{stone();root.userData.onAssetReady?.();};
     root.add(d);
-    finalize(root);
-    d.userData.dispose();
+    root.userData.dispose=()=>{disposeBase();d.userData.dispose();};
     return root;
   }
   return finalize(root);
@@ -446,14 +455,15 @@ export function createShopObject(item, profile) {
   return root;
 }
 export class CollectionViewer extends SpecimenViewer {
-  constructor(canvas, item, profile) {
-    super(canvas, SPECIES_BY_ID.compsognathus);
+  constructor(canvas, item, profile,settings={}) {
+    super(canvas, SPECIES_BY_ID.compsognathus,'natural',settings);
     this.setProduct(item, profile);
   }
   setProduct(item, profile) {
     this.scene.remove(this.model);
     this.model.userData.dispose();
     this.model = createShopObject(item, profile);
+    this.model.userData.onAssetReady=()=>this.resize();
     this.model.rotation.y = -0.5;
     this.scene.add(this.model);
     this.sku = item.sku;
@@ -461,7 +471,7 @@ export class CollectionViewer extends SpecimenViewer {
   }
   render(dt) {
     this.time += dt;
-    if (!this.dragging) this.model.rotation.y += dt * 0.18;
+    if (!this.dragging&&!this.quietMotion) this.model.rotation.y += dt * 0.18;
     if (this.model.userData.species)
       animateCreature(this.model, dt, this.time, 0);
     this.renderer.render(this.scene, this.camera);

@@ -1,3 +1,4 @@
+import {enterTitle} from './enter-title.mjs';
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -46,7 +47,7 @@ async function state() {
 }
 let saved, predeathBackup, deadRunId;
 try {
-  await page.goto(url); await ready();
+  await page.goto(url);await enterTitle(page); await ready();
   await check("a real new life hatches through the command authority and exposes checkpoint status", async () => {
     assert.equal(await page.locator('[data-action="continue"]').count(), 0);
     await page.getByRole("button", { name: /BEGIN A NEW LIFE/ }).click();
@@ -85,7 +86,7 @@ try {
     assert.ok(saved.inactiveFoods.every((f) => f.id !== consumedId));
     await page.locator('[data-action="menu"]').click();
     await page.locator('[data-action="continue"]').waitFor();
-    assert.match(await page.locator(".save-summary").textContent(), /TIER 1/);
+    assert.match(await page.locator(".save-meta").textContent(), /TIER 1/);
     await capture("continue-title");
     return { runId: saved.runId, consumedId, inactiveFoods: saved.inactiveFoods.length, offers: saved.choices };
   });
@@ -98,7 +99,7 @@ try {
       })));
       assert.ok(layout[".menu-top"].bottom <= layout[".menu-copy"].top + 1, JSON.stringify(layout));
       assert.ok(layout[".menu-copy"].bottom <= layout[".menu-footer"].top + 1, JSON.stringify(layout));
-      for (const action of ["continue", "start", "quit"]) {
+      for (const action of ["continue", "start", "credits"]) {
         const button = page.locator(`[data-action="${action}"]`);
         await button.scrollIntoViewIfNeeded();
         const box = await button.boundingBox();
@@ -114,7 +115,7 @@ try {
     return result;
   });
   await check("reloading and continuing restores a paused life with exact health, growth, position, RNG, offers and inactive foods", async () => {
-    await page.reload(); await ready();
+    await page.reload();await enterTitle(page); await ready();
     assert.equal(await page.evaluate(() => window.__JD.game), null);
     await page.locator('[data-action="continue"]').click();
     await page.waitForFunction(() => window.__JD.ui.view === "pause" && window.__JD.game);
@@ -129,12 +130,12 @@ try {
     await page.keyboard.press("KeyT");
     await page.waitForFunction(() => window.__JD.ui.view === "evolution");
     const offers = await page.evaluate(() => ({ species: [...window.__JD.game.evolutionChoices], mutations: [...window.__JD.game.mutationChoices], time: window.__JD.game.time }));
-    await page.reload(); await ready();
+    await page.reload();await enterTitle(page); await ready();
     await page.locator('[data-action="continue"]').click();
     await page.waitForFunction(() => window.__JD.ui.view === "evolution");
     assert.deepEqual(await page.evaluate(() => [...window.__JD.game.evolutionChoices]), offers.species);
     assert.deepEqual(await page.evaluate(() => [...window.__JD.game.mutationChoices]), offers.mutations);
-    await page.locator(`[data-species="${offers.species[0]}"]`).click();
+    assert.equal(await page.locator(`[data-species="${offers.species[0]}"]`).getAttribute('aria-pressed'), 'true');
     await page.locator(`[data-mutation="${offers.mutations[0]}"]`).click();
     await page.locator('[data-action="evolve"]').click();
     await page.waitForFunction((time) => window.__JD.ui.view === "hud" && window.__JD.game.state === "playing" && window.__JD.game.time > time + .15, offers.time);
@@ -221,7 +222,7 @@ try {
     await page.waitForFunction(() => window.__JD.game.player.attackCooldown > 0);
     await page.keyboard.up("KeyZ");
     assert.equal(await page.locator("#attack-ready").locator("..").locator("kbd").textContent(), "Z");
-    await page.keyboard.press("Escape"); await page.reload(); await ready();
+    await page.keyboard.press("Escape"); await page.reload();await enterTitle(page); await ready();
     assert.equal(await page.evaluate(() => window.__JD.settings.controls.attack), "KeyZ");
     assert.equal(await page.evaluate(() => window.__JD.settings.uiScale), 1.25);
     assert.equal(await page.evaluate(() => window.__JD.settings.reducedMotion), true);
@@ -240,7 +241,7 @@ try {
       });
       await frames(4);
       const layout = await page.evaluate(() => {
-        const nodes = [".vitals", ".abilities", ".evolution-progress"].map((selector) => {
+        const nodes = [".hud-top-center-vitals", ".abilities", ".hud-evolution-bar-container"].map((selector) => {
           const r = document.querySelector(selector).getBoundingClientRect(); return { selector, x: r.x, y: r.y, right: r.right, bottom: r.bottom };
         });
         const overlaps = [];
@@ -309,7 +310,7 @@ try {
     await page.locator("#restore-backup").click();
     await page.waitForFunction(() => window.__JD.ui.view === "menu");
     assert.equal(await page.locator('[data-action="continue"]').count(), 0);
-    await page.reload(); await ready();
+    await page.reload();await enterTitle(page); await ready();
     assert.equal(await page.locator('[data-action="continue"]').count(), 0);
     assert.ok(await page.evaluate((id) => window.__JD.profile.completedRuns.includes(id), deadRunId));
   });

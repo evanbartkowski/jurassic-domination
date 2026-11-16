@@ -10,6 +10,39 @@ echo.
 
 where node >nul 2>nul
 if errorlevel 1 (
+  if exist "release\primeval\Jurassic Domination-0.12.0-portable.exe" (
+    echo Launching Primeval portable Windows release...
+    start "" "release\primeval\Jurassic Domination-0.12.0-portable.exe"
+    exit /b 0
+  )
+  if exist "release\primeval\win-unpacked\Jurassic Domination.exe" (
+    start "" "release\primeval\win-unpacked\Jurassic Domination.exe"
+    exit /b 0
+  )
+  if exist "release\frontier\Jurassic Domination-0.11.0-portable.exe" (
+    echo Launching Frontier portable Windows release...
+    start "" "release\frontier\Jurassic Domination-0.11.0-portable.exe"
+    exit /b 0
+  )
+  if exist "release\frontier\win-unpacked\Jurassic Domination.exe" (
+    start "" "release\frontier\win-unpacked\Jurassic Domination.exe"
+    exit /b 0
+  )
+  if exist "release\grimwild\Jurassic Domination-0.10.0-portable.exe" (
+    echo Launching Grimwild portable Windows release...
+    start "" "release\grimwild\Jurassic Domination-0.10.0-portable.exe"
+    exit /b 0
+  )
+  if exist "release\grimwild\win-unpacked\Jurassic Domination.exe" (
+    echo Launching Grimwild Windows desktop build...
+    start "" "release\grimwild\win-unpacked\Jurassic Domination.exe"
+    exit /b 0
+  )
+  if exist "release\player-polish\Jurassic Domination-0.9.0-portable.exe" (
+    echo Launching portable Windows release...
+    start "" "release\player-polish\Jurassic Domination-0.9.0-portable.exe"
+    exit /b 0
+  )
   if exist "release\Jurassic Domination-0.8.0-portable.exe" (
     echo Launching portable Windows release...
     start "" "release\Jurassic Domination-0.8.0-portable.exe"

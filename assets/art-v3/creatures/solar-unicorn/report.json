@@ -1,0 +1,68 @@
+{
+  "id": "solar-unicorn",
+  "family": "equine",
+  "triangles": 20392,
+  "bones": 22,
+  "dimensions": [
+    3.2062482833862305,
+    1.2200000286102295,
+    3.363025426864624
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.086": {
+        "verts": 10230,
+        "faces": 20392,
+        "tris": 20392,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 17,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 40.1
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Unicorn_horn",
+      "distance": 0.0042
+    }
+  ],
+  "bytes": 1138820
+}

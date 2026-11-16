@@ -21,6 +21,7 @@ import {
   growthFromFood,
   feedEntity,
   BLOODLINES,
+  archetypeForSpecies,
 } from "./progression.js";
 import { ABILITIES } from "./content.js";
 import { canEatFood, forageForRegion, plantDefinition } from "./forage.js";
@@ -28,10 +29,14 @@ import { sweepMove, hasLineOfSight, attackLineClear } from "./combat.js";
 import { makeGenome, normalizeGenome, phenotype, newAdaptationState } from './genetics.js';
 import { initializeLifeEntity } from './life-cycle.js';
 import { initializeWorldState, updateWorldEvents, getTimeOfDay } from './world-events.js';
+import {updateIncidents} from './world-incidents.js';
+import {mutationPoolForRarity,mutationRarityFromKill,evolutionMutationRarity} from './mutation-rarity.js';
+import {MARINE_TRAITS} from './marine-ecology.js';
 import { initializeDiscoveryState, recordExploration, LANDMARKS, interactWithLandmark } from './discoveries.js';
 import { newSurvivalState, updateSurvival, survivalSpeed, setMovementPosture } from './survival.js';
 import { recordNoise, recordBlood } from './senses.js';
 import { COMPANION_SYNERGIES } from './sanctuary.js';
+import { spawnDemolitionLoot } from './wilderness.js';
 import {
   WORLD_RADIUS,
   biomeAt,
@@ -227,7 +232,7 @@ export class Game {
     const p = this.player,
       s = this.species,
       m = this.mutationCounts,
-      b = this.build || {};
+      b = this.build || {}, identity=archetypeForSpecies(s);
     const ratio = p.hp / Math.max(1, p.maxHp);
     const synergy = this.petId ? COMPANION_SYNERGIES[this.petId] : null;
 
@@ -248,7 +253,7 @@ export class Game {
     const berserkActive = b.transformations?.berserkerRage && (ratio < 0.5);
 
     p.maxHp = Math.round(
-      s.hp *
+      s.hp * identity.hpMultiplier *
         (1 + (p.growth || 0) * 0.4) *
         (1 +
           this.upgrades.vitality * 0.05 +
@@ -260,7 +265,7 @@ export class Game {
     );
     p.hp = heal ? p.maxHp : Math.min(p.maxHp, p.maxHp * ratio);
     p.damage =
-      s.damage *
+      s.damage * identity.damageMultiplier *
       (1 + (p.growth || 0) * 0.32) *
       (1 +
         this.upgrades.instinct * 0.04 +
@@ -271,7 +276,7 @@ export class Game {
       (this.hasBuff("damage") ? 1.5 : 1) *
       (berserkActive ? 2.0 : 1);
     p.speed =
-      s.speed * this.geneticTraits.speed *
+      s.speed * identity.speedBonus * this.geneticTraits.speed *
       (1 - (p.growth || 0) * 0.04) *
       (1 + (m.swift || 0) * 0.1 + hasteSpeed + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
       (this.hasBuff("speed") ? 1.4 : 1) *
@@ -279,7 +284,7 @@ export class Game {
       (berserkActive ? 1.4 : 1);
     p.armor = Math.min(
       0.75,
-      (m.ironhide || 0) * 0.12 + (s.body === "quad" ? 0.12 : 0) + (synergy?.role === "bulwark" ? 0.15 : 0) + thickScalesRed + armoredHideArmor,
+      (m.ironhide || 0) * 0.12 + (s.body === "quad" ? 0.12 : 0) + (identity.armorBonus||0) + (synergy?.role === "bulwark" ? 0.15 : 0) + thickScalesRed + armoredHideArmor,
     );
   }
 
@@ -464,6 +469,7 @@ export class Game {
     if (this.state !== "egg") return false;
     if (chosenSpeciesId && SPECIES_BY_ID[chosenSpeciesId] && this.starterChoices.includes(chosenSpeciesId)) {
       this.player.speciesId = chosenSpeciesId;
+      this.tier = SPECIES_BY_ID[chosenSpeciesId].tier;
       this.formHistory = [chosenSpeciesId];
       this.player.genome = makeGenome(`${this.seed}:player`, SPECIES_BY_ID[chosenSpeciesId]);
       this.refreshStats(true);
@@ -508,6 +514,7 @@ export class Game {
     if (input.evolve && this.openEvolution()) return;
     this.time += dt;
     updateWorldEvents(this, dt);
+    updateIncidents(this,dt);
     const p = this.player,
       s = this.species,
       m = this.mutationCounts;
@@ -579,7 +586,7 @@ export class Game {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.stamina = clamp(
-      p.stamina + (sprint ? -20 * this.geneticTraits.staminaCost : (24 + (m.swift || 0) * 5) * this.geneticTraits.staminaRecovery * (1 - this.survival.fatigue * .001)) * dt,
+      p.stamina + (sprint ? -20 * this.geneticTraits.staminaCost * (this.kit.archetype.staminaCost||1) : (24 + (m.swift || 0) * 5) * this.geneticTraits.staminaRecovery * (this.kit.archetype.staminaRecovery||1) * (1 - this.survival.fatigue * .001)) * dt,
       0,
       100,
     );
@@ -626,7 +633,7 @@ export class Game {
         for (const e of this.entities) {
           if (distance(e, trail) < trail.radius) {
             e.burning = Math.max(e.burning || 0, 2.5);
-            e.hp -= trail.damage * dt;
+            this._secondaryDamage(e, trail.damage * dt);
             e.hitFlash = 0.1;
           }
         }
@@ -642,7 +649,7 @@ export class Game {
           if (distance(e, cloud) < cloud.radius) {
             e.poison = Math.max(e.poison || 0, 4.0);
             e.slowed = Math.max(e.slowed || 0, 3.0);
-            e.hp -= cloud.damage * dt;
+            this._secondaryDamage(e, cloud.damage * dt);
           }
         }
       }
@@ -695,7 +702,7 @@ export class Game {
       this.rules.hunger *
       earlyBasinGrace *
       Math.max(0.35, 1 - this.upgrades.metabolism * 0.06) *
-      Math.pow(0.75, m.metabolism || 0);
+      Math.pow(0.75, m.metabolism || 0) * (this.kit.archetype.hungerDrainMult||1);
     p.hunger = Math.max(0, p.hunger - hungerDrain * dt * (sprint ? 1.45 : 1));
     if (p.hunger > 60 && p.hp < p.maxHp)
       p.hp = Math.min(
@@ -766,7 +773,8 @@ export class Game {
     const f = feature || (this.worldFeatures || []).find((feat) => feat.id === fish.poolId);
     const tier = f?.tier || fish.tier || 0;
     fish.maxHp = fish.maxHp || (50 + tier * 35);
-    fish.hp = (Number.isFinite(fish.hp) ? fish.hp : fish.maxHp) - damage;
+    fish.hp = (Number.isFinite(fish.hp) ? fish.hp : fish.maxHp) - damage*(1-(MARINE_TRAITS[fish.speciesId]?.armor||0));
+    fish.angeredUntil=this.time+12;
     this.emit("hit", {
       amount: damage,
       x: fish.x,
@@ -825,6 +833,7 @@ export class Game {
     p.attackCooldown = ["raptor", "bird"].includes(this.species.body)
       ? 0.43
       : 0.52;
+    p.attackCooldown *= this.kit.archetype.attackInterval||1;
     p.attacking = 0.28;
     const wideCleaveLvl = this.build?.passive?.wideCleave || 0;
     const reachMult = wideCleaveLvl > 0 ? (1 + wideCleaveLvl * 0.16) : 1;
@@ -876,7 +885,7 @@ export class Game {
             ? 1 + Math.min(3, p.combo) * 0.1
             : 1) *
           (this.species.body === "croc" && e.aggro <= 0 ? 1.35 : 1);
-        if (this.species.body === "serpent" || p.venomFang > 0) {
+        if (this.species.body === "serpent" || this.kit.archetype.id==='venom' || p.venomFang > 0) {
           e.poison = 5;
           e.poisonTick = 0;
           if (this.survivalBehavior) this.survivalBehavior.statusInflicted = (this.survivalBehavior.statusInflicted || 0) + 1;
@@ -903,39 +912,7 @@ export class Game {
         if (f.hits >= requiredHits || this.effectiveSize >= 2.5) {
           f.destroyed = true;
           f.solid = false;
-          try {
-            this.sound?.play?.("demolish");
-          } catch {}
-          this.emit("obstacle-demolished", { feature: f });
-          if (f.type === "fallen-log") {
-            this.notifications?.push?.({ text: "🪵 Hollow Log Smashed! Insects scattered!", color: "#ca8a04", time: 3 });
-            if (Array.isArray(this.foods)) {
-              for (let i = 0; i < 3; i++) {
-                this.foods.push({
-                  id: `demolish_grub_${f.id}_${i}_${Math.floor(this.time * 100)}`,
-                  type: "insect",
-                  x: f.x + (i - 1) * 1.2,
-                  y: f.y + ((i % 2) - 0.5) * 1.2,
-                  value: 20,
-                  nutrition: 25,
-                  spawned: this.time,
-                });
-              }
-            }
-          } else if (f.type === "boulder") {
-            this.notifications?.push?.({ text: "💎 Amber Geode Shattered! Essence exposed!", color: "#f59e0b", time: 3 });
-            if (Array.isArray(this.foods)) {
-              this.foods.push({
-                id: `demolish_amber_${f.id}_${Math.floor(this.time * 100)}`,
-                type: "amber",
-                x: f.x,
-                y: f.y,
-                value: 45,
-                nutrition: 15,
-                spawned: this.time,
-              });
-            }
-          }
+          spawnDemolitionLoot(this, f);
         }
       }
     }
@@ -985,7 +962,7 @@ export class Game {
     if (this.build?.transformations?.thunderJaws) {
       for (const foe of this.entities) {
         if (distance(p, foe) < 6.5) {
-          foe.hp -= 60;
+          this._secondaryDamage(foe, 60);
           foe.hitFlash = 0.2;
           this.emit("hit", { x: foe.x, y: foe.y, amount: 60, target: foe.id, lightning: true });
         }
@@ -1146,7 +1123,7 @@ export class Game {
     if (p.stamina < definition.stamina) return false;
     p.abilityCooldown = Math.max(
       3,
-      definition.cooldown * Math.pow(0.82, m.adrenaline || 0),
+      definition.cooldown * Math.pow(0.82, m.adrenaline || 0) * (this.kit.archetype.abilityInterval||1),
     );
     p.stamina -= definition.stamina;
     p.abilityActive = 0.8;
@@ -1193,7 +1170,7 @@ export class Game {
       if (type === "frost" || type === "web") e.slowed = 6;
       e.stunned = ["stomp", "petrify", "lightning"].includes(type) ? 1.4 : 0.4;
       const knockbackForce = type === "tailspin" ? 4.5 : type === "stomp" ? 3.2 : type === "charge" ? 3.6 : 1.4;
-      const damage = p.damage * definition.power;
+      const damage = p.damage * definition.power * (this.kit.archetype.abilityPower||1);
       this._hitEntity(e, damage, knockbackForce);
       if (type === "blood") p.hp = Math.min(p.maxHp, p.hp + damage * 0.2);
     }
@@ -1453,7 +1430,7 @@ export class Game {
     ) {
       this.evolutionReady = true;
       this.emit("evolution-ready", {
-        text: "Evolution ready. Press T or the flashing indicator when you choose.",
+        text: "Evolution ready. Use your evolution key or the gold sigil when you choose.",
       });
     }
   }
@@ -1462,7 +1439,7 @@ export class Game {
       return false;
     if (!this.evolutionChoices.length) {
       this.evolutionChoices = chooseEvolutions(this);
-      this.mutationChoices = this._sample(MUTATIONS, 3).map((m) => m.id);
+      this.mutationChoices = this._sample(mutationPoolForRarity(MUTATIONS,evolutionMutationRarity(this.tier,this.random())), 3).map((m) => m.id);
     } else
       for (const b of eligibleBloodlines(this))
         if (!this.evolutionChoices.includes(b.speciesId))
@@ -1477,8 +1454,10 @@ export class Game {
   }
   openMutationDrop(rarity = "common") {
     if (this.state !== "playing") return false;
+    this.mutationDropRarity = rarity;
+    delete this._recoveredMutationChoices;
     this.build ||= createBuildState();
-    const pool = [...MUTATIONS];
+    const pool = mutationPoolForRarity(MUTATIONS,rarity);
 
     // Collect upgradeable mutations that player currently possesses
     const upgradeable = [];
@@ -1798,8 +1777,10 @@ export class Game {
       }
     }
 
+    const toxin=typeof cause==='string'&&/poison|venom|toxic/i.test(cause)?1-(this.kit.archetype.toxinResistance||0):1;
     const damage =
       amount *
+      toxin *
       frontalShield *
       flankVuln *
       (1 - p.armor) *
@@ -1829,7 +1810,7 @@ export class Game {
         const refDmg = damage * reflectPct;
         for (const e of this.entities) {
           if (distance(p, e) < 5.5) {
-            e.hp -= refDmg;
+            this._secondaryDamage(e, refDmg);
             e.hitFlash = 0.15;
             this.emit("hit", { x: e.x, y: e.y, amount: refDmg, target: e.id, reflect: true });
           }
@@ -1842,7 +1823,7 @@ export class Game {
         const thornDmg = 18 + (thornsLvl - 1) * 20;
         for (const e of this.entities) {
           if (distance(p, e) < 4.5) {
-            e.hp -= thornDmg;
+            this._secondaryDamage(e, thornDmg);
             e.hitFlash = 0.15;
             if (thornsLvl >= 3) e.bleeding = Math.max(e.bleeding || 0, 3.0);
             this.emit("hit", { x: e.x, y: e.y, amount: thornDmg, target: e.id, thorns: true });
@@ -1857,7 +1838,7 @@ export class Game {
         for (const e of this.entities) {
           if (distance(p, e) < 5.0) {
             e.poison = Math.max(e.poison || 0, 4.0);
-            e.hp -= acidDmg;
+            this._secondaryDamage(e, acidDmg);
             this.emit("hit", { x: e.x, y: e.y, amount: acidDmg, target: e.id, poison: true });
           }
         }
@@ -1884,7 +1865,7 @@ export class Game {
         for (const e of this.entities) {
           if (distance(p, e) < 7.0) {
             e.burning = Math.max(e.burning || 0, 3.5);
-            e.hp -= p.damage * 0.85;
+            this._secondaryDamage(e, p.damage * 0.85);
             this.emit("hit", { x: e.x, y: e.y, amount: p.damage * 0.85, target: e.id, fire: true });
           }
         }
@@ -1894,7 +1875,7 @@ export class Game {
         for (const e of this.entities) {
           if (distance(p, e) < 6.5) {
             e.burning = Math.max(e.burning || 0, 3.5);
-            e.hp -= p.damage * 0.75;
+            this._secondaryDamage(e, p.damage * 0.75);
             this.emit("hit", { x: e.x, y: e.y, amount: p.damage * 0.75, target: e.id, fire: true });
           }
         }
@@ -1916,6 +1897,13 @@ export class Game {
       this.emit("death", { text: cause });
     }
     return true;
+  }
+
+  _secondaryDamage(e, amount) {
+    if (!this.entities.includes(e) || e.hp <= 0 || !Number.isFinite(amount) || amount <= 0) return;
+    // Preserve authored secondary damage without retriggering on-hit procs.
+    e.hp = Math.max(0, e.hp - amount);
+    if (e.hp <= 0) this._defeatEntity(e);
   }
 
   _hitEntity(e, amount, knockback = 0, isCrit = false, hitAngle = null) {
@@ -1989,7 +1977,7 @@ export class Game {
       let hitCount = 0;
       for (const other of this.entities) {
         if (other !== e && distance(other, e) < 8.0 && hitCount < maxArcs) {
-          other.hp -= arcDmg;
+          this._secondaryDamage(other, arcDmg);
           other.hitFlash = 0.18;
           if (chainLvl >= 3 && this.random() < 0.25) other.stunned = Math.max(other.stunned || 0, 1.0);
           this.emit("hit", { x: other.x, y: other.y, amount: arcDmg, target: other.id, lightning: true });
@@ -2002,7 +1990,7 @@ export class Game {
       const tailSweepDmg = actualAmount * (0.5 + tailLvl * 0.25);
       for (const other of this.entities) {
         if (other !== e && distance(this.player, other) < 4.5) {
-          other.hp -= tailSweepDmg;
+          this._secondaryDamage(other, tailSweepDmg);
           if (tailLvl >= 3) other.stunned = Math.max(other.stunned || 0, 1.0);
           this.emit("hit", { x: other.x, y: other.y, amount: tailSweepDmg, target: other.id, knockback: true });
         }
@@ -2028,6 +2016,12 @@ export class Game {
     }
     this.emit("hit", { x: e.x, y: e.y, amount, target: e.id, crit: isCrit });
     if (e.hp > 0) return;
+    this._defeatEntity(e, isCrit);
+  }
+
+  _defeatEntity(e, isCrit = false) {
+    if (!this.entities.includes(e) || e.hp > 0) return;
+    e.hp = 0;
     this.hitStop = e.boss ? 0.09 : 0.065;
     const s = SPECIES_BY_ID[e.speciesId];
     if (e.isRegionalAlpha && e.alphaRegion) {
@@ -2121,14 +2115,7 @@ export class Game {
     const dropRoll = (dropHash * 1000) % 1;
     if (dropRoll < mutationChance) {
       const rarityRoll = (dropHash * 10000) % 1;
-      let rarity = "common";
-      if (isBoss) {
-        rarity = rarityRoll < 0.45 ? "legendary" : "epic";
-      } else if (isHighTier) {
-        rarity = rarityRoll < 0.15 ? "legendary" : rarityRoll < 0.55 ? "epic" : "rare";
-      } else {
-        rarity = rarityRoll < 0.05 ? "epic" : rarityRoll < 0.35 ? "rare" : "common";
-      }
+      const rarity=mutationRarityFromKill(s.tier,isBoss,rarityRoll);
       this.spawnFood("mutation-catalyst", e.x, e.y, 45, {
         tier: s.tier,
         rarity,
@@ -2141,7 +2128,7 @@ export class Game {
       const aoeDamage = 120 + this.player.damage * 0.6;
       for (const other of this.entities) {
         if (other !== e && distance(other, e) < aoeRadius) {
-          other.hp -= aoeDamage;
+          this._secondaryDamage(other, aoeDamage);
           other.bleeding = Math.max(other.bleeding || 0, 4.0);
           other.hitFlash = 0.2;
           this.emit("hit", { x: other.x, y: other.y, amount: aoeDamage, target: other.id, bleed: true });

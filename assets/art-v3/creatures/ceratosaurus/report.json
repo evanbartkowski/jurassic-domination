@@ -1,0 +1,124 @@
+{
+  "id": "ceratosaurus",
+  "family": "carnosaur",
+  "triangles": 22706,
+  "bones": 20,
+  "dimensions": [
+    4.997358322143555,
+    1.71999990940094,
+    2.29154634475708
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.010": {
+        "verts": 11503,
+        "faces": 22706,
+        "tris": 22706,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 75,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.13,
+        "uv_coverage_pct": 32.2
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0369
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0385
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0382
+    },
+    {
+      "part": "Lower_tooth.008",
+      "distance": 0.0472
+    },
+    {
+      "part": "Lower_tooth.009",
+      "distance": 0.0434
+    },
+    {
+      "part": "Lower_tooth.010",
+      "distance": 0.045
+    },
+    {
+      "part": "Lower_tooth.016",
+      "distance": 0.0365
+    },
+    {
+      "part": "Lower_tooth.017",
+      "distance": 0.0386
+    },
+    {
+      "part": "Lower_tooth.018",
+      "distance": 0.0383
+    },
+    {
+      "part": "Lower_tooth.019",
+      "distance": 0.0472
+    },
+    {
+      "part": "Lower_tooth.020",
+      "distance": 0.0436
+    },
+    {
+      "part": "Lower_tooth.021",
+      "distance": 0.0448
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0369
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0351
+    },
+    {
+      "part": "Nasal_horn",
+      "distance": 0.0488
+    }
+  ],
+  "bytes": 1293992
+}

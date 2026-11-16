@@ -1,0 +1,161 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0-1.0",
+  "licenseURL": "https://polyhaven.com/license",
+  "records": [
+    {
+      "asset": "forest_floor",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_floor/forest_floor_diff_1k.jpg",
+      "file": "assets/art-v4/surface-sources/forest_floor/color.jpg",
+      "bytes": 1329853,
+      "sha256": "f12e5adea1741f9eb7a528bfc621f8267885b9530b74c3a8afdb823899bdbf0b",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "forest_floor",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_floor/forest_floor_nor_gl_1k.jpg",
+      "file": "assets/art-v4/surface-sources/forest_floor/normal.jpg",
+      "bytes": 1380104,
+      "sha256": "681f3de8c756c4d19bcda33039f953295498f38b1425ce9d56b37d6f97f6e518",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "forest_floor",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_floor/forest_floor_rough_1k.jpg",
+      "file": "assets/art-v4/surface-sources/forest_floor/roughness.jpg",
+      "bytes": 736353,
+      "sha256": "ece0b331f08c03f3edcd8ab6815b74a5ae20768beef64cd4f96a5b2fa26e116e",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "rock_face",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face/rock_face_diff_1k.jpg",
+      "file": "assets/art-v4/surface-sources/rock_face/color.jpg",
+      "bytes": 732721,
+      "sha256": "cce4b50517161264bdef196f5e247e328ca3739083cd6044ad3cc54d88cb82e2",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "rock_face",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face/rock_face_nor_gl_1k.jpg",
+      "file": "assets/art-v4/surface-sources/rock_face/normal.jpg",
+      "bytes": 1139857,
+      "sha256": "e2682e1286c8b6aca7e01ba7b8fe1726cb6606042b9ee70d097aa67470d410ef",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "rock_face",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face/rock_face_rough_1k.jpg",
+      "file": "assets/art-v4/surface-sources/rock_face/roughness.jpg",
+      "bytes": 224371,
+      "sha256": "70ddfc5d7f292909d18ad56dbb1ff7c3a65809dc031854356c7a6978cb446219",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "bark_brown_02",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_diff_1k.jpg",
+      "file": "assets/art-v4/surface-sources/bark_brown_02/color.jpg",
+      "bytes": 659592,
+      "sha256": "920fa0bed0c9d78c1d530e99795113afd532d7db746de440f4a85d7c83ed0f1a",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "bark_brown_02",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_nor_gl_1k.jpg",
+      "file": "assets/art-v4/surface-sources/bark_brown_02/normal.jpg",
+      "bytes": 1015623,
+      "sha256": "0d5e691e8ad8bcd093a3587887fda2a6b4a948b5708a4f256f7919584c6eb857",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "bark_brown_02",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_rough_1k.jpg",
+      "file": "assets/art-v4/surface-sources/bark_brown_02/roughness.jpg",
+      "bytes": 337946,
+      "sha256": "68125592de36e15bae7aa6db85c4d135aeb7e5653199ba226483a70f6d69837d",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/fir_sapling_medium/fir_sapling_medium_twigs_diff_1k.png",
+      "file": "assets/art-v4/surface-sources/fir_sapling_medium/fir_sapling_medium_twigs_diff_1k.png",
+      "bytes": 1745129,
+      "sha256": "581df52e36fa3ea1d348df6b84e276fb3c88ee33cc182c2987eff61bf3daa513",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/fir_sapling_medium/fir_sapling_medium_twigs_nor_gl_1k.png",
+      "file": "assets/art-v4/surface-sources/fir_sapling_medium/fir_sapling_medium_twigs_nor_gl_1k.png",
+      "bytes": 1825146,
+      "sha256": "cbb6b8179a9f7f6e84fd15d1f422bc342841d20845b2bad437612f03fb0067de",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/fir_sapling_medium/fir_sapling_medium_twigs_rough_1k.png",
+      "file": "assets/art-v4/surface-sources/fir_sapling_medium/fir_sapling_medium_twigs_rough_1k.png",
+      "bytes": 1155354,
+      "sha256": "a4f0a4c8bc93946dea229def779ffe5d32c555c717e4bf7b0e4b4d86bc21987a",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/fir_sapling_medium/fir_sapling_medium_twigs_alpha_1k.png",
+      "file": "assets/art-v4/surface-sources/fir_sapling_medium/fir_sapling_medium_twigs_alpha_1k.png",
+      "bytes": 371026,
+      "sha256": "3f399629337e7ac3af27a01b08ffb9c0d60224a9dd374a1427761a5c2eea9d6e",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "jacaranda_tree",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_diff_1k.png",
+      "file": "assets/art-v4/surface-sources/jacaranda_tree/jacaranda_tree_leaves_diff_1k.png",
+      "bytes": 2364526,
+      "sha256": "5729978e92649ee6cc70bdc457aac1b28b16a10bde0a55004b659a1923c8861b",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "jacaranda_tree",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_nor_gl_1k.png",
+      "file": "assets/art-v4/surface-sources/jacaranda_tree/jacaranda_tree_leaves_nor_gl_1k.png",
+      "bytes": 4154090,
+      "sha256": "4dc58cca117cb193629bf6a2b909bd281451c60a5d85f1b1d438d296b90a1091",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "jacaranda_tree",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_rough_1k.png",
+      "file": "assets/art-v4/surface-sources/jacaranda_tree/jacaranda_tree_leaves_rough_1k.png",
+      "bytes": 992522,
+      "sha256": "2f6b89e7a1983cfa6fc2050f993c2c91c9afc86ce285607fa5a5f8f6b1b4c879",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    },
+    {
+      "asset": "jacaranda_tree",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_alpha_1k.png",
+      "file": "assets/art-v4/surface-sources/jacaranda_tree/jacaranda_tree_leaves_alpha_1k.png",
+      "bytes": 506043,
+      "sha256": "c708a7e928a2e4d26981b021a22deeefc0ebb0e467f60b53cfa636a7e24d68f7",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license"
+    }
+  ],
+  "processing": "Color maps 1024px sRGB; data maps 512px linear. Tree atlases combine licensed branch/leaf color and alpha with a bark strip. No source tree geometry is bundled."
+}

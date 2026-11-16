@@ -121,7 +121,7 @@ test("enemy bites cannot hit through a rock but connect on the same side", () =>
   game._updateEntity(enemy, .02);
   assert.equal(game.player.hp, before);
   game.player.x = -3; game.player.y = 1;
-  enemy.attackCooldown = 0; enemy.telegraph = .001;
+  enemy.attackCooldown = 0; enemy.telegraph = .001;enemy.combatPlan=null;enemy.angle=Math.PI/2;
   game._updateEntity(enemy, .02);
   assert.ok(game.player.hp < before);
 });

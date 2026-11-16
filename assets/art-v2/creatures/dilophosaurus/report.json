@@ -1,0 +1,17 @@
+{
+  "id": "dilophosaurus",
+  "source": "assets\\art-v2\\creatures\\dilophosaurus\\dilophosaurus.blend",
+  "export": "public\\assets\\models-v2\\dilophosaurus\\dilophosaurus.glb",
+  "triangles": 24732,
+  "bones": 12,
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "meshes": 1,
+  "bytes": 1224636
+}

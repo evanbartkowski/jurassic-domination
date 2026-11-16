@@ -1,0 +1,524 @@
+{
+  "id": "hydra",
+  "family": "serpent",
+  "triangles": 41160,
+  "bones": 10,
+  "dimensions": [
+    7.040334701538086,
+    7.965006351470947,
+    1.1234948635101318
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.083": {
+        "verts": 21352,
+        "faces": 41160,
+        "tris": 41160,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 388,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 10.4
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.001",
+      "distance": 0.0249
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0302
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0435
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0409
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0415
+    },
+    {
+      "part": "Lower_tooth.009",
+      "distance": 0.0241
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0304
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0434
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0391
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0429
+    },
+    {
+      "part": "Secondary_Pupil",
+      "distance": 0.036
+    },
+    {
+      "part": "Secondary_Lower_tooth.001",
+      "distance": 0.0246
+    },
+    {
+      "part": "Secondary_Lower_tooth.003",
+      "distance": 0.0238
+    },
+    {
+      "part": "Secondary_Lower_tooth.004",
+      "distance": 0.0305
+    },
+    {
+      "part": "Secondary_Lower_tooth.005",
+      "distance": 0.0434
+    },
+    {
+      "part": "Secondary_Lower_tooth.006",
+      "distance": 0.0396
+    },
+    {
+      "part": "Secondary_Lower_tooth.007",
+      "distance": 0.0428
+    },
+    {
+      "part": "Secondary_Pupil.001",
+      "distance": 0.036
+    },
+    {
+      "part": "Secondary_Lower_tooth.009",
+      "distance": 0.0251
+    },
+    {
+      "part": "Secondary_Lower_tooth.011",
+      "distance": 0.0235
+    },
+    {
+      "part": "Secondary_Lower_tooth.012",
+      "distance": 0.0307
+    },
+    {
+      "part": "Secondary_Lower_tooth.013",
+      "distance": 0.0431
+    },
+    {
+      "part": "Secondary_Lower_tooth.014",
+      "distance": 0.0393
+    },
+    {
+      "part": "Secondary_Lower_tooth.015",
+      "distance": 0.0436
+    },
+    {
+      "part": "Secondary_Pupil.002",
+      "distance": 0.036
+    },
+    {
+      "part": "Secondary_Lower_tooth.017",
+      "distance": 0.0247
+    },
+    {
+      "part": "Secondary_Lower_tooth.019",
+      "distance": 0.0237
+    },
+    {
+      "part": "Secondary_Lower_tooth.020",
+      "distance": 0.0305
+    },
+    {
+      "part": "Secondary_Lower_tooth.021",
+      "distance": 0.0435
+    },
+    {
+      "part": "Secondary_Lower_tooth.022",
+      "distance": 0.0391
+    },
+    {
+      "part": "Secondary_Lower_tooth.023",
+      "distance": 0.044
+    },
+    {
+      "part": "Secondary_Pupil.003",
+      "distance": 0.0358
+    },
+    {
+      "part": "Secondary_Lower_tooth.025",
+      "distance": 0.0245
+    },
+    {
+      "part": "Secondary_Lower_tooth.027",
+      "distance": 0.0231
+    },
+    {
+      "part": "Secondary_Lower_tooth.028",
+      "distance": 0.0312
+    },
+    {
+      "part": "Secondary_Lower_tooth.029",
+      "distance": 0.0434
+    },
+    {
+      "part": "Secondary_Lower_tooth.030",
+      "distance": 0.0392
+    },
+    {
+      "part": "Secondary_Lower_tooth.031",
+      "distance": 0.0434
+    },
+    {
+      "part": "Secondary_Pupil.004",
+      "distance": 0.0356
+    },
+    {
+      "part": "Secondary_Lower_tooth.033",
+      "distance": 0.0247
+    },
+    {
+      "part": "Secondary_Lower_tooth.035",
+      "distance": 0.0249
+    },
+    {
+      "part": "Secondary_Lower_tooth.036",
+      "distance": 0.032
+    },
+    {
+      "part": "Secondary_Lower_tooth.037",
+      "distance": 0.0442
+    },
+    {
+      "part": "Secondary_Lower_tooth.038",
+      "distance": 0.0402
+    },
+    {
+      "part": "Secondary_Lower_tooth.039",
+      "distance": 0.044
+    },
+    {
+      "part": "Secondary_Pupil.005",
+      "distance": 0.0366
+    },
+    {
+      "part": "Secondary_Lower_tooth.041",
+      "distance": 0.0243
+    },
+    {
+      "part": "Secondary_Lower_tooth.044",
+      "distance": 0.0298
+    },
+    {
+      "part": "Secondary_Lower_tooth.045",
+      "distance": 0.0443
+    },
+    {
+      "part": "Secondary_Lower_tooth.046",
+      "distance": 0.0398
+    },
+    {
+      "part": "Secondary_Lower_tooth.047",
+      "distance": 0.041
+    },
+    {
+      "part": "Secondary_Pupil.006",
+      "distance": 0.0357
+    },
+    {
+      "part": "Secondary_Lower_tooth.049",
+      "distance": 0.025
+    },
+    {
+      "part": "Secondary_Lower_tooth.052",
+      "distance": 0.0305
+    },
+    {
+      "part": "Secondary_Lower_tooth.053",
+      "distance": 0.0454
+    },
+    {
+      "part": "Secondary_Lower_tooth.054",
+      "distance": 0.0388
+    },
+    {
+      "part": "Secondary_Lower_tooth.055",
+      "distance": 0.043
+    },
+    {
+      "part": "Secondary_Pupil.007",
+      "distance": 0.0354
+    },
+    {
+      "part": "Secondary_Lower_tooth.057",
+      "distance": 0.024
+    },
+    {
+      "part": "Secondary_Lower_tooth.060",
+      "distance": 0.0322
+    },
+    {
+      "part": "Secondary_Lower_tooth.061",
+      "distance": 0.0444
+    },
+    {
+      "part": "Secondary_Lower_tooth.062",
+      "distance": 0.0404
+    },
+    {
+      "part": "Secondary_Lower_tooth.063",
+      "distance": 0.0436
+    },
+    {
+      "part": "Secondary_Pupil.008",
+      "distance": 0.0345
+    },
+    {
+      "part": "Secondary_Lower_tooth.065",
+      "distance": 0.0239
+    },
+    {
+      "part": "Secondary_Lower_tooth.068",
+      "distance": 0.0308
+    },
+    {
+      "part": "Secondary_Lower_tooth.069",
+      "distance": 0.0437
+    },
+    {
+      "part": "Secondary_Lower_tooth.070",
+      "distance": 0.0408
+    },
+    {
+      "part": "Secondary_Lower_tooth.071",
+      "distance": 0.0444
+    },
+    {
+      "part": "Secondary_Pupil.009",
+      "distance": 0.0363
+    },
+    {
+      "part": "Secondary_Lower_tooth.073",
+      "distance": 0.0244
+    },
+    {
+      "part": "Secondary_Lower_tooth.076",
+      "distance": 0.0305
+    },
+    {
+      "part": "Secondary_Lower_tooth.077",
+      "distance": 0.0442
+    },
+    {
+      "part": "Secondary_Lower_tooth.078",
+      "distance": 0.0413
+    },
+    {
+      "part": "Secondary_Lower_tooth.079",
+      "distance": 0.0421
+    },
+    {
+      "part": "Secondary_Pupil.010",
+      "distance": 0.0373
+    },
+    {
+      "part": "Secondary_Lower_tooth.081",
+      "distance": 0.0247
+    },
+    {
+      "part": "Secondary_Lower_tooth.083",
+      "distance": 0.0231
+    },
+    {
+      "part": "Secondary_Lower_tooth.084",
+      "distance": 0.0311
+    },
+    {
+      "part": "Secondary_Lower_tooth.085",
+      "distance": 0.0445
+    },
+    {
+      "part": "Secondary_Lower_tooth.086",
+      "distance": 0.0394
+    },
+    {
+      "part": "Secondary_Lower_tooth.087",
+      "distance": 0.0425
+    },
+    {
+      "part": "Secondary_Pupil.011",
+      "distance": 0.0347
+    },
+    {
+      "part": "Secondary_Lower_tooth.089",
+      "distance": 0.0234
+    },
+    {
+      "part": "Secondary_Lower_tooth.091",
+      "distance": 0.0232
+    },
+    {
+      "part": "Secondary_Lower_tooth.092",
+      "distance": 0.0293
+    },
+    {
+      "part": "Secondary_Lower_tooth.093",
+      "distance": 0.0434
+    },
+    {
+      "part": "Secondary_Lower_tooth.094",
+      "distance": 0.0397
+    },
+    {
+      "part": "Secondary_Lower_tooth.095",
+      "distance": 0.0444
+    },
+    {
+      "part": "Secondary_Pupil.012",
+      "distance": 0.0351
+    },
+    {
+      "part": "Secondary_Lower_tooth.097",
+      "distance": 0.025
+    },
+    {
+      "part": "Secondary_Lower_tooth.099",
+      "distance": 0.0236
+    },
+    {
+      "part": "Secondary_Lower_tooth.100",
+      "distance": 0.0295
+    },
+    {
+      "part": "Secondary_Lower_tooth.101",
+      "distance": 0.045
+    },
+    {
+      "part": "Secondary_Lower_tooth.102",
+      "distance": 0.0403
+    },
+    {
+      "part": "Secondary_Lower_tooth.103",
+      "distance": 0.043
+    },
+    {
+      "part": "Secondary_Pupil.013",
+      "distance": 0.0372
+    },
+    {
+      "part": "Secondary_Lower_tooth.105",
+      "distance": 0.0258
+    },
+    {
+      "part": "Secondary_Lower_tooth.108",
+      "distance": 0.0314
+    },
+    {
+      "part": "Secondary_Lower_tooth.109",
+      "distance": 0.0453
+    },
+    {
+      "part": "Secondary_Lower_tooth.110",
+      "distance": 0.0405
+    },
+    {
+      "part": "Secondary_Lower_tooth.111",
+      "distance": 0.0435
+    },
+    {
+      "part": "Secondary_Pupil.014",
+      "distance": 0.0372
+    },
+    {
+      "part": "Secondary_Lower_tooth.113",
+      "distance": 0.0251
+    },
+    {
+      "part": "Secondary_Lower_tooth.115",
+      "distance": 0.0236
+    },
+    {
+      "part": "Secondary_Lower_tooth.116",
+      "distance": 0.0295
+    },
+    {
+      "part": "Secondary_Lower_tooth.117",
+      "distance": 0.045
+    },
+    {
+      "part": "Secondary_Lower_tooth.118",
+      "distance": 0.0403
+    },
+    {
+      "part": "Secondary_Lower_tooth.119",
+      "distance": 0.043
+    },
+    {
+      "part": "Secondary_Pupil.015",
+      "distance": 0.0348
+    },
+    {
+      "part": "Secondary_Lower_tooth.121",
+      "distance": 0.0254
+    },
+    {
+      "part": "Secondary_Lower_tooth.124",
+      "distance": 0.0314
+    },
+    {
+      "part": "Secondary_Lower_tooth.125",
+      "distance": 0.0452
+    },
+    {
+      "part": "Secondary_Lower_tooth.126",
+      "distance": 0.0405
+    },
+    {
+      "part": "Secondary_Lower_tooth.127",
+      "distance": 0.0435
+    }
+  ],
+  "bytes": 2658144
+}

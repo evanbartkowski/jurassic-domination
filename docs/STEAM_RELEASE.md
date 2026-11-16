@@ -21,8 +21,8 @@ Steam App ID. Those features are future integration work, not existing promises.
   integrated graphics. Establish requirements from measurements, not guesses.
 - Review color contrast, readable text, keyboard navigation, motion settings,
   volume controls, and tutorial clarity. Validate remapped controls, UI scaling,
-  reduced motion and the standard-controller gameplay adapter on physical devices;
-  controller menu navigation, localization and broader accessibility work remain.
+  reduced motion and the standard-controller gameplay/menu adapter on physical
+  devices; localization and broader accessibility playtesting remain.
 - Test saves across application updates and corrupted storage. Back up existing
   profiles before changing storage formats.
 
@@ -75,3 +75,7 @@ and [platform configuration documentation](https://partner.steamgames.com/doc/st
 The definitive requirements are the current Steamworks rules shown in the
 publisher's account. This repository does not perform store submission or
 publish a Steam release.
+
+## Primeval art build
+
+The current local art build is v0.12.0, packaged under `release/primeval/`. Review `artifacts/primeval/review.html` and `docs/PRIMEVAL_VISUAL_OVERHAUL.md` for actual in-engine captures, asset provenance and the limits of software rendering evidence. Store readiness still requires profiling on intended hardware and player testing; this local visual pass does not publish the game.

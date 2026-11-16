@@ -1,0 +1,205 @@
+{
+  "id": "dimetrodon",
+  "family": "synapsid",
+  "triangles": 19332,
+  "bones": 22,
+  "dimensions": [
+    4.524180889129639,
+    2.095602035522461,
+    1.9736127853393555
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 9778,
+        "faces": 19332,
+        "tris": 19332,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 56,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 35.1
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.003",
+      "distance": 0.0239
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.023
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0289
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0254
+    },
+    {
+      "part": "Lower_tooth.011",
+      "distance": 0.0237
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0231
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0287
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0253
+    },
+    {
+      "part": "Claw",
+      "distance": 0.0258
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.028
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0259
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0248
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0271
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0236
+    },
+    {
+      "part": "Claw.006",
+      "distance": 0.0257
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0281
+    },
+    {
+      "part": "Claw.008",
+      "distance": 0.0264
+    },
+    {
+      "part": "Claw.009",
+      "distance": 0.0252
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0272
+    },
+    {
+      "part": "Claw.011",
+      "distance": 0.0247
+    }
+  ],
+  "bytes": 2325460,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 512,
+      "height": 512,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 4,
+  "lodTriangles": 6958,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0001,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 3591,
+        "faces": 6958,
+        "tris": 6958,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 56,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 34.0
+      }
+    }
+  }
+}

@@ -142,7 +142,7 @@ try {
       }
       return result;
     });
-    assert.equal(result.count, 102);
+    assert.equal(result.count, 108);
     assert.ok(result.unrecorded > 90);
     assert.deepEqual(result.invalid, []);
     return result;

@@ -1,0 +1,92 @@
+{
+  "id": "oviraptor",
+  "family": "ornithomimid",
+  "triangles": 24788,
+  "bones": 20,
+  "dimensions": [
+    4.640680313110352,
+    1.4199999570846558,
+    2.8177430629730225
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.042": {
+        "verts": 12480,
+        "faces": 24788,
+        "tris": 24788,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 43,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.08,
+        "uv_coverage_pct": 28.9
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw",
+      "distance": 0.0324
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0342
+    },
+    {
+      "part": "Dorsal_feather",
+      "distance": 0.1693
+    },
+    {
+      "part": "Dorsal_feather.001",
+      "distance": 0.1382
+    },
+    {
+      "part": "Dorsal_feather.002",
+      "distance": 0.0623
+    }
+  ],
+  "bytes": 1348680
+}

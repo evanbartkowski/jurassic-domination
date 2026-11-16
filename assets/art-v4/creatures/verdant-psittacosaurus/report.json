@@ -1,0 +1,173 @@
+{
+  "id": "verdant-psittacosaurus",
+  "family": "ceratopsian",
+  "triangles": 20756,
+  "bones": 20,
+  "dimensions": [
+    3.9716243743896484,
+    1.3620001077651978,
+    1.5896270275115967
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD0": {
+        "verts": 10464,
+        "faces": 20756,
+        "tris": 20756,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 43,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 32.2
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.001",
+      "distance": 0.0239
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0221
+    },
+    {
+      "part": "Tail_bristle",
+      "distance": 0.0487
+    },
+    {
+      "part": "Tail_bristle.001",
+      "distance": 0.0258
+    },
+    {
+      "part": "Tail_bristle.002",
+      "distance": 0.0014
+    },
+    {
+      "part": "Tail_bristle.004",
+      "distance": 0.0467
+    },
+    {
+      "part": "Tail_bristle.005",
+      "distance": 0.0366
+    },
+    {
+      "part": "Tail_bristle.006",
+      "distance": 0.0125
+    },
+    {
+      "part": "Tail_bristle.008",
+      "distance": 0.0317
+    },
+    {
+      "part": "Tail_bristle.009",
+      "distance": 0.0582
+    },
+    {
+      "part": "Tail_bristle.010",
+      "distance": 0.0852
+    },
+    {
+      "part": "Tail_bristle.011",
+      "distance": 0.1111
+    }
+  ],
+  "bytes": 2432708,
+  "textures": {
+    "Albedo": {
+      "width": 1024,
+      "height": 1024,
+      "file": "Albedo.jpg"
+    },
+    "Normal": {
+      "width": 512,
+      "height": 512,
+      "file": "Normal.png"
+    },
+    "Roughness": {
+      "width": 512,
+      "height": 512,
+      "file": "Roughness.png"
+    }
+  },
+  "sourceVersion": 4,
+  "lodTriangles": 7472,
+  "lodQA": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0014,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Surface_LOD1": {
+        "verts": 3822,
+        "faces": 7472,
+        "tris": 7472,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 43,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 1,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.02,
+        "uv_coverage_pct": 31.1
+      }
+    }
+  }
+}

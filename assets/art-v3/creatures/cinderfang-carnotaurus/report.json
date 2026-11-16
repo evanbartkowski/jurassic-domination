@@ -1,0 +1,168 @@
+{
+  "id": "cinderfang-carnotaurus",
+  "family": "abelisaur",
+  "triangles": 22334,
+  "bones": 20,
+  "dimensions": [
+    4.6390509605407715,
+    1.2960000038146973,
+    2.5444154739379883
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.098": {
+        "verts": 11295,
+        "faces": 22334,
+        "tris": 22334,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 64,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 36.0
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.002",
+      "distance": 0.0263
+    },
+    {
+      "part": "Lower_tooth.003",
+      "distance": 0.0366
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.045
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0568
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0531
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0587
+    },
+    {
+      "part": "Lower_tooth.010",
+      "distance": 0.0257
+    },
+    {
+      "part": "Lower_tooth.011",
+      "distance": 0.0364
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0452
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0568
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0533
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0597
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0364
+    },
+    {
+      "part": "Finger",
+      "distance": 0.0663
+    },
+    {
+      "part": "Manual_claw",
+      "distance": 0.049
+    },
+    {
+      "part": "Finger.001",
+      "distance": 0.0681
+    },
+    {
+      "part": "Manual_claw.001",
+      "distance": 0.0248
+    },
+    {
+      "part": "Finger.002",
+      "distance": 0.0358
+    },
+    {
+      "part": "Manual_claw.002",
+      "distance": 0.0292
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0364
+    },
+    {
+      "part": "Finger.003",
+      "distance": 0.0359
+    },
+    {
+      "part": "Manual_claw.003",
+      "distance": 0.0292
+    },
+    {
+      "part": "Finger.004",
+      "distance": 0.0682
+    },
+    {
+      "part": "Manual_claw.004",
+      "distance": 0.0248
+    },
+    {
+      "part": "Finger.005",
+      "distance": 0.0663
+    },
+    {
+      "part": "Manual_claw.005",
+      "distance": 0.049
+    }
+  ],
+  "bytes": 1235224
+}

@@ -1,0 +1,96 @@
+{
+  "id": "tideweaver",
+  "family": "plesiosaur",
+  "triangles": 20844,
+  "bones": 14,
+  "dimensions": [
+    5.368460178375244,
+    3.8999998569488525,
+    1.305782437324524
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.093": {
+        "verts": 10522,
+        "faces": 20844,
+        "tris": 20844,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 50,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 37.7
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0273
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0374
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0345
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0412
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0273
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0374
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0346
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0413
+    }
+  ],
+  "bytes": 1072284
+}

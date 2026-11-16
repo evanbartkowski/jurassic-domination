@@ -1,3 +1,48 @@
+# Primeval - v0.12.0
+
+- Rebuilt all 108 creature surfaces with corrected anatomy, UV-baked albedo/normal/roughness, two LODs and six animation clips.
+- Independent multihead jaws; speed-matched strides; retained genetic and shop markings.
+- Rebuilt 40 botanical LOD meshes, textured forests and ground, asymmetric stone barriers, and refined giant-fossil anatomy.
+- Preserved PBR imports; consistent matte materials and lighting across the world, sanctuary and specimen views. Improved canopy clearance and night readability.
+- Reference-aware model cache and build pruning preserve performance and omit obsolete shipped GLBs. Previous source and releases are retained.
+
+See [visual review](../artifacts/primeval/review.html) and [implementation report](PRIMEVAL_VISUAL_OVERHAUL.md).
+
+# Frontier - v0.11.0
+
+- Meteor impacts, molten predators, lightning strikes with shelter and dodge counterplay, and great migrations.
+- Mountain belts, winding passes, a gated summit, Emerald Wilds, Shardwood, World-Eater skeleton cavern and Tideglass Lagoon.
+- Six distinct new aquatic creatures, varied persistent pool populations and telegraphed bites.
+- Mixed-level encounters and larger packs. Legendary mutation and evolution rewards are substantially rarer.
+- Separate Start chamber graphics; clearer menu type, blood-red controls and complete pause borders. Stronger attack strokes follow terrain height.
+- New events and encounters preserve checkpoint/reload state and stop with the simulation.
+
+See [implementation and validation](FRONTIER_EXPANSION.md) and [visual review](../artifacts/frontier/review.html).
+
+# Grimwild — v0.10.0
+
+- Rebuilt the complete 102-species 3D roster with connected skin, anatomical family profiles, weighted jaws/limbs and six animation clips. Fixed viewer and portrait framing, including tall necks and wings.
+- Enlarged dangerous predators and final forms while retaining increasing ordinary tier sizes and individual growth.
+- Added a Start front page, centered blood-darkened expedition menu, changing living menu creatures, a rebuilt pause menu and centered horizontal health/stamina bars.
+- Death fades the world to black and blood, reveals YOU DIED and plays the supplied lament. Evolution readiness is a small gold sigil and a sound; choices still wait for the player.
+- Applied health/damage/speed/armor/stamina/venom/burst tradeoffs to actual forms and displayed them in evolution comparisons and the encyclopedia.
+- Enemies commit aim during windups, recover after attacks, alternate patterns, limit concurrent pack strikes and retreat when appropriate. Ground arcs show bites and sweeps.
+- Integrated nine user-supplied tracks with measured level trims, quiet scene playlists, crossfades, focus mute and combat hysteresis.
+
+# Player experience — v0.9.0
+
+- Categorized, persistent settings with real frame caps, render scale, particle density, camera damping, five audio levels, focus mute, contrast, flash suppression and captions.
+- Short contextual lessons remember actual actions, support skip/revisit and honor remapped keys. Evolution readiness remains voluntary.
+- Nested Back/Escape/Done restore the previous screen, focus and scroll. Standard controllers navigate menus and pause safely on disconnect.
+- Independent startup recovery, factual credits/version/local-data information, manual checkpoints and clearer save failures.
+- Cleaner restarts, input release on interruptions, no HUD click-through, ambient fades and synthesized interface cues.
+- Repaired demolition-loot checkpoints, catalyst offer persistence, higher-tier starter saves, stale confirmation callbacks, failed-save retry flooding and the Builds/relic key conflict. Secondary-damage deaths now settle normally instead of leaving invalid actors in long-lived saves.
+
+See [the implementation and validation report](PLAYER_EXPERIENCE_POLISH.md) and
+[before/after review](../artifacts/player-polish/review.html). This is a local
+Windows candidate; recording provenance and physical hardware/player testing
+remain before public release.
+
 # Living generations - v0.8.0
 
 - Deterministic inherited genes give creatures small individual size, appearance, movement, endurance and resistance tradeoffs. Completed lives leave permanent ancestry records without accumulating unchecked power.

@@ -3,10 +3,21 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { Terrain, createTerrainChunk, terrainPlan } from "../src/terrain.js";
 import { WorldRenderer } from "../src/renderer.js";
+import { worldFeatures } from '../src/wilderness.js';
+import { elevationAt } from '../src/terrain.js';
+import { createDinosaur, animateCreature } from '../src/creatures.js';
+import { SPECIES_BY_ID } from '../src/data.js';
 
 // Geometry construction needs a canvas texture, not a browser or GPU.
-const context = new Proxy({}, { get: (target, key) => target[key] || (() => {}) });
+const context = new Proxy({createRadialGradient:()=>({addColorStop(){}}),createLinearGradient:()=>({addColorStop(){}})}, { get: (target, key) => target[key] || (() => {}) });
 globalThis.document = { createElement: () => ({ width: 1, height: 1, getContext: () => context }) };
+test('fallback bite keeps the skull rooted at its neck and juvenile jaws are not scaled twice',()=>{
+ const model=createDinosaur(SPECIES_BY_ID.tyrannosaurus,true),d=model.userData;d.isJuvenile=true;
+ for(let i=0;i<60;i++)animateCreature(model,1/60,i/60,1,true,.4);
+ assert.ok(Math.abs(d.head.position.x-d.headBaseX)<.03,'head detaches from the fixed neck');
+ assert.ok(Math.abs(d.head.position.y-d.headBaseY)<.03,'head detaches vertically');
+ assert.equal(d.jaw.scale.x,1,'nested jaw inherits its head scale once');model.userData.dispose();
+});
 
 function fakeChunk(cx, cy, seed) {
   const group = new THREE.Group();
@@ -20,6 +31,30 @@ function triangles(group) {
   });
   return total;
 }
+
+test('the visible pool basin stays below its continuous water surface on rolling terrain',()=>{
+ const chunk=createTerrainChunk(1,1,4411),pool=worldFeatures(4411,1,1).find(f=>f.type==='water');
+ const ground=chunk.children[0],positions=ground.geometry.attributes.position;let samples=0;
+ for(let i=0;i<positions.count;i++){
+  const x=positions.getX(i)+ground.position.x,z=positions.getZ(i)+ground.position.z;
+  if(Math.hypot(x-pool.x,z-pool.y)<pool.radius-5){samples++;assert.ok(positions.getY(i)<elevationAt(pool.x,pool.y)+.08,'ground cuts through the pool');}
+ }
+ assert.ok(samples>3);chunk.userData.dispose();
+});
+
+test('projectile visual synchronization receives delta time without a frame exception',()=>{
+ const world=Object.create(WorldRenderer.prototype);
+ world.scene=new THREE.Scene();world.warnings=new Map();world.addParticle=()=>{};
+ const game={entities:[],warnings:[],projectiles:[{id:1,kind:'venom',x:0,y:0,radius:.3,angle:0}]};
+ assert.doesNotThrow(()=>world.syncWarnings(game,1,1/60));
+ assert.equal(world.projectileModels.size,1);
+});
+test('committed bites and tail sweeps display a ground windup and clear it during recovery',()=>{
+ const world=Object.create(WorldRenderer.prototype);world.scene=new THREE.Scene();world.warnings=new Map();world.addParticle=()=>{};
+ const e={id:5,speciesId:'ankylosaurus',x:0,y:0,telegraph:.4,combatPlan:{phase:'windup',kind:'tail-sweep',arc:Math.PI,angle:1.2,windup:.78,reach:1.13}};
+ const g={player:{x:2,y:0},effectiveSize:1,entities:[e],projectiles:[]};world.syncWarnings(g,1,.016);assert.ok(world.warnings.has('melee:5'));assert.equal(world.warnings.get('melee:5').rotation.y,-1.2);
+ e.telegraph=0;world.syncWarnings(g,1.1,.016);assert.equal(world.warnings.has('melee:5'),false);
+});
 
 test("terrain prepares the containing chunk first, including negative coordinates, with one build per frame", () => {
   const scene = new THREE.Scene(), terrain = new Terrain(scene, { createChunk: fakeChunk });

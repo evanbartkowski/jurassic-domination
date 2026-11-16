@@ -1,0 +1,172 @@
+{
+  "id": "elder-dragon",
+  "family": "dragon",
+  "triangles": 28606,
+  "bones": 24,
+  "dimensions": [
+    5.853321075439453,
+    6.027640342712402,
+    2.8309192657470703
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.031": {
+        "verts": 14475,
+        "faces": 28606,
+        "tris": 28606,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 86,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.02,
+        "uv_coverage_pct": 27.4
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.001",
+      "distance": 0.0237
+    },
+    {
+      "part": "Lower_tooth.003",
+      "distance": 0.0278
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0352
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0488
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0443
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0481
+    },
+    {
+      "part": "Lower_tooth.009",
+      "distance": 0.0232
+    },
+    {
+      "part": "Lower_tooth.011",
+      "distance": 0.0274
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0351
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0489
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0444
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0475
+    },
+    {
+      "part": "Claw",
+      "distance": 0.0279
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.039
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0301
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0211
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0265
+    },
+    {
+      "part": "Claw.006",
+      "distance": 0.03
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0373
+    },
+    {
+      "part": "Claw.008",
+      "distance": 0.0279
+    },
+    {
+      "part": "Claw.009",
+      "distance": 0.0267
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.02
+    },
+    {
+      "part": "Swept_horn",
+      "distance": 0.0249
+    },
+    {
+      "part": "Swept_horn.001",
+      "distance": 0.0246
+    },
+    {
+      "part": "Dermal_armor",
+      "distance": 0.052
+    },
+    {
+      "part": "Dermal_armor.001",
+      "distance": 0.0625
+    },
+    {
+      "part": "Dermal_armor.002",
+      "distance": 0.0527
+    }
+  ],
+  "bytes": 1604772
+}

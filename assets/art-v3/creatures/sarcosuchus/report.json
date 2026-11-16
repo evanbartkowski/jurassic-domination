@@ -1,0 +1,104 @@
+{
+  "id": "sarcosuchus",
+  "family": "crocodilian",
+  "triangles": 28068,
+  "bones": 22,
+  "dimensions": [
+    5.644886016845703,
+    2.2036640644073486,
+    0.8447443842887878
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.057": {
+        "verts": 14216,
+        "faces": 28068,
+        "tris": 28068,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 91,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 5,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 26.4
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.033
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0327
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0231
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0222
+    },
+    {
+      "part": "Claw.006",
+      "distance": 0.0327
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0331
+    },
+    {
+      "part": "Claw.008",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0231
+    },
+    {
+      "part": "Claw.011",
+      "distance": 0.0241
+    }
+  ],
+  "bytes": 1548996
+}

@@ -1,0 +1,88 @@
+{
+  "id": "elasmosaurus",
+  "family": "plesiosaur",
+  "triangles": 21164,
+  "bones": 14,
+  "dimensions": [
+    5.628979682922363,
+    3.2530174255371094,
+    1.2029964923858643
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.002": {
+        "verts": 10676,
+        "faces": 21164,
+        "tris": 21164,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 47,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 5,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 54.9
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0265
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.0246
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0315
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.0265
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0246
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0315
+    }
+  ],
+  "bytes": 1050244
+}

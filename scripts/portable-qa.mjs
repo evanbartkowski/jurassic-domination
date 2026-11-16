@@ -1,13 +1,15 @@
+import {enterTitle} from './enter-title.mjs';
 import { chromium } from "@playwright/test";
 import { spawn, spawnSync } from "node:child_process";
 import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import assert from "node:assert/strict";
+import packageInfo from '../package.json' with {type:'json'};
 
 const exe = path.resolve(
   process.env.JD_PORTABLE_EXE ||
-    "release/Jurassic Domination-0.8.0-portable.exe",
+    `release/Jurassic Domination-${packageInfo.version}-portable.exe`,
 );
 const profile = await mkdtemp(path.join(os.tmpdir(), "jurassic-portable-qa-"));
 const env = { ...process.env, JD_TEST_USER_DATA: profile };
@@ -70,7 +72,7 @@ try {
   page.on("request", (r) => {
     if (/^https?:/i.test(r.url())) external.push(r.url());
   });
-  await page.bringToFront();
+  await page.bringToFront();await enterTitle(page);
   await check(
     "portable extracts into a functioning isolated offline desktop",
     async () => {
@@ -90,6 +92,14 @@ try {
       assert.equal(await page.locator("#graphics-error").count(), 0);
     },
   );
+  await check('portable startup and bundled credits work without the source tree', async () => {
+    await page.locator('#boot-screen').waitFor({ state: 'hidden' });
+    await page.locator('[data-action="credits"]').click();
+    assert.ok((await page.locator('.credits-panel').textContent()).includes(packageInfo.version));
+    await page.locator('[data-action="license"]').click();
+    await page.waitForFunction(() => document.getElementById('license-text')?.textContent.includes('Permission is hereby granted'));
+    await page.keyboard.press('Escape');
+  });
   await check(
     "portable hatch and Q/R/dodge controls execute real abilities",
     async () => {
@@ -131,7 +141,7 @@ try {
     "portable encyclopedia renders a live specimen from the pause menu",
     async () => {
       await page.keyboard.press("Escape");
-      await page.locator('#overlay [data-action="guide"]').click();
+      await page.locator('#overlay [data-action="compendium"]').click();
       await page.locator("#guide-search").fill("world serpent");
       await page.locator('[data-inspect="world-serpent"]').click();
       await page.waitForFunction(
@@ -210,7 +220,7 @@ try {
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
     page.on("request", (r) => { if (/^https?:/i.test(r.url())) external.push(r.url()); });
-    await page.bringToFront();
+    await page.bringToFront();await enterTitle(page);
     await page.locator('[data-action="continue"]').click();
     await page.locator('#overlay [data-action="resume"]').waitFor();
     assert.match(await page.locator("#pause-save-status").textContent(), /RESTORED/);

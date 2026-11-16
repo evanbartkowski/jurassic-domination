@@ -1,4 +1,10 @@
 import * as THREE from "three";
+import {IncidentPresentation,createAttackStroke} from './frontier-effects.js';
+import {createStartVista} from './start-vista.js';
+import {RIDGES,LOCATIONS} from './frontier-map.js';
+import {createNaturalEnvironment} from './natural-materials.js';
+import {attackProfile} from './combat.js';
+import { biomeLook, createDistantLandscape, updateEnvironmentTime } from './environment-presentation.js';
 import { SPECIES, SPECIES_BY_ID } from "./data.js";
 import { createForageModel } from "./forage-art.js";
 import { createDinosaur, animateCreature, genomeAppearanceKey } from "./creatures.js";
@@ -11,7 +17,7 @@ import { biomeAt, REGIONS, LAIRS, WORLD_RADIUS } from "./world-data.js";
 import { POWERUPS, SKINS } from "./content.js";
 import { applyCosmetic, createPet } from "./collection-art.js";
 import { CATALOG, RARITIES } from "./collection-data.js";
-import { tryAttachFlagshipGLB, animateFlagshipGLB, FLAGSHIP_SPECIES_IDS } from "./flagship-models.js";
+import { tryAttachFlagshipGLB, animateFlagshipGLB, setCreatureDetail, FLAGSHIP_SPECIES_IDS } from "./flagship-models.js";
 export { createDinosaur };
 
 const lookup = (id) => SPECIES_BY_ID[id] || SPECIES[0];
@@ -161,15 +167,18 @@ export class WorldRenderer {
     });
     this.renderer.setClearColor(0x0a1e1c);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.16;
+    this.renderer.toneMappingExposure = 1.08;
     this.scene = new THREE.Scene();
+    this.naturalEnvironment=createNaturalEnvironment(this.renderer);this.scene.environment=this.naturalEnvironment.texture;this.scene.environmentIntensity=.24;
+    this.distantLandscape = createDistantLandscape();
+    this.scene.add(this.distantLandscape);
     this.scene.background = new THREE.Color(0x112825);
     this.scene.fog = new THREE.FogExp2(0x112825, 0.010);
     this.camera = new THREE.PerspectiveCamera(43, 1, 0.2, 380);
-    this.hemiLight = new THREE.HemisphereLight(0x9fe0d2, 0x243222, 1.75);
+    this.hemiLight = new THREE.HemisphereLight(0xb9d0da, 0x343728, 1.15);
     this.scene.add(this.hemiLight);
     this.sun = new THREE.DirectionalLight(0xffe2b5, 3.8);
     this.sun.position.set(-36, 48, -26);
@@ -188,7 +197,7 @@ export class WorldRenderer {
     this.sun.shadow.normalBias = 0.08;
     this.scene.add(this.sun);
     this.scene.add(this.sun.target);
-    this.rimLight = new THREE.DirectionalLight(0x7fe3d7, 1.15);
+    this.rimLight = new THREE.DirectionalLight(0xa0c1c4, 0.65);
     this.rimLight.position.set(28, 22, 34);
     this.scene.add(this.rimLight);
     this.bounceLight = new THREE.DirectionalLight(0x564929, 0.45);
@@ -263,7 +272,7 @@ export class WorldRenderer {
     const quality = settings.quality || "high";
     this.terrain.setQuality(quality);
     this.renderer.setPixelRatio(
-      Math.min(
+      (settings.renderScale??1)*Math.min(
         devicePixelRatio,
         quality === "low" ? 1 : quality === "medium" ? 1.35 : 1.8,
       ),
@@ -285,6 +294,7 @@ export class WorldRenderer {
     this.camera.updateProjectionMatrix();
   }
   resetRun() {
+    this.incidentArt?.clear();
     for (const mesh of this.projectileModels?.values() || []) {
       this.scene.remove(mesh);
       mesh.geometry.dispose();
@@ -310,8 +320,7 @@ export class WorldRenderer {
     this.warnings.clear();
     for (const effect of this.effects) {
       this.scene.remove(effect.group);
-      effect.mesh.geometry.dispose();
-      effect.mesh.material.dispose();
+      effect.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
     }
     this.effects = [];
     this.particles = [];
@@ -325,15 +334,22 @@ export class WorldRenderer {
       return;
     if (this.menuDino) this.removeModel(this.menuDino);
     this.menuDino = createDinosaur(
-      SPECIES.find((s) => s.id === "tyrannosaurus"),
+      SPECIES.find((s) => s.id === (this.menuSpeciesId||'tyrannosaurus')),
       true,
       id,
     );
-    tryAttachFlagshipGLB(this.menuDino, "tyrannosaurus");
+    tryAttachFlagshipGLB(this.menuDino, this.menuSpeciesId||'tyrannosaurus');
     this.menuDino.position.set(6.6, elevationAt(6.6, -1), -1);
     applyCosmetic(this.menuDino, cosmeticId);
-    this.menuDino.scale.setScalar(2.4);
+    this.menuDino.scale.setScalar(12 / (this.menuDino.userData.anatomyProfile?.length||6));
     this.scene.add(this.menuDino);
+  }
+  nextMenuCreature(){
+    const roster=['tyrannosaurus','carnotaurus','spinosaurus','triceratops','ankylosaurus','giganotosaurus','allosaurus','stegosaurus','utahraptor','therizinosaurus','baryonyx','parasaurolophus'];
+    const choices=roster.filter(id=>id!==this.menuSpeciesId);this.menuSpeciesId=choices[Math.floor(Math.random()*choices.length)];
+    const skin=this.menuDino?.userData.skinId||'natural',cosmetic=this.menuDino?.userData.cosmeticId||'none';
+    if(this.menuDino){this.removeModel(this.menuDino);this.menuDino=null;}
+    this.setMenuSkin(skin,cosmetic);this.menuArrival=this.elapsed;
   }
   generateWorld() {
     this.terrain = new Terrain(this.scene);
@@ -360,7 +376,7 @@ export class WorldRenderer {
     const mistMat = new THREE.MeshBasicMaterial({
       map: mistTexture(),
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.08,
       depthWrite: false,
       blending: THREE.NormalBlending,
     });
@@ -432,7 +448,7 @@ export class WorldRenderer {
     );
     tryAttachFlagshipGLB(this.menuDino, "tyrannosaurus");
     this.menuDino.position.set(6.2, elevationAt(6.2, -0.8), -0.8);
-    this.menuDino.scale.setScalar(2.45);
+    this.menuDino.scale.setScalar(1.95);
     this.menuDino.rotation.y = -0.65;
     this.scene.add(this.menuDino);
 
@@ -466,6 +482,15 @@ export class WorldRenderer {
     this.particleMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.particleMesh.frustumCulled = false;
     this.scene.add(this.particleMesh);
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=64;
+    const context=canvas.getContext('2d'),gradient=context.createRadialGradient(32,32,0,32,32,32);
+    gradient.addColorStop(0,'rgba(255,255,255,.9)');gradient.addColorStop(.25,'rgba(255,255,255,.48)');gradient.addColorStop(1,'rgba(255,255,255,0)');
+    context.fillStyle=gradient;context.fillRect(0,0,64,64);
+    this.particleTexture=new THREE.CanvasTexture(canvas);
+    this.softParticleMesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(2,2),new THREE.MeshBasicMaterial({map:this.particleTexture,color:0xffffff,transparent:true,opacity:.7,depthWrite:false}),this.maxParticles);
+    this.softParticleMesh.name='Pooled impact, dust and weather sprites';
+    this.softParticleMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);this.softParticleMesh.frustumCulled=false;this.softParticleMesh.count=0;
+    this.scene.add(this.softParticleMesh);
     this.particleDummy = new THREE.Object3D();
     const dustGeo = new THREE.BufferGeometry(),
       positions = new Float32Array(220 * 3);
@@ -488,8 +513,9 @@ export class WorldRenderer {
     this.scene.add(this.dust);
   }
   addParticle(p, priority = 1) {
+    if(this.settings?.particles===0)return false;
     p.priority = priority;
-    const maxCapacity = this.maxParticles || 750;
+    const maxCapacity = Math.max(1,Math.floor((this.maxParticles||750)*(this.settings?.particles??1)));
     if (this.particles.length < maxCapacity) {
       this.particles.push(p);
       return true;
@@ -512,7 +538,9 @@ export class WorldRenderer {
     return false;
   }
   emitCount(ratePerSecond, dt) {
-    const expected = ratePerSecond * Math.min(0.1, Math.max(0, dt));
+    const density=this.settings?.quality==='low'?.5:this.settings?.quality==='medium'?.78:1;
+    const motion=this.settings?.reducedMotion?.6:1;
+    const expected = ratePerSecond * density * motion * (this.settings?.particles??1) * Math.min(0.1, Math.max(0, dt));
     let count = Math.floor(expected);
     if (Math.random() < (expected - count)) count++;
     return count;
@@ -521,7 +549,7 @@ export class WorldRenderer {
     for (let i = 0; i < count; i++) {
       this.addParticle({
         x,
-        y: 0.6,
+        y: elevationAt(x,z)+0.6,
         z,
         vx: (Math.random() - 0.5) * 7,
         vy: 2 + Math.random() * 5,
@@ -534,6 +562,10 @@ export class WorldRenderer {
     }
   }
   event(event) {
+    if(['attack','enemy-strike','ability','enemy-ability'].includes(event.type)){
+      const stroke=createAttackStroke(event);this.scene.add(stroke.group);this.effects.push(stroke);
+    }
+    if(event.type==='meteor-impact')this.shake=Math.max(this.shake,.85);
     if (
       [
         "hit",
@@ -752,7 +784,7 @@ export class WorldRenderer {
         coreMesh.position.y = mesh.position.y + 0.02;
         group.add(coreMesh);
       }
-      group.position.set(event.x || 0, 0.12, event.y || 0);
+      group.position.set(event.x || 0, elevationAt(event.x||0,event.y||0)+.12, event.y || 0);
       group.rotation.y = -(event.angle || 0);
       this.scene.add(group);
       this.effects.push({
@@ -1112,16 +1144,17 @@ export class WorldRenderer {
     scaleFactor = 1,
     cosmeticId = "none",
     genome = null,
+    eventLook = null,
   ) {
     let model = this.models.get(key);
     if (
       !model ||
       model.userData.species.id !== id ||
       model.userData.skinId !== skinId ||
-      model.userData.cosmeticId !== cosmeticId || model.userData.genomeKey !== genomeAppearanceKey(genome)
+      model.userData.cosmeticId !== cosmeticId || model.userData.genomeKey !== genomeAppearanceKey(genome) || model.userData.eventLook !== eventLook
     ) {
       if (model) this.removeModel(model);
-      model = createDinosaur(lookup(id), false, skinId, genome);
+      model = createDinosaur(lookup(id), false, skinId, genome,eventLook);
       applyCosmetic(model, cosmeticId);
       tryAttachFlagshipGLB(model, id);
       model.position.set(x, 0, z);
@@ -1129,10 +1162,12 @@ export class WorldRenderer {
       this.models.set(key, model);
       this.scene.add(model);
     }
+    setCreatureDetail(model,!active&&key!=='player'&&Math.hypot(x-this.cameraTarget.x,z-this.cameraTarget.z)>(this.settings.quality==='low'?22:this.settings.quality==='medium'?32:44));
     const moved =
       model.userData.motionX === undefined
         ? 0
         : Math.hypot(x - model.userData.motionX, z - model.userData.motionY);
+    model.userData.worldSpeed=dt>0?moved/dt:0;
     model.userData.motionX = x;
     model.userData.motionY = z;
     model.position.x = THREE.MathUtils.damp(model.position.x, x, 22, dt);
@@ -1183,11 +1218,16 @@ export class WorldRenderer {
         obj.material.dispose();
     });
   }
+  renderStart(dt){
+    if(this.disposed)return;this.elapsed+=dt;this.startVista||=createStartVista();const v=this.startVista;
+    v.camera.aspect=this.camera.aspect;v.camera.updateProjectionMatrix();v.update(dt,this.elapsed,this.settings.reducedMotion);this.renderer.render(v.scene,v.camera);
+  }
   render(game, dt, menu = false) {
     if (this.disposed) return;
     this.currentGame = game;
+    this.incidentArt||=new IncidentPresentation(this.scene);this.incidentArt.update(menu?null:game,this.settings);
     this.ecologyArt ||= createEcologyArt(this.scene);
-    this.ecologyArt.update(menu ? null : game, dt, this.terrain.quality || 'high');
+    this.ecologyArt.update(menu ? null : game, dt, this.terrain.quality || 'high',this.settings.particles??1);
     this.elapsed += dt;
     const t = this.elapsed,
       p = game?.player;
@@ -1195,14 +1235,16 @@ export class WorldRenderer {
     if (this.menuVistaGroup) this.menuVistaGroup.visible = menu;
     this.egg.visible = game?.state === "egg";
     if (menu) {
-      this.menuDino.position.y = elevationAt(this.menuDino.position.x, this.menuDino.position.z) + 0.35;
-      this.animateDino(this.menuDino, t * 0.7, 0, false, dt);
-      this.menuDino.rotation.y = -0.75 + Math.sin(t * 0.12) * 0.08;
+      const alive=this.settings.reducedMotion?0:1,age=t-(this.menuArrival||0),stride=Math.sin(age*.19);
+      this.menuDino.position.x=4.8+stride*1.8*alive;this.menuDino.position.z=-2.8+Math.cos(age*.19)*.55*alive;
+      this.menuDino.position.y = elevationAt(this.menuDino.position.x, this.menuDino.position.z);
+      this.animateDino(this.menuDino, t * 0.7, Math.abs(Math.cos(age*.19))*.38*alive, false, dt);
+      this.menuDino.rotation.y = -.62+Math.sin(age*.19)*.24*alive;
       this.cameraTarget.lerp(this.cameraDesired.set(1.5, 1.8, 0), Math.min(1, dt * 3));
     } else if (p)
       this.cameraTarget.lerp(
-        this.cameraDesired.set(p.x, 0, p.y),
-        1 - Math.exp(-dt * 6),
+        this.cameraDesired.set(p.x, elevationAt(p.x,p.y), p.y),
+        this.settings.cameraSmoothing===false?1:1 - Math.exp(-dt * 6),
       );
     this.terrain.update(
       menu ? 0 : p?.x || 0,
@@ -1210,7 +1252,7 @@ export class WorldRenderer {
       menu ? 7281 : game.seed,
     );
     this.terrain.focus(p?.x || 0, p?.y || 0, menu);
-    this.terrain.animate(menu ? t : game.time, menu ? null : game.marineState);
+    this.terrain.animate(menu ? t : game.time, menu ? null : game.marineState, menu ? null : game.worldFeatures);
     if (p && !menu) {
       this.egg.position.set(p.x, 0, p.y);
       this.egg.rotation.z = Math.sin(t * 8) * 0.035;
@@ -1234,6 +1276,7 @@ export class WorldRenderer {
         );
         player.position.y = elevationAt(p.x, p.y) + (p.submerged ? -.5 : p.crouching ? -.15 : 0);
         player.userData.isSleeping = p.sleeping > 0;
+        player.userData.isFeeding = game._eatCooldown > .1;
         player.userData.isWet = inWater(game, p);
         if (p.poisoned > 0) {
           const count = this.emitCount(20, dt);
@@ -1408,8 +1451,10 @@ export class WorldRenderer {
           e.scaleFactor || 1,
           'none',
           e.genome,
+          e.lavaBorn?'molten':null,
         );
         const baseEY = elevationAt(e.x, e.y);
+        creature.userData.combatKind=e.combatPlan?.kind;creature.userData.combatWindup=e.telegraph>0;
         if (e.isFlying && (e.hp === undefined || e.hp > 0)) {
           const isDiving = e.diveState === "diving";
           const isCruising = e.diveState === "cruising" || !e.diveState;
@@ -1444,6 +1489,7 @@ export class WorldRenderer {
         creature.userData.isFlying = !!e.isFlying;
         creature.userData.diveState = e.diveState;
         creature.userData.isSleeping = (e.sleeping > 0) || !!e.isSleeping;
+        creature.userData.isFeeding = e.feedCooldown > 2.3 || e.intent === 'graze';
         creature.userData.isWet = inWater(game, e);
         if (e.poison > 0) {
           const count = this.emitCount(14, dt);
@@ -1549,7 +1595,7 @@ export class WorldRenderer {
       this.syncFood(game.foods, t);
       this.syncCompanion(game, dt, t);
       this.dangerRing.visible = false;
-      this.syncWarnings(game, t);
+      this.syncWarnings(game, t, dt);
       if (this.roarProgress > 0) {
         this.roarProgress = Math.max(0, this.roarProgress - dt * 2.0);
         const prog = 1 - this.roarProgress;
@@ -1649,7 +1695,7 @@ export class WorldRenderer {
     const effectiveSize = (p && !menu) ? game.effectiveSize : 1.0;
     const sprintZoom = (p && p.sprinting) ? 3.2 : 0;
     const targetDist = p && !menu ? 15.0 + Math.pow(effectiveSize, 1.08) * 8.5 + sprintZoom : 25;
-    this.cameraDist = this.cameraDist ? THREE.MathUtils.damp(this.cameraDist, targetDist, 3.8, dt) : targetDist;
+    this.cameraDist = this.cameraDist&&this.settings.cameraSmoothing!==false ? THREE.MathUtils.damp(this.cameraDist, targetDist, 3.8, dt) : targetDist;
 
     if (p && !menu && p.sprinting && dt > 0) {
       const dustCount = this.emitCount(20, dt);
@@ -1671,8 +1717,9 @@ export class WorldRenderer {
     }
 
     if (menu) {
-      this.camera.position.set(Math.sin(t * 0.06) * 0.35, 7.8, 21.5);
-      this.camera.lookAt(1.5, 2.0, 0);
+      const drift = this.settings.reducedMotion ? 0 : Math.sin(t * .035) * .28;
+      this.camera.position.set(drift, 5.3, 25);
+      this.camera.lookAt(1.5, 2.2, -2);
     } else {
       const shakeX = Math.sin(t * 76) * shake;
       const shakeY = Math.cos(t * 62) * shake * 0.72;
@@ -1681,12 +1728,13 @@ export class WorldRenderer {
         this.cameraTarget.y + this.cameraDist + shakeY,
         this.cameraTarget.z + this.cameraDist,
       );
-      this.camera.lookAt(this.cameraTarget.x, 0, this.cameraTarget.z - (this.cameraDist * 0.04));
+      this.camera.lookAt(this.cameraTarget.x, this.cameraTarget.y, this.cameraTarget.z - (this.cameraDist * 0.04));
     }
 
     const tod = game && !menu ? getTimeOfDay(game.time) : { name: "day", progress: 0.35, ambientIntensity: 1 };
+    this.scene.environmentIntensity=.24*tod.ambientIntensity;
     const weather = game && !menu ? conditionsAt(game, p?.x || 0, p?.y || 0) : null;
-    const isRain = weather?.event === "rain" || weather?.event === "flood";
+    const isRain = weather?.event === "rain" || weather?.event === "flood" || (!menu&&game?.frontierState?.active?.kind==='lightning');
     const isAsh = weather?.event === "ashfall" || weather?.event === "eruption" || weather?.event === "fire";
     const isFrost = weather?.event === "frost";
 
@@ -1707,10 +1755,10 @@ export class WorldRenderer {
     } else if (tod.name === "day") {
       sunOffsetX = -36; sunOffsetY = 50; sunOffsetZ = -26;
       targetSunColor = 0xfffaee;
-      targetSkyColor = 0x9fe0d2;
-      targetGroundColor = 0x243222;
-      targetSunIntensity = 3.8;
-      baseFogDensity = 0.010;
+      targetSkyColor = 0xd8dfc9;
+      targetGroundColor = 0x4e5140;
+      targetSunIntensity = 3.15;
+      baseFogDensity = 0.0075;
     } else if (tod.name === "dusk") {
       sunOffsetX = 44; sunOffsetY = 24; sunOffsetZ = 26;
       targetSunColor = 0xff5c26;
@@ -1724,7 +1772,7 @@ export class WorldRenderer {
       targetSkyColor = 0x1e3452;
       targetGroundColor = 0x0c1612;
       targetSunIntensity = 0.88;
-      baseFogDensity = 0.015;
+      baseFogDensity = 0.012;
     }
 
     if (isRain) {
@@ -1749,6 +1797,7 @@ export class WorldRenderer {
       baseFogDensity += 0.005;
     }
 
+    if(this.settings.flashes===false)this.lightningFlash=0;
     if ((this.lightningFlash || 0) > 0) {
       this.lightningFlash = Math.max(0, this.lightningFlash - dt);
       const flash = Math.sin((this.lightningFlash / 0.26) * Math.PI);
@@ -1758,7 +1807,7 @@ export class WorldRenderer {
 
     this.sun.position.set(
       this.cameraTarget.x + sunOffsetX,
-      sunOffsetY,
+      this.cameraTarget.y+sunOffsetY,
       this.cameraTarget.z + sunOffsetZ,
     );
     this.sun.target.position.copy(this.cameraTarget);
@@ -1770,7 +1819,7 @@ export class WorldRenderer {
     (this.targetHemiGround ||= new THREE.Color()).setHex(targetGroundColor);
     this.hemiLight.color.lerp(this.targetHemiSky, Math.min(1, dt * 2));
     this.hemiLight.groundColor.lerp(this.targetHemiGround, Math.min(1, dt * 2));
-    this.hemiLight.intensity = THREE.MathUtils.damp(this.hemiLight.intensity, (menu ? 1.75 : tod.ambientIntensity * 1.6), 3, dt);
+    this.hemiLight.intensity = THREE.MathUtils.damp(this.hemiLight.intensity, (menu ? 1.20 : Math.max(.50,tod.ambientIntensity * 1.12)), 3, dt);
 
     if (this.skyDome) this.skyDome.position.copy(this.cameraTarget);
     if (this.groundMist) {
@@ -1780,7 +1829,7 @@ export class WorldRenderer {
     }
     if (this.rimLight) {
       this.rimLight.position.set(this.cameraTarget.x + 28, 22, this.cameraTarget.z + 34);
-      this.rimLight.intensity = menu ? 1.35 : 1.05;
+      this.rimLight.intensity = menu ? .8 : .55;
     }
     if (this.bounceLight) {
       this.bounceLight.position.set(this.cameraTarget.x, -15, this.cameraTarget.z + 20);
@@ -1791,7 +1840,7 @@ export class WorldRenderer {
 
     this.scene.fog.density = THREE.MathUtils.damp(this.scene.fog.density, baseFogDensity, 3, dt);
     const region = game && !menu ? biomeAt(p.x, p.y) : REGIONS[0];
-    let destFog = (this.targetFogColor ||= new THREE.Color()).set(region.color).multiplyScalar(0.48);
+    let destFog = (this.targetFogColor ||= new THREE.Color()).set(biomeLook(region.id).fog).multiplyScalar(.72);
     if (tod.name === "dawn") destFog.lerp(this.fogColor.setHex(0x452818), 0.35);
     else if (tod.name === "dusk") destFog.lerp(this.fogColor.setHex(0x522216), 0.45);
     else if (tod.name === "night") destFog.lerp(this.fogColor.setHex(0x0c1a26), 0.7);
@@ -1800,6 +1849,11 @@ export class WorldRenderer {
     else if (isFrost) destFog.lerp(this.fogColor.setHex(0x182c38), 0.5);
     this.scene.fog.color.lerp(destFog, Math.min(1, dt * 1.5));
     this.scene.background.copy(this.scene.fog.color);
+    updateEnvironmentTime(t, this.scene.fog.color, this.sun.color);
+    if (this.distantLandscape) {
+      this.distantLandscape.visible = menu;
+      this.distantLandscape.position.set(this.cameraTarget.x, -1, this.cameraTarget.z);
+    }
 
     if (menu) {
       const leafCount = this.emitCount(2.4, dt);
@@ -1890,6 +1944,8 @@ export class WorldRenderer {
     }
     for (const water of this.water)
       water.material.color.setHSL(0.49, 0.38, 0.29 + Math.sin(t * 0.7) * 0.02);
+    this.dust.visible=(this.settings.particles??1)>0;
+    this.dust.geometry.setDrawRange(0,Math.floor(this.dust.geometry.attributes.position.count*(this.settings.particles??1)));
     this.dust.rotation.y = t * 0.008;
     for (let i = this.effects.length - 1; i >= 0; i--) {
       const effect = this.effects[i];
@@ -2212,7 +2268,7 @@ export class WorldRenderer {
         this.foodModels.delete(key);
       }
   }
-  syncWarnings(game, t) {
+  syncWarnings(game, t, dt = 0) {
     this.warnings ||= new Map();
     const activeKeys = new Set();
     const p = game?.player;
@@ -2221,6 +2277,16 @@ export class WorldRenderer {
       for (const e of game.entities || []) {
         const d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d > 55) continue;
+
+        if(e.telegraph>0&&e.combatPlan?.phase==='windup'){
+          const key=`melee:${e.id}`,plan=e.combatPlan;activeKeys.add(key);let group=this.warnings.get(key);
+          if(!group){
+            const s=lookup(e.speciesId),reach=(attackProfile({...s,size:s.size*(1+(e.growth||0)*.28)}).reach+(game.effectiveSize||1)*.4)*(plan.reach||1),arc=plan.arc||1.1;
+            group=new THREE.Group();const mesh=new THREE.Mesh(new THREE.RingGeometry(reach*.90,reach,48,1,-arc,arc*2),new THREE.MeshBasicMaterial({color:plan.kind==='tail-sweep'?0xe1a56a:0xd77460,transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide}));mesh.rotation.x=-Math.PI/2;group.add(mesh);this.scene.add(group);this.warnings.set(key,group);
+          }
+          group.position.set(e.x,elevationAt(e.x,e.y)+.065,e.y);group.rotation.y=-plan.angle;
+          group.children[0].material.opacity=.22+.48*Math.max(0,1-e.telegraph/Math.max(.01,plan.windup));
+        }
 
         if (e.cast) {
           const key = `cast:${e.id}`;
@@ -2480,7 +2546,7 @@ export class WorldRenderer {
     const dummy = this.particleDummy,
       color = (this.particleColor ||= new THREE.Color()),
       maxCapacity = this.maxParticles || 750;
-    let active = 0;
+    let active = 0,leaves=0,soft=0;
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
       p.life -= dt;
@@ -2498,26 +2564,32 @@ export class WorldRenderer {
           dummy.rotation.set(Math.sin(this.elapsed * 1.8 + p.z) * 0.4, this.elapsed * 0.9 + p.x, Math.cos(this.elapsed * 2.2 + p.x) * 0.5);
           dummy.scale.set(p.size * 1.6, p.size * 0.12, p.size * 0.85).multiplyScalar(clamp(p.life * 3, 0, 1));
         } else {
-          dummy.rotation.set(0, 0, 0);
+          dummy.quaternion.copy(this.camera.quaternion);
           dummy.scale.setScalar(p.size * clamp(p.life * 3, 0, 1));
         }
         dummy.position.set(p.x, Math.max(0.04, p.y), p.z);
-        this.particleMesh.setColorAt(active, color.set(p.color));
+        const leaf=p.kind==='leaf';
+        const target=leaf||!this.softParticleMesh?this.particleMesh:this.softParticleMesh;
+        const index=this.softParticleMesh?(leaf?leaves++:soft++):active;
+        target.setColorAt(index, color.set(p.color));
         dummy.updateMatrix();
-        this.particleMesh.setMatrixAt(active, dummy.matrix);
+        target.setMatrixAt(index, dummy.matrix);
         active++;
       }
     }
     this.particles.length = active;
-    this.particleMesh.count = active;
-    if (active) {
-      this.particleMesh.instanceMatrix.clearUpdateRanges();
-      this.particleMesh.instanceMatrix.addUpdateRange(0, active * 16);
-      this.particleMesh.instanceMatrix.needsUpdate = true;
-      if (this.particleMesh.instanceColor) {
-        this.particleMesh.instanceColor.clearUpdateRanges();
-        this.particleMesh.instanceColor.addUpdateRange(0, active * 3);
-        this.particleMesh.instanceColor.needsUpdate = true;
+    this.particleBatches||=[this.particleMesh,...(this.softParticleMesh?[this.softParticleMesh]:[])];
+    for(const mesh of this.particleBatches){
+      mesh.count=this.softParticleMesh?(mesh===this.softParticleMesh?soft:leaves):active;
+      if (mesh.count) {
+        mesh.instanceMatrix.clearUpdateRanges();
+        mesh.instanceMatrix.addUpdateRange(0, mesh.count * 16);
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) {
+          mesh.instanceColor.clearUpdateRanges();
+          mesh.instanceColor.addUpdateRange(0, mesh.count * 3);
+          mesh.instanceColor.needsUpdate = true;
+        }
       }
     }
   }
@@ -2538,6 +2610,8 @@ export class WorldRenderer {
     this.canvas.removeEventListener("webglcontextlost", this.onContextLost);
     this.resetRun();
     this.terrain.dispose();
+    this.incidentArt?.dispose();this.startVista?.dispose();
+    this.naturalEnvironment?.dispose();
     this.ecologyArt?.dispose();
     this.removeModel(this.menuDino);
     if (Array.isArray(this.menuRoamers)) {
@@ -2556,6 +2630,7 @@ export class WorldRenderer {
     });
     geometries.forEach((geometry) => geometry.dispose());
     materials.forEach((material) => material.dispose());
+    this.particleTexture?.dispose();
     this.sun.shadow.dispose();
     this.minimapBackdrops?.clear();
     this.scene.clear();
@@ -2625,6 +2700,16 @@ export class WorldRenderer {
     for (let x = 0; x < w; x += 8) for (let y = 0; y < h; y += 8) {
       if (!isExplored(game, cx + (x - c) / scale, cy + (y - c) / scale)) ctx.fillRect(x, y, 8, 8);
     }
+    ctx.fillStyle='#9e9c96';
+    for(const ridge of RIDGES)for(let a=0;a<Math.PI*2;a+=.012){
+      const gap=Math.abs(Math.atan2(Math.sin((a-ridge.phase)*4),Math.cos((a-ridge.phase)*4)))/4*ridge.radius;
+      const x=Math.cos(a)*ridge.radius,y=Math.sin(a)*ridge.radius;if(gap<ridge.passWidth/2||!isExplored(game,x,y))continue;
+      ctx.fillRect(c+(x-cx)*scale,c+(y-cy)*scale,expanded?1.4:2,expanded?1.4:2);
+    }
+    for(const site of LOCATIONS){if(!isExplored(game,site.x,site.y))continue;const x=c+(site.x-cx)*scale,y=c+(site.y-cy)*scale;
+      ctx.fillStyle='#'+site.color.toString(16).padStart(6,'0');ctx.fillRect(x-3,y-3,6,6);if(expanded){ctx.font='9px system-ui';ctx.textAlign='center';ctx.fillText(site.name,x,y-8);}
+    }
+    for(const crater of game.frontierState?.craters||[]){if(!isExplored(game,crater.x,crater.y))continue;ctx.strokeStyle='#f7853f';ctx.beginPath();ctx.arc(c+(crater.x-cx)*scale,c+(crater.y-cy)*scale,Math.max(3,crater.radius*scale),0,Math.PI*2);ctx.stroke();}
     for (const e of game.entities) {
       if (!isExplored(game, e.x, e.y) || Math.hypot(e.x-p.x,e.y-p.y)>65) continue;
       ctx.fillStyle = e.boss

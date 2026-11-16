@@ -1,0 +1,104 @@
+{
+  "id": "pachyrhinosaurus",
+  "family": "ceratopsian",
+  "triangles": 20890,
+  "bones": 22,
+  "dimensions": [
+    3.964360237121582,
+    1.696000099182129,
+    1.8807917833328247
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.060": {
+        "verts": 10511,
+        "faces": 20890,
+        "tris": 20890,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 33,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.08,
+        "uv_coverage_pct": 40.2
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.001",
+      "distance": 0.0352
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0324
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0232
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0245
+    },
+    {
+      "part": "Claw.006",
+      "distance": 0.0324
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0352
+    },
+    {
+      "part": "Claw.009",
+      "distance": 0.0231
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0206
+    },
+    {
+      "part": "Frill_rim",
+      "distance": 0.0306
+    },
+    {
+      "part": "Frill_rim.004",
+      "distance": 0.0306
+    }
+  ],
+  "bytes": 1195636
+}

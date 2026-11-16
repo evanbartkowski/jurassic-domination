@@ -1,0 +1,88 @@
+{
+  "id": "quetzalcoatlus",
+  "family": "pterosaur",
+  "triangles": 19868,
+  "bones": 18,
+  "dimensions": [
+    3.7009999752044678,
+    6.027933120727539,
+    3.0277156829833984
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.069": {
+        "verts": 9972,
+        "faces": 19868,
+        "tris": 19868,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 22,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 5,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 34.6
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw",
+      "distance": 0.0279
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0373
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0307
+    },
+    {
+      "part": "Claw.003",
+      "distance": 0.0306
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0391
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0279
+    }
+  ],
+  "bytes": 1107160
+}

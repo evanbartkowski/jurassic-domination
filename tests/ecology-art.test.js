@@ -42,9 +42,10 @@ test("returning to a menu hides every pooled world visual and resuming restores 
 });
 
 test("all three marine anatomical models remain finite with independently animated tails", () => {
+  globalThis.document ||= {createElement:()=>({getContext:()=>new Proxy({createLinearGradient:()=>({addColorStop(){}}),createRadialGradient:()=>({addColorStop(){}})}, {get:(o,k)=>o[k]||(()=>{})})})};
   const feature = { id: "test-pool", type: "water", x: 100, y: 100, radius: 16, tier: 2, phase: 0.4 },
     model = createWildFeature(feature), swimmers = model.userData.swimmers;
-  assert.equal(new Set(swimmers.map((swimmer) => swimmer.userData.kind)).size, 3);
+  assert.equal(new Set(swimmers.map((swimmer) => swimmer.userData.speciesId)).size, 3);
   const marineState = new Map([[feature.id, { swimmers: swimmers.map((_, i) => ({ x: 100 + i, y: 100 - i, angle: i, hunting: true })) }]]);
   for (let time = 0; time < 100; time += 0.7) {
     model.userData.animate(time, { x: 100, y: 100 }, marineState); model.updateMatrixWorld(true);
@@ -53,7 +54,7 @@ test("all three marine anatomical models remain finite with independently animat
       if (object.geometry) assert([...object.geometry.attributes.position.array].every(Number.isFinite));
     });
   }
-  assert(swimmers.every((swimmer) => swimmer.userData.tail && swimmer.children.length <= 4));
+  assert(swimmers.every((swimmer) => swimmer.userData.model.userData.tails.length>0 && swimmer.children.length===1));
   model.userData.dispose();
 });
 

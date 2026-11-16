@@ -1,0 +1,17 @@
+{
+  "id": "triceratops",
+  "source": "assets\\art-v2\\creatures\\triceratops\\triceratops.blend",
+  "export": "public\\assets\\models-v2\\triceratops\\triceratops.glb",
+  "triangles": 32500,
+  "bones": 16,
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "meshes": 1,
+  "bytes": 1502956
+}

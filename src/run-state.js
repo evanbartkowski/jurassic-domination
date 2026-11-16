@@ -11,6 +11,7 @@ import { initializeWorldState, isWorldStateValid } from "./world-events.js";
 import { initializeDiscoveryState, isExplorationStateValid } from "./discoveries.js";
 import { newSurvivalState, validSurvival } from "./survival.js";
 
+import {validIncidents} from './world-incidents.js';
 export const SNAPSHOT_VERSION = 2;
 export const CONTENT_VERSION = 1;
 export const MAX_SNAPSHOT_BYTES = 16 * 1024 * 1024;
@@ -26,7 +27,7 @@ const scalarFields = [
   "worldState", "exploration", "survival", "senses", "nests", "_nextSocialAt",
   "formHistory", "guardianKills", "hitStop", "_hasRoared", "survivalBehavior",
   "playerMateId", "playerNest", "playerOffspringCount", "strongestDefeated",
-  "build",
+  "build", "starterChoices", "pendingMutationChoices", "mutationDropRarity", "frontierState",
 ];
 const baseSetFields = ["modifiers", "knownUnlocks", "foundUnlocks", "activeChunks", "discoveredRegions"];
 const setFields = [...baseSetFields, "dominatedRegions", "excavatedLandmarks"];
@@ -35,7 +36,7 @@ const states = new Set(["egg", "playing", "evolution", "dead", "mutation-choice"
 const idPattern = /^[a-zA-Z0-9:_-]{1,96}$/;
 const chunkPattern = /^-?\d{1,4},-?\d{1,4}$/;
 const foodTypes = new Set(["plant", "meat", "essence", "egg", "rareplant", "lineage-fruit", "relic", "fossil", "dna", "pet-egg", "decoration-cache", "cosmetic-cache", "mutation-catalyst"]);
-const featureTypes = new Set(["boulder", "fallen-log", "landmark", "water", "volcano", "mushrooms", "toxic-bloom", "carnivore"]);
+const featureTypes = new Set(["boulder", "fallen-log", "landmark", "water", "volcano", "mushrooms", "toxic-bloom", "carnivore",'frontier-rock','frontier-site','shelter']);
 const finite = (n, low = -1e12, high = 1e12) => typeof n === "number" && Number.isFinite(n) && n >= low && n <= high;
 const integer = (n, low = 0, high = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && n >= low && n <= high;
 const object = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
@@ -129,6 +130,10 @@ function actorValid(actor, player = false, version = SNAPSHOT_VERSION) {
     (actor.treeDrop !== undefined && !finite(actor.treeDrop)) ||
     !["passive", "boss", "roaming", "juvenile"].every((k) => typeof actor[k] === "boolean") || typeof actor.behavior !== "string") return false;
   const cast = actor.cast;
+  if(!['lavaBorn','wanderer'].every(k=>actor[k]===undefined||typeof actor[k]==='boolean')||(actor.nativeSite!==undefined&&!(typeof actor.nativeSite==='string'&&actor.nativeSite.length<80))||(actor.migration!==undefined&&!(object(actor.migration)&&finite(actor.migration.x,-2000,2000)&&finite(actor.migration.y,-2000,2000)&&finite(actor.migration.until,0))))return false;
+  const plan=actor.combatPlan;
+  if(actor.attackSequence!==undefined&&!integer(actor.attackSequence,0,1e9))return false;
+  if(plan!==undefined&&plan!==null&&!(object(plan)&&['windup','recovery'].includes(plan.phase)&&integer(plan.comboLeft,0,2)&&finite(plan.recoverUntil,0)&&['angle','startedAt','windup','recovery','arc','reach','damage'].every(k=>plan[k]===undefined||finite(plan[k]))))return false;
   return cast === null || (object(cast) && ["circle", "cone"].includes(cast.shape) && finite(cast.remaining, 0) && finite(cast.radius, 0) && finite(cast.angle) && finite(cast.x) && finite(cast.y));
 }
 function foodValid(food, version = SNAPSHOT_VERSION) {
@@ -188,12 +193,20 @@ export function validateSnapshot(snapshot) {
       !array(g.mutations, 100000) || !g.mutations.every((id) => MUTATIONS.some((m) => m.id === id)) ||
       !array(g.evolutionChoices, 100) || !g.evolutionChoices.every((id) => !!SPECIES_BY_ID[id]) ||
       !array(g.mutationChoices, 8) || !g.mutationChoices.every((id) => MUTATIONS.some((m) => m.id === id))) return false;
+    if(!validIncidents(g.frontierState))return false;
+    if (g.pendingMutationChoices !== undefined && (!array(g.pendingMutationChoices, 3) ||
+      new Set(g.pendingMutationChoices).size !== g.pendingMutationChoices.length ||
+      !g.pendingMutationChoices.every(id => MUTATIONS.some(m => m.id === id)))) return false;
+    if (g.mutationDropRarity !== undefined && !['common','rare','epic','legendary'].includes(g.mutationDropRarity)) return false;
+    if (g.starterChoices !== undefined && (!array(g.starterChoices, 3) || !g.starterChoices.length ||
+      new Set(g.starterChoices).size !== g.starterChoices.length ||
+      !g.starterChoices.every(id => !!SPECIES_BY_ID[id]))) return false;
     if (!baseSetFields.every((k) => array(g[k], k === "activeChunks" ? 9 : 4096)) ||
       (g.dominatedRegions !== undefined && !array(g.dominatedRegions, 4096)) ||
       (g.excavatedLandmarks !== undefined && !array(g.excavatedLandmarks, 4096)) ||
       !g.activeChunks.every((key) => typeof key === "string" && chunkPattern.test(key)) || new Set(g.activeChunks).size !== g.activeChunks.length ||
       !g.modifiers.every((id) => PERMANENT_MODIFIERS.some((m) => m.id === id)) ||
-      !SKINS.some((s) => s.id === g.skinId) || !array(g.chunks, 2048) || !array(g.marineState, 9)) return false;
+      !SKINS.some((s) => s.id === g.skinId) || !array(g.chunks, 2048) || !array(g.marineState, 16)) return false;
     const ids = new Set();
     for (const record of [...g.entities, ...g.foods]) {
       if (ids.has(record.id) || record.id >= g._nextId) return false;
@@ -216,10 +229,10 @@ export function validateSnapshot(snapshot) {
     for (const entry of g.marineState) {
       if (!array(entry, 2) || entry.length !== 2 || typeof entry[0] !== "string" || !object(entry[1]) ||
         !array(entry[1].swimmers, 3) || entry[1].swimmers.length !== 3 ||
-        !entry[1].swimmers.every((s) => object(s) && finite(s.x) && finite(s.y) && finite(s.angle) && typeof s.hunting === "boolean") || pools.has(entry[0])) return false;
+        !entry[1].swimmers.every((s) => object(s) && finite(s.x) && finite(s.y) && finite(s.angle) && typeof s.hunting === "boolean" && (s.speciesId===undefined||SPECIES_BY_ID[s.speciesId]?.body==='marine') && ['attackCooldown','attackWindup','biteReadyUntil','angeredUntil'].every(k=>s[k]===undefined||finite(s[k],0)) && (s.attackAngle===undefined||finite(s.attackAngle))) || pools.has(entry[0])) return false;
       pools.add(entry[0]);
     }
-    if (!array(g.worldFeatures, 160) || !g.worldFeatures.every((f) => object(f) && typeof f.id === "string" && featureTypes.has(f.type) && finite(f.x) && finite(f.y) && finite(f.radius, .01, 1000) && integer(f.tier, 0, 7) && finite(f.phase) && typeof f.solid === "boolean")) return false;
+    if (!array(g.worldFeatures, 512) || !g.worldFeatures.every((f) => object(f) && typeof f.id === "string" && featureTypes.has(f.type) && finite(f.x) && finite(f.y) && finite(f.radius, .01, 1000) && integer(f.tier, 0, 7) && finite(f.phase) && typeof f.solid === "boolean")) return false;
     if (![...pools].every((id) => g.worldFeatures.some((f) => f.id === id && f.type === "water"))) return false;
     if (!g.projectiles.every((s) => object(s) && (typeof s.id === "string" || integer(s.id, 1)) && finite(s.x) && finite(s.y) && finite(s.angle) && finite(s.speed, 0, 1000) && finite(s.life, 0, 120) && finite(s.radius, 0, 100) && finite(s.damage, 0) && typeof s.kind === "string")) return false;
     if (new Set(g.lairs.map((l) => l.id)).size !== g.lairs.length || !g.lairs.every((l) => object(l) && LAIRS.some((d) => d.id === l.id) && !!SPECIES_BY_ID[l.speciesId] && finite(l.x) && finite(l.y) && finite(l.respawnAt, 0) && finite(l.respawn, 1) && integer(l.defeats) && (l.entityId === null || integer(l.entityId, 1)))) return false;
@@ -314,6 +327,14 @@ export function restoreGame(snapshot) {
   game.runId = copy.runId;
   game.tick = copy.tick;
   game._starter = SPECIES_BY_ID[data.starterId];
+  game.starterChoices ||= [game._starter.id];
+  if (game.state === 'mutation-choice' && !game.pendingMutationChoices?.length) {
+    const recorded = [...game.events].reverse().find(event => event.type === 'mutation-found');
+    const offers = recorded?.choices?.map(m => m.id).filter(id => MUTATIONS.some(m => m.id === id));
+    game.pendingMutationChoices = [...new Set(offers?.length ? offers : MUTATIONS.slice(0, 3).map(m => m.id))].slice(0, 3);
+    game.mutationDropRarity = recorded?.rarity || 'common';
+    game._recoveredMutationChoices = true;
+  }
   game.rules = DIFFICULTIES[game.difficulty];
   game.worldRadius = WORLD_RADIUS;
   if (!game.survivalBehavior) {

@@ -1,0 +1,96 @@
+{
+  "id": "edmontosaurus",
+  "family": "hadrosaur",
+  "triangles": 20134,
+  "bones": 22,
+  "dimensions": [
+    5.13620662689209,
+    1.4160001277923584,
+    1.944486141204834
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": -0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.066": {
+        "verts": 10117,
+        "faces": 20134,
+        "tris": 20134,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 25,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 35.5
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Claw.001",
+      "distance": 0.0371
+    },
+    {
+      "part": "Claw.002",
+      "distance": 0.0324
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0232
+    },
+    {
+      "part": "Claw.005",
+      "distance": 0.0245
+    },
+    {
+      "part": "Claw.006",
+      "distance": 0.0342
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0352
+    },
+    {
+      "part": "Claw.009",
+      "distance": 0.0245
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0219
+    }
+  ],
+  "bytes": 1112412
+}

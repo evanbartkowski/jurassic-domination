@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import {naturalMaterial} from './natural-materials.js';
+import {frontierElevation,pathDistance,groundHeight} from './frontier-map.js';
+import { BOTANY } from './botany.js';
+import { groundPigment } from './environment-presentation.js';
 import { worldFeatures } from "./wilderness.js";
 import { createWildFeature } from "./wilderness-art.js";
 import {
@@ -12,7 +16,9 @@ import {
 const materials = new Map();
 const foliageFocus = new THREE.Vector3(1e6, 0, 1e6);
 const foliageWind = { value: 0 };
+const foliageMenu = { value: 0 };
 let foliageMaterial;
+const foliageMaterials=new Map();
 function foliageTexture() {
   if (canopyTextureMap) return canopyTextureMap;
   const canvas = document.createElement("canvas");
@@ -34,16 +40,16 @@ function foliageTexture() {
   return canopyTextureMap;
 }
 
-function canopyMaterial() {
-  if (foliageMaterial) return foliageMaterial;
-  foliageMaterial = new THREE.MeshStandardMaterial({
-    color: 0x74906b,
-    map: foliageTexture(),
-    roughness: 0.78,
+function canopyMaterial(kind='leaf') {
+  if (foliageMaterials.has(kind)) return foliageMaterials.get(kind);
+  foliageMaterial = naturalMaterial(kind,0xffffff,{
+    vertexColors: kind==='leaf',
+    roughness: 0.86,
   });
   foliageMaterial.onBeforeCompile = (shader) => {
     shader.uniforms.foliageFocus = { value: foliageFocus };
     shader.uniforms.foliageTime = foliageWind;
+    shader.uniforms.foliageMenu = foliageMenu;
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
@@ -53,8 +59,12 @@ function canopyMaterial() {
         "#include <begin_vertex>",
         `#include <begin_vertex>
       float foliageH = max(0.0, position.y - 0.2);
-      float swayX = sin(foliageTime * 1.6 + position.x * 0.5 + position.z * 0.4) * 0.12 * foliageH;
-      float swayZ = cos(foliageTime * 1.3 + position.x * 0.4) * 0.08 * foliageH;
+      float windPhase = 0.0;
+      #ifdef USE_INSTANCING
+        windPhase = instanceMatrix[3].x * .17 + instanceMatrix[3].z * .11;
+      #endif
+      float swayX = sin(foliageTime * 1.6 + windPhase + position.x * 0.5) * 0.025 * foliageH;
+      float swayZ = cos(foliageTime * 1.3 + windPhase) * 0.018 * foliageH;
       transformed.x += swayX;
       transformed.z += swayZ;`,
       )
@@ -70,19 +80,22 @@ function canopyMaterial() {
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
-        "#include <common>\nvarying vec3 foliageWorldPosition;\nuniform vec3 foliageFocus;",
+        "#include <common>\nvarying vec3 foliageWorldPosition;\nuniform vec3 foliageFocus;\nuniform float foliageMenu;",
       )
       .replace(
         "#include <clipping_planes_fragment>",
         `#include <clipping_planes_fragment>
-      float foliageDistance=distance(foliageWorldPosition.xz,foliageFocus.xz);
-      if(foliageDistance<5.5 && foliageWorldPosition.y>foliageFocus.y+1.5){
+      if(foliageMenu>.5 && foliageWorldPosition.z>3.0 && foliageWorldPosition.x>0.0) discard;
+      vec3 foliageOffset=foliageWorldPosition-foliageFocus;
+      float foliageDistance=length(vec2(foliageOffset.x,(foliageOffset.z-foliageOffset.y)*.7071));
+      if(foliageDistance<6.5 && foliageOffset.z>-4.0 && foliageOffset.y>.7){
         float foliageNoise=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
-        if(foliageNoise<.87*(1.0-smoothstep(2.0,5.5,foliageDistance)))discard;
+        if(foliageNoise<.98*(1.0-smoothstep(3.0,6.5,foliageDistance)))discard;
       }`,
       );
   };
-  foliageMaterial.customProgramCacheKey = () => "jurassic-canopy-v2";
+  foliageMaterial.customProgramCacheKey = () => 'primeval-botany-'+kind;
+  foliageMaterials.set(kind,foliageMaterial);
   return foliageMaterial;
 }
 const trunkLevels = [9, 8, 6, 5].map((segments) => new THREE.CylinderGeometry(0.18, 0.36, 1, segments));
@@ -105,7 +118,7 @@ function material(color) {
   if (!materials.has(color))
     materials.set(
       color,
-      new THREE.MeshStandardMaterial({ color, roughness: 0.94 }),
+      naturalMaterial('stone',color),
     );
   return materials.get(color);
 }
@@ -155,7 +168,7 @@ function groundTexture() {
   const c = canvas.getContext("2d"),
     rand = seeded(728);
   // Rich prehistoric humus earth base
-  c.fillStyle = "#262c20";
+  c.fillStyle = "#aaa38e";
   c.fillRect(0, 0, 1024, 1024);
 
   // Large organic moss and fertile silt drifts
@@ -164,8 +177,8 @@ function groundTexture() {
     const grad = c.createRadialGradient ? c.createRadialGradient(cx, cy, 10, cx, cy, r) : null;
     const gVal = Math.floor(45 + rand() * 30);
     if (grad && typeof grad.addColorStop === "function") {
-      grad.addColorStop(0, `rgba(${gVal - 5},${gVal + 28},${gVal - 8},0.42)`);
-      grad.addColorStop(0.65, `rgba(${gVal - 8},${gVal + 12},${gVal - 14},0.22)`);
+      grad.addColorStop(0, `rgba(${gVal - 5},${gVal + 28},${gVal - 8},0.12)`);
+      grad.addColorStop(0.65, `rgba(${gVal - 8},${gVal + 12},${gVal - 14},0.06)`);
       grad.addColorStop(1, "rgba(38,44,32,0)");
       c.fillStyle = grad;
     } else {
@@ -183,8 +196,8 @@ function groundTexture() {
       b = 80 + Math.floor(rand() * 110),
       isMoss = rand() < 0.45;
     c.fillStyle = isMoss
-      ? `rgba(${b - 20},${b + 22},${b - 18},.28)`
-      : `rgba(${b + 12},${b + 4},${b - 15},.24)`;
+      ? `rgba(${b - 20},${b + 22},${b - 18},.12)`
+      : `rgba(${b + 12},${b + 4},${b - 15},.12)`;
     c.fillRect(x, y, 1 + rand() * 2.5, rand() * 2.5 + 1);
   }
 
@@ -254,7 +267,7 @@ function instanced(group, geometry, mat, count, positions, shadow = true) {
     o = new THREE.Object3D();
   mesh.castShadow = shadow;
   mesh.receiveShadow = true;
-  const levels = geometry === trunkGeo ? trunkLevels : geometry === crownGeo ? crownLevels : geometry === rockGeo ? rockLevels : geometry === coneGeo ? coneLevels : geometry === fernGeo ? fernLevels : null;
+  const levels = geometry.userData.levels || (geometry === trunkGeo ? trunkLevels : geometry === crownGeo ? crownLevels : geometry === rockGeo ? rockLevels : geometry === coneGeo ? coneLevels : geometry === fernGeo ? fernLevels : null);
   if (levels) {
     mesh.userData.detail = { levels, count, thin: !shadow };
     (group.userData.detailMeshes ||= []).push(mesh);
@@ -273,12 +286,7 @@ function instanced(group, geometry, mat, count, positions, shadow = true) {
 }
 
 export function elevationAt(x, z) {
-  const d = Math.hypot(x, z);
-  const basinFactor = Math.min(1, Math.max(0, (d - 40) / 35));
-  const roll1 = Math.sin(x * 0.016 + 0.5) * Math.cos(z * 0.014);
-  const roll2 = Math.sin(x * 0.038 - z * 0.032) * 0.45;
-  const ripple = Math.sin(x * 0.11) * Math.cos(z * 0.12) * 0.065;
-  return -0.14 + (roll1 * 0.85 + roll2) * basinFactor + ripple;
+  return groundHeight(x,z);
 }
 
 export function createTerrainChunk(cx, cy, seed) {
@@ -291,6 +299,12 @@ export function createTerrainChunk(cx, cy, seed) {
   const featureData = worldFeatures(seed, cx, cy),
     clearFeature = (x, z, margin = 0) =>
       featureData.some((f) => Math.hypot(f.x - x, f.y - z) < f.radius + margin);
+  // Neighbor pools participate on both sides of a chunk boundary. This only
+  // shapes rendered ground; obstacle and swimming coordinates remain intact.
+  const pools=[];
+  for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)
+    for(const f of (dx===0&&dz===0?featureData:worldFeatures(seed,cx+dx,cy+dz)))
+      if(f.type==='water')pools.push({...f,surface:elevationAt(f.x,f.y)+.1});
   const region = biomeAt(ox + 80, oy + 80),
     geo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, 32, 32);
   geo.rotateX(-Math.PI / 2);
@@ -301,21 +315,29 @@ export function createTerrainChunk(cx, cy, seed) {
     const x = positions.getX(i) + ox + 80,
       z = positions.getZ(i) + oy + 80,
       biome = biomeAt(x, z),
-      color = new THREE.Color(biome.color);
+      color = groundPigment(x,z);
     const trail = Math.abs(Math.sin(x * 0.011 + Math.sin(z * 0.008) * 2));
     if (trail < 0.08) color.lerp(new THREE.Color(0xa09371), 0.32);
-    color.multiplyScalar(0.85 + rand() * 0.22);
+    // Pigment is world-space deterministic, including shared chunk edges.
     colors.push(color.r, color.g, color.b);
-    positions.setY(i, elevationAt(x, z));
+    let height=elevationAt(x,z);
+    for(const pool of pools){
+      const distance=Math.hypot(x-pool.x,z-pool.y);
+      if(distance<pool.radius+8){
+        const blend=1-THREE.MathUtils.smoothstep(distance,pool.radius+2,pool.radius+8);
+        const depth=Math.max(0,1-distance/pool.radius)*Math.min(3,pool.radius*.18);
+        height=THREE.MathUtils.lerp(height,Math.min(height,pool.surface-.12-depth),blend);
+      }
+    }
+    positions.setY(i,height);
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  const terrainUV=geo.attributes.uv;for(let i=0;i<positions.count;i++)terrainUV.setXY(i,(positions.getX(i)+ox+80)/4,(positions.getZ(i)+oy+80)/4);
   geo.computeVertexNormals();
-  const terrainMat = new THREE.MeshStandardMaterial({
+  const terrainMat = naturalMaterial('soil',0xffffff,{
       vertexColors: true,
-      map: groundTexture(),
-      bumpMap: groundBumpTexture(),
-      bumpScale: 0.045,
-      roughness: 0.86,
+      bumpScale: 0.022,
+      roughness: 0.94,
     }),
     ground = new THREE.Mesh(geo, terrainMat);
   ground.position.set(ox + 80, 0, oy + 80);
@@ -343,11 +365,11 @@ export function createTerrainChunk(cx, cy, seed) {
   for (let i = 0; i < treeCount; i++) {
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE;
-    if (Math.hypot(x, z) < 17 || clearFeature(x, z, 4)) continue;
+    if (Math.hypot(x, z) < 17 || clearFeature(x, z, 4)||pathDistance(x,z)<9) continue;
     const ey = elevationAt(x, z);
     const scale = 0.85 + rand() * 1.35,
       height = (forest ? 5 : 4) * scale;
-    trunks.push({
+    if (["desert", "savannah", "sky"].includes(region.id)) trunks.push({
       position: [x, ey + height / 2, z],
       scale: [scale, height, scale],
     });
@@ -362,19 +384,17 @@ export function createTerrainChunk(cx, cy, seed) {
         rotation: [0, rand() * 6.28, 0],
       });
     } else
-      for (let j = 0; j < 4; j++) {
+      for (let j = 0; j < 1; j++) {
         const color = new THREE.Color(
-          frost ? 0xa1bab0 : barren ? 0x697064 : 0x52794b,
+          frost ? 0xb7c9c3 : barren ? 0xb1a58b : 0xe5e7cb,
         ).multiplyScalar(0.75 + rand() * 0.5);
         crowns.push({
           position: [
-            x + (j % 2 ? 1 : -1) * scale * 0.75,
-            ey + height + j * 0.65 * scale,
-            z + Math.sin(j * 2.5) * scale,
+            x,
+            ey,
+            z,
           ],
-          scale: frost
-            ? [2.0 * scale, (3 - j * 0.35) * scale, 2 * scale]
-            : [(2.3 - j * 0.17) * scale, 1.4 * scale, (2.2 - j * 0.17) * scale],
+          scale: [2.4 * scale, height / 2.6 * 1.6, 2.4 * scale],
           rotation: [0, rand() * 6.28, 0],
           color,
         });
@@ -389,12 +409,13 @@ export function createTerrainChunk(cx, cy, seed) {
   );
   instanced(
     group,
-    frost ? coneGeo : crownGeo,
-    canopyMaterial(),
-    crowns.length,
-    crowns,
+    BOTANY.conifer[0],
+    canopyMaterial('conifer'),
+    crowns.filter((p,i)=>!['grove','fen','fernwood'].includes(region.id)||(region.id==='fernwood'&&i%3===0)).length,
+    crowns.filter((p,i)=>!['grove','fen','fernwood'].includes(region.id)||(region.id==='fernwood'&&i%3===0)),
   );
-  instanced(group, fernGeo, fernMat, palmLeaves.length, palmLeaves);
+  const broadCrowns=crowns.filter((p,i)=>['grove','fen'].includes(region.id)||(region.id==='fernwood'&&i%3!==0));instanced(group,BOTANY.ginkgo[0],canopyMaterial('broadleaf'),broadCrowns.length,broadCrowns);
+  instanced(group, BOTANY.cycad[0], canopyMaterial(), palmLeaves.length, palmLeaves);
   for (let i = 0; i < 28; i++) {
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE,
@@ -408,11 +429,18 @@ export function createTerrainChunk(cx, cy, seed) {
       color: frost ? 0xa4b4b0 : region.id === "volcano" ? 0x454244 : 0x7b7d6d,
     });
   }
-  instanced(group, rockGeo, material(0x858c81), rocks.length, rocks);
-  const cover = forest ? 700 : barren ? 120 : 400;
+  const rockMaterial = material(0xd7d4bb); rockMaterial.vertexColors = true;
+  instanced(group, BOTANY.rock[0], rockMaterial, rocks.length, rocks);
+  const cover = forest ? 140 : barren ? 24 : 80;
+  const thickets = Array.from({ length: forest ? 9 : 5 }, () => ({
+    x: ox + 14 + rand() * (CHUNK_SIZE - 28),
+    z: oy + 14 + rand() * (CHUNK_SIZE - 28),
+  }));
   for (let i = 0; i < cover; i++) {
-    const x = ox + rand() * CHUNK_SIZE,
-      z = oy + rand() * CHUNK_SIZE,
+    const patch = thickets[i % thickets.length], angle = rand() * Math.PI * 2,
+      radius = Math.sqrt(rand()) * (forest ? 16 : 12),
+      x = patch.x + Math.cos(angle) * radius,
+      z = patch.z + Math.sin(angle) * radius,
       s = 0.35 + rand() * 0.85;
     if (clearFeature(x, z, 0.3)) continue;
     const ey = elevationAt(x, z);
@@ -420,25 +448,25 @@ export function createTerrainChunk(cx, cy, seed) {
       position: [x, ey + 0.03, z],
       scale: [s, s, s],
       rotation: [0, rand() * 6.28, 0],
-      color: frost ? 0xa1b8a7 : barren ? 0x8c8560 : 0x7aa068,
+      color: frost ? 0xbacabd : barren ? 0xbeb18b : 0xe0e6b6,
     });
   }
-  instanced(group, fernGeo, fernMat, ferns.length, ferns, false);
+  instanced(group, BOTANY.fern[0], canopyMaterial(), ferns.length, ferns, false);
   for (let i = 0; i < 45; i++) {
     const x = ox + rand() * 160,
       z = oy + rand() * 160;
     if (clearFeature(x, z, 0.5)) continue;
     const ey = elevationAt(x, z);
     flowers.push({
-      position: [x, ey + 0.22, z],
-      scale: [0.14, 0.2, 0.14],
+      position: [x, ey, z],
+      scale: [0.7, 0.7, 0.7],
       color: region.tier >= 6 ? [0xcfa8d9,0x87d7d5,0xe9c88c][i%3] : frost ? 0xbacbdd : [0xd6c397,0xba83a9,0xd2a764,0x94b4d5][i%4],
     });
   }
   instanced(
     group,
-    crownGeo,
-    material(0xd8bd9b),
+    BOTANY.flower[0],
+    canopyMaterial(),
     flowers.length,
     flowers,
     false,
@@ -453,24 +481,22 @@ export function createTerrainChunk(cx, cy, seed) {
     if (i%3===0) {
       for (let j=0;j<3;j++) {
         const dx=x+(rand()-.5)*.8,dz=z+(rand()-.5)*.8,h=(.5+rand()*.6)*s;
-        mushroomStems.push({position:[dx,ey+h*.5,dz],scale:[.18*s,h,.18*s]});
-        mushroomCaps.push({position:[dx,ey+h,dz],scale:[.42*s,.19*s,.42*s],color:frost?0x91bac7:i%2?0xc9a67b:0xb87f5f});
+        mushroomCaps.push({position:[dx,ey,dz],scale:[s,s,s],color:frost?0xb8cfce:i%2?0xe7d0aa:0xd9b788});
       }
     } else if (i%3===1) {
-      for (let j=0;j<4;j++) {
+      for (let j=0;j<1;j++) {
         const h=(1+rand())*s,dx=x+(rand()-.5),dz=z+(rand()-.5);
-        reedStems.push({position:[dx,ey+h*.5,dz],scale:[.09,h,.09],rotation:[0,0,(rand()-.5)*.12]});
-        reedHeads.push({position:[dx,ey+h,dz],scale:[.12,.3*s,.12],color:frost?0xb5c3bd:0x9b7950});
+        reedStems.push({position:[dx,ey,dz],scale:[s,h,s],rotation:[0,0,(rand()-.5)*.12]});
       }
     } else {
-      for (let j=0;j<3;j++) shrubs.push({position:[x+(j-1)*.55*s,ey+.4*s,z],scale:[.66*s,.48*s,.62*s],color:frost?0x9db6a4:barren?0x9c9855:j%2?0x668a56:0x71965d});
+      shrubs.push({position:[x,ey,z],scale:[s,s,s],rotation:[0,rand()*6.28,0],color:frost?0xbdc9c0:barren?0xc5b88a:0xe4e8bb});
     }
   }
-  instanced(group,trunkGeo,material(0x68834c),reedStems.length,reedStems,false);
+  instanced(group,BOTANY.horsetail[0],canopyMaterial(),reedStems.length,reedStems,false);
   instanced(group,crownGeo,material(0xb28e65),reedHeads.length,reedHeads,false);
   instanced(group,trunkGeo,material(0xd6c4a4),mushroomStems.length,mushroomStems,false);
-  instanced(group,crownGeo,material(0xc89d74),mushroomCaps.length,mushroomCaps,false);
-  instanced(group,crownGeo,material(0x729b5d),shrubs.length,shrubs,false);
+  instanced(group,BOTANY.mushroom[0],canopyMaterial(),mushroomCaps.length,mushroomCaps,false);
+  instanced(group,BOTANY.shrub[0],canopyMaterial(),shrubs.length,shrubs,false);
   for (const lair of LAIRS)
     if (
       lair.x >= ox &&
@@ -616,24 +642,28 @@ export class Terrain {
       group.userData.detailLevel = level;
     }
   }
-  animate(t, marineState) {
+  animate(t, marineState, worldFeatures = null) {
+    const liveFeatures = new Map((worldFeatures || []).map(f => [f.id, f]));
     foliageWind.value = t;
     for (const g of this.chunks.values())
-      g.userData.features.forEach((f) =>
-        f.userData.animate(t, this.focusPosition, marineState),
-      );
+      g.userData.features.forEach((f) => {
+        const live = liveFeatures.get(f.userData.feature?.id);
+        if (live) Object.assign(f.userData.feature, live);
+        f.userData.animate(t, this.focusPosition, marineState);
+      });
     for (const g of this.chunks.values())
       for (const water of g.userData.water)
         water.material.roughness = 0.24 + Math.sin(t * 0.6) * 0.04;
   }
   focus(x, y, menu = false) {
+    foliageMenu.value = menu ? 1 : 0;
     if (menu) this.focusPosition = null;
     else {
       this.focusPosition ||= { x, y };
       this.focusPosition.x = x;
       this.focusPosition.y = y;
     }
-    foliageFocus.set(menu ? 1e6 : x, 0.7, menu ? 1e6 : y);
+    foliageFocus.set(menu ? 1e6 : x, elevationAt(x,y)+0.7, menu ? 1e6 : y);
   }
   dispose() {
     if (this.disposed) return;

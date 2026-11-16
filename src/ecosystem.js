@@ -3,6 +3,7 @@ import {
   resolveObstacles,
   updateWildlife,
 } from "./wilderness.js";
+import { beginEnemyAttack, finishEnemyAttack, enemyTactics } from './enemy-combat.js';
 import { feedEntity, growthFromFood, creatureKit } from "./progression.js";
 import { canEatFood, speciesDiet, plantDefinition } from "./forage.js";
 import { attackProfile, firstSolidHit, segmentCircleHit, hasLineOfSight, attackLineClear, sweepMove } from "./combat.js";
@@ -10,6 +11,8 @@ import { SPECIES, SPECIES_BY_ID } from "./data.js";
 import { initializeSenses, updateSenses, perceivePlayer } from "./senses.js";
 import { createNest, initializeLifeEntity, matureEntity, hatchEgg, updateLifeCycle, notifyNestTheft } from "./life-cycle.js";
 import { conditionsAt } from "./world-events.js";
+import {encounterTier,populateFrontierSite} from './frontier-ecology.js';
+import {blockedFrontierPoint,routeWaypoint} from './frontier-map.js';
 import { rollCollectionItem } from "./collection-data.js";
 import {
   ABILITIES,
@@ -201,17 +204,14 @@ export const Ecosystem = {
   _generateChunk(key) {
     const [cx, cy] = key.split(",").map(Number),
       random = seeded(chunkSeed(this.seed, cx, cy));
-    const point = () => ({
-      x: (cx + random()) * CHUNK_SIZE,
-      y: (cy + random()) * CHUNK_SIZE,
-    });
+    const point = () => {let p;for(let attempt=0;attempt<12;attempt++){p={x:(cx+random())*CHUNK_SIZE,y:(cy+random())*CHUNK_SIZE};if(!blockedFrontierPoint(this.seed,p.x,p.y,4))return p;}return p;};
     for (let i = 0; i < 5; i++) {
       const p = point();
       if (Math.hypot(p.x, p.y) > WORLD_RADIUS - 8 || Math.hypot(p.x, p.y) < 10)
         continue;
       const region = biomeAt(p.x, p.y),
         tier = clamp(
-          region.tier + (random() < 0.12 && region.tier > 0 ? -1 : 0),
+          encounterTier(region.tier,random()),
           0,
           7,
         );
@@ -252,7 +252,9 @@ export const Ecosystem = {
       if (s.temperament === "pack" && i < 3) {
         e.packId = `${key}:${i}`;
         e.groupRole = "leader";
-        for (let j = 0; j < 2; j++) {
+        const packSize=5+Math.floor(random()*9);
+        for (let j = 0; j < packSize&&this.entities.length<280; j++) {
+          if(blockedFrontierPoint(this.seed,p.x+4+j*2,p.y-3+j*3,3))continue;
           const flankDino = this.spawnEntity(s.id, p.x + 4 + j * 2, p.y - 3 + j * 3, {
             homeChunk: key,
             packId: e.packId,
@@ -262,6 +264,7 @@ export const Ecosystem = {
         }
       }
     }
+    populateFrontierSite(this,key);
     for (let i = 0; i < 18; i++) {
       const p = point();
       if (Math.hypot(p.x, p.y) > WORLD_RADIUS - 5) continue;
@@ -284,7 +287,7 @@ export const Ecosystem = {
     }
     const nest = point(),
       tier = biomeAt(nest.x, nest.y).tier,
-      pool = SPECIES.filter((s) => s.tier === tier && !s.bloodline);
+      pool = SPECIES.filter((s) => s.tier === tier && !s.bloodline&&s.body!=='marine');
     if (Math.hypot(nest.x, nest.y) < WORLD_RADIUS - 12) {
       const s = pool[Math.floor(random() * pool.length)],
         // Nests belong to an animal already living here. Reusing a seeded
@@ -844,6 +847,7 @@ export const Ecosystem = {
       if (e.cast.remaining <= 0) {
         const zone = e.cast;
         e.cast = null;
+        finishEnemyAttack(e,s,this.time);
         e.attacking = 0.55;
         if (zone.isSpecial || zone.isMutation) {
           const kind = zone.kind;
@@ -1017,7 +1021,7 @@ export const Ecosystem = {
       !defendingNest &&
       !defendingYoung &&
       isMuchLessEvolved &&
-      !underfoot;
+      !underfoot&&!e.wanderer;
     e.beneathNotice = beneathNotice;
 
     const aggressive =
@@ -1088,6 +1092,7 @@ export const Ecosystem = {
           size: s.size * (1 + (e.growth || 0) * 0.28),
         }),
         range = combat.reach + this.effectiveSize * 0.4;
+      const tactics=enemyTactics(e,p,s,this.time,this.entities);
       if (s.tier >= 1 && combat.ranged && !e.boss && distance < 14) {
         if (distance < 6.5) {
           targetAngle = Math.atan2(e.y - p.y, e.x - p.x);
@@ -1120,8 +1125,8 @@ export const Ecosystem = {
             e.chargeCooldown = 5.5;
           }
         }
-        if (e.charging <= 0) e.chargeCooldown = 5.5;
-      } else if (!e.chargeWindup && (e.chargeCooldown || 0) <= 0 && isCharger && distance >= 7.5 && distance <= 15 && hasLineOfSight(e, p, this.worldFeatures || [])) {
+        if (e.charging <= 0) {e.chargeCooldown = 5.5;finishEnemyAttack(e,s,this.time);}
+      } else if (tactics.canStrike && !e.chargeWindup && (e.chargeCooldown || 0) <= 0 && isCharger && distance >= 7.5 && distance <= 15 && hasLineOfSight(e, p, this.worldFeatures || [])) {
         e.chargeWindup = 0.45;
         e.chargeAngle = Math.atan2(p.y - e.y, p.x - e.x);
       } else if (e.chargeWindup > 0) {
@@ -1143,7 +1148,7 @@ export const Ecosystem = {
           e.speedBuff = 1.0;
         }
       }
-      if (e.telegraph <= 0 && e.skillCooldown <= 0) {
+      if (tactics.canSkill && e.telegraph <= 0 && e.skillCooldown <= 0) {
         if (kit.special === "rage" && (e.specialCooldown || 0) <= 0 && distance < 18 && (e.hp < e.maxHp * 0.65)) {
           e.cast = {
             x: e.x,
@@ -1260,7 +1265,7 @@ export const Ecosystem = {
         }
       }
       if (
-        kit.ability &&
+        tactics.canSkill && kit.ability &&
         e.skillCooldown <= 0 &&
         distance < combat.range &&
         distance > range * 0.65 &&
@@ -1275,8 +1280,8 @@ export const Ecosystem = {
           radius: castRadius,
           angle: Math.atan2(p.y - e.y, p.x - e.x),
           shape,
-          remaining: e.boss ? 0.35 : 0.28,
-          total: e.boss ? 0.35 : 0.28,
+          remaining: e.boss ? 0.65 : 0.50,
+          total: e.boss ? 0.65 : 0.50,
           kind: s.abilityType,
           playerWasNear: distance < castRadius + 2.5,
         };
@@ -1286,27 +1291,34 @@ export const Ecosystem = {
         e.telegraph = 0;
         return;
       }
-      if (distance < range + 0.65 && hasLineOfSight(e, p, this.worldFeatures || [])) {
+      if (tactics.canStrike && distance < range + 0.65 && hasLineOfSight(e, p, this.worldFeatures || [])) {
         move = 0;
         e.intent = "attack";
-        if (e.attackCooldown <= 0 && e.telegraph <= 0)
-          e.telegraph = combat.windup;
+        if (e.attackCooldown <= 0 && e.telegraph <= 0){
+          const plan=beginEnemyAttack(e,p,s,this.time);e.telegraph=Math.max(combat.windup,plan.windup);targetAngle=plan.angle;e.intent=plan.kind==='tail-sweep'?'tail-sweep':'windup';
+        }
+      } else if(!tactics.canStrike&&e.telegraph<=0){
+        e.intent=tactics.intent;move=tactics.move;targetAngle=tactics.angle;
       } else {
         e.intent = e.packId ? "flank" : "hunt";
         move = (0.86 + (e.boss ? 0.12 : 0) + Math.min(0.12, this.time / 3600)) * (e.speedBuff || 1.0);
       }
       if (e.telegraph > 0) {
+        if(e.combatPlan?.phase==='windup')targetAngle=e.combatPlan.angle;
+        if(e.combatPlan)e.intent=e.combatPlan.kind==='tail-sweep'?'tail-sweep':'windup';
         e.telegraph -= dt * (e.slowed > 0 ? 0.4 : 1);
         move = 0;
         if (e.telegraph <= 0) {
           e.attacking = 0.28;
-          this.emit("enemy-strike", { x: e.x, y: e.y, angle: e.angle, radius: range, speciesId: s.id });
-          e.attackCooldown = combat.cooldown * (e.boss ? 0.8 : 1);
+          const plan=e.combatPlan,strikeRange=range*(plan?.reach||1);
+          const facing=Math.abs(angleDiff(Math.atan2(p.y-e.y,p.x-e.x),targetAngle))<=(plan?.arc||1.15);
+          const inRange = facing && dist(e, p) < strikeRange + 0.35 && hasLineOfSight(e, p, this.worldFeatures || []);
+          this.emit("enemy-strike", { x: e.x, y: e.y, angle: targetAngle, radius: strikeRange, speciesId: s.id, pattern:plan?.kind||'bite' });
+          e.attackCooldown = plan?.comboLeft>0?.34:combat.cooldown * (e.boss ? 0.8 : 1);
           if (s.tier >= 1) sweepMove(e, Math.cos(targetAngle) * (0.8 + s.size * 0.22), Math.sin(targetAngle) * (0.8 + s.size * 0.22), s.size * (e.scaleFactor || 1), this.worldFeatures || []);
           if (["pounce", "charge"].includes(s.abilityType)) {
             sweepMove(e, Math.cos(targetAngle) * 1.4, Math.sin(targetAngle) * 1.4, s.size * (e.scaleFactor || 1), this.worldFeatures || []);
           }
-          const inRange = dist(e, p) < range + 0.35 && hasLineOfSight(e, p, this.worldFeatures || []);
           if (inRange) {
             if (p.invulnerable > 0) {
               this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}` });
@@ -1317,13 +1329,14 @@ export const Ecosystem = {
                   this.rules.enemyDamage *
                   (e.boss ? 1.25 : 1) *
                   (1 + this.ascensions * 0.2) *
-                  (e.damageBuff || 1.0),
+                  (e.damageBuff || 1.0) * (plan?.damage||1),
                 `${e.boss ? "Alpha " : ""}${s.name}`,
               );
             }
           } else if (dist(e, p) < range + 2.8) {
             this.triggerPerfectDodge?.({ x: p.x, y: p.y, cause: `${e.boss ? "Alpha " : ""}${s.name}` });
           }
+          finishEnemyAttack(e,s,this.time);
         }
       }
     } else if (sensory.detected && !sensory.visible && !e.juvenile &&
@@ -1471,6 +1484,8 @@ export const Ecosystem = {
       }
     }
     // Steer around a nearby solid rather than endlessly biting its far side.
+    if(e.migration&&e.migration.until>this.time&&e.aggro<=0&&!e.fear){const goal=routeWaypoint(e,e.migration);targetAngle=Math.atan2(goal.y-e.y,goal.x-e.x);move=.92;e.intent='migrate';}
+    else if(move>0&&['hunt','flank','track','return'].includes(e.intent)){const goal=routeWaypoint(e,e.intent==='return'?{x:e.homeX,y:e.homeY}:p);if(goal!==p)targetAngle=Math.atan2(goal.y-e.y,goal.x-e.x);}
     if (move > 0) {
       const probe = { x: e.x + Math.cos(targetAngle) * 5, y: e.y + Math.sin(targetAngle) * 5 },
         block = firstSolidHit(e, probe, this.worldFeatures || [], Math.min(3, s.size * (e.scaleFactor || 1) * 0.35), true);

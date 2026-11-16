@@ -17,7 +17,9 @@ try {
     const { SHOP_ITEMS } = await import("/src/collection-data.js");
     const { createShopObject, createCosmetic } =
       await import("/src/collection-art.js");
+    const {fitSpecimenCamera}=await import('/src/specimen-framing.js');
     const { createDinosaur } = await import("/src/creatures.js");
+    const {createNaturalEnvironment}=await import('/src/natural-materials.js');
     const canvas = document.createElement("canvas"),
       r = new THREE.WebGLRenderer({
         canvas,
@@ -31,11 +33,12 @@ try {
     r.toneMapping = THREE.ACESFilmicToneMapping;
     r.toneMappingExposure = 1.15;
     const scene = new THREE.Scene();
-    scene.add(new THREE.HemisphereLight(0xe7f6ef, 0x39462d, 2.5));
+    const environment=createNaturalEnvironment(r);scene.environment=environment.texture;scene.environmentIntensity=.24;
+    scene.add(new THREE.HemisphereLight(0xe7f6ef, 0x39462d, 1.4));
     const sun = new THREE.DirectionalLight(0xffe6b9, 3);
     sun.position.set(4, 8, 6);
     scene.add(sun);
-    const rim = new THREE.DirectionalLight(0x94c8ef, 2);
+    const rim = new THREE.DirectionalLight(0x94c8ef, 1.3);
     rim.position.set(-4, 2, -3);
     scene.add(rim);
     const camera = new THREE.PerspectiveCamera(32, 320 / 260, 0.01, 300);
@@ -45,7 +48,7 @@ try {
       ],
       out = [];
     for (const entry of list) {
-      const model = entry.item
+      let model = entry.item
         ? entry.item.kind === "cosmetic"
           ? createCosmetic(entry.item.id)
           : createShopObject(entry.item, {
@@ -53,18 +56,11 @@ try {
               equippedCosmetic: "none",
             })
         : createDinosaur(entry.species, true);
+      if(model.userData.species)await new Promise((resolve,reject)=>{const end=performance.now()+15000;const poll=()=>model.userData.flagshipAsset?resolve():performance.now()>end?reject(Error('Missing anatomical asset '+entry.key)):setTimeout(poll,20);poll();});
       model.rotation.y = -0.62;
       scene.add(model);
       model.updateMatrixWorld(true);
-      const box = new THREE.Box3().setFromObject(model),
-        center = box.getCenter(new THREE.Vector3()),
-        size = box.getSize(new THREE.Vector3());
-      const span = Math.max(size.y, size.x / camera.aspect, size.z * 0.65),
-        distance = (span / (2 * Math.tan((32 * Math.PI) / 360))) * 1.24;
-      camera.position
-        .copy(center)
-        .add(new THREE.Vector3(distance * 0.2, distance * 0.18, distance));
-      camera.lookAt(center);
+      fitSpecimenCamera(camera,model,{padding:1.16});
       r.render(scene, camera);
       out.push({
         key: entry.key,

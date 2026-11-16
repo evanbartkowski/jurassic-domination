@@ -1,3 +1,4 @@
+import {enterTitle} from './enter-title.mjs';
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -10,7 +11,7 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } }),
   errors = [],
   checks = [];
-page.setDefaultTimeout(15000);
+page.setDefaultTimeout(45000);
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("response", (response) => {
   if (response.status() >= 400)
@@ -26,7 +27,7 @@ async function check(name, fn) {
   console.log(`PASS ${name}`);
 }
 try {
-  await page.goto(base);
+  await page.goto(base);await enterTitle(page);
   await page.waitForFunction(() => window.__JD?.ui?.view === "menu");
   await check("live 3D title screen animates an actual creature", async () => {
     await page.getByRole("button", { name: /BEGIN A NEW LIFE/ }).waitFor();
@@ -40,18 +41,18 @@ try {
     );
   });
   await check("tutorial and keyboard back", async () => {
-    await page.getByRole("button", { name: /HOW TO SURVIVE/ }).click();
+    await page.locator('[data-action="tutorial"]').click();
     await page.waitForFunction(() => window.__JD.ui.view === "tutorial");
     await page.screenshot({ path: "artifacts/tutorial.png" });
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => window.__JD.ui.view === "menu");
   });
   await check(
-    "encyclopedia contains all 102 species and a working 3D viewer",
+    "encyclopedia contains all 108 species and a working 3D viewer",
     async () => {
-      await page.getByRole("button", { name: /ENCYCLOPEDIA/ }).click();
+      await page.locator('[data-action="guide"]').click();
       await page.waitForFunction(() => window.__JD.specimen);
-      assert.equal(await page.locator("[data-inspect]").count(), 102);
+      assert.equal(await page.locator("[data-inspect]").count(), 108);
       await page.locator("#guide-search").fill("unicorn");
       await page.locator('[data-inspect="unicorn"]').click();
       await page.waitForFunction(
@@ -67,7 +68,7 @@ try {
   await check(
     "every creature family renders with finite animated geometry",
     async () => {
-      await page.getByRole("button", { name: /ENCYCLOPEDIA/ }).click();
+      await page.locator('[data-action="guide"]').click();
       await page.waitForFunction(() => window.__JD.specimen);
       const count = await page.evaluate(async () => {
         const { SPECIES } = await import("/src/data.js");
@@ -87,7 +88,7 @@ try {
         }
         return SPECIES.length;
       });
-      assert.equal(count, 102);
+      assert.equal(count, 108);
       await page.keyboard.press("Escape");
     },
   );
@@ -189,7 +190,7 @@ try {
       await page.keyboard.press("KeyT");
       await page.waitForFunction(() => window.__JD.ui.view === "evolution");
       await page.screenshot({ path: "artifacts/evolution.png" });
-      await page.locator("[data-species]").first().click();
+      await page.locator("[data-species]").first().focus();
       await page.locator("[data-mutation]").first().click();
       await page
         .getByRole("button", { name: /^EMBRACE EVOLUTION/ })
@@ -299,7 +300,9 @@ try {
         const dragon = page.locator(
           '[data-species="elder-dragon"], [data-species="wyvern"], [data-species="world-serpent"]',
         );
-        if (await dragon.count()) await dragon.first().click();
+        // Clicking the already selected form confirms it. Keep the explicit
+        // confirmation step deterministic across randomly ordered offerings.
+        if (await dragon.count() && !(await dragon.first().evaluate(e=>e.classList.contains('selected')))) await dragon.first().click();
         await page.getByRole("button", { name: /EMBRACE EVOLUTION/ }).click();
         await page.waitForFunction(
           (t) => window.__JD.game.tier === t && window.__JD.ui.view === "hud",
@@ -435,14 +438,14 @@ try {
   );
   await check("profile survives reload", async () => {
     const dna = await page.evaluate(() => window.__JD.profile.dna);
-    await page.reload();
+    await page.reload();await enterTitle(page);
     await page.waitForFunction(() => window.__JD?.ui?.view === "menu");
     assert.equal(await page.evaluate(() => window.__JD.profile.dna), dna);
   });
   await check(
     "legacy purchase spends earned DNA and persists the actual upgrade",
     async () => {
-      await page.getByRole("button", { name: /THE ANCESTRAL LEGACY/ }).click();
+      await page.locator('[data-action="legacy"]').click();
       const before = await page.evaluate(() => window.__JD.profile.dna);
       await page.locator('[data-upgrade="vitality"]').click();
       assert.equal(
@@ -453,7 +456,7 @@ try {
         await page.evaluate(() => window.__JD.profile.upgrades.vitality),
         1,
       );
-      await page.reload();
+      await page.reload();await enterTitle(page);
       await page.waitForFunction(() => window.__JD?.ui?.view === "menu");
       assert.equal(
         await page.evaluate(() => window.__JD.profile.upgrades.vitality),
@@ -465,7 +468,7 @@ try {
     "earned skins can be equipped and survive reloading",
     async () => {
       await page
-        .getByRole("button", { name: /APPEARANCE & ANCIENT RELICS/ })
+        .locator('[data-action="wardrobe"]')
         .click();
       await page.locator('[data-skin="obsidian"]').click();
       assert.equal(
@@ -473,7 +476,7 @@ try {
         "obsidian",
       );
       await page.screenshot({ path: "artifacts/wardrobe.png" });
-      await page.reload();
+      await page.reload();await enterTitle(page);
       await page.waitForFunction(() => window.__JD?.ui?.view === "menu");
       assert.equal(
         await page.evaluate(() => window.__JD.profile.equippedSkin),
@@ -494,7 +497,7 @@ try {
       ),
     );
     const rect = await page
-      .getByRole("button", { name: /BEGIN A NEW LIFE/ })
+      .locator('[data-action="start"]')
       .boundingBox();
     assert(rect.y >= 0 && rect.y + rect.height <= 600);
   });

@@ -1,0 +1,80 @@
+{
+  "id": "dunkleosteus",
+  "family": "armored-fish",
+  "triangles": 19472,
+  "bones": 12,
+  "dimensions": [
+    4.144258975982666,
+    1.9878079891204834,
+    2.010016679763794
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface": {
+        "verts": 9774,
+        "faces": 19472,
+        "tris": 19472,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 19,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 7,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 48.9
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Dorsal_fin",
+      "distance": 0.0572
+    },
+    {
+      "part": "Caudal_fluke",
+      "distance": 0.0148
+    },
+    {
+      "part": "Swept_pectoral_fin",
+      "distance": 0.0593
+    },
+    {
+      "part": "Swept_pectoral_fin.001",
+      "distance": 0.0592
+    }
+  ],
+  "bytes": 951688
+}

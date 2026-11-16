@@ -1,0 +1,62 @@
+/* Expedition controls: clear hierarchy, cut stone borders, deep blood red. */
+.menu-screen,.grim-pause,.pause-panel{--display:Bahnschrift,'Arial Narrow','Segoe UI',sans-serif;--blood:#780014;--text:#f0e8df;font-family:'Segoe UI',Arial,sans-serif}
+.start-screen{background:radial-gradient(ellipse at 50% 50%,transparent 15%,#03040899 100%)!important}
+.start-screen:before{display:none}.start-scratches{position:absolute;inset:0;border:24px solid #03040855;pointer-events:none}
+.start-screen .start-button{position:absolute;top:68%;min-width:260px;padding:19px 38px;font:600 30px Bahnschrift,'Segoe UI',sans-serif;letter-spacing:.35em;color:#f0e5d7;background:#08080cc9;border:1px solid #8e2637;box-shadow:inset 0 0 0 4px #110b11,0 8px 30px #000a}
+.start-screen .start-button:hover{background:#49000f;border-color:#d8a7a0}
+.menu-screen:before{background:none!important;box-shadow:inset 0 0 130px #090306;opacity:1}
+.menu-art{background:linear-gradient(90deg,#07070baa,transparent 35%,transparent 65%,#07070baa),linear-gradient(#06070922,#09050833 35%,#080609e6)!important}
+.menu-copy{filter:drop-shadow(0 2px 3px #0008)}
+.menu-screen .game-title{font-family:Bahnschrift,'Arial Narrow','Segoe UI',sans-serif!important;font-weight:700!important;font-size:clamp(45px,5.5vw,76px)!important;line-height:.94!important;letter-spacing:.015em!important;margin:10px 0 14px!important}
+.menu-screen .game-title>span:last-child{color:#c6a59d!important}
+.menu-copy>.eyebrow{color:#dbc8b2!important;font-size:10px!important;letter-spacing:.14em!important}
+.menu-screen .menu-description{color:#eee0d4!important;font-size:13px!important;margin-bottom:17px!important}
+.menu-screen .menu-feature-grid{gap:9px!important;margin-top:16px!important}
+.menu-screen .menu-feature-tile{min-height:66px!important;padding:13px 15px!important;background:#101014ed!important;border:1px solid #88716a!important;border-left:3px solid #790017!important;border-radius:2px!important;box-shadow:inset 0 0 0 2px #08090d,0 5px 14px #0005!important}
+.menu-screen .menu-feature-tile:hover{background:#310811f5!important;border-color:#d5aba0!important}
+.menu-screen .tile-text strong{font-size:14px!important;font-weight:650!important;color:#f6eee4!important;letter-spacing:0!important}
+.menu-screen .tile-text span{font-size:11px!important;color:#d2bfb3!important;line-height:1.5!important}
+.menu-screen .tile-icon{color:#c39a8f!important;width:29px!important;min-width:29px!important}
+.menu-screen .menu-hero-card{border:1px solid #987b72!important;border-top:3px solid #780014!important;background:#121015f2!important;padding:15px!important;border-radius:2px!important}
+.menu-screen .button.primary,.grim-pause .button.primary,.pause-panel .button.primary{background:#6d0012!important;border:1px solid #bd6570!important;box-shadow:inset 0 0 0 3px #42000c,0 4px 14px #0008!important;font-family:Bahnschrift,'Segoe UI',sans-serif!important;font-size:14px!important;letter-spacing:.065em!important}
+.menu-screen .button.primary:hover,.grim-pause .button.primary:hover{background:#8e071c!important;border-color:#e0a0a4!important}
+.menu-screen .difficulty-picker{border:1px solid #88716a!important;background:#101014f5!important;padding:8px!important;border-radius:2px!important;gap:7px!important}
+.menu-screen .difficulty-picker button{border:1px solid #80655e!important;color:#e3d5c9!important;font-size:10px!important;padding:9px 12px!important;background:#1a1419!important}
+.menu-screen .difficulty-picker button.selected{background:#690011!important;border:1px solid #df8990!important;box-shadow:inset 0 -2px #ce7b82!important;color:#fff1e7!important}
+.menu-screen .difficulty-description,.menu-screen .menu-sub-btn,.menu-screen .version-label{color:#d2bdb1!important}
+.menu-screen .menu-sub-btn{padding:8px 10px!important;border:1px solid #6c504c!important;background:#100c11dc!important;border-radius:2px}
+.menu-screen .menu-footer{border-color:#814f4f!important;color:#c8b4a7!important}
+.grim-pause,.pause-panel{background:#110c11f7!important;border:1px solid #91736a!important;border-top:4px solid #770014!important}
+.grim-pause h1,.pause-panel h1{font:600 clamp(28px,4vw,38px) Bahnschrift,'Segoe UI',sans-serif!important;letter-spacing:.03em!important;color:#eee0d4!important}
+.grim-pause:before{border-color:#74001555!important}
+.grim-pause .button.secondary,.pause-panel .button.secondary{border:1px solid #8f6e68!important;background:#1c1018!important;color:#e6d7ce!important;min-height:41px;font-size:11px!important}
+.grim-pause .save-return-button,.pause-panel .save-return-button{border:1px solid #bb6470!important;background:#35020d!important;margin-top:7px!important;box-shadow:inset 0 0 0 3px #170b12!important}
+.grim-pause .save-return-button:hover{background:#620014!important;border-color:#e5acb0!important}
+.hud-objective-panel[data-incident]:not([data-incident='']){border-color:#ad5c39!important;background:#1c1114ec!important}
+.hud-objective-panel[data-incident='lightning']{border-color:#99b9d6!important}.hud-objective-panel[data-incident='lightning'] .objective-badge{color:#c4e5ff!important}
+@media(max-width:600px){.menu-screen .menu-feature-tile{padding:11px 10px!important;gap:7px!important}.menu-screen .tile-text strong{font-size:12px!important}.menu-screen .tile-text span{font-size:10px!important}.menu-screen .menu-sub-btn{font-size:10px!important}.start-screen .start-button{min-width:215px}}
+@media(max-height:730px) and (min-width:601px){#overlay.menu-screen .menu-shell{padding-block:15px!important}.menu-screen .game-title{font-size:51px!important}.menu-main{padding:14px 0!important}.menu-screen .menu-feature-tile{min-height:56px!important;padding-block:9px!important}.menu-screen .menu-description{margin-bottom:12px!important}.menu-screen .difficulty-picker-wrap{margin-top:12px!important}}
+/* Larger expedition menu and cinematic entry. */
+#overlay.menu-screen .menu-copy{width:min(760px,100%)!important}
+#overlay.menu-screen .menu-hero-area{max-width:620px!important}
+.menu-screen .menu-feature-grid{width:min(680px,100%)!important}
+.menu-screen .menu-feature-tile{min-height:78px!important;padding:16px 22px!important}
+.menu-screen .tile-text strong{font-size:16px!important}.menu-screen .tile-text span{font-size:12px!important}
+.menu-screen .hero-play-btn{min-height:78px!important;font-size:16px!important}
+.menu-screen .menu-sub-btn{min-height:40px;font-size:12px!important;padding:10px 13px!important}
+.menu-screen .game-title{font-size:clamp(48px,6.4vw,92px)!important}
+.start-heading{position:absolute;top:8%;left:0;width:100%;text-align:center;text-shadow:0 4px 25px #000;pointer-events:none}
+.start-heading p{font:12px 'Segoe UI',sans-serif;letter-spacing:.3em;color:#e4c29c;margin:0 0 16px}
+.start-heading h1{font:800 clamp(40px,7vw,94px)/.95 Bahnschrift,'Segoe UI',sans-serif;letter-spacing:.045em;color:#efe7dc;margin:0}
+.start-heading h1 span{color:#c68176}
+.start-screen .start-button{top:auto;bottom:12%;font-size:25px;letter-spacing:.2em;min-width:320px;padding:22px 35px}
+.start-tagline{position:absolute;bottom:5%;text-align:center;color:#c9b9ad;font:14px 'Segoe UI',sans-serif;letter-spacing:.1em}
+.death-screen{isolation:isolate;background:#080002!important;overflow:hidden auto!important}
+.death-screen .death-blood{position:fixed!important;inset:-30%!important;z-index:-1!important;pointer-events:none;background:radial-gradient(ellipse at 24% 35%,#a00028a6,transparent 47%),radial-gradient(ellipse at 77% 63%,#720019cc,transparent 48%),radial-gradient(ellipse at 50% 90%,#d124222e,transparent 50%),#040002!important;filter:blur(28px);animation:death-tide 12s ease-in-out infinite alternate!important;opacity:1!important}
+.death-screen .death-content{position:relative;z-index:1}
+@keyframes death-tide{0%{transform:translate(-5%,-5%) rotate(-8deg) scale(1);filter:blur(28px) brightness(.65)}50%{transform:translate(6%,2%) rotate(7deg) scale(1.12);filter:blur(40px) brightness(1.2)}100%{transform:translate(-2%,7%) rotate(-3deg) scale(1.04);filter:blur(30px) brightness(.8)}}
+@media(max-height:730px){.menu-screen .game-title{font-size:52px!important}.menu-screen .menu-feature-tile{min-height:60px!important;padding:10px 16px!important}.menu-screen .hero-play-btn{min-height:60px!important}}
+@media(max-width:600px){.start-heading{top:14%}.start-heading p{font-size:9px;letter-spacing:.17em}.start-screen .start-button{min-width:250px;font-size:21px}.start-tagline{font-size:11px}.menu-screen .tile-text strong{font-size:13px!important}.menu-screen .tile-text span{font-size:10px!important}.menu-screen .menu-feature-tile{padding:12px 10px!important}.menu-screen .menu-sub-btn{font-size:10px!important}}
+@media(prefers-reduced-motion:reduce){.death-screen .death-blood{animation:none!important}}
+body.reduced-motion .death-screen .death-blood{animation:none!important}
+@media(max-width:400px){.menu-screen .game-title{font-size:clamp(30px,10.7vw,42px)!important}.start-heading h1{font-size:clamp(28px,10vw,40px)}}

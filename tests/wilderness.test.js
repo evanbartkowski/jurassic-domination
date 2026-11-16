@@ -1,3 +1,4 @@
+import {MARINE_TRAITS} from '../src/marine-ecology.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -33,7 +34,7 @@ test("wilderness is deterministic, varied, bounded and protects the first 55 uni
       }
     }
   assert.ok(count > 1000);
-  assert.equal(types.size, 8);
+  assert.equal(types.size, 11);
 });
 test("solid wilderness objects push players and creatures outside their footprint", () => {
   const a = { x: 0, y: 0 };
@@ -67,6 +68,9 @@ test("toxic fungi poison, snapjaws bite and water slows with marine attacks", ()
   hazard("carnivore");
   const hp = g.player.hp;
   updateWildlife(g, 0.1);
+  assert.equal(g.player.hp, hp, "windup deals no contact damage");
+  g.time += .81;
+  updateWildlife(g, .81);
   assert.ok(g.player.hp < hp);
   g.player.invulnerable = 0;
   hazard("water");
@@ -105,7 +109,7 @@ test("marine predators swim continuously into range rather than teleporting on e
     updateWildlife(g, 0.1);
     const swimmers = g.marineState.get(f.id).swimmers;
     swimmers.forEach((s, i) => {
-      assert.ok(Math.hypot(s.x - previous[i].x, s.y - previous[i].y) <= marineSpeed(f, i, true) * 0.1 + 1e-8);
+      assert.ok(Math.hypot(s.x - previous[i].x, s.y - previous[i].y) <= marineSpeed(f, i, true) * (MARINE_TRAITS[s.speciesId]?.speed||1) * 0.1 + 1e-8);
       assert.ok(Math.abs(s.angle - previous[i].angle) <= 0.28 + 1e-8);
       assert.ok(Math.hypot(s.x - f.x, s.y - f.y) <= f.radius - 2.3 + 1e-8);
     });
@@ -115,6 +119,7 @@ test("marine predators swim continuously into range rather than teleporting on e
   assert.ok(g.bites > 0, "predators eventually swim into physical bite range");
 });
 test("marine rendering reads simulation positions without moving swimmers, including while paused", () => {
+  globalThis.document ||= {createElement:()=>({getContext:()=>new Proxy({createLinearGradient:()=>({addColorStop(){}}),createRadialGradient:()=>({addColorStop(){}})}, {get:(o,k)=>o[k]||(()=>{})})})};
   const g = marineGame(), f = g.worldFeatures[0];
   updateWildlife(g, 0.1);
   const state = g.marineState.get(f.id), snapshot = structuredClone(state),
@@ -158,8 +163,8 @@ test("ranged enemies fire travelling attacks that damage and expire", () => {
   e.aggro = 5;
   g._updateEntity(e, 0.016);
   assert.ok(e.cast);
-  assert.ok(e.cast.remaining < 0.4);
-  g._updateEntity(e, 0.3);
+  assert.ok(e.cast.remaining >= 0.45 && e.cast.remaining <= .65,'ranged attacks have a readable windup');
+  g._updateEntity(e, 0.7);
   assert.equal(g.projectiles.length, 1);
   const before = g.player.hp;
   for (let i = 0; i < 60; i++) {

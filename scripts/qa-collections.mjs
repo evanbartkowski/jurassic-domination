@@ -1,3 +1,4 @@
+import {enterTitle} from './enter-title.mjs';
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -19,9 +20,9 @@ async function check(name, fn) {
   console.log("PASS " + name);
 }
 try {
-  await page.goto("http://127.0.0.1:5173");
+  await page.goto("http://127.0.0.1:5173");await enterTitle(page);
   await page.waitForFunction(() => window.__JD?.ui);
-  await page.getByRole("button", { name: /DNA SHOP/ }).click();
+  await page.getByRole("button", { name: /DNA SHOP/i }).click();
   await page.waitForFunction(() => window.__JD.productViewer);
   await check("shop disables unaffordable purchases", async () =>
     assert.ok(await page.locator("[data-buy]").isDisabled()),
@@ -94,7 +95,7 @@ try {
   await check("island rename and owned inventory survive reload", async () => {
     await page.locator("#island-name").fill("Cretaceous Cove");
     await page.locator("#island-name").press("Tab");
-    await page.reload();
+    await page.reload();await enterTitle(page);
     await page.waitForFunction(() => window.__JD?.ui);
     assert.equal(
       await page.evaluate(() => window.__JD.profile.island.name),
@@ -105,7 +106,7 @@ try {
       "compy",
     );
   });
-  await page.getByRole("button", { name: /DNA SHOP/ }).click();
+  await page.getByRole("button", { name: /DNA SHOP/i }).click();
   await check("buy crown and display real 3D cosmetic", async () => {
     await page.locator('[data-shop-category="cosmetic"]').click();
     await page.locator('[data-product="cosmetic:royal-crown"]').click();
@@ -155,7 +156,10 @@ try {
     );
   });
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: /DNA SHOP/ }).click();
+  await check('Back from island placement restores the previous shop category', async () => {
+    await page.waitForFunction(() => window.__JD.ui.view === 'shop');
+    assert.equal(await page.evaluate(() => window.__JD.ui.shopCategory), 'decoration');
+  });
   await page.screenshot({ path: "artifacts/shop-800.png" });
   await check(
     "all 49 product preview models render without errors",

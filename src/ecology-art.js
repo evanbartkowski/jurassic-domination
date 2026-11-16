@@ -98,11 +98,14 @@ export function createEcologyArt(scene) {
   motesGeometry.setAttribute("position", new THREE.BufferAttribute(motesData, 3).setUsage(THREE.DynamicDrawUsage));
   const rainMaterial = new THREE.LineBasicMaterial({ color: 0x94cce1, transparent: true, opacity: 0.36, depthWrite: false }),
     moteMaterial = new THREE.PointsMaterial({ color: 0xc7d0cb, size: 0.16, transparent: true, opacity: 0.66, depthWrite: false });
+  // Round weather flecks in the existing point batch, without another texture.
+  moteMaterial.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\n float fleck=length(gl_PointCoord-vec2(.5))*2.0; diffuseColor.a*=1.0-smoothstep(.25,1.0,fleck);');};
+  moteMaterial.customProgramCacheKey=()=> 'weather-soft-flecks-v1';
   materials.add(rainMaterial); materials.add(moteMaterial);
   const rain = new THREE.LineSegments(dropsGeometry, rainMaterial), motes = new THREE.Points(motesGeometry, moteMaterial);
   rain.frustumCulled = motes.frustumCulled = false; rain.name = "Seasonal rain"; motes.name = "Windborne weather"; root.add(rain, motes);
 
-  function update(game, dt = 0, detail = "high") {
+  function update(game, dt = 0, detail = "high",particleDensity=1) {
     if (disposed) return;
     root.visible = !!game?.player;
     if (!root.visible) return;
@@ -153,7 +156,7 @@ export function createEcologyArt(scene) {
     }
     const weather = status?.phase === "active" ? status.event : "clear",
       rainy = ["rain", "flood"].includes(weather), dusty = ["frost", "ashfall", "fire", "eruption"].includes(weather),
-      particleCount = detail === "low" ? 48 : detail === "medium" ? 120 : PARTICLE_LIMIT;
+      particleCount = Math.floor((detail === "low" ? 48 : detail === "medium" ? 120 : PARTICLE_LIMIT)*particleDensity);
     rain.visible = rainy; motes.visible = dusty;
     if (rainy || dusty) {
       const wind = status.wind, speed = rainy ? 18 : weather === "frost" ? 1.6 : 2.8;

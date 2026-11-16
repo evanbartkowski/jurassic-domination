@@ -1,0 +1,216 @@
+{
+  "id": "cerberus",
+  "family": "wolf",
+  "triangles": 29620,
+  "bones": 22,
+  "dimensions": [
+    3.2062418460845947,
+    2.1628000736236572,
+    2.8916866779327393
+  ],
+  "clips": [
+    "Idle",
+    "Walk",
+    "Run",
+    "Attack",
+    "Graze",
+    "Rest"
+  ],
+  "qa": {
+    "ok": true,
+    "pass": true,
+    "errors": [],
+    "warnings": [],
+    "ground_z": 0.0,
+    "zfighting": [],
+    "floating": [],
+    "back_to_back": [],
+    "enclosed": [],
+    "objects": {
+      "Creature_surface.084": {
+        "verts": 15094,
+        "faces": 29620,
+        "tris": 29620,
+        "ngons": 0,
+        "boundary_edges": 0,
+        "nonmanifold_edges": 0,
+        "wire_edges": 0,
+        "loose_verts": 0,
+        "degenerate_faces": 0,
+        "zero_length_edges": 0,
+        "inconsistent_normals_edges": 0,
+        "duplicate_verts": 0,
+        "islands": 142,
+        "inside_out_islands": 0,
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": 6,
+        "unweighted_verts": 0,
+        "verts_over_4_influences": 0,
+        "uv_maps": 1,
+        "uv_oob_pct": 0.0,
+        "uv_zero_area_faces": 0,
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 22.1
+      }
+    }
+  },
+  "attachmentShifts": [
+    {
+      "part": "Lower_tooth.003",
+      "distance": 0.0259
+    },
+    {
+      "part": "Lower_tooth.004",
+      "distance": 0.0308
+    },
+    {
+      "part": "Lower_tooth.005",
+      "distance": 0.0403
+    },
+    {
+      "part": "Lower_tooth.006",
+      "distance": 0.037
+    },
+    {
+      "part": "Lower_tooth.007",
+      "distance": 0.0455
+    },
+    {
+      "part": "Lower_tooth.011",
+      "distance": 0.0254
+    },
+    {
+      "part": "Lower_tooth.012",
+      "distance": 0.0315
+    },
+    {
+      "part": "Lower_tooth.013",
+      "distance": 0.04
+    },
+    {
+      "part": "Lower_tooth.014",
+      "distance": 0.0384
+    },
+    {
+      "part": "Lower_tooth.015",
+      "distance": 0.0448
+    },
+    {
+      "part": "Secondary_Pupil",
+      "distance": 0.0358
+    },
+    {
+      "part": "Secondary_Lower_tooth.003",
+      "distance": 0.0253
+    },
+    {
+      "part": "Secondary_Lower_tooth.004",
+      "distance": 0.0316
+    },
+    {
+      "part": "Secondary_Lower_tooth.005",
+      "distance": 0.041
+    },
+    {
+      "part": "Secondary_Lower_tooth.006",
+      "distance": 0.0378
+    },
+    {
+      "part": "Secondary_Lower_tooth.007",
+      "distance": 0.0425
+    },
+    {
+      "part": "Secondary_Pupil.001",
+      "distance": 0.0359
+    },
+    {
+      "part": "Secondary_Lower_tooth.011",
+      "distance": 0.0251
+    },
+    {
+      "part": "Secondary_Lower_tooth.012",
+      "distance": 0.0301
+    },
+    {
+      "part": "Secondary_Lower_tooth.013",
+      "distance": 0.0418
+    },
+    {
+      "part": "Secondary_Lower_tooth.014",
+      "distance": 0.0394
+    },
+    {
+      "part": "Secondary_Lower_tooth.015",
+      "distance": 0.0439
+    },
+    {
+      "part": "Secondary_Pupil.002",
+      "distance": 0.036
+    },
+    {
+      "part": "Secondary_Lower_tooth.019",
+      "distance": 0.0255
+    },
+    {
+      "part": "Secondary_Lower_tooth.020",
+      "distance": 0.0295
+    },
+    {
+      "part": "Secondary_Lower_tooth.021",
+      "distance": 0.0421
+    },
+    {
+      "part": "Secondary_Lower_tooth.022",
+      "distance": 0.0396
+    },
+    {
+      "part": "Secondary_Lower_tooth.023",
+      "distance": 0.0439
+    },
+    {
+      "part": "Secondary_Pupil.003",
+      "distance": 0.0356
+    },
+    {
+      "part": "Secondary_Lower_tooth.027",
+      "distance": 0.025
+    },
+    {
+      "part": "Secondary_Lower_tooth.028",
+      "distance": 0.0316
+    },
+    {
+      "part": "Secondary_Lower_tooth.029",
+      "distance": 0.0405
+    },
+    {
+      "part": "Secondary_Lower_tooth.030",
+      "distance": 0.0379
+    },
+    {
+      "part": "Secondary_Lower_tooth.031",
+      "distance": 0.0427
+    },
+    {
+      "part": "Claw.001",
+      "distance": 0.0352
+    },
+    {
+      "part": "Claw.004",
+      "distance": 0.0313
+    },
+    {
+      "part": "Claw.007",
+      "distance": 0.0352
+    },
+    {
+      "part": "Claw.010",
+      "distance": 0.0313
+    }
+  ],
+  "bytes": 1772568
+}

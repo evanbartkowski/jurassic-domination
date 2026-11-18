@@ -1,11 +1,11 @@
 {
   "id": "heterodontosaurus",
   "family": "coelurosaur",
-  "triangles": 24548,
+  "triangles": 30356,
   "bones": 20,
   "dimensions": [
-    4.579965114593506,
-    1.8075287342071533,
+    4.581097602844238,
+    1.8185169696807861,
     1.1509724855422974
   ],
   "clips": [
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12338,
-        "faces": 24548,
-        "tris": 24548,
+        "verts": 15466,
+        "faces": 30356,
+        "tris": 30356,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 32,
+        "islands": 144,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,22 +55,30 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.09,
-        "uv_coverage_pct": 34.2
+        "uv_overlap_pct": 0.07,
+        "uv_coverage_pct": 24.4
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw.002",
-      "distance": 0.0234
+      "part": "Orbital_upper_lid",
+      "distance": 0.0252
     },
     {
-      "part": "Claw.003",
-      "distance": 0.0234
+      "part": "Orbital_lower_lid",
+      "distance": 0.0369
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0251
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0367
     }
   ],
-  "bytes": 3515460,
+  "bytes": 4866160,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -89,22 +97,31 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 13500,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 16694,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": 0.0,
+    "ground_z": -0.0006,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 6814,
-        "faces": 13500,
-        "tris": 13500,
+        "verts": 8635,
+        "faces": 16694,
+        "tris": 16694,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -114,7 +131,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 32,
+        "islands": 144,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -127,8 +144,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.09,
-        "uv_coverage_pct": 33.8
+        "uv_overlap_pct": 0.08,
+        "uv_coverage_pct": 24.0
       }
     }
   }

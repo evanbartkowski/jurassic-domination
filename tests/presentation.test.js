@@ -40,7 +40,7 @@ test('particles share a bounded sprite batch while leaf fragments retain geometr
 });
 
 test('opening a menu hides gameplay HUD controls behind the modal',()=>{
- const fake={hud:{hidden:false},overlay:{hidden:true,className:'',innerHTML:'',scrollTop:0,querySelector:()=>null,dataset:{}},settings:{}};
+ const fake={hud:{hidden:false},overlay:{hidden:true,className:'',innerHTML:'',scrollTop:0,querySelector:()=>null,dataset:{}},settings:{},applyAccountUI(){}};
  UI.prototype.screen.call(fake,'settings','<section>Settings</section>');
  assert.equal(fake.hud.hidden,true);
 });

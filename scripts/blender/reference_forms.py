@@ -95,6 +95,19 @@ def calibrate(a):
       'eastern-dragon':dict(hip=.55,width=.31,depth=.33,head=[1.35,.94],skull=[.80,.25,.25],tail=6.1,arms=.30),
     }
     a.update(profiles.get(base,{}))
+    # Longer, planar snouts and supported necks replace the short toy-like
+    # crania on the large terrestrial predators. Gameplay sizes stay unchanged.
+    apex_profiles={
+      'tyrannosaurus':dict(hip=1.80,width=.54,depth=.56,head=[1.24,2.08],skull=[1.20,.33,.32]),
+      'tarbosaurus':dict(hip=1.76,width=.49,depth=.52,head=[1.28,2.03],skull=[1.22,.30,.30]),
+      'albertosaurus':dict(head=[1.31,2.14],skull=[1.07,.24,.25]),
+      'giganotosaurus':dict(head=[1.34,1.93],skull=[1.40,.25,.27]),
+      'carcharodontosaurus':dict(head=[1.35,1.97],skull=[1.39,.25,.27]),
+      'mapusaurus':dict(head=[1.34,1.95],skull=[1.36,.25,.27]),
+      'allosaurus':dict(head=[1.31,1.96],skull=[1.16,.24,.28]),
+      'carnotaurus':dict(hip=1.94,width=.41,depth=.48,head=[1.26,2.13],skull=[.83,.25,.33]),
+    }
+    a.update(apex_profiles.get(base,{}))
     if f=='wolf':a.update(hip=1.02,width=.37,depth=.42,head=[1.16,1.36],skull=[.73,.20,.25],tail=1.85)
     if f=='equine':a.update(hip=1.65,width=.44,depth=.60,head=[1.10,2.26],skull=[.80,.19,.28],tail=1.55)
     if f=='gryphon':a.update(hip=1.25,width=.43,depth=.50,head=[1.15,1.86],skull=[.65,.22,.25])

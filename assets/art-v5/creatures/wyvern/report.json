@@ -1,10 +1,10 @@
 {
   "id": "wyvern",
   "family": "dragon",
-  "triangles": 31292,
+  "triangles": 36388,
   "bones": 18,
   "dimensions": [
-    6.358284950256348,
+    6.35916805267334,
     3.1754097938537598,
     5.695677280426025
   ],
@@ -22,17 +22,24 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (1 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 1
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 15804,
-        "faces": 31292,
-        "tris": 31292,
+        "verts": 18584,
+        "faces": 36388,
+        "tris": 36388,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +49,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 79,
+        "islands": 195,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,72 +63,57 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 28.4
+        "uv_coverage_pct": 23.0
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Lower_tooth.003",
-      "distance": 0.0238
+      "part": "Orbital_upper_lid",
+      "distance": 0.0487
     },
     {
-      "part": "Lower_tooth.004",
-      "distance": 0.024
+      "part": "Orbital_lower_lid",
+      "distance": 0.057
     },
     {
-      "part": "Lower_tooth.005",
-      "distance": 0.0297
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0487
     },
     {
-      "part": "Lower_tooth.006",
-      "distance": 0.026
-    },
-    {
-      "part": "Lower_tooth.011",
-      "distance": 0.0241
-    },
-    {
-      "part": "Lower_tooth.012",
-      "distance": 0.0237
-    },
-    {
-      "part": "Lower_tooth.013",
-      "distance": 0.0298
-    },
-    {
-      "part": "Lower_tooth.014",
-      "distance": 0.026
-    },
-    {
-      "part": "Claw.002",
-      "distance": 0.0228
-    },
-    {
-      "part": "Claw.003",
-      "distance": 0.0229
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0571
     }
   ],
-  "bytes": 3865904,
+  "bytes": 9446984,
   "textures": {
     "Albedo": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Albedo.jpg"
     },
     "Normal": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Normal.png"
     },
     "Roughness": {
-      "width": 512,
-      "height": 512,
+      "width": 1024,
+      "height": 1024,
       "file": "Roughness.png"
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 11264,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 4
+  },
+  "lodTriangles": 13098,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -134,9 +126,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 5790,
-        "faces": 11264,
-        "tris": 11264,
+        "verts": 6939,
+        "faces": 13098,
+        "tris": 13098,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -146,7 +138,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 79,
+        "islands": 195,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -160,7 +152,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 28.0
+        "uv_coverage_pct": 22.7
       }
     }
   }

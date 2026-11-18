@@ -1,16 +1,50 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { Terrain, createTerrainChunk, terrainPlan } from "../src/terrain.js";
+import { Terrain, createTerrainChunk, createTerrainChunkSteps, terrainPlan } from "../src/terrain.js";
 import { WorldRenderer } from "../src/renderer.js";
 import { worldFeatures } from '../src/wilderness.js';
 import { elevationAt } from '../src/terrain.js';
 import { createDinosaur, animateCreature } from '../src/creatures.js';
 import { SPECIES_BY_ID } from '../src/data.js';
+import {createWildFeature} from '../src/wilderness-art.js';
 
 // Geometry construction needs a canvas texture, not a browser or GPU.
 const context = new Proxy({createRadialGradient:()=>({addColorStop(){}}),createLinearGradient:()=>({addColorStop(){}})}, { get: (target, key) => target[key] || (() => {}) });
 globalThis.document = { createElement: () => ({ width: 1, height: 1, getContext: () => context }) };
+test('dead aquatic actors sink away, stay hidden until respawn and restore their live pose',()=>{
+ const feature={id:'death-pool',type:'water',x:200,y:200,radius:15,phase:0};
+ const pool=createWildFeature(feature,0),fish={x:201,y:202,angle:.4,dead:true,deadAt:10,hunting:false};
+ const state=new Map([[feature.id,{swimmers:[fish,fish,fish]}]]);
+ pool.userData.animate(10.5,{x:180,y:180},state);
+ const wrapper=pool.userData.swimmers[0];assert.ok(wrapper.position.y<0,'corpse sinks');
+ pool.userData.animate(13,{x:180,y:180},state);assert.equal(wrapper.visible,false);
+ fish.dead=false;pool.userData.animate(46,{x:180,y:180},state);
+ assert.equal(wrapper.visible,true);assert.equal(wrapper.rotation.z,0);
+ pool.userData.dispose();
+});
+test('streaming pools use small loading silhouettes instead of rebuilding complex marine animals',()=>{
+ const pool=createWildFeature({id:'pool-qa',type:'water',x:200,y:200,radius:15,phase:0},0);let meshes=0;
+ pool.traverse(n=>{if(n.isMesh)meshes++;});assert.ok(meshes<20,`pool built ${meshes} meshes synchronously`);
+ assert.equal(pool.userData.swimmers.length,3);
+ for(const wrapper of pool.userData.swimmers)assert.equal(wrapper.userData.model.userData.isMarineProxy,true);
+ pool.userData.dispose();
+ for(const wrapper of pool.userData.swimmers)assert.equal(wrapper.userData.model.userData.artDisposed,true);
+});
+test('background terrain is built in slices and cancelled staging never enters the scene',()=>{
+ const scene=new THREE.Scene(),terrain=new Terrain(scene,{buildBudgetMs:0});
+ terrain.update(80,80,4411);assert.equal(terrain.chunks.size,1,'center is immediately available');
+ terrain.update(80,80,4411);assert.equal(terrain.chunks.size,1,'unfinished neighbor stays hidden');
+ assert.ok(terrain.buildJob,'background work survives between frames');
+ const job=terrain.buildJob;terrain.dispose();assert.equal(terrain.buildJob,null);assert.equal(job.steps.next().done,true);
+ assert.equal(scene.children.length,0);
+});
+test('sliced terrain produces the same deterministic terrain as a synchronous build',()=>{
+ const sync=createTerrainChunk(0,0,4411),steps=createTerrainChunkSteps(0,0,4411);let result,count=0;
+ do{result=steps.next();count++;}while(!result.done);
+ assert.ok(count>15);assert.deepEqual([...sync.children[0].geometry.attributes.position.array],[...result.value.children[0].geometry.attributes.position.array]);
+ assert.equal(sync.children.length,result.value.children.length);sync.userData.dispose();result.value.userData.dispose();
+});
 test('fallback bite keeps the skull rooted at its neck and juvenile jaws are not scaled twice',()=>{
  const model=createDinosaur(SPECIES_BY_ID.tyrannosaurus,true),d=model.userData;d.isJuvenile=true;
  for(let i=0;i<60;i++)animateCreature(model,1/60,i/60,1,true,.4);

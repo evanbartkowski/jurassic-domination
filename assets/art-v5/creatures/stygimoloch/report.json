@@ -1,12 +1,12 @@
 {
   "id": "stygimoloch",
   "family": "pachycephalosaur",
-  "triangles": 24912,
+  "triangles": 30720,
   "bones": 20,
   "dimensions": [
-    4.784153938293457,
-    2.414463996887207,
-    1.346839189529419
+    4.785337448120117,
+    2.4328181743621826,
+    1.3532732725143433
   ],
   "clips": [
     "Idle",
@@ -22,17 +22,24 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (1 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 1
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12528,
-        "faces": 24912,
-        "tris": 24912,
+        "verts": 15656,
+        "faces": 30720,
+        "tris": 30720,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +49,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 36,
+        "islands": 148,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,25 +63,29 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 27.9
+        "uv_coverage_pct": 20.1
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw",
-      "distance": 0.0228
+      "part": "Orbital_upper_lid",
+      "distance": 0.0338
     },
     {
-      "part": "Claw.004",
-      "distance": 0.0229
+      "part": "Orbital_lower_lid",
+      "distance": 0.0476
     },
     {
-      "part": "Claw.005",
-      "distance": 0.0227
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0339
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0475
     }
   ],
-  "bytes": 3182252,
+  "bytes": 4622308,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -93,7 +104,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8968,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 13824,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -106,9 +126,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4556,
-        "faces": 8968,
-        "tris": 8968,
+        "verts": 7208,
+        "faces": 13824,
+        "tris": 13824,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -118,7 +138,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 36,
+        "islands": 148,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -132,7 +152,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 27.0
+        "uv_coverage_pct": 19.6
       }
     }
   }

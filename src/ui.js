@@ -1,3 +1,9 @@
+import {questStatus} from './quests.js';
+import {hudFocus} from './hud-focus.js';
+import {showLootLocker,showSkinWardrobe} from './loot-view.js';
+import {questsHTML} from './quest-view.js';
+import {accountStatus,featureAccess,requiredItemLevel,islandProgress} from './account-progression.js';
+import {accountWidget,accountHTML} from './account-view.js';
 import { SPECIES, MUTATIONS, TIERS, MUTATION_RARITIES } from "./data.js";
 import {incidentStatus} from './world-incidents.js';
 import {locationAt} from './frontier-map.js';
@@ -32,6 +38,7 @@ import { upgradeCost } from "./profile.js";
 import {
   CATALOG,
   SHOP_ITEMS,
+  dailyStock,
   PETS,
   DECORATIONS,
   ACHIEVEMENTS,
@@ -118,9 +125,9 @@ const animal = (s) =>
   `<svg class="animal" viewBox="0 0 100 76" aria-hidden="true"><path d="${silhouettes[s?.body] || silhouettes.raptor}" fill="currentColor"/></svg>`;
 const small = (key, text) =>
   `<span class="key-help"><kbd>${key}</kbd><span>${text}</span></span>`;
-const skillSummary = (s) => {
+const skillSummary = (s, controls=DEFAULT_BINDINGS) => {
   const kit = creatureKit(s);
-  return [kit.ability && `Q · ${s.ability}`, kit.technique && `R · ${TECHNIQUES[kit.technique].name}`, kit.special && `X · ${SPECIALS[kit.special].name}`].filter(Boolean).join(" / ") || "INSTINCT ONLY · BITE & SURVIVE";
+  return [kit.ability && `${keyLabel(controls.ability)} · ${s.ability}`, kit.technique && `${keyLabel(controls.technique)} · ${TECHNIQUES[kit.technique].name}`, kit.special && `${keyLabel(controls.special)} · ${SPECIALS[kit.special].name}`].filter(Boolean).join(" / ") || "INSTINCT ONLY · BITE & SURVIVE";
 };
 const formStats=s=>{const role=archetypeForSpecies(s);return {hp:Math.round(s.hp*(role.hpMultiplier||1)),damage:Math.round(s.damage*(role.damageMultiplier||1)),speed:Number((s.speed*(role.speedBonus||1)).toFixed(1))};};
 const buildSummary=s=>{const role=archetypeForSpecies(s);return `<span class="build-identity"><strong>${esc(role.name)}</strong><span>${esc(role.pros)}</span><small>${esc(role.cons)}</small></span>`;};
@@ -326,6 +333,7 @@ export class UI {
   }
 
   screen(view, html, className = "") {
+    clearTimeout(this.revealTimer);this.revealReady=false;
     this.screenRevision=(this.screenRevision||0)+1;clearTimeout(this.confirmTimer);
     if(!this.restoringScreen)this.flow?.open(view,this.captureScreenState());
     this.callbacks?.transition?.();
@@ -338,6 +346,7 @@ export class UI {
     this.overlay.setAttribute?.('role',view==='menu'?'region':'dialog');
     this.overlay.setAttribute?.('aria-modal',view==='menu'?'false':'true');
     this.overlay.innerHTML = themedMarkup(html);
+    this.applyAccountUI();
     const heading=this.overlay.querySelector('h1,h2');
     if(heading){heading.id='active-screen-title';this.overlay.setAttribute?.('aria-labelledby',heading.id);}
     else this.overlay.removeAttribute?.('aria-labelledby');
@@ -352,8 +361,45 @@ export class UI {
     return `<header class="panel-header"><div><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${subtitle ? `<p class="panel-subtitle">${subtitle}</p>` : ""}</div><button class="icon-button" data-action="back" aria-label="Go back">${icon("cross")}</button></header>`;
   }
 
+  applyAccountUI(){
+    this.overlay.querySelectorAll('[data-action="account"]').forEach(button=>button.onclick=()=>this.showAccount());
+    for(const [selector,feature] of [['[data-action="island"],[data-action="shop-island"],[data-place-product]','island'],['[data-action="shop"],[data-action="wardrobe-shop"],[data-action="island-shop"]','shop']]){
+      const gate=featureAccess(this.profile,feature);
+      this.overlay.querySelectorAll(selector).forEach(button=>{
+        button.disabled=!gate.unlocked;button.setAttribute('aria-disabled',String(!gate.unlocked));
+        if(!gate.unlocked){button.title=`Unlocks at account level ${gate.required}`;const label=button.querySelector('.tile-text>span');if(label)label.textContent=`LOCKED · ACCOUNT LEVEL ${gate.required}`;}
+      });
+    }
+  }
+
+  updateAccountWidgets(){
+    const a=accountStatus(this.profile);
+    document.querySelectorAll('.account-widget').forEach(widget=>{
+      const signature=[a.level,a.current,a.needed].join(':');if(widget.dataset.progress===signature)return;widget.dataset.progress=signature;
+      widget.querySelector('strong').innerHTML=`LV ${a.level} <small>ACCOUNT</small>`;
+      widget.querySelector('b').textContent=a.needed?`${a.current} / ${a.needed} XP`:'MAX LEVEL';
+      widget.querySelector('i').style.width=`${a.ratio*100}%`;
+      const meter=widget.querySelector('.account-meter');meter.setAttribute('aria-valuenow',String(a.needed?a.current:1));meter.setAttribute('aria-valuemax',String(a.needed||1));
+      widget.setAttribute('aria-label',`Account level ${a.level}. Open account progression.`);
+      const next=widget.querySelector('.account-next');if(next)next.textContent=a.next?`NEXT · ${a.next.title} · LV ${a.next.level}`:'YOUR LEGACY IS COMPLETE';
+    });
+  }
+
+  showAccount(){
+    this.screen('account',`<div class="wide-panel account-panel">${this.header('YOUR ENDURING BLOODLINE','Account progression','Play, earn DNA, and unlock a larger world across every life.')}${accountHTML(this.profile)}<div class="panel-bottom"><span>Levels and collectibles survive every death.</span><button class="button primary" data-action="back" data-focus>RETURN</button></div></div>`,'shade-screen');
+    this.bind('back',()=>this.back());
+  }
+
+  accountLevelUp(result){
+    let notice=document.getElementById('account-level-notice');
+    if(!notice){notice=document.createElement('div');notice.id='account-level-notice';notice.className='account-level-notice';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');document.body.append(notice);}
+    const gifts=result.rewards.flatMap(r=>r.items).map(sku=>CATALOG[sku]?.name).filter(Boolean);
+    notice.innerHTML=`<span>ACCOUNT LEVEL UP</span><strong>Level ${result.toLevel} · +${result.dna} DNA</strong><p>${esc(result.rewards.at(-1)?.title)}${gifts.length?' · '+esc(gifts.join(', ')):''}</p>`;
+    notice.hidden=false;clearTimeout(this.accountNoticeTimer);this.accountNoticeTimer=setTimeout(()=>notice.hidden=true,6500);
+  }
+
   showStart(){
-    this.screen('start','<div class="start-scratches" aria-hidden="true"></div><div class="start-heading"><p>ONE EGG. AN UNBROKEN BLOODLINE.</p><h1>JURASSIC<br><span>DOMINATION</span></h1></div><button class="start-button" data-action="enter" data-focus><span>START GAME</span></button><p class="start-tagline">Survive the wild. Become its legend.</p>','start-screen');
+    this.screen('start',`<div class="start-motes" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i style="--x:${12+i*7}%;--y:${28+(i*17)%65}%;--delay:-${i*1.7}s"></i>`).join('')}</div><div class="start-edition">A world before your time</div><div class="start-heading"><h1>JURASSIC<span>DOMINATION</span></h1><p>From a single egg.<br>To the apex of an ancient world.</p></div><div class="start-entry"><button class="start-button" data-action="enter" data-focus><span>START GAME</span><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M1 10h24M17 2l8 8-8 8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><p>Press Enter or select to begin</p></div><footer class="start-footer"><span><strong>Survive. Evolve. Leave a legacy.</strong><br>An evolutionary survival roguelite</span><span>Offline · Single player<br>v${packageInfo.version}</span></footer>`,'start-screen');
     this.overlay.setAttribute('aria-label','Jurassic Domination');
     this.bind('enter',()=>this.showMenu());
   }
@@ -370,6 +416,7 @@ export class UI {
       <div class="menu-shell">
         <header class="menu-top">
           <span class="brand-mark">${icon("claw")}<span>JURASSIC DOMINATION</span></span>
+          ${accountWidget(profile,'account-menu')}
           <button class="icon-button" data-action="settings" aria-label="Open settings">${icon("settings")}</button>
         </header>
         <div class="menu-main">
@@ -422,6 +469,7 @@ export class UI {
               <button class="menu-feature-tile" data-action="shop"><div class="tile-icon">${icon("dna")}</div><div class="tile-text"><strong>DNA Shop</strong><span>Companions & sanctuary finds</span></div></button>
             </div>
             <div class="menu-sub-row">
+              <button class="menu-sub-btn" data-action="loot">${icon("sparkles")} Treasures · ${profile.loot.crates.length}</button>
               <button class="menu-sub-btn" data-action="field-journal">${icon("book")} Field Journal</button>
               <button class="menu-sub-btn" data-action="guide">${icon("claw")} Encyclopedia</button>
               <button class="menu-sub-btn" data-action="tutorial">${icon("book")} Survival Guide</button>
@@ -450,6 +498,7 @@ export class UI {
     this.bind("tutorial", () => this.showTutorial());
     this.bind("guide", () => this.showGuide());
     this.bind("wardrobe", () => this.showWardrobe());
+    this.bind('loot',()=>this.showLoot());
     this.bind("shop", () => this.showShop());
     this.bind("island", () => this.callbacks.island());
     this.bind("legacy", () => this.showLegacy());
@@ -607,6 +656,7 @@ export class UI {
           </div>
           <div class="meter objective-meter"><span id="hud-obj-bar"></span></div>
           <p id="hud-obj-hint" class="objective-hint">Press E or click to hatch.</p>
+          <button id="quest-hud-button" class="quest-hud-button" type="button"><small>MAIN STORY · THE LAST CHORUS</small><strong>Open story & quests</strong><span>Four repeatable survival quests</span></button>
         </div>
       </div>
 
@@ -659,6 +709,7 @@ export class UI {
       this.showTutorial();
     });
     $("#evolve-ready").onclick = () => this.callbacks.evolution();
+    $('#quest-hud-button').onclick=()=>{this.callbacks.pause();this.showCompendium('quests',this.currentGame);};
     $("#bloodline-journal").onclick = () => {
       this.callbacks.pause();
       this.callbacks.bloodlines();
@@ -680,6 +731,9 @@ export class UI {
     nourishment.className = 'vital nourishment-vital';
     nourishment.innerHTML = `<div class="vital-label">${icon('leaf')}<span>NOURISHMENT</span><b id="hud-hunger-text">100%</b></div><div class="meter nourishment" role="progressbar" aria-label="Nourishment"><span id="hud-hunger"></span></div>`;
     left.insertBefore(nourishment,left.querySelector('#hud-evolution-bar-container'));
+    const accountDock=document.createElement('div');accountDock.innerHTML=accountWidget(this.profile,'account-hud');
+    left.insertBefore(accountDock.firstElementChild,left.querySelector('#hud-objective-panel'));
+    this.hud.querySelector('[data-action="account"]').onclick=()=>{this.callbacks.pause();this.showAccount();};
     $("#hatch-button").addEventListener("click", () => this.callbacks.hatch(this.selectedStarterId || this.currentGame?._starter?.id));
   }
 
@@ -696,6 +750,7 @@ export class UI {
   updateHUD(game, dt = 0) {
     if (!game) return;
     this.currentGame = game;
+    this.updateAccountWidgets();
     const controlSignature = JSON.stringify(this.settings.controls || DEFAULT_BINDINGS);
     if (this.controlSignature !== controlSignature) { this.controlSignature = controlSignature; this.refreshControlLabels(); }
     const p = game.player;
@@ -775,7 +830,7 @@ export class UI {
       !game.evolutionReady || game.state !== "playing";
     $("#growth-status").textContent =
       `${growthName(p.growth || 0).toUpperCase()} - ${Math.round((p.growth || 0) * 100)}% GROWTH - ${Math.round((1 + (p.growth || 0) * 0.28) * 100)}% SIZE`;
-    const kit = creatureKit(s),
+    const kit = game.kit,
       special = SPECIALS[kit.special];
     $("#hud-ability").closest(".ability-key").hidden = !kit.ability;
     $("#special-key").hidden = !special;
@@ -852,19 +907,25 @@ export class UI {
     const obj = evaluateObjectives(game, this.profile);
     const objStep = $("#hud-obj-step");
     const lesson=this.settings.tutorialHints?learningPrompt(this.profile.onboarding,this.settings.controls):null;
-    if (objStep) objStep.textContent = lesson?`LEARN ${lesson.index} / ${lesson.total}`:`STEP ${obj.step} / ${obj.totalSteps}`;
+    const quests=questStatus(game),incident=incidentStatus(game),focus=hudFocus({player:p,incident,lesson,quests,objective:obj,survivalHint:getSurvivalHint(game)});
+    if (objStep) objStep.textContent = focus.step;
     const objTitle = $("#hud-obj-title");
-    if (objTitle) objTitle.textContent = lesson?.title||obj.title;
+    if (objTitle) objTitle.textContent = focus.title;
     const objProgress = $("#hud-obj-progress");
-    if (objProgress) objProgress.textContent = lesson?(lesson.action?keyLabel(this.settings.controls[lesson.action]):'ESC'):controlHelp(obj.progressText,this.settings.controls);
-    $('#hud-objective-panel')?.classList.toggle('learning-active',!!lesson);
+    if (objProgress) objProgress.textContent = focus.learning?keyLabel(this.settings.controls[focus.progressText]||DEFAULT_BINDINGS[focus.progressText]||'Escape'):controlHelp(focus.progressText,this.settings.controls);
+    $('#hud-objective-panel')?.classList.toggle('learning-active',!!focus.learning);
     const objBar = $("#hud-obj-bar");
-    if (objBar) objBar.style.width = `${Math.round((lesson?(lesson.index-1)/lesson.total:obj.progress) * 100)}%`;
+    if (objBar) objBar.style.width = `${Math.round(focus.progress * 100)}%`;
     const objHint = $("#hud-obj-hint");
-    if (objHint) objHint.textContent = controlHelp((p.hp<p.maxHp*.35||p.hunger<25?getSurvivalHint(game):'')||lesson?.text||obj.hint,this.settings.controls);
-    const incident=incidentStatus(game),objectivePanel=$('#hud-objective-panel');
-    if(objectivePanel){objectivePanel.dataset.incident=incident?.kind||'';objectivePanel.querySelector('.objective-badge').textContent=incident?'WORLD EVENT':'CURRENT GOAL';}
-    if(incident){if(objTitle)objTitle.textContent=incident.label;if(objStep)objStep.textContent=incident.safe?'SHELTERED':'COUNTERPLAY';if(objProgress)objProgress.textContent=incident.seconds+'s';if(objHint)objHint.textContent=incident.detail;if(objBar)objBar.style.width=(incident.safe?100:Math.min(100,incident.seconds*2))+'%';}
+    if (objHint) objHint.textContent = controlHelp(focus.hint,this.settings.controls);
+    const questButton=$('#quest-hud-button');
+    if(questButton){
+      questButton.querySelector('strong').textContent='Story & quests';
+      const ready=quests.repeatable.filter(q=>q.ready).length;
+      questButton.querySelector('span').textContent=(quests.main?.ready?'CHAPTER READY':ready?ready+' REWARDS READY':quests.main?'CHAPTER '+(quests.chapter+1)+' / '+quests.total:'STORY COMPLETE');
+    }
+    const objectivePanel=$('#hud-objective-panel');
+    if(objectivePanel){objectivePanel.dataset.incident=incident?.kind||'';objectivePanel.querySelector('.objective-badge').textContent=focus.badge;}
     if(this.lastLearningTarget!==lesson?.highlight){this.hud.querySelector('.learning-target')?.classList.remove('learning-target');if(lesson?.highlight)this.hud.querySelector(lesson.highlight)?.classList.add('learning-target');this.lastLearningTarget=lesson?.highlight;}
     if(this.kitHelp!==p.speciesId){
       this.kitHelp=p.speciesId;
@@ -920,10 +981,11 @@ export class UI {
     const hasMutations = (this.currentGame?.mutations || []).length > 0;
     this.screen(
       "pause",
-      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused. Returning to the title keeps this life.</p><p class="save-status" id="pause-save-status"></p><div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="build-sheet">🧬 MUTATION BUILDS & SYNERGIES</button><button class="button secondary" data-action="compendium">${icon("book")} COMPENDIUM (ENCYCLOPEDIA · JOURNAL · BLOODLINES)</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button secondary save-return-button" data-action="menu">SAVE & RETURN TO TITLE</button></div>${hasMutations ? `<div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame.mutations).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ")}</p></div>` : ""}<p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
+      `<div class="modal-panel pause-panel"><p class="eyebrow">THE HUNT CAN WAIT</p><h1>Catch your breath.</h1><p class="panel-subtitle">Your world is paused. Returning to the title keeps this life.</p><p class="save-status" id="pause-save-status"></p>${accountWidget(this.profile)}<div class="stacked-buttons"><button class="button primary" data-action="resume" data-focus>RESUME THE HUNT ${icon("arrow")}</button><button class="button secondary" data-action="build-sheet">🧬 MUTATION BUILDS & SYNERGIES</button><button class="button secondary" data-action="compendium">${icon("book")} COMPENDIUM (ENCYCLOPEDIA · JOURNAL · BLOODLINES)</button><button class="button secondary" data-action="settings">${icon("settings")} SETTINGS</button><button class="button secondary" data-action="tutorial">${icon("book")} SURVIVAL GUIDE</button><button class="button secondary save-return-button" data-action="menu">SAVE & RETURN TO TITLE</button></div>${hasMutations ? `<div class="run-adaptations"><strong>THIS LIFE</strong><p>${(this.currentGame.mutations).map((id) => esc(MUTATIONS.find((m) => m.id === id)?.name || id)).join(" · ")}</p></div>` : ""}<p class="small-muted">Rare DNA and permanent finds save immediately. Ordinary deaths grant no DNA.</p><span class="pause-hint">ESC TO RESUME</span></div>`,
       "shade-screen",
     );
     this.bind("resume", () => this.callbacks.resume());
+    const lootButton=document.createElement('button');lootButton.className='button secondary';lootButton.textContent=`EXPEDITION TREASURES · ${this.profile.loot.crates.length} CRATES`;lootButton.dataset.action='loot';this.overlay.querySelector('.stacked-buttons').insertBefore(lootButton,this.overlay.querySelector('[data-action="build-sheet"]'));lootButton.onclick=()=>this.showLoot();
     const checkpoint=document.createElement('button');checkpoint.className='button secondary';checkpoint.dataset.action='checkpoint';checkpoint.textContent='SAVE CHECKPOINT';this.overlay.querySelector('.stacked-buttons').append(checkpoint);this.bind('checkpoint',()=>{this.callbacks.checkpoint?.();});
     this.bind("build-sheet", () => this.showBuildSheet(this.currentGame));
     this.bind("compendium", () => this.showCompendium("encyclopedia", this.currentGame));
@@ -959,6 +1021,7 @@ export class UI {
 
     const renderTabsNav = () => `
       <div class="compendium-tabs" role="tablist">
+        <button class="compendium-tab-btn ${this.compendiumTab === "quests" ? "active" : ""}" data-comp-tab="quests" role="tab">${icon("book")} STORY & QUESTS</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "encyclopedia" ? "active" : ""}" data-comp-tab="encyclopedia" role="tab">${icon("book")} DINOSAUR ENCYCLOPEDIA</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "journal" ? "active" : ""}" data-comp-tab="journal" role="tab">${icon("leaf")} FIELD JOURNAL & SURVIVAL</button>
         <button class="compendium-tab-btn ${this.compendiumTab === "bloodlines" ? "active" : ""}" data-comp-tab="bloodlines" role="tab">${icon("dna")} BLOODLINE PATHS</button>
@@ -968,6 +1031,7 @@ export class UI {
     `;
 
     const getBodyHTML = () => {
+      if(this.compendiumTab === "quests")return questsHTML(game);
       if (this.compendiumTab === "build") {
         const b = game?.build || { offensive: {}, defensive: {}, passive: {}, transformations: {}, activeSynergies: [] };
         const buildPower = calculateBuildPower(b);
@@ -1136,7 +1200,7 @@ export class UI {
         const info = $("#specimen-info");
         if (!info) return;
         info.innerHTML =
-          `<span class="eyebrow">${s.wildOnly ? "WILD AQUATIC FAUNA" : unlocked.includes(s.id) ? "DISCOVERED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}">${(s.rarity || "regular").toUpperCase()} · ${kit.abilityCount} SPECIES SKILLS</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p>${buildSummary(s)}<div class="species-stats"><span>HP <b>${formStats(s).hp}</b></span><span>ATK <b>${formStats(s).damage}</b></span><span>SPD <b>${formStats(s).speed}</b></span></div><dl>${kit.ability ? `<dt>Q · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd>` : ""}${technique ? `<dt>R · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd>` : ""}${SPECIALS[kit.special] ? `<dt>X · ${SPECIALS[kit.special].name}</dt><dd>${SPECIALS[kit.special].description}</dd>` : ""}${kit.abilityCount ? "" : "<dt>Instinct only</dt><dd>This form relies on its bite, movement and innate adaptation. Species skills develop in later evolutions.</dd>"}<dt>Diet</dt><dd>${esc(dietName(s))}</dd><dt>Body size</dt><dd>${s.size.toFixed(2)} · ${s.compactEvolution ? "Rare compact evolution: a smaller, specialized body." : "Grows with evolution and feeding."}</dd><dt>Mobility</dt><dd>${kit.dash ? "Shift: dodge/dash available." : "Heavy form: no dash. Use positioning, sprint and defensive skills."}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
+          `<span class="eyebrow">${s.wildOnly ? "WILD AQUATIC FAUNA" : unlocked.includes(s.id) ? "DISCOVERED & RECORDED" : "UNDISCOVERED · FUTURE FORM"} / ${esc(tierName(s.tier))}</span><span class="evolution-rarity" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}">${(s.rarity || "regular").toUpperCase()} · ${kit.abilityCount} SPECIES SKILLS</span><h2>${esc(s.name)}</h2><p>${esc(s.description)}</p>${buildSummary(s)}<div class="species-stats"><span>HP <b>${formStats(s).hp}</b></span><span>ATK <b>${formStats(s).damage}</b></span><span>SPD <b>${formStats(s).speed}</b></span></div><dl>${kit.ability ? `<dt>${keyLabel(this.settings.controls.ability)} · ${esc(s.ability)}</dt><dd>${esc(s.abilityDescription)}</dd>` : ""}${technique ? `<dt>${keyLabel(this.settings.controls.technique)} · ${esc(technique.name)}</dt><dd>${esc(technique.description)}</dd>` : ""}${SPECIALS[kit.special] ? `<dt>${keyLabel(this.settings.controls.special)} · ${SPECIALS[kit.special].name}</dt><dd>${SPECIALS[kit.special].description}</dd>` : ""}${kit.abilityCount ? "" : "<dt>Instinct only</dt><dd>This form relies on its bite, movement and innate adaptation. Species skills develop in later evolutions.</dd>"}<dt>Diet</dt><dd>${esc(dietName(s))}</dd><dt>Body size</dt><dd>${s.size.toFixed(2)} · ${s.compactEvolution ? "Rare compact evolution: a smaller, specialized body." : "Grows with evolution and feeding."}</dd><dt>Mobility</dt><dd>${kit.dash ? `${keyLabel(this.settings.controls.dash)}: dodge/dash available.` : "Heavy form: no dash. Use positioning, sprint and defensive skills."}</dd><dt>Innate adaptation</dt><dd>${esc(s.passive)}</dd><dt>Habitat & temperament</dt><dd>${esc(s.habitat)} · ${esc(s.temperament)}.</dd></dl>`;
         $("#guide-results")
           ?.querySelectorAll("[data-inspect]")
           .forEach((b) =>
@@ -1166,7 +1230,7 @@ export class UI {
           ? found
               .map(
                 (s) =>
-                  `<button class="species-entry ${unlocked.includes(s.id) ? "discovered" : ""}" data-inspect="${s.id}" data-rarity="${s.rarity || "regular"}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${s.id === this.guideSelection}"><span class="species-tier">${s.tier + 1} / ${esc(tierName(s.tier))} · ${unlocked.includes(s.id) ? "RECORDED" : "UNDISCOVERED"}</span><span class="evolution-rarity">${(s.rarity || "regular").toUpperCase()}</span><div class="creature-art">${portrait(s.id)}</div><h2>${esc(s.name)}</h2><span class="species-ability">${esc(skillSummary(s))}</span></button>`,
+                  `<button class="species-entry ${unlocked.includes(s.id) ? "discovered" : ""}" data-inspect="${s.id}" data-rarity="${s.rarity || "regular"}" style="--lineage-color:${EVOLUTION_RARITIES[s.rarity || "regular"].color}" aria-pressed="${s.id === this.guideSelection}"><span class="species-tier">${s.tier + 1} / ${esc(tierName(s.tier))} · ${unlocked.includes(s.id) ? "RECORDED" : "UNDISCOVERED"}</span><span class="evolution-rarity">${(s.rarity || "regular").toUpperCase()}</span><div class="creature-art">${portrait(s.id)}</div><h2>${esc(s.name)}</h2><span class="species-ability">${esc(skillSummary(s,this.settings.controls))}</span></button>`,
               )
               .join("")
           : '<p class="empty-collection">No recorded specimens match. Hatch and evolve to grow your collection, or select All potential forms.</p>';
@@ -1194,6 +1258,9 @@ export class UI {
       };
     });
 
+    this.overlay.querySelectorAll('[data-quest-claim]').forEach(button=>button.onclick=()=>{this.callbacks.quest?.('claim-quest',{id:button.dataset.questClaim});this.showCompendium('quests',game);});
+    this.overlay.querySelectorAll('[data-story-ending]').forEach(button=>button.onclick=()=>{this.callbacks.quest?.('story-ending',{ending:button.dataset.storyEnding});this.showCompendium('quests',game);});
+    this.overlay.querySelectorAll('[data-quest-track]').forEach(button=>button.onclick=()=>this.callbacks.questTrack?.(button.dataset.questTrack));
     this.bind("back", () => this.back());
   }
 
@@ -1277,35 +1344,12 @@ export class UI {
 
 
 
-  showWardrobe() {
-    this.returnView = "menu";
-    const p = this.profile;
-    this.screen(
-      "wardrobe",
-      `<div class="wide-panel wardrobe-panel">${this.header("WHAT TIME COULD NOT BURY", "Skins & Ancient Relics", "Exceptionally rare fossils unlock permanent discoveries. Equipped skins apply to every form.")}
-      <h2 class="section-label">YOUR APPEARANCE</h2><div class="skin-grid">${SKINS.map(
-        (s) => {
-          const owned = (p.skins || ["natural"]).includes(s.id),
-            equipped = p.equippedSkin === s.id;
-          return `<button class="skin-card ${equipped ? "equipped" : ""}" data-skin="${s.id}" ${owned ? "" : "disabled"} aria-pressed="${equipped}"><span class="skin-orb" style="--skin:${s.color === null ? "#81945f" : `#${s.color.toString(16).padStart(6, "0")}`};--accent:${s.accent === null ? "#d8c99d" : `#${s.accent.toString(16).padStart(6, "0")}`}"></span><strong>${esc(s.name)}</strong><small>${esc(s.description)}</small><b>${equipped ? "EQUIPPED" : owned ? "EQUIP" : "UNDISCOVERED"}</b></button>`;
-        },
-      ).join("")}</div>
-      <h2 class="section-label relic-heading">PERMANENT WORLD RELICS</h2><div class="modifier-grid">${PERMANENT_MODIFIERS.map((m) => `<article class="modifier-card ${(p.modifiers || []).includes(m.id) ? "owned" : ""}">${icon("dna")}<div><h3>${esc(m.name)}</h3><p>${esc(m.description)}</p></div><b>${(p.modifiers || []).includes(m.id) ? "ACTIVE" : "UNDISCOVERED"}</b></article>`).join("")}</div><p class="survival-tip">Explore distant regions and defeat lair guardians to seek ancient fossils. Unlocks persist through death. Rare plants and relic skills found during a run are separate, temporary discoveries.</p>
-      <div class="panel-bottom"><span>Find rare appearances in the world or buy them with earned DNA.</span><button class="button secondary" data-action="wardrobe-shop">BROWSE DNA SHOP</button><button class="button primary" data-action="back" data-focus>RETURN ${icon("arrow")}</button></div></div>`,
-      "shade-screen",
-    );
-    this.overlay.querySelectorAll("[data-skin]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          this.callbacks.skin?.(b.dataset.skin);
-          this.showWardrobe();
-        }),
-    );
-    this.bind("wardrobe-shop", () => this.showShop("skin"));
-    this.bind("back", () => this.back());
-  }
+  showLoot() { showLootLocker(this); }
+
+  showWardrobe() { showSkinWardrobe(this); }
 
   showShop(category = this.shopCategory || "pet") {
+    if(!featureAccess(this.profile,'shop').unlocked){this.showAccount();this.toast('The DNA Shop opens at account level 2.');return;}
     this.hud.hidden = true;
     this.returnView = "menu";
     this.shopCategory = category;
@@ -1313,8 +1357,8 @@ export class UI {
       SHOP_ITEMS.find((i) => i.kind === category)?.sku || SHOP_ITEMS[0].sku;
     this.screen(
       "shop",
-      `<div class="wide-panel dna-shop">${this.header("THE ANCESTRAL EXCHANGE", "The DNA Shop", "Permanent companions, appearances, and pieces of your own prehistoric home.")}
-      <div class="shop-wallet"><span>${icon("dna")} AVAILABLE DNA <strong id="shop-wallet">${number(this.profile.dna)}</strong></span><p>DNA comes from selected one-time achievements and rare map finds.</p><button class="button compact secondary" data-action="shop-legacy">ACHIEVEMENTS & GROWTH</button><button class="button compact secondary" data-action="shop-island">MY ISLAND</button></div>
+      `<div class="wide-panel dna-shop">${this.header("THE ANCESTRAL EXCHANGE", "The DNA Shop", "Daily rotating stock refreshes at midnight UTC. Owned items stay available.")}
+      <div class="shop-wallet">${accountWidget(this.profile)}<span>${icon("dna")} AVAILABLE DNA <strong id="shop-wallet">${number(this.profile.dna)}</strong></span><p>Level up your account, earn achievements, or find rare DNA in the wild.</p><button class="button compact secondary" data-action="shop-legacy">ACHIEVEMENTS & GROWTH</button><button class="button compact secondary" data-action="shop-island">MY ISLAND</button></div>
       <div class="shop-toolbar"><div class="shop-tabs">${[
         ["skin", "Skins"],
         ["cosmetic", "Crowns & cosmetics"],
@@ -1355,7 +1399,7 @@ export class UI {
       rarity = $("#shop-rarity").value;
     const items = SHOP_ITEMS.filter(
       (i) =>
-        i.kind === this.shopCategory &&
+        i.kind === this.shopCategory && (dailyStock().includes(i.sku) || ownedCount(p,i.sku)) &&
         (rarity === "all" || i.rarity === rarity),
     );
     if (items.length && !items.some((i) => i.sku === this.shopSelection))
@@ -1374,7 +1418,7 @@ export class UI {
           .map((item) => {
             const count = ownedCount(p, item.sku),
               r = RARITIES[item.rarity];
-            return `<button class="shop-card ${this.shopSelection === item.sku ? "selected" : ""}" data-product="${item.sku}" data-rarity="${item.rarity}" style="--rarity:${r.color}" aria-pressed="${this.shopSelection === item.sku}"><span class="rarity-label">${r.name}</span><div class="shop-item-art">${portrait(item.id, item.kind)}</div><h2>${esc(item.name)}</h2><p>${item.kind === "decoration" ? `${count} OWNED` : count ? "PERMANENTLY OWNED" : `${item.price} DNA`}</p><span>${item.kind === "decoration" ? `${item.price} DNA EACH` : count ? "SELECT TO EQUIP" : "FIND OR BUY"}</span></button>`;
+            return `<button class="shop-card ${(accountStatus(p).level<requiredItemLevel(item)&&!count?"level-locked ":"")+(this.shopSelection === item.sku ? "selected" : "")}" data-product="${item.sku}" data-rarity="${item.rarity}" style="--rarity:${r.color}" aria-pressed="${this.shopSelection === item.sku}"><span class="rarity-label">${r.name}</span><div class="shop-item-art">${portrait(item.id, item.kind)}</div><h2>${esc(item.name)}</h2><p>${item.kind === "decoration" ? `${count} OWNED` : count ? "PERMANENTLY OWNED" : `${item.price} DNA`}</p><span>${accountStatus(p).level<requiredItemLevel(item)&&!count?`ACCOUNT LEVEL ${requiredItemLevel(item)}`:item.kind === "decoration" ? `${item.price} DNA EACH` : count ? "SELECT TO EQUIP" : "FIND OR BUY"}</span></button>`;
           })
           .join("")
       : '<p class="empty-collection">No items in this rarity. Choose another filter.</p>';
@@ -1395,15 +1439,19 @@ export class UI {
       unique = item.kind !== "decoration",
       r = RARITIES[item.rarity];
     const owned = unique && count > 0,
-      full = item.kind === "decoration" && count >= 99;
+      full = item.kind === "decoration" && count >= 99,
+      required = requiredItemLevel(item), locked = accountStatus(p).level < required;
     $("#shop-details").innerHTML =
       `<span class="rarity-label" style="color:${r.color}">${r.name} · ${item.kind === "pet" ? "PERMANENT PET" : item.kind.toUpperCase()}</span><h2>${esc(item.name)}</h2><p>${esc(item.description)}</p><div class="shop-detail-price">${item.price} <small>DNA${item.kind === "decoration" ? " PER COPY" : ""}</small></div><button class="button ${owned ? "secondary" : "primary"}" data-buy="${item.sku}" ${owned || full || p.dna < item.price ? "disabled" : ""}>${owned ? "OWNED" : full ? "INVENTORY FULL" : `BUY · ${item.price} DNA`}</button>
       ${count && item.kind === "skin" ? `<button class="button secondary" data-equip-skin="${item.id}">${p.equippedSkin === item.id ? "EQUIPPED" : "EQUIP SKIN"}</button>` : ""}
       ${count && item.kind === "cosmetic" ? `<button class="button secondary" data-equip-cosmetic="${item.id}">${p.equippedCosmetic === item.id ? "UNEQUIP COSMETIC" : "EQUIP COSMETIC"}</button>` : ""}
       ${count && item.kind === "pet" ? `<button class="button secondary" data-equip-pet="${item.id}">${p.activePet === item.id ? "LEAVE ON ISLAND" : "TAKE ON EXPEDITIONS"}</button>` : ""}
       ${count && ["pet", "decoration"].includes(item.kind) ? '<button class="button secondary" data-place-product>PLACE ON MY ISLAND</button>' : ""}
-      <small class="shop-source">${owned ? "This collectible is permanent." : p.dna < item.price ? `You need ${item.price - p.dna} more DNA.` : "Purchases save immediately."} ${item.kind === "pet" ? "Pets are extremely rare map finds and cosmetic companions, with no combat advantage." : item.kind === "decoration" ? "Rare decoration caches can also be found in the world." : ""}</small>`;
+      <small class="shop-source">${owned ? "This collectible is permanent." : p.dna < item.price ? `You need ${item.price - p.dna} more DNA.` : "Purchases save immediately."} ${item.kind === "pet" ? "Permanent companions can join your island and support expeditions." : item.kind === "decoration" ? "Rare decoration caches can also be found in the world." : ""}</small>`;
     $("[data-buy]").onclick = () => this.callbacks.purchase(item.sku);
+    const buyButton=$('[data-buy]');
+    if(locked&&!owned){buyButton.disabled=true;buyButton.textContent=`UNLOCKS AT ACCOUNT LEVEL ${required}`;buyButton.title=`Earn account XP through activities and quests to reach level ${required}.`;}
+    this.applyAccountUI();
     $("[data-equip-skin]")?.addEventListener("click", () => {
       this.callbacks.skin(item.id);
       this.refreshShop();
@@ -1423,6 +1471,7 @@ export class UI {
     );
   }
   showIsland(profile = this.profile) {
+    if(!featureAccess(profile,'island').unlocked){this.showAccount();this.toast('Dinosaur Island opens at account level 3.');return;}
     this.profile = profile;
     this.hud.hidden = true;
     this.returnView = "menu";
@@ -1465,6 +1514,11 @@ export class UI {
     this.profile = profile;
     this.islandState = state || { selected: null, tool: null };
     const p = profile;
+    const habitat=islandProgress(p),petsPlaced=p.island.placements.filter(a=>a.kind==='pet').length;
+    let habitatInfo=$('#island-level-info');
+    if(!habitatInfo){habitatInfo=document.createElement('div');habitatInfo.id='island-level-info';habitatInfo.className='island-level-info';$('.island-sidebar').prepend(habitatInfo);}
+    habitatInfo.innerHTML=`<strong>${habitat.name}</strong><span>${petsPlaced} / ${habitat.pets} residents · ${p.island.placements.length-petsPlaced} / ${habitat.decorations} decorations</span><small>${habitat.radius.toFixed(0)}m building radius${habitat.next?` · Next expansion: account level ${habitat.next.level}`:' · Fully expanded'}</small>${accountWidget(p)}`;
+    this.applyAccountUI();
     $("#island-wallet").textContent = number(p.dna);
     this.overlay
       .querySelectorAll("[data-island-tab]")
@@ -1566,6 +1620,9 @@ export class UI {
             })),
       );
     }
+    const habitatHost=building?$('.island-sidebar'):$('#sanctuary-trials');
+    habitatHost?.prepend(habitatInfo);
+    this.applyAccountUI();
     $("#island-grid").textContent = `${p.island.grid ? "HIDE" : "SHOW"} GRID`;
   }
   islandHint(text) {
@@ -1580,6 +1637,7 @@ export class UI {
       `${a.description}${a.reward ? ` Reward: ${a.reward} DNA, once.` : ""}`,
     ]);
     const upgrades = [
+      {id:"stride",name:"Nomad ancestry",description:"Travel farther and escape danger in every life.",icon:"leaf",effect:"+2.5% movement speed per rank"},
       {
         id: "vitality",
         name: "Enduring bloodline",
@@ -1774,7 +1832,7 @@ export class UI {
               <span>SPD <b>${stats.speed}</b></span>
             </div>
             <span class="evolution-body">${s.compactEvolution ? "COMPACT RARE FORM" : "LARGER EVOLVED BODY"} · ${creatureKit(s).abilityCount} SKILLS</span>
-            <span class="species-ability">${esc(skillSummary(s))}</span>
+            <span class="species-ability">${esc(skillSummary(s,this.settings.controls))}</span>
             <span class="choice-indicator"></span>
           </button>`;
         })
@@ -2094,7 +2152,7 @@ export class UI {
     const strongestName = results.strongestDefeated ? (species(results.strongestDefeated)?.name || results.strongestDefeated) : "None";
     this.screen(
       "death",
-      `<div class="death-blood" aria-hidden="true"></div><div class="death-content"><header class="death-announcement"><p class="eyebrow">THE WILD CLAIMS ITS DUE</p><h1>YOU DIED</h1><p class="death-cause">${esc(results.cause || 'The wild claimed another survivor.')}</p></header><div class="wide-panel death-panel"><div class="death-left"><div class="final-species">${portrait(s.id)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier)+1}</span><h2>${esc(s.name)}</h2></div></div><div class="final-score"><span>${best?'A NEW PERSONAL BEST':'FINAL SCORE'}</span><strong>${number(results.score)}</strong></div><div class="dna-earned">${icon('dna')}<span>RARE DNA BANKED</span><strong>+${number(results.dna)}</strong></div></div><div class="death-right"><div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION</span><strong>${esc(tierName(results.tier??s.tier))}</strong></div><div><span>STRONGEST FOE</span><strong>${esc(strongestName)}</strong></div><div><span>BIOMES DOMINATED</span><strong>${results.dominatedRegions?.length||0}</strong></div><div><span>HEIRS RAISED</span><strong>${results.offspringCount||0}</strong></div></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>RISE AGAIN ${icon('arrow')}</button><button class="button secondary" data-action="compendium-lineage">REMEMBER THIS BLOODLINE</button><button class="button quiet" data-action="menu">RETURN TO TITLE</button></div></div></div></div>`,
+      `<div class="death-blood" aria-hidden="true"></div><div class="death-content"><header class="death-announcement"><p class="eyebrow">THE WILD CLAIMS ITS DUE</p><h1>YOU DIED</h1><p class="death-cause">${esc(results.cause || 'The wild claimed another survivor.')}</p></header><div class="wide-panel death-panel"><div class="death-left"><div class="final-species">${portrait(s.id)}<div><span>FINAL FORM · TIER ${(results.tier ?? s.tier)+1}</span><h2>${esc(s.name)}</h2></div></div><div class="final-score"><span>${best?'A NEW PERSONAL BEST':'FINAL SCORE'}</span><strong>${number(results.score)}</strong></div><div class="dna-earned">${icon('dna')}<span>RARE DNA BANKED</span><strong>+${number(results.dna)}</strong></div></div><div class="death-right">${accountWidget(profile)}<div class="death-stats"><div><span>TIME SURVIVED</span><strong>${clock(results.time)}</strong></div><div><span>PREY HUNTED</span><strong>${number(results.kills)}</strong></div><div><span>EVOLUTION</span><strong>${esc(tierName(results.tier??s.tier))}</strong></div><div><span>STRONGEST FOE</span><strong>${esc(strongestName)}</strong></div><div><span>BIOMES DOMINATED</span><strong>${results.dominatedRegions?.length||0}</strong></div><div><span>HEIRS RAISED</span><strong>${results.offspringCount||0}</strong></div></div><div class="stacked-buttons"><button class="button primary" data-action="restart" data-focus>RISE AGAIN ${icon('arrow')}</button><button class="button secondary" data-action="compendium-lineage">REMEMBER THIS BLOODLINE</button><button class="button quiet" data-action="menu">RETURN TO TITLE</button></div></div></div></div>`,
       "shade-screen death-screen",
     );
     this.bind("restart", () => this.callbacks.restart());
@@ -2104,6 +2162,7 @@ export class UI {
 
   updateProfile(profile) {
     this.profile = profile;
+    this.updateAccountWidgets();
   }
 
   back() {
@@ -2119,6 +2178,10 @@ export class UI {
   }
 
   toast(text) {
+    if(!text)return;
+    const now=Date.now();this.recentToasts||=new Map();
+    if(now-(this.recentToasts.get(text)||0)<8000)return;
+    this.recentToasts.set(text,now);for(const[key,time]of this.recentToasts)if(now-time>8000)this.recentToasts.delete(key);
     const element = $("#toast");
     element.textContent = text;
     element.classList.add("visible");
@@ -2137,12 +2200,13 @@ export class UI {
   restoreScreen(entry){
     this.restoringScreen=true;
     try{
-      const simple={menu:'showMenu',pause:'showPause',settings:'showSettings',controls:'showControls',tutorial:'showTutorial',wardrobe:'showWardrobe',legacy:'showLegacy',credits:'showCredits',learning:'showLearning'};
+      const simple={loot:'showLoot',account:'showAccount',menu:'showMenu',pause:'showPause',settings:'showSettings',controls:'showControls',tutorial:'showTutorial',wardrobe:'showWardrobe',legacy:'showLegacy',credits:'showCredits',learning:'showLearning'};
       if(entry.view==='hud')this.callbacks.resume?.();
       else if(simple[entry.view])this[simple[entry.view]]();
       else if(entry.view==='compendium'||entry.view==='guide')this.showCompendium(entry.state.tab||'encyclopedia',this.currentGame);
       else if(entry.view==='shop')this.showShop(entry.state.category);
       else if(entry.view==='island')this.callbacks.island?.();
+      else if(entry.view==='death'&&this.lastResults)this.showDeath(this.lastResults,this.profile);
       else if(entry.view==='backups')this.callbacks.backups?.();
       else this.showPause();
     }finally{this.restoringScreen=false;}

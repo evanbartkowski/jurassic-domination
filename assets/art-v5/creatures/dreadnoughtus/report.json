@@ -1,12 +1,12 @@
 {
   "id": "dreadnoughtus",
   "family": "sauropod",
-  "triangles": 22900,
+  "triangles": 28132,
   "bones": 22,
   "dimensions": [
-    7.732086658477783,
-    3.662191867828369,
-    2.5279345512390137
+    7.733097553253174,
+    3.672642707824707,
+    2.522502899169922
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11496,
-        "faces": 22900,
-        "tris": 22900,
+        "verts": 14332,
+        "faces": 28132,
+        "tris": 28132,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 23,
+        "islands": 133,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,41 +56,37 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 35.9
+        "uv_coverage_pct": 28.7
       }
     }
   },
   "attachmentShifts": [
     {
       "part": "Claw.001",
-      "distance": 0.0247
-    },
-    {
-      "part": "Claw.003",
-      "distance": 0.0233
-    },
-    {
-      "part": "Claw.004",
       "distance": 0.0237
     },
     {
-      "part": "Claw.005",
-      "distance": 0.0236
+      "part": "Claw.004",
+      "distance": 0.023
     },
     {
-      "part": "Claw.007",
-      "distance": 0.0247
+      "part": "Orbital_upper_lid",
+      "distance": 0.0294
     },
     {
-      "part": "Claw.009",
-      "distance": 0.0233
+      "part": "Orbital_lower_lid",
+      "distance": 0.0417
     },
     {
-      "part": "Claw.010",
-      "distance": 0.0233
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0295
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0417
     }
   ],
-  "bytes": 3156472,
+  "bytes": 4464240,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -109,7 +105,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8244,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10126,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -122,9 +127,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4168,
-        "faces": 8244,
-        "tris": 8244,
+        "verts": 5329,
+        "faces": 10126,
+        "tris": 10126,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -134,7 +139,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 23,
+        "islands": 133,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -148,7 +153,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 35.1
+        "uv_coverage_pct": 28.1
       }
     }
   }

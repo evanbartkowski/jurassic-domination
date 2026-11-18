@@ -21,13 +21,11 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run simulate -- --runs 8 --seconds 30 --report artifacts/ci-simulation.json
-      - run: npm run build
       - run: npm run package
       - uses: actions/upload-artifact@v4
         with:
           name: Jurassic-Domination-Windows
           path: |
             release/*portable.exe
-            release/win-unpacked/**
             artifacts/ci-simulation.json
           if-no-files-found: error

@@ -1,12 +1,12 @@
 {
   "id": "velociraptor",
   "family": "dromaeosaur",
-  "triangles": 30484,
+  "triangles": 45188,
   "bones": 20,
   "dimensions": [
-    5.355935096740723,
-    1.5241185426712036,
-    1.6918367147445679
+    5.355337142944336,
+    1.754058837890625,
+    1.4884147644042969
   ],
   "clips": [
     "Idle",
@@ -22,17 +22,25 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "Surface_LOD0: duplicate verts=8 loose verts=0",
+      "hidden back-to-back faces: Surface_LOD0 (6 pairs) - delete to save tris"
+    ],
     "ground_z": 0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 6
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 15424,
-        "faces": 30484,
-        "tris": 30484,
+        "verts": 23082,
+        "faces": 45188,
+        "tris": 45188,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -41,8 +49,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 91,
+        "duplicate_verts": 8,
+        "islands": 244,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,45 +64,53 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 22.4
+        "uv_coverage_pct": 9.3
       }
     }
   },
   "attachmentShifts": [
     {
       "part": "Sickle_claw",
-      "distance": 0.0357
+      "distance": 0.0349
     },
     {
       "part": "Sickle_claw.001",
-      "distance": 0.0357
+      "distance": 0.0349
+    },
+    {
+      "part": "Dorsal_feather",
+      "distance": 0.0288
     },
     {
       "part": "Forearm_primary",
-      "distance": 0.0262
+      "distance": 0.0329
+    },
+    {
+      "part": "Forearm_primary.001",
+      "distance": 0.0242
     },
     {
       "part": "Forearm_primary.008",
-      "distance": 0.0378
+      "distance": 0.0397
     },
     {
       "part": "Forearm_primary.009",
-      "distance": 0.0344
+      "distance": 0.0395
     },
     {
       "part": "Forearm_primary.010",
-      "distance": 0.0352
+      "distance": 0.0427
     },
     {
       "part": "Forearm_primary.011",
-      "distance": 0.0421
+      "distance": 0.0434
     },
     {
       "part": "Forearm_primary.012",
-      "distance": 0.0327
+      "distance": 0.0417
     }
   ],
-  "bytes": 3910160,
+  "bytes": 5912932,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -113,22 +129,38 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 10974,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 0,
+    "individualFeathers": 86,
+    "predatorScars": 0
+  },
+  "lodTriangles": 16266,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (1 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0006,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 1
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 5669,
-        "faces": 10974,
-        "tris": 10974,
+        "verts": 8621,
+        "faces": 16266,
+        "tris": 16266,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -138,7 +170,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 91,
+        "islands": 244,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -152,7 +184,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 21.5
+        "uv_coverage_pct": 8.9
       }
     }
   }

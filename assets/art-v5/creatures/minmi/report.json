@@ -1,12 +1,12 @@
 {
   "id": "minmi",
   "family": "ankylosaur",
-  "triangles": 31308,
+  "triangles": 36828,
   "bones": 22,
   "dimensions": [
-    4.313626289367676,
-    1.8839350938796997,
-    1.2043555974960327
+    4.313660144805908,
+    1.355879545211792,
+    1.9225739240646362
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 15772,
-        "faces": 31308,
-        "tris": 31308,
+        "verts": 18754,
+        "faces": 36828,
+        "tris": 36828,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 59,
+        "islands": 170,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,8 +55,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.38,
-        "uv_coverage_pct": 30.4
+        "uv_overlap_pct": 0.34,
+        "uv_coverage_pct": 19.8
       }
     }
   },
@@ -67,7 +67,7 @@
     },
     {
       "part": "Flank_spike.001",
-      "distance": 0.0018
+      "distance": 0.002
     },
     {
       "part": "Flank_spike.004",
@@ -75,14 +75,30 @@
     },
     {
       "part": "Flank_spike.006",
-      "distance": 0.0016
+      "distance": 0.002
     },
     {
       "part": "Flank_spike.009",
       "distance": 0.024
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0341
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0432
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.034
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0431
     }
   ],
-  "bytes": 3929996,
+  "bytes": 5121652,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -101,7 +117,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 11270,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 13258,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -114,9 +139,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 5753,
-        "faces": 11270,
-        "tris": 11270,
+        "verts": 6969,
+        "faces": 13258,
+        "tris": 13258,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -126,7 +151,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 59,
+        "islands": 170,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -139,8 +164,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.33,
-        "uv_coverage_pct": 29.4
+        "uv_overlap_pct": 0.35,
+        "uv_coverage_pct": 19.1
       }
     }
   }

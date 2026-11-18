@@ -161,7 +161,9 @@ test("old profiles keep purchases, scores and discoveries while lineage starts s
     unlocked: Array.from({ length: 180 }, (_, n) => `legacy-${n}`), hunted: ["legacy-unlisted"],
     upgrades: { vitality: 3 }, ancestry: { generations: Infinity, discoveries: [null, "__proto__"],
       recent: [{ runId: "bad", genome: { alleles: { mass: 100000 } } }] } });
-  assert.equal(p.dna, 53); assert.equal(p.runs, 20); assert.equal(p.upgrades.vitality, 3);
+  assert.ok(p.dna >= 53, 'legacy DNA is retained with earned account rewards');
+  assert.equal(normalizeProfile(p).dna,p.dna,'account migration does not repeat rewards');
+  assert.equal(p.runs, 20); assert.equal(p.upgrades.vitality, 3);
   assert.equal(p.unlocked.length, 180); assert.deepEqual(p.hunted, ["legacy-unlisted"]);
   assert.equal(p.ancestry.generations, 0);
   assert.equal(p.ancestry.lastAncestor.genome, null);

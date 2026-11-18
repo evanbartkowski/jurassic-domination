@@ -1,12 +1,12 @@
 {
   "id": "pachycephalosaurus",
   "family": "pachycephalosaur",
-  "triangles": 24364,
+  "triangles": 30172,
   "bones": 20,
   "dimensions": [
-    4.907778263092041,
-    2.4300761222839355,
-    1.5208392143249512
+    4.908931255340576,
+    2.4304027557373047,
+    1.5092277526855469
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12242,
-        "faces": 24364,
-        "tris": 24364,
+        "verts": 15370,
+        "faces": 30172,
+        "tris": 30172,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 30,
+        "islands": 142,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,18 +55,30 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 34.7
+        "uv_overlap_pct": 0.17,
+        "uv_coverage_pct": 21.9
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw",
-      "distance": 0.0229
+      "part": "Orbital_upper_lid",
+      "distance": 0.0374
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.054
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0381
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0539
     }
   ],
-  "bytes": 3237864,
+  "bytes": 4708316,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -85,7 +97,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8770,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 16594,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -98,9 +119,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4445,
-        "faces": 8770,
-        "tris": 8770,
+        "verts": 8581,
+        "faces": 16594,
+        "tris": 16594,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -110,7 +131,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 30,
+        "islands": 142,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -123,8 +144,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 33.8
+        "uv_overlap_pct": 0.2,
+        "uv_coverage_pct": 21.6
       }
     }
   }

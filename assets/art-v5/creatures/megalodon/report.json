@@ -1,11 +1,11 @@
 {
   "id": "megalodon",
   "family": "shark",
-  "triangles": 26260,
+  "triangles": 32164,
   "bones": 12,
   "dimensions": [
     4.722500801086426,
-    2.0257816314697266,
+    2.0258145332336426,
     2.9425015449523926
   ],
   "clips": [
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 13244,
-        "faces": 26260,
-        "tris": 26260,
+        "verts": 16424,
+        "faces": 32164,
+        "tris": 32164,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 57,
+        "islands": 171,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,7 +56,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 45.5
+        "uv_coverage_pct": 31.4
       }
     }
   },
@@ -67,22 +67,38 @@
     },
     {
       "part": "Lower_tooth.005",
-      "distance": 0.0274
+      "distance": 0.0267
     },
     {
       "part": "Lower_tooth.009",
-      "distance": 0.0232
+      "distance": 0.0231
     },
     {
       "part": "Lower_tooth.013",
-      "distance": 0.0274
+      "distance": 0.0268
     },
     {
       "part": "Dorsal_fin",
       "distance": 0.1083
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0636
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0651
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0636
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0651
     }
   ],
-  "bytes": 3388868,
+  "bytes": 4811648,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -101,7 +117,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 9452,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 14472,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -114,9 +139,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4840,
-        "faces": 9452,
-        "tris": 9452,
+        "verts": 7578,
+        "faces": 14472,
+        "tris": 14472,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -126,7 +151,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 57,
+        "islands": 171,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -140,7 +165,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 45.1
+        "uv_coverage_pct": 31.0
       }
     }
   }

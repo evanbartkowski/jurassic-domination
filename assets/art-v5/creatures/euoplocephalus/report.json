@@ -1,12 +1,12 @@
 {
   "id": "euoplocephalus",
   "family": "ankylosaur",
-  "triangles": 31588,
+  "triangles": 37108,
   "bones": 22,
   "dimensions": [
-    4.931800365447998,
-    2.212273359298706,
-    1.2030029296875
+    4.930079936981201,
+    1.3951592445373535,
+    2.2478785514831543
   ],
   "clips": [
     "Idle",
@@ -22,24 +22,17 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [
-      "hidden back-to-back faces: Surface_LOD0 (1 pairs) - delete to save tris"
-    ],
+    "warnings": [],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [
-      {
-        "where": "Surface_LOD0",
-        "tri_pairs": 1
-      }
-    ],
+    "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 15914,
-        "faces": 31588,
-        "tris": 31588,
+        "verts": 18896,
+        "faces": 37108,
+        "tris": 37108,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -49,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 60,
+        "islands": 171,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -62,38 +55,54 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.27,
-        "uv_coverage_pct": 31.4
+        "uv_overlap_pct": 0.33,
+        "uv_coverage_pct": 20.4
       }
     }
   },
   "attachmentShifts": [
     {
       "part": "Flank_spike.001",
-      "distance": 0.0061
+      "distance": 0.0059
     },
     {
       "part": "Flank_spike.002",
-      "distance": 0.0047
+      "distance": 0.0043
     },
     {
       "part": "Flank_spike.004",
-      "distance": 0.0313
+      "distance": 0.0312
     },
     {
       "part": "Flank_spike.006",
-      "distance": 0.0064
+      "distance": 0.0062
     },
     {
       "part": "Flank_spike.007",
-      "distance": 0.0046
+      "distance": 0.0043
     },
     {
       "part": "Flank_spike.009",
-      "distance": 0.0313
+      "distance": 0.0312
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0467
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0576
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0465
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0576
     }
   ],
-  "bytes": 3998896,
+  "bytes": 5175412,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -112,34 +121,38 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 11370,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 13358,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
     "warnings": [
-      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD1']"
+      "hidden back-to-back faces: Surface_LOD1 (1 pairs) - delete to save tris"
     ],
     "ground_z": -0.0011,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
-    "enclosed": [
+    "back_to_back": [
       {
-        "object": "Surface_LOD1",
-        "island_verts": 24,
-        "center": [
-          1.566,
-          0.0,
-          0.403
-        ]
+        "where": "Surface_LOD1",
+        "tri_pairs": 1
       }
     ],
+    "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 5805,
-        "faces": 11370,
-        "tris": 11370,
+        "verts": 7021,
+        "faces": 13358,
+        "tris": 13358,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -149,7 +162,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 60,
+        "islands": 171,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -162,8 +175,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.3,
-        "uv_coverage_pct": 30.7
+        "uv_overlap_pct": 0.34,
+        "uv_coverage_pct": 19.6
       }
     }
   }

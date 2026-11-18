@@ -1,12 +1,12 @@
 {
   "id": "diplodocus",
   "family": "sauropod",
-  "triangles": 22612,
+  "triangles": 27844,
   "bones": 22,
   "dimensions": [
-    9.331842422485352,
-    2.319418430328369,
-    2.118199348449707
+    9.333309173583984,
+    2.3195579051971436,
+    2.1127853393554688
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11350,
-        "faces": 22612,
-        "tris": 22612,
+        "verts": 14186,
+        "faces": 27844,
+        "tris": 27844,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 22,
+        "islands": 132,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,22 +55,22 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 28.3
+        "uv_overlap_pct": 0.02,
+        "uv_coverage_pct": 26.8
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw.001",
-      "distance": 0.0233
+      "part": "Orbital_lower_lid",
+      "distance": 0.026
     },
     {
-      "part": "Claw.007",
-      "distance": 0.0234
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0261
     }
   ],
-  "bytes": 2948484,
+  "bytes": 4368612,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -89,22 +89,38 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8140,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10022,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (1 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0007,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 1
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4114,
-        "faces": 8140,
-        "tris": 8140,
+        "verts": 5275,
+        "faces": 10022,
+        "tris": 10022,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -114,7 +130,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 22,
+        "islands": 132,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -128,7 +144,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.02,
-        "uv_coverage_pct": 27.7
+        "uv_coverage_pct": 26.1
       }
     }
   }

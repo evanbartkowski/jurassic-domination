@@ -1,4 +1,4 @@
-import{createDinosaur,animateCreature}from'./creatures.js';
+import {createMarineActor,animateMarineActor} from './marine-presentation.js';
 import{SPECIES_BY_ID}from'./data.js';
 import{marineRoster,marineBodyLength}from'./marine-ecology.js';
 import{anatomyForSpecies}from'./anatomy.js';
@@ -137,7 +137,7 @@ export function createWildFeature(f, elevation = 0) {
     root.userData.ripples = [];
     // Waves, foam and contact ripples share the water shader rather than rings.
     root.userData.swimmers=[];
-    const makeMarine=(wrapper,id,index)=>{wrapper.userData.model?.userData.dispose();wrapper.clear();const species=SPECIES_BY_ID[id]||SPECIES_BY_ID.tideweaver,model=createDinosaur(species,true),profile=anatomyForSpecies(species),scale=marineBodyLength(f,index)/profile.length;model.scale.setScalar(scale);model.position.y=-Math.max(.5,Math.max(profile.head[1]+profile.skull[2],profile.hip+profile.depth)*scale*.75);wrapper.add(model);wrapper.userData.model=model;wrapper.userData.speciesId=species.id;};
+    const makeMarine=(wrapper,id,index)=>{wrapper.userData.model?.userData.dispose();wrapper.clear();const species=SPECIES_BY_ID[id]||SPECIES_BY_ID.tideweaver,model=createMarineActor(species),profile=anatomyForSpecies(species),scale=marineBodyLength(f,index)/profile.length;model.scale.setScalar(scale);model.position.y=-Math.max(.5,Math.max(profile.head[1]+profile.skull[2],profile.hip+profile.depth)*scale*.75);wrapper.add(model);wrapper.userData.model=model;wrapper.userData.speciesId=species.id;};
     root.userData.makeMarine=makeMarine;
     for(let i=0;i<3;i++){const wrapper=new THREE.Group();makeMarine(wrapper,marineRoster(f)[i],i);root.add(wrapper);root.userData.swimmers.push(wrapper);}
   } else if (f.type === "volcano") {
@@ -276,7 +276,7 @@ export function createWildFeature(f, elevation = 0) {
     if(root.userData.attackWarning){const w=root.userData.attackWarning;w.visible=!f.dead&&!!f.attackDueAt;w.rotation.z=-(f.attackAngle||0);w.material.opacity=.22+(Math.sin(t*16)+1)*.13;}
     root.userData.waterSurface?.material.userData.update(t,player,f);
     const marineDt=Math.max(0,Math.min(.1,t-(root.userData.lastMarineT??t)));root.userData.lastMarineT=t;
-    root.userData.swimmers?.forEach((m,i)=>{const pose=marinePose(f,t,i,player,marineState);if(pose.speciesId&&pose.speciesId!==m.userData.speciesId)root.userData.makeMarine(m,pose.speciesId,i);m.position.set(pose.x-f.x,.06,pose.y-f.y);m.rotation.y=-pose.angle;m.rotation.z=pose.dead?1.7:0;animateCreature(m.userData.model,marineDt,t,pose.dead?0:pose.hunting?1.3:.45,!!pose.attackWindup,0);});
+    root.userData.swimmers?.forEach((m,i)=>{const pose=marinePose(f,t,i,player,marineState);if(pose.speciesId&&pose.speciesId!==m.userData.speciesId)root.userData.makeMarine(m,pose.speciesId,i);const deathAge=pose.dead?Math.max(0,t-(pose.deadAt??((pose.respawnAt||t+35)-35))):0;m.visible=!pose.dead||deathAge<1.8;m.position.set(pose.x-f.x,.06-(pose.dead?deathAge*2:0),pose.y-f.y);m.rotation.y=-pose.angle;m.rotation.z=pose.dead?Math.min(1.7,deathAge*2):0;m.userData.model.userData.isDead=!!pose.dead;animateMarineActor(m.userData.model,marineDt,t,pose.dead?0:pose.hunting?1.3:.45,!!pose.attackWindup);});
     root.userData.ripples?.forEach((m, i) => {
       m.scale.setScalar(1 + Math.sin(t * 0.75 + i * 2.1 + f.phase) * 0.025);
       m.material.opacity = 0.1 + (Math.sin(t * 0.65 + i) + 1) * 0.055;

@@ -1,12 +1,12 @@
 {
   "id": "maiasaura",
   "family": "hadrosaur",
-  "triangles": 23188,
+  "triangles": 28996,
   "bones": 22,
   "dimensions": [
-    5.751278877258301,
-    2.1649422645568848,
-    1.7793840169906616
+    5.752267837524414,
+    2.1663737297058105,
+    1.775403618812561
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11642,
-        "faces": 23188,
-        "tris": 23188,
+        "verts": 14770,
+        "faces": 28996,
+        "tris": 28996,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 24,
+        "islands": 136,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,17 +56,29 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 34.4
+        "uv_coverage_pct": 28.2
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw.008",
-      "distance": 0.023
+      "part": "Orbital_upper_lid",
+      "distance": 0.0419
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.056
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0419
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0559
     }
   ],
-  "bytes": 3139764,
+  "bytes": 4501472,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -85,22 +97,38 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8346,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10438,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (1 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0007,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 1
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4221,
-        "faces": 8346,
-        "tris": 8346,
+        "verts": 5491,
+        "faces": 10438,
+        "tris": 10438,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -110,7 +138,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 24,
+        "islands": 136,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -124,7 +152,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 33.4
+        "uv_coverage_pct": 27.3
       }
     }
   }

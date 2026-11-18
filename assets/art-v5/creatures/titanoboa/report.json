@@ -1,12 +1,12 @@
 {
   "id": "titanoboa",
   "family": "serpent",
-  "triangles": 23620,
+  "triangles": 28564,
   "bones": 10,
   "dimensions": [
-    8.031733512878418,
-    0.7680000066757202,
-    1.1261606216430664
+    8.037070274353027,
+    1.146965742111206,
+    0.8588433265686035
   ],
   "clips": [
     "Idle",
@@ -22,29 +22,17 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [
-      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD0']"
-    ],
-    "ground_z": -0.0,
+    "warnings": [],
+    "ground_z": 0.0,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
-    "enclosed": [
-      {
-        "object": "Surface_LOD0",
-        "island_verts": 146,
-        "center": [
-          1.808,
-          0.0,
-          0.571
-        ]
-      }
-    ],
+    "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11898,
-        "faces": 23620,
-        "tris": 23620,
+        "verts": 14588,
+        "faces": 28564,
+        "tris": 28564,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -54,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 44,
+        "islands": 153,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -68,61 +56,29 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 15.1
+        "uv_coverage_pct": 16.1
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Lower_tooth",
-      "distance": 0.0234
+      "part": "Orbital_upper_lid",
+      "distance": 0.0553
     },
     {
-      "part": "Lower_tooth.001",
-      "distance": 0.0254
+      "part": "Orbital_lower_lid",
+      "distance": 0.071
     },
     {
-      "part": "Lower_tooth.003",
-      "distance": 0.0248
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0553
     },
     {
-      "part": "Lower_tooth.004",
-      "distance": 0.024
-    },
-    {
-      "part": "Lower_tooth.005",
-      "distance": 0.0318
-    },
-    {
-      "part": "Lower_tooth.006",
-      "distance": 0.027
-    },
-    {
-      "part": "Lower_tooth.008",
-      "distance": 0.0234
-    },
-    {
-      "part": "Lower_tooth.009",
-      "distance": 0.0252
-    },
-    {
-      "part": "Lower_tooth.011",
-      "distance": 0.0249
-    },
-    {
-      "part": "Lower_tooth.012",
-      "distance": 0.0241
-    },
-    {
-      "part": "Lower_tooth.013",
-      "distance": 0.0316
-    },
-    {
-      "part": "Lower_tooth.014",
-      "distance": 0.0268
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0714
     }
   ],
-  "bytes": 2383840,
+  "bytes": 3578712,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -141,34 +97,31 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8502,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10282,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [
-      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD1']"
-    ],
-    "ground_z": -0.0001,
+    "warnings": [],
+    "ground_z": -0.0006,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
-    "enclosed": [
-      {
-        "object": "Surface_LOD1",
-        "island_verts": 49,
-        "center": [
-          1.808,
-          0.0,
-          0.571
-        ]
-      }
-    ],
+    "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4339,
-        "faces": 8502,
-        "tris": 8502,
+        "verts": 5447,
+        "faces": 10282,
+        "tris": 10282,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -178,7 +131,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 44,
+        "islands": 153,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -192,7 +145,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 14.8
+        "uv_coverage_pct": 15.7
       }
     }
   }

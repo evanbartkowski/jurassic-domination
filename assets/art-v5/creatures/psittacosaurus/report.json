@@ -1,12 +1,12 @@
 {
   "id": "psittacosaurus",
   "family": "ceratopsian",
-  "triangles": 25756,
+  "triangles": 31276,
   "bones": 20,
   "dimensions": [
-    4.365240097045898,
-    1.3760000467300415,
-    1.5182830095291138
+    4.364350318908691,
+    1.6289918422698975,
+    1.3695001602172852
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12964,
-        "faces": 25756,
-        "tris": 25756,
+        "verts": 15946,
+        "faces": 31276,
+        "tris": 31276,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 43,
+        "islands": 154,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,35 +55,31 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 34.5
+        "uv_overlap_pct": 0.03,
+        "uv_coverage_pct": 23.0
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw.003",
-      "distance": 0.0229
-    },
-    {
       "part": "Tail_bristle",
-      "distance": 0.0363
+      "distance": 0.0361
     },
     {
       "part": "Tail_bristle.001",
-      "distance": 0.0546
+      "distance": 0.0544
     },
     {
       "part": "Tail_bristle.002",
-      "distance": 0.0728
+      "distance": 0.0727
     },
     {
       "part": "Tail_bristle.003",
-      "distance": 0.0566
+      "distance": 0.0567
     },
     {
       "part": "Tail_bristle.004",
-      "distance": 0.0416
+      "distance": 0.0417
     },
     {
       "part": "Tail_bristle.005",
@@ -91,11 +87,11 @@
     },
     {
       "part": "Tail_bristle.006",
-      "distance": 0.0084
+      "distance": 0.0086
     },
     {
       "part": "Tail_bristle.008",
-      "distance": 0.0257
+      "distance": 0.0255
     },
     {
       "part": "Tail_bristle.009",
@@ -103,48 +99,73 @@
     },
     {
       "part": "Tail_bristle.010",
-      "distance": 0.0617
+      "distance": 0.0615
     },
     {
       "part": "Tail_bristle.011",
-      "distance": 0.0802
+      "distance": 0.0801
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0383
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0539
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0384
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0534
     }
   ],
-  "bytes": 3401884,
+  "bytes": 8494028,
   "textures": {
     "Albedo": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Albedo.jpg"
     },
     "Normal": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Normal.png"
     },
     "Roughness": {
-      "width": 512,
-      "height": 512,
+      "width": 1024,
+      "height": 1024,
       "file": "Roughness.png"
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 9272,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 11258,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": -0.0007,
+    "ground_z": -0.0008,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4722,
-        "faces": 9272,
-        "tris": 9272,
+        "verts": 5937,
+        "faces": 11258,
+        "tris": 11258,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -154,7 +175,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 43,
+        "islands": 154,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -168,7 +189,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 33.5
+        "uv_coverage_pct": 22.2
       }
     }
   }

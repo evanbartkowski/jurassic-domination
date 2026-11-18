@@ -1,12 +1,12 @@
 {
   "id": "shantungosaurus",
   "family": "hadrosaur",
-  "triangles": 23184,
+  "triangles": 28988,
   "bones": 22,
   "dimensions": [
-    6.244873046875,
-    2.4971675872802734,
-    2.0956737995147705
+    6.246122360229492,
+    2.4972612857818604,
+    2.092970609664917
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11640,
-        "faces": 23184,
-        "tris": 23184,
+        "verts": 14766,
+        "faces": 28988,
+        "tris": 28988,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 24,
+        "islands": 136,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,22 +55,30 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 38.9
+        "uv_overlap_pct": 0.17,
+        "uv_coverage_pct": 27.9
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw.002",
-      "distance": 0.023
+      "part": "Orbital_upper_lid",
+      "distance": 0.0459
     },
     {
-      "part": "Claw.006",
-      "distance": 0.023
+      "part": "Orbital_lower_lid",
+      "distance": 0.0613
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0454
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0617
     }
   ],
-  "bytes": 3236672,
+  "bytes": 4495336,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -89,7 +97,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8346,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10434,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -102,9 +119,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4221,
-        "faces": 8346,
-        "tris": 8346,
+        "verts": 5489,
+        "faces": 10434,
+        "tris": 10434,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -114,7 +131,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 24,
+        "islands": 136,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -127,8 +144,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 38.1
+        "uv_overlap_pct": 0.18,
+        "uv_coverage_pct": 27.2
       }
     }
   }

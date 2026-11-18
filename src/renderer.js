@@ -1,5 +1,7 @@
+import {EGG_RARITIES} from './eggs.js';
 import * as THREE from "three";
 import {IncidentPresentation,createAttackStroke} from './frontier-effects.js';
+import {sampleLocomotion,cameraDistance} from './motion-presentation.js';
 import {createStartVista} from './start-vista.js';
 import {RIDGES,LOCATIONS} from './frontier-map.js';
 import {createNaturalEnvironment} from './natural-materials.js';
@@ -17,6 +19,8 @@ import { biomeAt, REGIONS, LAIRS, WORLD_RADIUS } from "./world-data.js";
 import { POWERUPS, SKINS } from "./content.js";
 import { applyCosmetic, createPet } from "./collection-art.js";
 import { CATALOG, RARITIES } from "./collection-data.js";
+import {createTreasureModel} from './loot-art.js';
+import {CRATE_TYPES,TREASURES} from './loot-data.js';
 import { tryAttachFlagshipGLB, animateFlagshipGLB, setCreatureDetail, FLAGSHIP_SPECIES_IDS } from "./flagship-models.js";
 export { createDinosaur };
 
@@ -702,7 +706,7 @@ export class WorldRenderer {
     if (event.type === "technique") {
       this.shake = Math.max(this.shake, 0.40);
     }
-    if (["attack", "enemy-strike", "ability", "enemy-ability", "evolve"].includes(event.type)) {
+    if (["ability", "enemy-ability", "evolve"].includes(event.type)) {
       const isPlayerAttack = event.type === "attack";
       const isEnemyStrike = event.type === "enemy-strike";
       const directional =
@@ -1154,22 +1158,21 @@ export class WorldRenderer {
       model.userData.cosmeticId !== cosmeticId || model.userData.genomeKey !== genomeAppearanceKey(genome) || model.userData.eventLook !== eventLook
     ) {
       if (model) this.removeModel(model);
-      model = createDinosaur(lookup(id), false, skinId, genome,eventLook);
+      model = createDinosaur(lookup(id), false, skinId, genome,eventLook,{active,prepareAsset:root=>this.renderer.compileAsync(root,this.camera,this.scene)});
       applyCosmetic(model, cosmeticId);
+      // Parallel shader compilation keeps first encounters from blocking a visible frame.
+      model.userData.prepareAsset=root=>this.renderer.compileAsync(root,this.camera,this.scene);
       tryAttachFlagshipGLB(model, id);
       model.position.set(x, 0, z);
       model.rotation.y = -angle;
       this.models.set(key, model);
       this.scene.add(model);
     }
-    setCreatureDetail(model,!active&&key!=='player'&&Math.hypot(x-this.cameraTarget.x,z-this.cameraTarget.z)>(this.settings.quality==='low'?22:this.settings.quality==='medium'?32:44));
-    const moved =
-      model.userData.motionX === undefined
-        ? 0
-        : Math.hypot(x - model.userData.motionX, z - model.userData.motionY);
-    model.userData.worldSpeed=dt>0?moved/dt:0;
-    model.userData.motionX = x;
-    model.userData.motionY = z;
+    const distanceToFocus=Math.hypot(x-this.cameraTarget.x,z-this.cameraTarget.z);
+    const detailDistance=this.settings.quality==='low'?16:this.settings.quality==='medium'?22:30;
+    const previousDetail=model.userData.flagshipAsset?.detailLevel||0;
+    setCreatureDetail(model,!active&&distanceToFocus>detailDistance+(previousDetail?-3:3));
+    sampleLocomotion(model.userData,x,z,dt);
     model.position.x = THREE.MathUtils.damp(model.position.x, x, 22, dt);
     model.position.z = THREE.MathUtils.damp(model.position.z, z, 22, dt);
     const target = -angle,
@@ -1178,16 +1181,24 @@ export class WorldRenderer {
         Math.cos(target - model.rotation.y),
       );
     model.rotation.y += diff * (1 - Math.exp(-dt * 16));
+    model.scale.setScalar(model.userData.baseScale * scaleFactor);
+    // Smooth transforms every frame; background skeletons use a bounded update rate.
+    model.userData.animationDebt=(model.userData.animationDebt||0)+dt;
+    const presentationDistance=distanceToFocus/Math.max(1,Math.sqrt(model.userData.species.size));
+    const animationInterval=active||attacking||model.userData.hitReaction?0:presentationDistance>30?1/30:0;
+    if(model.userData.animationDebt+1e-6>=animationInterval){
     this.animateDino(
       model,
       t,
       dt > 0
-        ? clamp(moved / Math.max(dt, 0.016) / (lookup(id).speed * 0.8), 0, 1.5)
+        ? clamp(model.userData.worldSpeed / (lookup(id).speed * 0.8), 0, 1.5)
         : model.userData.speed,
       attacking,
-      dt,
+      model.userData.animationDebt,
       diff,
     );
+    model.userData.animationDebt=0;
+    }
     const isColossal = (model.userData.species.size * scaleFactor >= 2.2) || (model.userData.species.tier >= 4);
     const viewLimit = isColossal ? 145 : 70;
     model.visible =
@@ -1196,7 +1207,6 @@ export class WorldRenderer {
     if (model.userData.glbContainer) model.userData.glbContainer.visible = !!model.userData.isGLB;
     model.userData.isJuvenile = scaleFactor < 0.68;
     model.userData.isColossal = isColossal;
-    model.scale.setScalar(model.userData.baseScale * scaleFactor);
     return model;
   }
   removeModel(model) {
@@ -1220,6 +1230,7 @@ export class WorldRenderer {
   }
   renderStart(dt){
     if(this.disposed)return;this.elapsed+=dt;this.startVista||=createStartVista();const v=this.startVista;
+    if(v.ready)this.renderer.domElement.dataset.startArt='ready';
     v.camera.aspect=this.camera.aspect;v.camera.updateProjectionMatrix();v.update(dt,this.elapsed,this.settings.reducedMotion);this.renderer.render(v.scene,v.camera);
   }
   render(game, dt, menu = false) {
@@ -1696,9 +1707,8 @@ export class WorldRenderer {
     this.shake = Math.max(0, this.shake - dt * 2.2);
     const shake = (this.settings.shake && !this.settings.reducedMotion) ? this.shake : 0;
     const effectiveSize = (p && !menu) ? game.effectiveSize : 1.0;
-    const sprintZoom = (p && p.sprinting) ? 3.2 : 0;
-    const targetDist = p && !menu ? 15.0 + Math.pow(effectiveSize, 1.08) * 8.5 + sprintZoom : 25;
-    this.cameraDist = this.cameraDist&&this.settings.cameraSmoothing!==false ? THREE.MathUtils.damp(this.cameraDist, targetDist, 3.8, dt) : targetDist;
+    const targetDist = p && !menu ? cameraDistance(effectiveSize) : 25;
+    this.cameraDist = this.cameraDist&&this.settings.cameraSmoothing!==false ? THREE.MathUtils.damp(this.cameraDist, targetDist, 1.8, dt) : targetDist;
 
     if (p && !menu && p.sprinting && dt > 0) {
       const dustCount = this.emitCount(20, dt);
@@ -1735,7 +1745,7 @@ export class WorldRenderer {
     }
 
     const tod = game && !menu ? getTimeOfDay(game.time) : { name: "day", progress: 0.35, ambientIntensity: 1 };
-    this.scene.environmentIntensity=.24*tod.ambientIntensity;
+    this.scene.environmentIntensity=.30*tod.ambientIntensity;
     const weather = game && !menu ? conditionsAt(game, p?.x || 0, p?.y || 0) : null;
     const isRain = weather?.event === "rain" || weather?.event === "flood" || (!menu&&game?.frontierState?.active?.kind==='lightning');
     const isAsh = weather?.event === "ashfall" || weather?.event === "eruption" || weather?.event === "fire";
@@ -1758,8 +1768,8 @@ export class WorldRenderer {
     } else if (tod.name === "day") {
       sunOffsetX = -36; sunOffsetY = 50; sunOffsetZ = -26;
       targetSunColor = 0xfffaee;
-      targetSkyColor = 0xd8dfc9;
-      targetGroundColor = 0x4e5140;
+      targetSkyColor = 0xc9eaf4;
+      targetGroundColor = 0x334d33;
       targetSunIntensity = 3.15;
       baseFogDensity = 0.0075;
     } else if (tod.name === "dusk") {
@@ -1843,7 +1853,7 @@ export class WorldRenderer {
 
     this.scene.fog.density = THREE.MathUtils.damp(this.scene.fog.density, baseFogDensity, 3, dt);
     const region = game && !menu ? biomeAt(p.x, p.y) : REGIONS[0];
-    let destFog = (this.targetFogColor ||= new THREE.Color()).set(biomeLook(region.id).fog).multiplyScalar(.72);
+    let destFog = (this.targetFogColor ||= new THREE.Color()).set(biomeLook(region.id).fog).multiplyScalar(.78);
     if (tod.name === "dawn") destFog.lerp(this.fogColor.setHex(0x452818), 0.35);
     else if (tod.name === "dusk") destFog.lerp(this.fogColor.setHex(0x522216), 0.45);
     else if (tod.name === "night") destFog.lerp(this.fogColor.setHex(0x0c1a26), 0.7);
@@ -1946,7 +1956,7 @@ export class WorldRenderer {
       }
     }
     for (const water of this.water)
-      water.material.color.setHSL(0.49, 0.38, 0.29 + Math.sin(t * 0.7) * 0.02);
+      water.material.color.setHSL(0.50, 0.62, 0.34 + Math.sin(t * 0.7) * 0.02);
     this.dust.visible=(this.settings.particles??1)>0;
     this.dust.geometry.setDrawRange(0,Math.floor(this.dust.geometry.attributes.position.count*(this.settings.particles??1)));
     this.dust.rotation.y = t * 0.008;
@@ -1987,6 +1997,9 @@ export class WorldRenderer {
       keys.add(food.id);
       let mesh = this.foodModels.get(food.id);
       if (!mesh) {
+        if(['supply-crate','treasure'].includes(food.type)){
+          mesh=createTreasureModel(food);mesh.position.set(food.x,elevationAt(food.x,food.y),food.y);this.scene.add(mesh);this.foodModels.set(food.id,mesh);continue;
+        }
         if (food.type === "plant") {
           mesh = createForageModel(food);
           const plantRing = new THREE.Mesh(
@@ -2037,7 +2050,7 @@ export class WorldRenderer {
               : food.type === "essence"
                 ? 0xb59ce8
                 : food.type === "egg"
-                  ? 0xe5d5b6
+                  ? (EGG_RARITIES[food.eggRarity]?.color || 0xe5d5b6)
                   : food.type === "fossil"
                     ? 0xe9c77c
                     : food.type === "relic"
@@ -2183,7 +2196,7 @@ export class WorldRenderer {
             piece(
               mesh,
               sphere,
-              0x8c8565,
+              EGG_RARITIES[food.eggRarity]?.color || 0x8c8565,
               [Math.cos(a) * 0.4, 0.4 + (i % 3) * 0.2, Math.sin(a) * 0.4],
               [0.07, 0.08, 0.035],
               [0, -a, 0],
@@ -2255,7 +2268,7 @@ export class WorldRenderer {
       }
       if (food.type === "plant")
         mesh.rotation.z = Math.sin(t * 1.5 + mesh.id) * 0.025;
-      else if (food.type !== "egg" && food.type !== "meat")
+      else if (!["egg","meat","supply-crate","treasure"].includes(food.type))
         mesh.children[0].position.y = 0.45 + Math.sin(t * 2 + mesh.id) * 0.07;
       if (food.type === "relic" || food.type === "essence")
         mesh.children[0].rotation.y = t * 0.6;
@@ -2749,9 +2762,14 @@ export class WorldRenderer {
     }
     for (const food of game.foods)
       if (
-        ["rareplant", "egg", "relic", "fossil"].includes(food.type) &&
+        ["supply-crate", "treasure", "rareplant", "egg", "relic", "fossil"].includes(food.type) &&
         Math.hypot(food.x - p.x, food.y - p.y) < 45
       ) {
+        if(['supply-crate','treasure'].includes(food.type)){
+          const x=c+(food.x-cx)*scale,y=c+(food.y-cy)*scale;
+          ctx.fillStyle=food.type==='supply-crate'?CRATE_TYPES[food.crateType].color:TREASURES[food.findId].color;
+          ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x+4,y);ctx.lineTo(x,y+4);ctx.lineTo(x-4,y);ctx.closePath();ctx.fill();continue;
+        }
         ctx.fillStyle =
           food.type === "egg"
             ? "#e4d8b9"

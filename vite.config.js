@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
-export default defineConfig({
+export default defineConfig(({mode})=>({
   base: './',
   build: {
+    outDir:mode==='web'?'web-dist':'dist',
     target: 'es2022',
     chunkSizeWarningLimit: 850,
     rolldownOptions: {
@@ -12,4 +13,4 @@ export default defineConfig({
     },
   },
   server: { strictPort: true },
-});
+}));

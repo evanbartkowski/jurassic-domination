@@ -8,7 +8,7 @@ test("every discovered creature and shop item has a bundled model portrait", asy
     ...SPECIES.map((s) => "species-" + s.id),
     ...SHOP_ITEMS.map((i) => i.kind + "-" + i.id),
   ];
-  assert.equal(names.length, 157);
+  assert.equal(names.length, 193);
   await Promise.all(
     names.map(async (name) => {
       const meta = await sharp(

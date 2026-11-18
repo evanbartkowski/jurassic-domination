@@ -18,6 +18,8 @@ def surface_material(mat,anatomy):
  pigment=next((n for n in nodes if n.type=='VERTEX_COLOR'),None)
  base=p.inputs['Base Color'].default_value[:]
  blend=nodes.new('ShaderNodeMixRGB');blend.blend_type='MULTIPLY';blend.inputs[0].default_value=.42;blend.inputs[1].default_value=base;links.new(ramp.outputs[0],blend.inputs[2])
+ blend.inputs[0].default_value=.22
+ if pigment and mat.name=='Hide':links.new(pigment.outputs['Color'],blend.inputs[1])
  wave=mathnode('SINE',mathnode('ADD',mathnode('MULTIPLY',sep.outputs['X'],8.5),mathnode('MULTIPLY',noise.outputs['Fac'],5)),0)
  mask=mathnode('MULTIPLY',mathnode('GREATER_THAN',wave,.25),mathnode('MAXIMUM',top,.05));shade=nodes.new('ShaderNodeMixRGB');shade.blend_type='MULTIPLY';links.new(mathnode('MULTIPLY',mask,.22),shade.inputs[0]);links.new(blend.outputs[0],shade.inputs[1]);shade.inputs[2].default_value=(.12,.18,.15,1);links.new(shade.outputs[0],p.inputs['Base Color'])
  # Pigment mottling and scales are separate frequencies; no painted lighting.
@@ -25,6 +27,16 @@ def surface_material(mat,anatomy):
  mottled=nodes.new('ShaderNodeMixRGB');mottled.blend_type='MULTIPLY';mottled.inputs[0].default_value=.25;links.new(shade.outputs[0],mottled.inputs[1]);links.new(noise.outputs['Color'],mottled.inputs[2]);links.new(mottled.outputs[0],p.inputs['Base Color'])
  scales=nodes.new('ShaderNodeTexVoronoi');scales.feature='DISTANCE_TO_EDGE';scales.inputs['Scale'].default_value=72;scales.inputs['Randomness'].default_value=.75;links.new(tex.outputs['Object'],scales.inputs['Vector'])
  bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.24;bump.inputs['Distance'].default_value=.006;links.new(scales.outputs['Distance'],bump.inputs['Height']);links.new(bump.outputs['Normal'],p.inputs['Normal'])
+ # Distinct scale beds with tiny pores and larger directional skin creases.
+ scales.inputs['Scale'].default_value=42 if anatomy['family'] in ['tyrannosaur','carnosaur','abelisaur','ankylosaur','ceratopsian','sauropod'] else 64
+ height=mathnode('MINIMUM',mathnode('MULTIPLY',scales.outputs['Distance'],22),1)
+ links.new(mathnode('ADD',height,mathnode('MULTIPLY',flecks.outputs['Fac'],.15)),bump.inputs['Height'])
+ bump.inputs['Strength'].default_value=.46;bump.inputs['Distance'].default_value=.012
+ crease=mathnode('POWER',mathnode('MAXIMUM',mathnode('SINE',mathnode('ADD',mathnode('MULTIPLY',sep.outputs['Z'],62),mathnode('MULTIPLY',noise.outputs['Fac'],9)),0),0),14)
+ folds=nodes.new('ShaderNodeBump');folds.inputs['Strength'].default_value=.23;folds.inputs['Distance'].default_value=.007
+ links.new(crease,folds.inputs['Height']);links.new(bump.outputs['Normal'],folds.inputs['Normal']);links.new(folds.outputs['Normal'],p.inputs['Normal'])
+ # Edge pigmentation follows actual cells, so scale relief remains legible.
+ scale_pigment=nodes.new('ShaderNodeMixRGB');scale_pigment.blend_type='MULTIPLY';links.new(mathnode('MULTIPLY',mathnode('LESS_THAN',scales.outputs['Distance'],.025),.18),scale_pigment.inputs[0]);links.new(mottled.outputs[0],scale_pigment.inputs[1]);scale_pigment.inputs[2].default_value=(.32,.28,.20,1);links.new(scale_pigment.outputs[0],p.inputs['Base Color'])
  links.new(mathnode('ADD',mathnode('MULTIPLY',noise.outputs['Fac'],.21),.64),p.inputs['Roughness'])
  p.inputs['Metallic'].default_value=0
 
@@ -35,7 +47,8 @@ def bake(surface,anatomy,directory):
  mats=list(surface.data.materials);targets=[];outputs={}
  for m in mats:
   if m.name.startswith('Hide'):surface_material(m,anatomy)
- for kind,size in [('Albedo',1024),('Normal',1024),('Roughness',512)]:
+ hero=anatomy['family'] in ['tyrannosaur','carnosaur','abelisaur','spinosaur','dragon','ceratopsian']
+ for kind,size in [('Albedo',2048 if hero else 1024),('Normal',2048 if hero else 1024),('Roughness',1024 if hero else 512)]:
   image=bpy.data.images.new(anatomy['id']+'_'+kind,width=size,height=size,alpha=False);image.colorspace_settings.name='sRGB' if kind=='Albedo' else 'Non-Color'
   image.generated_color=(.5,.5,1,1) if kind=='Normal' else (.35,.35,.35,1)
   for m in mats:
@@ -49,6 +62,7 @@ def bake(surface,anatomy,directory):
   for m,node in targets:m.node_tree.nodes.remove(node)
   targets=[];print('PRIMEVAL_BAKE',anatomy['id'],kind,round(time.time()-started,2),flush=True)
  material=bpy.data.materials.new('Hide_PBR');p=next(n for n in material.node_tree.nodes if n.type=='BSDF_PRINCIPLED');links=material.node_tree.links
+ material['detailVersion']=2
  for kind,socket in [('Albedo','Base Color'),('Roughness','Roughness'),('Normal','Normal')]:
   node=material.node_tree.nodes.new('ShaderNodeTexImage');node.image=outputs[kind]
   if kind=='Normal':normal=material.node_tree.nodes.new('ShaderNodeNormalMap');links.new(node.outputs['Color'],normal.inputs['Color']);links.new(normal.outputs['Normal'],p.inputs[socket])

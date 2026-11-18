@@ -1,4 +1,5 @@
 import { Game } from "./game.js";
+import { claimQuest, chooseStoryEnding } from './quests.js';
 import { SPECIES_BY_ID } from "./data.js";
 import { WORLD_RADIUS, chunkKey } from "./world-data.js";
 import { snapshotGame, restoreGame } from "./run-state.js";
@@ -19,6 +20,8 @@ const commandFields = {
   "apply-mutation": ["mutationId"],
   "close-mutation-choice": [],
   waypoint: ["x", "y"],
+  'claim-quest': ['id'],
+  'story-ending': ['ending'],
 };
 const plain = (v) => v && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
 export function normalizeInput(input = {}) {
@@ -87,6 +90,8 @@ export class LocalAuthority {
       const next = this._sequence(sequence), g = this.game;
       let ok = false;
       switch (command.type) {
+        case 'claim-quest': ok = claimQuest(g,command.id); break;
+        case 'story-ending': ok = chooseStoryEnding(g,command.ending); break;
         case "hatch": ok = g.hatch(command.chosenSpeciesId || null); break;
         case "open-evolution": ok = g.openEvolution(); break;
         case "close-evolution": ok = g.closeEvolution(); break;

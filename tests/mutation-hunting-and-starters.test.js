@@ -117,19 +117,22 @@ test("ultimate attacks are locked for low tier dinosaurs and unlocked by high ti
   const raptor = SPECIES_BY_ID["velociraptor"]; // tier 0
   assert.equal(creatureKit(raptor).special, null, "tier 0 raptor has no ultimate");
 
-  // Unlocked by titansWrath mutation
+  // Early forms keep their small kit even after a rare mutation.
   assert.equal(
     creatureKit(raptor, { titansWrath: 1 }).special,
-    "rending",
-    "titansWrath unlocks species ultimate"
+    null,
+    "titansWrath waits for a developed form"
   );
 
   // Unlocked by astralBehemoth mutation
   assert.equal(
     creatureKit(raptor, { astralBehemoth: 1 }).special,
-    "bolt",
-    "astralBehemoth grants celestial bolt"
+    null,
+    "astralBehemoth waits for a developed form"
   );
+  const developed={...raptor,tier:3};
+  assert.equal(creatureKit(developed,{titansWrath:1}).special,'rending');
+  assert.equal(creatureKit(developed,{astralBehemoth:1}).special,'bolt');
 
   // High tier dinosaurs (Tier 4+ with mastery / Tier 5+)
   const anky = SPECIES_BY_ID["ankylosaurus"]; // tier 4

@@ -3,20 +3,20 @@ import * as THREE from 'three';
 import { biomeAt } from './world-data.js';
 
 export const BIOME_LOOKS={
- fernwood:{ground:0x748163,fog:0x607e79,water:0x315c58},
- savannah:{ground:0xb3a16e,fog:0x99987c,water:0x58716a},
- fen:{ground:0x60746b,fog:0x607d83,water:0x315e63},
- redwood:{ground:0x79765d,fog:0x637e76,water:0x3d6260},
- marsh:{ground:0x6d7872,fog:0x6b7f89,water:0x3c6370},
- desert:{ground:0xc1a57e,fog:0xb3a58a,water:0x668c87},
- frost:{ground:0xb7c4be,fog:0xa0b4c1,water:0x759aab},
- volcano:{ground:0x69615c,fog:0x78605a,water:0x405b5d},
- grove:{ground:0x8e9470,fog:0x819786,water:0x5b7c74},
- sky:{ground:0xa4aaa2,fog:0x9daebd,water:0x72969c},
- graveyard:{ground:0x968e7a,fog:0x8b968b,water:0x567474},
- highlands:{ground:0x879293,fog:0x899ea9,water:0x5a8292},
- peaks:{ground:0x7f888a,fog:0x7a96a3,water:0x476f7f},
- origin:{ground:0x9a967e,fog:0x88988d,water:0x557e78},
+ fernwood:{ground:0x60964e,fog:0x518e82,water:0x238e9b},
+ savannah:{ground:0xc7aa59,fog:0xa5a17b,water:0x319c91},
+ fen:{ground:0x4f8968,fog:0x4d8d98,water:0x257f99},
+ redwood:{ground:0x768b45,fog:0x548d78,water:0x2b9388},
+ marsh:{ground:0x54876a,fog:0x548b9e,water:0x328da3},
+ desert:{ground:0xd6aa68,fog:0xc0a681,water:0x36a59a},
+ frost:{ground:0xb9d5db,fog:0x92c2dd,water:0x479fc1},
+ volcano:{ground:0x79615e,fog:0x945b55,water:0x368b94},
+ grove:{ground:0x7eaa52,fog:0x6b9d84,water:0x369d92},
+ sky:{ground:0xabc5d0,fog:0x94bcd6,water:0x55acba},
+ graveyard:{ground:0x9a9177,fog:0x809b94,water:0x398d91},
+ highlands:{ground:0x759a99,fog:0x7eaac0,water:0x348eaf},
+ peaks:{ground:0x778e9b,fog:0x719fba,water:0x2983aa},
+ origin:{ground:0xa6a166,fog:0x7eaa92,water:0x2f9d91},
 };
 const colors=new Map(Object.entries(BIOME_LOOKS).map(([id,v])=>[id,new THREE.Color(v.ground)]));
 export const biomeLook=id=>BIOME_LOOKS[id]||BIOME_LOOKS.fernwood;
@@ -65,7 +65,7 @@ export function poolMaterial(radius,waterColor=BIOME_LOOKS.fernwood.water,shoreR
       float fresnel=.025+.975*pow(1.0-max(dot(view,n),0.0),5.0);
       float shore=length(p)-uShoreRadius;
       float depth=uShoreRadius>0.0?max(0.0,shore*.32):max(0.0,1.0-pow(radial,1.6))*uRadius*.23;
-      vec3 shallow=mix(uWaterColor,vec3(.27,.39,.30),.55),deep=uWaterColor*.4;
+      vec3 shallow=mix(uWaterColor,vec3(.09,.42,.39),.32),deep=uWaterColor*.4;
       vec3 body=mix(deep,shallow,exp(-depth*.35));
       vec3 reflection=uSky*(.72+.18*n.y);
       vec3 color=mix(body,reflection,fresnel);
@@ -76,7 +76,7 @@ export function poolMaterial(radius,waterColor=BIOME_LOOKS.fernwood.water,shoreR
       float foam=smoothstep(.89,.985,radial)*(1.0-smoothstep(.985,1.0,radial));
       if(uShoreRadius>0.0)foam=(1.0-smoothstep(.25,1.8,abs(shore)))*.7;
       foam*=smoothstep(-.35,.7,crest+sin(atan(vPool.y,vPool.x)*21.0)*.4);
-      color=mix(color,vec3(.66,.76,.65),foam*.55);
+      color=mix(color,vec3(.67,.86,.84),foam*.55);
       if(uDebug>1.5)color=vec3(depth/uRadius);else if(uDebug>.5)color=n*.5+.5;
       gl_FragColor=vec4(color,mix(.93,.65,smoothstep(.85,1.0,radial)));
       #include <tonemapping_fragment>

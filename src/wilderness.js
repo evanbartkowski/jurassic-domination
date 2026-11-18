@@ -158,6 +158,11 @@ function swim(f, game, dt) {
         fish.dead = false;
         fish.maxHp = (50 + (f.tier || 0) * 35)*(MARINE_TRAITS[fish.speciesId]?.hp||1);
         fish.hp = fish.maxHp;
+        fish.deadAt = null;
+        fish.hunting = false;
+        fish.attackWindup = 0;
+        fish.biteReadyUntil = 0;
+        fish.attackCooldown = 1;
       } else {
         continue;
       }

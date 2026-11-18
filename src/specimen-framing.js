@@ -4,6 +4,25 @@ export function visibleSpecimenBounds(model){
  model.traverseVisible(o=>{if(!o.isMesh)return;if(o.isSkinnedMesh)o.computeBoundingBox();else if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();const local=o.isSkinnedMesh?o.boundingBox:o.geometry.boundingBox;if(local)box.union(local.clone().applyMatrix4(o.matrixWorld));});
  return box;
 }
+/** Head-weighted vertices keep face inspection independent of tails and wings. */
+export function specimenHeadBounds(model){
+ model.updateMatrixWorld(true);
+ const box=new THREE.Box3(),point=new THREE.Vector3();
+ model.traverseVisible(mesh=>{
+  if(!mesh.isSkinnedMesh)return;
+  const {position,skinIndex,skinWeight}=mesh.geometry.attributes;
+  if(!skinIndex||!skinWeight)return;
+  mesh.skeleton.update();
+  const headBones=new Set(mesh.skeleton.bones.map((bone,index)=>['head','jaw'].includes(bone.name)?index:-1).filter(index=>index>=0));
+  for(let i=0;i<position.count;i++){
+   let weight=0;
+   for(let j=0;j<4;j++)if(headBones.has(skinIndex.getComponent(i,j)))weight+=skinWeight.getComponent(i,j);
+   if(weight<.65)continue;
+   mesh.getVertexPosition(i,point);mesh.localToWorld(point);box.expandByPoint(point);
+  }
+ });
+ return box;
+}
 /** Perspective-correct fit includes depth, oblique view and the camera far plane. */
 export function fitSpecimenCamera(camera,model,{padding=1.22,direction=new THREE.Vector3(.25,.18,1),orbit=false}={}){
  const box=model.isBox3?model.clone():visibleSpecimenBounds(model);if(box.isEmpty())return box;

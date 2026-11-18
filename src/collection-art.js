@@ -444,7 +444,7 @@ export function createShopObject(item, profile) {
   if (item.kind === "decoration") return createDecoration(item.id);
   if (item.kind === "pet") return createPet(item.id);
   const root = createDinosaur(
-    SPECIES_BY_ID.tyrannosaurus,
+    SPECIES_BY_ID[profile.previewSpeciesId]||SPECIES_BY_ID.tyrannosaurus,
     true,
     item.kind === "skin" ? item.id : profile.equippedSkin,
   );
@@ -460,6 +460,7 @@ export class CollectionViewer extends SpecimenViewer {
     this.setProduct(item, profile);
   }
   setProduct(item, profile) {
+    this.zoom=1;this.faceMode=false;
     this.scene.remove(this.model);
     this.model.userData.dispose();
     this.model = createShopObject(item, profile);
@@ -471,9 +472,10 @@ export class CollectionViewer extends SpecimenViewer {
   }
   render(dt) {
     this.time += dt;
-    if (!this.dragging&&!this.quietMotion) this.model.rotation.y += dt * 0.18;
+    if (!this.dragging&&!this.quietMotion&&!this.faceMode) this.model.rotation.y += dt * 0.18;
     if (this.model.userData.species)
       animateCreature(this.model, dt, this.time, 0);
+    this.applyInspection();
     this.renderer.render(this.scene, this.camera);
   }
 }

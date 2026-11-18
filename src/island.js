@@ -6,6 +6,7 @@ import { seeded } from "./world-data.js";
 import { placementValid } from "./collections.js";
 import { poolMaterial } from './environment-presentation.js';
 import {naturalMaterial,naturalTextures,createNaturalEnvironment} from './natural-materials.js';
+import {islandProgress} from './account-progression.js';
 
 export class IslandScene {
   constructor(canvas, profile, callbacks, settings) {
@@ -164,6 +165,8 @@ export class IslandScene {
     this.selection.rotation.x = -Math.PI / 2;
     this.selection.visible = false;
     this.scene.add(this.selection);
+    this.habitatBoundary=new THREE.Mesh(new THREE.RingGeometry(.994,1,128),new THREE.MeshBasicMaterial({color:0xd3c68c,transparent:true,opacity:.7,side:THREE.DoubleSide,depthWrite:false}));
+    this.habitatBoundary.rotation.x=-Math.PI/2;this.habitatBoundary.position.y=.37;this.habitatBoundary.visible=false;this.scene.add(this.habitatBoundary);this.staticOwned.push(this.habitatBoundary);
     this.fixed = [];
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * Math.PI * 2,
@@ -304,6 +307,8 @@ export class IslandScene {
   }
   sync(profile) {
     this.profile = profile;
+    this.habitatBoundary.scale.setScalar(islandProgress(profile).radius);
+    this.habitatBoundary.visible=this.buildMode;
     const seen = new Set();
     this.grid.visible = this.buildMode && profile.island.grid;
     for (const p of profile.island.placements) {
@@ -346,6 +351,7 @@ export class IslandScene {
   }
   setBuildMode(enabled) {
     this.buildMode = enabled;
+    this.habitatBoundary.visible=enabled;
     this.cancelTool();
     this.grid.visible = enabled && this.profile.island.grid;
     this.canvas

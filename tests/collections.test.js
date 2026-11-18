@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { newProfile, normalizeProfile, recordRun, PROFILE_VERSION } from "../src/profile.js";
 import { SHOP_ITEMS, PETS, DECORATIONS } from "../src/collection-data.js";
+import {xpForLevel,MAX_ACCOUNT_LEVEL} from '../src/account-progression.js';
+function unlockedProfile(){const p=newProfile();p.account.xp=xpForLevel(MAX_ACCOUNT_LEVEL);p.account.rewardedLevel=MAX_ACCOUNT_LEVEL;return p;}
 import {
   purchaseItem,
   awardRareDNA,
@@ -14,13 +16,14 @@ import {
   equipPet,
   equipCosmetic,
 } from "../src/collections.js";
-test("all 49 catalog items have unique valid prices and can be purchased", () => {
-  const p = newProfile();
+test("the expanded catalogue has unique prices; nonexclusive items can be purchased", () => {
+  const p = unlockedProfile();
   p.dna = 10000;
-  assert.equal(SHOP_ITEMS.length, 49);
-  assert.equal(new Set(SHOP_ITEMS.map((i) => i.sku)).size, 49);
+  assert.ok(SHOP_ITEMS.length>=85);
+  assert.equal(new Set(SHOP_ITEMS.map((i) => i.sku)).size, SHOP_ITEMS.length);
   for (const item of SHOP_ITEMS) {
     const before = p.dna;
+    if(item.source==='crate'){assert.equal(purchaseItem(p,item.sku).ok,false);assert.equal(p.dna,before);continue;}
     assert.ok(purchaseItem(p, item.sku).ok, item.sku);
     assert.equal(p.dna, before - item.price);
   }
@@ -28,7 +31,7 @@ test("all 49 catalog items have unique valid prices and can be purchased", () =>
   assert.equal(Object.keys(p.decorations).length, 17);
 });
 test("purchases reject insufficient DNA, forged ids and duplicate pets without charging", () => {
-  const p = newProfile();
+  const p = unlockedProfile();
   assert.equal(purchaseItem(p, "pet:compy").ok, false);
   p.dna = 100;
   assert.ok(purchaseItem(p, "pet:compy").ok);
@@ -83,13 +86,14 @@ test("v2 saves preserve currency, progression and claimed milestones", () => {
     skins: ["natural", "obsidian"],
   });
   checkAchievements(p);
-  assert.equal(p.dna, 37);
+  assert.equal(p.dna, 40, 'the previous balance plus the new level-two migration reward');
+  assert.equal(normalizeProfile(p).dna,p.dna,'migration rewards are issued once');
   assert.equal(p.upgrades.vitality, 2);
   assert.ok(p.claimedAchievements.includes("first-evolution"));
   assert.equal(p.version, PROFILE_VERSION);
 });
 test("island validates owned copies, collisions, finite coordinates and shores", () => {
-  const p = newProfile();
+  const p = unlockedProfile();
   p.dna = 100;
   purchaseItem(p, "pet:compy");
   purchaseItem(p, "decoration:fern");
@@ -114,7 +118,7 @@ test("island validates owned copies, collisions, finite coordinates and shores",
   assert.ok(p.pets.includes("compy"));
 });
 test("island save migration removes invalid placements without losing owned inventory", () => {
-  const p = newProfile();
+  const p = unlockedProfile();
   p.pets = ["compy"];
   p.decorations.fern = 2;
   placeIslandItem(p, "pet", "compy", 0, 0);

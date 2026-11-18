@@ -1,11 +1,11 @@
 {
   "id": "quetzalcoatlus",
   "family": "pterosaur",
-  "triangles": 22144,
+  "triangles": 27376,
   "bones": 18,
   "dimensions": [
-    4.404402256011963,
-    3.134490966796875,
+    4.405764579772949,
+    3.146758794784546,
     5.692154884338379
   ],
   "clips": [
@@ -22,7 +22,9 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "Surface_LOD0: duplicate verts=4 loose verts=0"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
@@ -30,9 +32,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11110,
-        "faces": 22144,
-        "tris": 22144,
+        "verts": 13946,
+        "faces": 27376,
+        "tris": 27376,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -41,8 +43,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 19,
+        "duplicate_verts": 4,
+        "islands": 129,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,29 +58,12 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 31.8
+        "uv_coverage_pct": 28.4
       }
     }
   },
-  "attachmentShifts": [
-    {
-      "part": "Claw",
-      "distance": 0.0232
-    },
-    {
-      "part": "Claw.001",
-      "distance": 0.0224
-    },
-    {
-      "part": "Claw.004",
-      "distance": 0.0225
-    },
-    {
-      "part": "Claw.005",
-      "distance": 0.0227
-    }
-  ],
-  "bytes": 3069860,
+  "attachmentShifts": [],
+  "bytes": 4287732,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -97,22 +82,31 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 7970,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 9854,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": -0.0007,
+    "ground_z": -0.0008,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4023,
-        "faces": 7970,
-        "tris": 7970,
+        "verts": 5185,
+        "faces": 9854,
+        "tris": 9854,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -122,7 +116,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 19,
+        "islands": 129,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -136,7 +130,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 31.7
+        "uv_coverage_pct": 28.1
       }
     }
   }

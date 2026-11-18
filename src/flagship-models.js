@@ -3,15 +3,21 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone } from 'three/addons/utils/SkeletonUtils.js';
 import { SPECIES, SPECIES_BY_ID } from './data.js';
 import { SKINS } from './content.js';
+import {applyDinosaurSkin} from './skin-materials.js';
+import {naturalPaletteForSpecies} from './creature-palettes.js';
 import { anatomyForSpecies } from './anatomy.js';
 import primevalAssets from './primeval-assets.json' with {type:'json'};
 import referenceAssets from './reference-assets.json' with {type:'json'};
 import {creatureAssetCandidates} from './creature-asset-paths.js';
+import {naturalGaitClips,prepareSecondaryMotion,removeSecondaryMotion,applySecondaryMotion} from './creature-motion.js';
+import {AssetPreparationQueue} from './asset-preparation-queue.js';
+const preparations=new AssetPreparationQueue(fn=>typeof requestAnimationFrame==='function'?requestAnimationFrame(fn):queueMicrotask(fn));
 const primevalIds=new Set(primevalAssets);
 
 export const FLAGSHIP_SPECIES_IDS = new Set(['velociraptor','tyrannosaurus','triceratops','spinosaurus','ankylosaurus','stegosaurus','brachiosaurus','compsognathus','carnotaurus','dilophosaurus']);
 const cache = new Map(), pending = new Map();
 const references=new WeakMap(),CACHE_TARGET=24;
+const normalizationBounds=new WeakMap();
 function trimCache(){
  for(const [url,gltf]of cache){if(cache.size<=CACHE_TARGET)break;if((references.get(gltf)||0)>0)continue;
   cache.delete(url);const geometries=new Set(),materials=new Set(),textures=new Set();gltf.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){materials.add(m);for(const value of Object.values(m))if(value?.isTexture)textures.add(value);}});for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of textures){t.dispose();t.image?.close?.();}
@@ -53,7 +59,8 @@ function anatomicalBump(){
 
 export function getFlagshipGLTF(id, onLoaded) {
   if (typeof window === 'undefined' || !ANATOMY_SPECIES_IDS.has(id)) return;
-  const candidates=creatureAssetCandidates(id,import.meta.env?.BASE_URL || './',referenceAssets);
+  const candidates=creatureAssetCandidates(id,import.meta.env?.BASE_URL || './',referenceAssets,{legacy:import.meta.env?.MODE!=='web'});
+  if(!candidates.length)return;
   const url=candidates[0];
   if (cache.has(url)) {const gltf=cache.get(url);cache.delete(url);cache.set(url,gltf);onLoaded?.(gltf);trimCache();return; }
   if (pending.has(url)) { if (onLoaded) pending.get(url).push(onLoaded); return; }
@@ -78,19 +85,22 @@ export function prepareFlagshipAsset(gltf, targetLength) {
     if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
   });
   root.add(surface); root.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(surface);
+  let box = normalizationBounds.get(gltf);
+  if(!box){box=new THREE.Box3().setFromObject(surface);normalizationBounds.set(gltf,box);}
   const length = box.getSize(new THREE.Vector3()).x;
   const factor = targetLength / Math.max(.001, length);
   surface.scale.setScalar(factor);
   surface.position.set(-(box.min.x + box.max.x) * .5 * factor, -box.min.y * factor, -(box.min.z + box.max.z) * .5 * factor);
   const mixer = new THREE.AnimationMixer(surface), actions = {};
-  for (const clip of gltf.animations || []) {
+  for (const clip of version>=4?naturalGaitClips(surface,gltf.animations||[]):gltf.animations||[]) {
     const name = clip.name.split('_').at(-1);
     actions[name] = mixer.clipAction(clip).setEffectiveWeight(0).play();
   }
   actions.Idle?.setEffectiveWeight(1);
   const detailMeshes=[[],[]];surface.traverse(o=>{if(o.isMesh&&/Surface_LOD[01]/.test(o.name))detailMeshes[/LOD1/.test(o.name)?1:0].push(o);});
-  return { root, surface, mixer, actions, version, detailMeshes };
+  const phase=[...root.uuid].reduce((n,c)=>n+c.charCodeAt(0),0)*.13;
+  for(const [name,action] of Object.entries(actions))if(!['Attack','Hit','Death'].includes(name))action.time=phase%action.getClip().duration;
+  return { root, surface, mixer, actions, version, detailMeshes,secondary:prepareSecondaryMotion(surface,phase) };
 }
 
 export function setCreatureDetail(model,level=0){const asset=model.userData?.flagshipAsset;if(!asset?.detailMeshes?.[1].length)return;level=level?1:0;if(asset.detailLevel===level)return;asset.detailLevel=level;for(let i=0;i<2;i++)for(const mesh of asset.detailMeshes[i])mesh.visible=i===level;}
@@ -101,7 +111,9 @@ export function cloneAnatomyMaterial(original,data,skin){
  if(/^Hide/.test(original.name)){
   if(data.version>=4){
    material.vertexColors=false;material.metalness=0;
-   if(data.skinId!=='natural')material.color.lerp(new THREE.Color(skin.color??data.species.color),.72);
+   material.bumpMap=original.userData?.detailVersion>=2?null:anatomicalBump();material.bumpScale=.012;
+   if(material.normalScale)material.normalScale.setScalar(original.userData?.detailVersion>=2?1:1.35);
+   if(data.skinId!=='natural'){if(!skin.pattern)material.color.lerp(new THREE.Color(skin.color??data.species.color),.72);}
    else if(data.species.color!==SPECIES_BY_ID[data.species.id]?.color&&SPECIES_BY_ID[data.species.id])material.color.lerp(new THREE.Color(data.species.color),.58);
    const pigment=Number(data.genomeKey?.split(':')[0])||0;material.color.multiplyScalar(1+pigment*.012);
    const pattern=data.genomeKey?.split(':')[1];
@@ -121,6 +133,16 @@ export function cloneAnatomyMaterial(original,data,skin){
   }
   if(data.eventLook==='molten'){material.vertexColors=false;material.color.setHex(0x171719);material.map=null;material.emissive.setHex(0xff6a16);material.emissiveMap=moltenCracks();material.emissiveIntensity=2.4;material.roughness=.92;}
  }
+ if(/^Hide/.test(original.name)&&data.eventLook!=='molten'){
+  if(data.skinId==='natural'){
+   const palette=naturalPaletteForSpecies(data.species);
+   if(palette){
+    const color=new THREE.Color(palette.color),pigment=Number(data.genomeKey?.split(':')[0])||0;
+    if(SPECIES_BY_ID[data.species.id]&&data.species.color!==SPECIES_BY_ID[data.species.id].color)color.lerp(new THREE.Color(data.species.color),.45);
+    color.offsetHSL(pigment*.012,0,0);applyDinosaurSkin(material,{...palette,color:color.getHex()});material.userData.naturalPalette=data.species.id;
+   }
+  }else applyDinosaurSkin(material,skin);
+ }
  if(data.eventLook==='molten'&&/Eye|Horn|Spine/i.test(original.name)){material.emissive?.setHex(0xff5b08);material.emissiveIntensity=1.5;}
  return material;
 }
@@ -136,8 +158,15 @@ export function updateFlagshipAnimation(asset, dt, speed = 0, attacking = false,
   const move = Math.min(1, speed), run = THREE.MathUtils.smoothstep(speed, .65, 1.3);
   if(asset.hitActive&&!actions.Hit?.isRunning())asset.hitActive=false;
   const weights = reaction.dead&&actions.Death?{Death:1}:asset.hitActive?{Hit:1}:sleeping ? { Rest: 1 } : attacking && actions.Attack ? { Attack: 1 } : feeding && actions.Graze ? { Graze: 1 } : { Idle: 1 - move, Walk: move * (1 - run), Run: move * run };
-  for (const [name, action] of Object.entries(actions)) action.setEffectiveWeight(THREE.MathUtils.damp(action.getEffectiveWeight(), weights[name] || 0, 10, dt));
-  mixer.timeScale = attacking?(asset.version>=4?4.7:2.1):sleeping ? .7 : asset.gaitRate&&speed>.1?asset.gaitRate:.8 + Math.min(1.6, speed) * .45;
+  for (const [name, action] of Object.entries(actions)) {
+    let weight=THREE.MathUtils.damp(action.getEffectiveWeight(),weights[name]||0,14,dt);
+    if(!weights[name]&&weight<.001)weight=0;
+    action.enabled=weight>0;action.setEffectiveWeight(weight);
+    action.setEffectiveTimeScale(name==='Attack'?(asset.version>=4?5.8:2.1):['Walk','Run'].includes(name)?asset.gaitRate||1:name==='Rest'?.6:.85);
+  }
+  // Keep walk/run at the same contact phase even when one action has been disabled.
+  if(actions.Walk&&actions.Run){const lead=run>.5?actions.Run:actions.Walk,follow=run>.5?actions.Walk:actions.Run;follow.time=lead.time/lead.getClip().duration*follow.getClip().duration;}
+  mixer.timeScale = 1;
   mixer.update(Math.min(.1, dt));
 }
 
@@ -145,6 +174,8 @@ export function tryAttachFlagshipGLB(model, speciesId) {
   // Preserve the established custom skins and inherited marking materials.
   if (!model || !ANATOMY_SPECIES_IDS.has(speciesId)) return;
   const data = model.userData;
+  if(data.assetRequested)return;
+  data.assetRequested=true;
   const originalDispose = data.dispose;
   if (!data.flagshipDisposeWrapped) {
     data.flagshipDisposeWrapped = true;
@@ -161,12 +192,14 @@ export function tryAttachFlagshipGLB(model, speciesId) {
     };
   }
   getFlagshipGLTF(speciesId, gltf => {
-    if (data.artDisposed || model.userData !== data || data.species?.id !== speciesId || data.flagshipAsset) return;
+   references.set(gltf,(references.get(gltf)||0)+1);
+   preparations.enqueue(() => {
+    if (data.artDisposed || model.userData !== data || data.species?.id !== speciesId || data.flagshipAsset) {references.set(gltf,Math.max(0,(references.get(gltf)||1)-1));trimCache();return;}
     // Root already carries species size and individual growth; normalize once.
     const profile=anatomyForSpecies(data.species);
     const targetLength = profile.length;
     const asset = prepareFlagshipAsset(gltf, targetLength);
-    data.flagshipTemplate=gltf;references.set(gltf,(references.get(gltf)||0)+1);
+    data.flagshipTemplate=gltf;
     const skin=SKINS.find(s=>s.id===data.skinId)||SKINS[0],materials=new Map();
     asset.surface.traverse(o=>{
       if(!o.material)return;
@@ -178,10 +211,10 @@ export function tryAttachFlagshipGLB(model, speciesId) {
       o.material=Array.isArray(o.material)?o.material.map(shade):shade(o.material);
     });
     data.anatomyMaterials=[...materials.values()];data.anatomyProfile=profile;
-    data.flagshipAsset = asset; data.glbContainer = asset.root; data.isGLB = true;
-    data.body.visible = false; model.add(asset.root);
+    data.flagshipAsset = asset; data.glbContainer = asset.root;
+    data.isGLB = !data.prepareAsset;data.body.visible=!data.isGLB;asset.root.visible=data.isGLB;model.add(asset.root);
     const head=asset.surface.getObjectByName('head');
-    if(head){
+    if(head&&data.cosmetic){
       model.updateMatrixWorld(true);const anchor=new THREE.Group();anchor.name='Cosmetic_attachment';head.add(anchor);
       const orientation=model.getWorldQuaternion(new THREE.Quaternion()),position=head.getWorldPosition(new THREE.Vector3());
       position.add(new THREE.Vector3(profile.skull[0]*.24,profile.skull[2]*.86,0).multiply(model.getWorldScale(new THREE.Vector3())).applyQuaternion(orientation));
@@ -193,17 +226,23 @@ export function tryAttachFlagshipGLB(model, speciesId) {
       anchor.position.copy(head.worldToLocal(position));anchor.quaternion.copy(head.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(orientation));
       anchor.scale.setScalar(Math.max(.4,Math.min(1,profile.skull[1]/.3)));data.cosmeticAnchor=anchor;if(data.cosmetic){data.cosmetic.position.y=-.05;anchor.add(data.cosmetic);}
     }
-    data.onAssetReady?.();
+    const reveal=()=>{if(data.artDisposed||data.flagshipAsset!==asset)return;data.isGLB=true;data.body.visible=false;asset.root.visible=true;data.onAssetReady?.();};
+    if(data.prepareAsset)Promise.resolve(data.prepareAsset(asset.root)).then(reveal,()=>{if(!data.artDisposed)data.assetPreparationFailed=true;});
+    else reveal();
+   },!!data.assetPriority);
   });
 }
 
 export function animateFlagshipGLB(model, dt, time, speed, attacking, turn) {
   const d = model.userData;
   if (!d?.flagshipAsset) return;
-  if(d.flagshipAsset.version>=4){const scale=model.getWorldScale(new THREE.Vector3()).x,stride=(d.anatomyProfile?.hip||1.3)*scale*2.4;d.flagshipAsset.gaitRate=THREE.MathUtils.clamp((d.worldSpeed||0)/Math.max(.1,stride)*2,.8,8);}
+  if(d.flagshipAsset.version>=4){const stride=(d.anatomyProfile?.hip||1.3)*model.scale.x*2.4;d.flagshipAsset.gaitRate=THREE.MathUtils.clamp((d.worldSpeed||0)/Math.max(.1,stride)*2,.65,3.6);}
+  removeSecondaryMotion(d.flagshipAsset.secondary);
   updateFlagshipAnimation(d.flagshipAsset, dt, speed, attacking, d.isSleeping, d.isFeeding,{hit:d.hitReaction,dead:d.isDead});
+  d.attackFollow=THREE.MathUtils.damp(d.attackFollow||0,attacking?1:0,attacking?28:9,dt);
+  applySecondaryMotion(d.flagshipAsset.secondary,dt,speed,turn,d.attackFollow,d.isSleeping||d.isFeeding,d.isDead);
   const root = d.glbContainer;
   root.rotation.y = THREE.MathUtils.damp(root.rotation.y, attacking&&d.combatKind==='tail-sweep'?Math.sin(d.flagshipAsset.mixer.time*8)*.65:-turn*.07, 8, dt);
   root.rotation.z = THREE.MathUtils.damp(root.rotation.z,d.combatWindup?-.035:0,8,dt);
-  root.position.x = THREE.MathUtils.damp(root.position.x, attacking ? .12 : 0, 12, dt);
+  root.position.x = THREE.MathUtils.damp(root.position.x, attacking ? .22 : 0, attacking?24:9, dt);
 }

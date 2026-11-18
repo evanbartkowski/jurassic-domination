@@ -1,12 +1,12 @@
 {
   "id": "tideweaver",
   "family": "plesiosaur",
-  "triangles": 24196,
+  "triangles": 29428,
   "bones": 14,
   "dimensions": [
-    5.48466682434082,
-    1.1753110885620117,
-    3.181265354156494
+    5.485890865325928,
+    1.1870651245117188,
+    3.181265115737915
   ],
   "clips": [
     "Idle",
@@ -22,17 +22,24 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (1 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 1
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12190,
-        "faces": 24196,
-        "tris": 24196,
+        "verts": 15026,
+        "faces": 29428,
+        "tris": 29428,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +49,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 46,
+        "islands": 156,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,12 +63,21 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 48.6
+        "uv_coverage_pct": 41.6
       }
     }
   },
-  "attachmentShifts": [],
-  "bytes": 3226380,
+  "attachmentShifts": [
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0233
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0233
+    }
+  ],
+  "bytes": 4711828,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -80,7 +96,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8710,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10594,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -93,9 +118,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4447,
-        "faces": 8710,
-        "tris": 8710,
+        "verts": 5609,
+        "faces": 10594,
+        "tris": 10594,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -105,7 +130,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 46,
+        "islands": 156,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -119,7 +144,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 48.1
+        "uv_coverage_pct": 41.1
       }
     }
   }

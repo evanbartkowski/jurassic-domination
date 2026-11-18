@@ -1,3 +1,11 @@
+import './quests.css';
+import './account.css';
+import './creature-detail.css';
+import './loot.css';
+import {grantCrate,grantTreasure,openCrate} from './loot.js';
+import {CRATE_TYPES,TREASURES} from './loot-data.js';
+import {syncAccountProgress,syncSanctuaryProgress,featureAccess} from './account-progression.js';
+import {plantHealth} from './plant-health.js';
 import "./style.css";
 import "./world-ui.css";
 import "./expansion.css";
@@ -11,6 +19,9 @@ import './presentation.css';
 import './player-polish.css';
 import './grimwild.css';
 import './frontier.css';
+import './boot-screen.css';
+import './vibrant.css';
+import './hud-focus.css';
 import { actionHeld, gamepadIntent, keyLabel, DEFAULT_BINDINGS } from "./controls.js";
 import { ancestryOptions } from './ancestry.js';
 import { worldStatus } from './world-events.js';
@@ -30,6 +41,7 @@ import { UI } from "./ui.js";
 import { presentationIcon } from './presentation.js';
 import { FramePacer,advanceLearning,normalizeLearning,LESSONS } from './player-experience.js';
 import { AudioEngine } from "./audio.js";
+import {pickupSound,eventSound} from './audio-presentation.js';
 import {
   purchaseUpgrade,
   recordRun,
@@ -111,6 +123,16 @@ let pendingIslandBuild = false;
 let handlingEvents = false, pendingSave = false, autosaveElapsed = 0, lastSaveFailed = false;
 const pendingTerminalIds = new Set();
 let settingsSaveTimer = null;
+function bankAccountProgress(){
+  const expedition=syncAccountProgress(profile,game||suspendedGame),sanctuary=syncSanctuaryProgress(profile);
+  const result={...expedition,earned:expedition.earned+sanctuary.earned,toLevel:sanctuary.toLevel,rewards:[...expedition.rewards,...sanctuary.rewards],dna:expedition.dna+sanctuary.dna};
+  if(result.earned){pendingSave=true;ui?.updateProfile(profile);}
+  if(result.toLevel>result.fromLevel){
+    if(game)game.earnedDNA+=result.dna;
+    ui?.accountLevelUp(result);
+  }
+  return result;
+}
 const islandUndo = [],
   islandRedo = [];
 function settleAchievements(progress = {}) {
@@ -137,6 +159,7 @@ function islandState(
   ui?.refreshIslandInventory(profile, state);
 }
 function openIsland(tool = null) {
+  if(!featureAccess(profile,'island').unlocked){ui?.toast('Dinosaur Island opens at account level 3.');return false;}
   if (game && game.state !== "dead" && !checkpointAndSuspend()) return;
   clearWorldFeedback();
   game = null;
@@ -152,6 +175,7 @@ function openIsland(tool = null) {
   audio.setMode("menu");
 }
 function islandAction(action, payload = {}) {
+  if(!featureAccess(profile,'island').unlocked)return {ok:false,reason:'Dinosaur Island opens at account level 3.'};
   if (
     action === "build" &&
     (!islandScene ||
@@ -298,6 +322,7 @@ function runSummary() {
   } : null;
 }
 function persist(options = {}) {
+  bankAccountProgress();
   if (options.terminalRunId) {
     pendingTerminalIds.add(options.terminalRunId);
     if (!profile.completedRuns.includes(options.terminalRunId)) profile.completedRuns.push(options.terminalRunId);
@@ -436,6 +461,7 @@ function clearWorldFeedback() {
 function completeDeath() {
   if (!game || game.state !== "dead" || recorded) return;
   recorded = true;
+  bankAccountProgress();
   const result = game.getResults(), before = profile.dna;
   result.runId = game.runId;
   recordRun(profile, result);
@@ -463,6 +489,8 @@ async function fullscreen() {
 }
 ui = new UI(
   {
+    quest:(type,payload)=>{const result=authority?.dispatch({type,...payload});if(result?.ok){processEvents();persist();}return result;},
+    questTrack:id=>{const site=LANDMARKS.find(s=>s.id===id);if(site&&authority?.dispatch({type:'waypoint',x:site.x,y:site.y}).ok){persist();ui.toast(site.name+' marked on your map.');}},
     transition:()=>{clearInputs();pointerBlockUntil=performance.now()+120;},
     learning:action=>{profile.onboarding=action==='reset'?normalizeLearning():{...profile.onboarding,skipped:true};persist();},
     checkpoint:()=>persist(),
@@ -587,6 +615,12 @@ ui = new UI(
         if (game) game.skinId = id;
       }
     },
+    openCrate:(id)=>{
+      const before=structuredClone(profile),result=openCrate(profile,id);
+      if(!result.ok)return result;
+      if(!persist()){Object.assign(profile,before);ui.updateProfile(profile);return {ok:false,reason:'The crate could not be saved. It remains sealed; try again after saving works.'};}
+      ui.updateProfile(profile);audio.play('evolve');return result;
+    },
     purchase: (sku) => {
       const result = purchaseItem(profile, sku);
       if (result.ok) {
@@ -681,9 +715,9 @@ matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',applySe
 const appRoot=document.getElementById('app');
 window.addEventListener('pointerdown',()=>unlock(),{passive:true});
 window.addEventListener('keydown',event=>{if(!event.repeat)unlock();},{passive:true});
-appRoot.addEventListener('click',event=>{if(event.target.closest('button,input,select'))audio.uiCue('click');});
-appRoot.addEventListener('pointerover',event=>{if(event.target.closest('button')&&!event.target.closest('button')?.disabled)audio.uiCue('hover');});
-appRoot.addEventListener('focusin',()=>audio.uiCue('hover'));
+appRoot.addEventListener('click',event=>{const control=event.target.closest('button,input,select');if(control&&!control.disabled)audio.uiCue('click');});
+appRoot.addEventListener('pointerover',event=>{const button=event.target.closest('button');if(button&&!button.disabled&&event.relatedTarget?.closest?.('button')!==button)audio.uiCue('hover');});
+appRoot.addEventListener('focusin',event=>{const button=event.target.closest('button');if(button&&!button.disabled)audio.uiCue('hover');});
 if (storageFailed)
   ui.toast(
     loadError || "Some local data could not be read. Valid legacy progress was preserved.",
@@ -1017,7 +1051,8 @@ function updateWorldUI() {
   if (!visible || !world) return;
   const weather = worldStatus(game), body = survivalStatus(game), discovery = discoveryStatus(game);
   const timeLabel = weather.timeOfDay?.label ? ` · ${weather.timeOfDay.label.toUpperCase()}` : '';
-  document.getElementById('environment-weather').textContent = `${weather.season.toUpperCase()}${timeLabel} · ${weather.label} · ${Math.round(weather.temperature)}°C`;
+  document.getElementById('environment-weather').textContent = `${weather.label} · ${Math.round(weather.temperature)}°C`;
+  environmentPanel.title=`${weather.season}${timeLabel} · ${body.label} · ${Math.round(body.cover*100)}% cover · ${Math.round(body.fatigue)}% fatigue. Open the field journal for discoveries and survival details.`;
   document.getElementById('environment-body').textContent = `${body.label} · ${Math.round(body.cover*100)}% COVER · ${Math.round(body.fatigue)}% FATIGUE${body.strain>0?' · STRAIN '+Math.ceil(body.strain)+'s':''}`;
   document.getElementById('environment-body').classList.toggle('exposed',Math.abs(body.temperature)>.65);
   document.getElementById('environment-discovery').textContent = discovery.next ? `${discovery.found}/${discovery.total} SITES · ${discovery.next.direction.toUpperCase()} ${Math.round(discovery.next.distance)}m · ${keyLabel(settings.controls.crouch)} STALK / DIVE` : 'ALL ANCIENT SITES DISCOVERED';
@@ -1035,7 +1070,7 @@ function updateWorldUI() {
     : region.tier < game.tier
       ? `SEEK LEVEL ${game.tier + 1} FOOD · ${Math.round(meters)}m OUTWARD`
       : `REGION LEVEL ${region.tier + 1} · ${region.description}`;
-  route.hidden = mapExpanded;
+  route.hidden = mapExpanded||!target;
   document.getElementById("hud-technique").closest(".ability-key").hidden = !game.kit.technique;
   document.getElementById("hud-technique").textContent =
     TECHNIQUES[game.kit.technique]?.name.toUpperCase() || "";
@@ -1115,6 +1150,8 @@ function updateWorldUI() {
                   : "E - EXCEPTIONALLY RARE FOSSIL - permanent discovery";
     if (nearby.type === "lineage-fruit")
       prompt.textContent = `E - ${nearby.fruit === "sunheart" ? "SUNHEART" : "MOONDROP"} FRUIT - rare bloodline ingredient`;
+    if(nearby.type==='supply-crate')prompt.textContent=`${keyLabel(settings.controls.eat)} · RECOVER ${CRATE_TYPES[nearby.crateType].name.toUpperCase()} · OPEN LATER IN TREASURES`;
+    if(nearby.type==='treasure')prompt.textContent=`${keyLabel(settings.controls.eat)} · ${TREASURES[nearby.findId].name.toUpperCase()} · ${TREASURES[nearby.findId].dna.join('–')} DNA + ACCOUNT XP`;
     if (["plant", "meat", "essence"].includes(nearby.type))
       prompt.textContent = canEatFood(game.species, nearby)
         ? `E · ${foodLabel(nearby).toUpperCase()} · LEVEL ${(nearby.tier || 0) + 1} FOOD`
@@ -1133,7 +1170,18 @@ function updateWorldUI() {
   }
   prompt.textContent = prompt.textContent.replace(/^E(?=\s)/, keyLabel(settings.controls?.eat || DEFAULT_BINDINGS.eat));
 }
-function updateCreatureLabels() {
+let nextLabelRefresh=0;
+function updateCreatureLabels(){
+  const now=performance.now();
+  if(now>=nextLabelRefresh||!game||game.state!=='playing'||ui.view!=='hud'){refreshCreatureLabels();nextLabelRefresh=now+100;}
+  if(!world)return;
+  for(const element of labels.values()){
+    const anchor=element.worldAnchor;if(!anchor)continue;
+    const pos=world.project(anchor.x,anchor.y,element.worldHeight);
+    element.style.transform=`translate(${pos.x}px,${pos.y}px)`;element.style.opacity=pos.visible?1:0;
+  }
+}
+function refreshCreatureLabels() {
   if (!game || !world || ui.view !== "hud" || game.state !== "playing") {
     if (labels.size > 0) {
       for (const [, element] of labels) element.remove();
@@ -1143,12 +1191,12 @@ function updateCreatureLabels() {
   }
   const p = game.player,
     near = game.entities
-      .filter((e) => Math.hypot(e.x - p.x, e.y - p.y) < 32)
+      .filter((e) => e.hp>0&&!e.dead&&Math.hypot(e.x-p.x,e.y-p.y)<32&&(e.boss||e.eliteMutation||e.aggro>0||e.hp<e.maxHp*.85||Math.hypot(e.x-p.x,e.y-p.y)<14))
       .sort(
         (a, b) =>
           Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y),
       )
-      .slice(0, 18),
+      .slice(0, 8),
     seen = new Set();
   for (const e of near) {
     seen.add(e.id);
@@ -1180,17 +1228,30 @@ function updateCreatureLabels() {
     }
     const nameEl = element.querySelector(".creature-name") || element.querySelector("span");
     if (nameEl) {
-      nameEl.textContent = `${e.boss ? "ALPHA · " : e.eliteMutation ? `${e.eliteMutation.toUpperCase()} · ` : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " - " + growthName(e.growth) : ""}${threat.isInjured ? " · INJURED" : ""}`;
+      nameEl.textContent = `${e.boss ? "ALPHA · " : e.juvenile ? "JUVENILE · " : ""}${species.name}${(e.growth || 0) >= 0.5 ? " · " + growthName(e.growth) : ""}`;
     }
     const hpBar = element.querySelector("i");
     if (hpBar) {
       hpBar.style.transform = `scaleX(${Math.max(0, e.hp / e.maxHp)})`;
     }
-    const pos = world.project(e.x, e.y, species.size * (e.scaleFactor || 1) * 2 + 1);
-    element.style.transform = `translate(${pos.x}px,${pos.y}px)`;
-    element.style.opacity = pos.visible ? 1 : 0;
+    element.worldAnchor=e;element.worldHeight=species.size*(e.scaleFactor||1)*2+1;
   }
 
+  const nearbyPlants=[...game.worldFeatures.filter(f=>f.type==='carnivore'),...game.foods.filter(f=>['plant','rareplant'].includes(f.type))]
+    .filter(f=>!f.dead&&Math.hypot(f.x-p.x,f.y-p.y)<(f.type==='carnivore'?28:12))
+    .sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)).slice(0,16);
+  for(const plant of nearbyPlants){
+    const health=plantHealth(plant);if(!health)continue;
+    const id='plant:'+plant.id;seen.add(id);let element=labels.get(id);
+    if(!element){element=document.createElement('div');element.innerHTML='<span class="plant-name"></span><b role="progressbar"><i></i></b><small></small>';labels.set(id,element);labelLayer.append(element);}
+    element.className='creature-label plant-health-label'+(plant.type==='carnivore'?' hostile':'');
+    const name=plant.type==='carnivore'?'Carnivorous plant':foodLabel(plant);
+    element.querySelector('span').textContent=name;
+    element.querySelector('small').textContent=Math.ceil(health.hp)+' / '+Math.round(health.maxHp)+' HP';
+    const bar=element.querySelector('b');bar.setAttribute('aria-label',name+' health');bar.setAttribute('aria-valuenow',String(Math.ceil(health.hp)));bar.setAttribute('aria-valuemax',String(health.maxHp));bar.setAttribute('aria-valuemin','0');
+    element.querySelector('i').style.transform='scaleX('+health.ratio+')';
+    element.worldAnchor=plant;element.worldHeight=plant.type==='carnivore'?(plant.radius||1)+2:2.4;
+  }
   if (game.marineState && game.worldFeatures) {
     for (const f of game.worldFeatures) {
       if (f.type !== "water") continue;
@@ -1234,9 +1295,7 @@ function updateCreatureLabels() {
           const maxHp = fish.maxHp || (50 + (f.tier || 0) * 35);
           hpBar.style.transform = `scaleX(${Math.max(0, Math.min(1, (fish.hp ?? maxHp) / maxHp))})`;
         }
-        const pos = world.project(fish.x, fish.y, 1.8);
-        element.style.transform = `translate(${pos.x}px,${pos.y}px)`;
-        element.style.opacity = pos.visible ? 1 : 0;
+        element.worldAnchor=fish;element.worldHeight=1.8;
       }
     }
   }
@@ -1311,7 +1370,16 @@ function float(event) {
   floating.push({ element, x: event.x, y: event.y, life: 1, isCrit });
 }
 function processEvents() {
-  for (const event of game.consumeEvents()) {
+  const batch=game.consumeEvents(),pickup=pickupSound(batch);
+  for (const event of batch) {
+    if(event.type==='crate-find'){
+      const result=grantCrate(profile,event.crateType,event.receipt);
+      if(result.ok){persist();ui.updateProfile(profile);ui.toast(result.converted?'Crate inventory full · +25 DNA':`${CRATE_TYPES[event.crateType].name} recovered! Open it from Treasures in the pause menu.`);}
+    }
+    if(event.type==='treasure-find'){
+      const result=grantTreasure(profile,event.findId,event.receipt);
+      if(result.ok){game.earnedDNA+=result.dna;persist();ui.updateProfile(profile);if(result.account.toLevel>result.account.fromLevel)ui.accountLevelUp(result.account);ui.toast(`${result.find.name} · +${result.dna} DNA · +${result.xp} account XP`);}
+    }
     if(settings.captions){const labels={roar:'A creature roars nearby',warning:'Danger warning',thunder:'Thunder',evolve:'Evolution complete','enemy-ability':'Nearby creature uses a skill','world-event':'Weather changes','water-enter':'Entering water'};
       if(labels[event.type]&&(!Number.isFinite(event.x)||Math.hypot(event.x-game.player.x,event.y-game.player.y)<38))ui.caption(labels[event.type]);}
     if (
@@ -1390,28 +1458,12 @@ function processEvents() {
     try {
     world?.event(event);
     if(event.type==='incident-warning')ui.toast(event.text);
-    const sound =
-      {
-        powerup: "eat",
-        "run-skill": "evolve",
-        unlock: "evolve",
-        "enemy-ability": "ability",
-        "run-cast": "ability",
-        "egg-hatch": "hatch",
-        'discovery': 'evolve',
-        'adaptation': 'evolve',
-        'world-event': 'warning',
-        'incident-warning':'warning',
-        'meteor-impact':'thunder',
-        'lightning-strike':'thunder',
-        'obstacle-demolished': 'demolish',
-      }[event.type] || event.type;
+    const sound = eventSound(event.type,!!pickup);
     if (
-      !Number.isFinite(event.x) ||
-      Math.hypot(event.x - game.player.x, event.y - game.player.y) < 70
+      sound&&(!Number.isFinite(event.x) ||
+      Math.hypot(event.x - game.player.x, event.y - game.player.y) < 70)
     )
       audio.creatureEvent({ ...event, originalType: event.type, type: sound }, game);
-    if (event.type === "collection-find") audio.play("evolve");
     float(event);
     if (
       [
@@ -1429,6 +1481,7 @@ function processEvents() {
         'discovery',
         'adaptation',
         'world-event',
+        'quest-complete',
       ].includes(event.type) &&
       event.text
     )
@@ -1437,6 +1490,7 @@ function processEvents() {
       console.error("Presentation event failed; gameplay and reward state retained", error);
     }
   }
+  if(pickup)audio.play(pickup);
 }
 function events() {
   handlingEvents = true;
@@ -1561,6 +1615,8 @@ function frame(now) {
       uiTimer += dt;
       miniTimer += dt;
       if (uiTimer > 0.08) {
+        const accountGain=bankAccountProgress();
+        if(accountGain.toLevel>accountGain.fromLevel)persist();
         settleAchievements({
           tier: game.tier,
           time: game.time,
@@ -1584,20 +1640,22 @@ function frame(now) {
       if(ui.view==='start')world?.renderStart(dt);else world?.render(game, active || titleView ? dt : 0, menuView);
       lastRenderedWorldView = ui.view;
     }
-    const shopCanvas =
-      ui.view === "shop" ? document.getElementById("shop-preview") : null;
+    const shopCanvas = ui.view==='wardrobe'?document.getElementById('wardrobe-preview'):ui.view==='crate-reveal'&&ui.revealReady?document.getElementById('loot-preview'):ui.view==='shop'?document.getElementById('shop-preview'):null;
     if (productViewer && productViewer.canvas !== shopCanvas) {
       productViewer.dispose();
       productViewer = null;
     }
     if (shopCanvas && !graphicsFailed) {
-      const item = CATALOG[ui.shopSelection];
+      const sku=ui.view==='wardrobe'?`skin:${ui.wardrobeSelection}`:ui.view==='crate-reveal'?ui.lootSelection:ui.shopSelection;
+      const item = CATALOG[sku]||(sku==='skin:natural'?{kind:'skin',id:'natural',sku}:null);
       if (item) {
-        const key = `${item.sku}:${profile.equippedSkin}:${profile.equippedCosmetic}`;
-        if (!productViewer)
-          productViewer = new CollectionViewer(shopCanvas, item, profile,{...settings,reducedMotion:document.body.classList.contains('reduced-motion')});
+        const previewProfile=ui.view==='wardrobe'?{...profile,previewSpeciesId:ui.skinPreviewSpecies||'tyrannosaurus'}:profile;
+        const key = `${item.sku}:${profile.equippedSkin}:${profile.equippedCosmetic}:${previewProfile.previewSpeciesId||''}`;
+        if (!productViewer){
+          productViewer = new CollectionViewer(shopCanvas, item, previewProfile,{...settings,reducedMotion:document.body.classList.contains('reduced-motion')});productViewer.appearanceKey=key;
+        }
         if (productViewer.appearanceKey !== key) {
-          productViewer.setProduct(item, profile);
+          productViewer.setProduct(item, previewProfile);
           productViewer.appearanceKey = key;
         }
         productViewer.render(dt);

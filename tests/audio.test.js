@@ -2,6 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { AudioEngine } from "../src/audio.js";
 
+test('recorded effects finish without rewinding when another footstep or hit arrives',async(t)=>{
+ const originals=['window','Audio'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]);
+ t.after(()=>{for(const[key,value]of originals){if(value)Object.defineProperty(globalThis,key,value);else delete globalThis[key];}});
+ globalThis.window={};globalThis.Audio=class{constructor(){this.currentTime=0;this.paused=true;this.ended=false;this.calls=0;}play(){this.paused=false;this.calls++;return Promise.resolve();}pause(){this.paused=true;}};
+ const a=new AudioEngine();a.playSample('giantStep');const clip=a.samplePool.get('giantStep');assert.ok(clip,'first effect has no initial cooldown');
+ clip.currentTime=1.25;a.sampleCooldowns.set('giantStep',-10000);a.playSample('giantStep');assert.equal(clip.currentTime,1.25);assert.equal(clip.calls,1);
+ clip.ended=true;clip.paused=true;a.sampleCooldowns.set('giantStep',-10000);a.playSample('giantStep');assert.equal(clip.calls,2);assert.equal(clip.currentTime,0);assert.equal(a.samplePool.size,1);a.dispose();
+});
+
 class Parameter {
   constructor(value = 0) {
     this.value = value;
@@ -288,6 +297,7 @@ test("creature calls and footsteps vary with anatomy and size without bypassing 
   const small = { id: "compsognathus", body: "raptor", size: 0.7 },
     large = { id: "brachiosaurus", body: "longneck", size: 2.9 };
   const start = engine.context.created.length;
+  const recordings=[];engine.playSample=key=>recordings.push(key);
   engine.voice(small, "step");
   const smallPitch = engine.context.created
     .slice(start)
@@ -300,6 +310,7 @@ test("creature calls and footsteps vary with anatomy and size without bypassing 
     .find((n) => n.started.length && n.frequency.changes.length)?.frequency
     .changes[0].value;
   assert.ok(smallPitch > heavyPitch);
+  assert.deepEqual(recordings,[],'individual steps must not start multi-second walking recordings');
   engine.context.currentTime = 1;
   engine.voice(large, "call");
   assert.ok(engine.nodes.size > 0);

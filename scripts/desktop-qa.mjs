@@ -86,6 +86,9 @@ try {
     if (/^https?:/i.test(request.url())) externalRequests.push(request.url());
   });
 
+  await page.waitForSelector('#world[data-start-art="ready"]',{timeout:45000});
+  await page.screenshot({path:'artifacts/start-screen/desktop-native.png'});
+  checks.push('cinematic startup artwork loads from local files');
   await enterTitle(page);
   await check(
     "desktop profile is isolated from existing player data",
@@ -166,17 +169,24 @@ try {
   await check(
     "packaged shop purchases and permanent island saves work offline",
     async () => {
-      // Seed a legacy profile before application initialization in this isolated
+      // Seed an account with the shop and island unlocked in this isolated
       // QA origin. Editing a mirror after startup is now correctly superseded by
       // the application's atomic checkpoint on unload.
       await page.addInitScript(() => {
         if (sessionStorage.getItem("jd-qa-legacy-profile-seeded")) return;
         localStorage.clear();
-        localStorage.setItem("jurassic-domination.profile.v1", JSON.stringify({ version: 3, dna: 30 }));
+        localStorage.setItem("jurassic-domination.profile.v1", JSON.stringify({version:6,dna:30,account:{version:1,xp:280,rewardedLevel:3,earnedByRun:{}},loot:{crates:[{id:'crate:native-test',type:'primeval',seed:12345}]}}));
         sessionStorage.setItem("jd-qa-legacy-profile-seeded", "1");
       });
       await page.reload();await enterTitle(page);
-    await page.locator('[data-action="shop"]').click();
+      await page.locator('[data-action="loot"]').click();await page.locator('[data-open-crate]').click();await page.locator('[data-skip-reveal]').click();
+      await page.locator('.crate-result').waitFor({state:'visible'});
+      assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('jurassic-domination.profile.v1')).loot.opened),1);
+      await page.screenshot({path:'artifacts/loot/reveal-native.png'});
+      await page.locator('[data-loot-return]').click();await page.locator('[data-action="back"]').first().click();
+      checks.push('native crate opening saves its collectible and currency before reveal');
+      const dnaBeforePurchase=await page.evaluate(()=>JSON.parse(localStorage.getItem('jurassic-domination.profile.v1')).dna);
+      await page.locator('[data-action="shop"]').click();
       await page.locator('[data-shop-category="pet"]').click();
       await page.locator('[data-product="pet:compy"]').click();
       await page.locator("[data-buy]").click();
@@ -194,7 +204,7 @@ try {
       const saved = await page.evaluate(() =>
         JSON.parse(localStorage.getItem("jurassic-domination.profile.v1")),
       );
-      assert.equal(saved.dna, 24);
+      assert.equal(saved.dna, dnaBeforePurchase-6);
       assert.equal(saved.activePet, "compy");
       await page.screenshot({ path: "artifacts/desktop-island.png" });
       await page.reload();await enterTitle(page);

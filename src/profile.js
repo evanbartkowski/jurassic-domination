@@ -3,8 +3,10 @@ import { normalizeCollection, checkAchievements } from "./collections.js";
 import { normalizeBindings } from "./controls.js";
 import { newAncestry, normalizeAncestry, recordAncestryRun } from "./ancestry.js";
 import { normalizeLearning } from './player-experience.js';
+import {newAccount,normalizeAccount,claimLevelRewards} from './account-progression.js';
+import {normalizeLoot} from './loot.js';
 export const PROFILE_KEY = "jurassic-domination.profile.v1";
-export const PROFILE_VERSION = 4;
+export const PROFILE_VERSION = 6;
 export const SETTINGS_KEY = "jurassic-domination.settings.v1";
 export const DEFAULT_SETTINGS = {
   master: 0.7,
@@ -24,11 +26,13 @@ export const DEFAULT_SETTINGS = {
   highContrast: false, flashes: true, captions: false,
   tutorialHints: true, interactionPrompts: true, autosaveInterval: 10,
 };
-export const UPGRADE_IDS = ["vitality", "instinct", "metabolism"];
+export const UPGRADE_IDS = ["vitality", "instinct", "metabolism", "stride"];
 export function newProfile() {
   return {
     version: PROFILE_VERSION,
     dna: 0,
+    account:newAccount(),
+    loot:normalizeLoot(),
     bestScore: 0,
     runs: 0,
     totalKills: 0,
@@ -39,7 +43,7 @@ export function newProfile() {
     equippedSkin: "natural",
     modifiers: [],
     regions: [],
-    upgrades: { vitality: 0, instinct: 0, metabolism: 0 },
+    upgrades: { vitality: 0, instinct: 0, metabolism: 0, stride: 0 },
     history: [],
     completedRuns: [],
     activeFindClaims: [],
@@ -129,6 +133,9 @@ export function normalizeProfile(raw) {
   ))];
   p.ancestry = normalizeAncestry(raw.ancestry);
   p.onboarding=normalizeLearning(raw.onboarding||{skipped:p.runs>0||p.unlocked.length>0});
+  p.account=normalizeAccount(raw.account,p);
+  p.loot=normalizeLoot(raw.loot);
+  claimLevelRewards(p);
   return p;
 }
 export function normalizeSettings(raw) {

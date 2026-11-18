@@ -1,12 +1,12 @@
 {
   "id": "apatosaurus",
   "family": "sauropod",
-  "triangles": 22900,
+  "triangles": 28708,
   "bones": 22,
   "dimensions": [
-    8.365180969238281,
-    2.5108659267425537,
-    2.3856301307678223
+    8.366534233093262,
+    2.5222671031951904,
+    2.3808422088623047
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11496,
-        "faces": 22900,
-        "tris": 22900,
+        "verts": 14624,
+        "faces": 28708,
+        "tris": 28708,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 23,
+        "islands": 135,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,38 +55,46 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 35.7
+        "uv_overlap_pct": 0.02,
+        "uv_coverage_pct": 27.0
       }
     }
   },
   "attachmentShifts": [
     {
       "part": "Claw.001",
-      "distance": 0.0246
+      "distance": 0.0237
     },
     {
       "part": "Claw.004",
-      "distance": 0.0241
-    },
-    {
-      "part": "Claw.005",
-      "distance": 0.0231
+      "distance": 0.0234
     },
     {
       "part": "Claw.007",
-      "distance": 0.0246
-    },
-    {
-      "part": "Claw.009",
-      "distance": 0.0233
+      "distance": 0.0234
     },
     {
       "part": "Claw.010",
-      "distance": 0.0232
+      "distance": 0.023
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0264
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0379
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0272
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0378
     }
   ],
-  "bytes": 3190448,
+  "bytes": 4422348,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -105,7 +113,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8244,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10334,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -118,9 +135,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4168,
-        "faces": 8244,
-        "tris": 8244,
+        "verts": 5437,
+        "faces": 10334,
+        "tris": 10334,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -130,7 +147,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 23,
+        "islands": 135,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -143,8 +160,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 34.9
+        "uv_overlap_pct": 0.02,
+        "uv_coverage_pct": 26.3
       }
     }
   }

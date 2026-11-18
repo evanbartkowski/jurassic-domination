@@ -1,12 +1,12 @@
 {
   "id": "megalosaurus",
   "family": "carnosaur",
-  "triangles": 25516,
+  "triangles": 31404,
   "bones": 20,
   "dimensions": [
-    5.415960788726807,
-    1.7200000286102295,
-    2.138270616531372
+    5.410145282745361,
+    2.2546558380126953,
+    1.6938987970352173
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12882,
-        "faces": 25516,
-        "tris": 25516,
+        "verts": 16060,
+        "faces": 31404,
+        "tris": 31404,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 62,
+        "islands": 179,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,57 +55,66 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.29,
-        "uv_coverage_pct": 29.2
+        "uv_overlap_pct": 0.43,
+        "uv_coverage_pct": 21.1
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Lower_tooth.002",
-      "distance": 0.0243
+      "part": "Lower_tooth.007",
+      "distance": 0.0059
     },
     {
-      "part": "Lower_tooth.003",
-      "distance": 0.0256
+      "part": "Lower_tooth.015",
+      "distance": 0.0062
     },
     {
-      "part": "Lower_tooth.010",
-      "distance": 0.0244
+      "part": "Orbital_upper_lid",
+      "distance": 0.0518
     },
     {
-      "part": "Lower_tooth.011",
-      "distance": 0.0257
+      "part": "Orbital_lower_lid",
+      "distance": 0.0605
     },
     {
-      "part": "Claw.002",
-      "distance": 0.0233
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0518
     },
     {
-      "part": "Claw.003",
-      "distance": 0.0228
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0607
     }
   ],
-  "bytes": 3321276,
+  "bytes": 8530660,
   "textures": {
     "Albedo": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Albedo.jpg"
     },
     "Normal": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Normal.png"
     },
     "Roughness": {
-      "width": 512,
-      "height": 512,
+      "width": 1024,
+      "height": 1024,
       "file": "Roughness.png"
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 9184,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 4
+  },
+  "lodTriangles": 11304,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -118,9 +127,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4716,
-        "faces": 9184,
-        "tris": 9184,
+        "verts": 6010,
+        "faces": 11304,
+        "tris": 11304,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -130,7 +139,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 62,
+        "islands": 179,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -143,8 +152,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.26,
-        "uv_coverage_pct": 28.5
+        "uv_overlap_pct": 0.42,
+        "uv_coverage_pct": 20.3
       }
     }
   }

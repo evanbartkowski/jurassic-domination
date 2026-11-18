@@ -4,7 +4,9 @@ A single-player prehistoric survival roguelite. Crack your egg, hatch into a fra
 
 An offline, playable desktop game built with Three.js and Electron. It combines procedural and authored Blender creatures and environments, bundled recordings and synthesized audio, dynamic weather, sensory ecology, status effects and persistent ancestry. Keyboard/mouse controls are remappable; standard-mapping controllers support gameplay and menu navigation.
 
-Current visual release: **Primeval v0.12.0**. [Before/after gallery](artifacts/primeval/review.html) | [Windows portable](release/primeval/Jurassic%20Domination-0.12.0-portable.exe) | [Art and verification report](docs/PRIMEVAL_VISUAL_OVERHAUL.md).
+Current release: **v0.13.0 — Living Legacy**. [Play in your browser](https://evanbartkowski.github.io/jurassic-domination/) | [Windows downloads](https://github.com/evanbartkowski/jurassic-domination/releases/latest) | [Changes and verification](docs/LIVING_LEGACY.md).
+
+Hatch, follow the single current goal, and grow by eating and exploring. Evolution waits for your choice with **T**. Account XP and DNA persist between lives: the shop opens at account level 2 and the island at level 3. Story chapters and repeating survival quests are in **Story & quests**. Rare wild crates open from **Treasures** in the compendium; no purchased keys are needed.
 
 ![Jurassic Domination Title Screen](docs/screenshots/title.png)
 
@@ -24,8 +26,8 @@ Play Jurassic Domination.cmd
 This automatically verifies dependencies and launches the full game in desktop mode.
 
 ### Packaged & Portable Releases
-- **Standalone Unpacked**: Launch `release/frontier/win-unpacked/Jurassic Domination.exe`. Keep that entire folder intact.
-- **Single-File Portable**: Run `release/frontier/Jurassic Domination-0.11.0-portable.exe` directly without installation.
+- **Single-File Portable**: Download `Jurassic Domination-0.13.0-portable.exe` from [Releases](https://github.com/evanbartkowski/jurassic-domination/releases/latest) and run it without installation.
+- **Source build**: `npm run package` creates the portable executable and `release/win-unpacked/Jurassic Domination.exe`. Keep the unpacked folder intact when using that executable.
 
 Version 0.11.0 adds meteor and lightning encounters with shelter counterplay, lava predators, great migrations, mountain passes, five named locations and six new marine creatures. Menus have clearer type, visible borders and a separate Start scene. See [the Frontier report](docs/FRONTIER_EXPANSION.md) and [visual review](artifacts/frontier/review.html).
 
@@ -60,10 +62,10 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 | **Bite / Primary Attack** | Left Mouse Button or `Space` | Right Trigger (`RT`) |
 | **Primal Roar** | `Z` (`C` also works with default bindings) or Middle Mouse Click | Right Stick Click |
 | **Species Ability** | `Q` | Right Bumper (`RB`) |
-| **Species Technique** | `R` | Left Bumper (`LB`) |
+| **Species Technique** | `Ctrl` | Left Bumper (`LB`) |
 | **Anatomy Skill** (when available) | `X` | `Y` Button |
 | **Stalk / Sneak / Dive** | Hold `H` | Left Trigger (`LT`) |
-| **Dodge / Dash** (agile forms) | `Shift` | `A` Button |
+| **Dodge / Dash** (agile forms) | `R` | `A` Button |
 | **Eat / Forage / Collect** | `E` | `X` Button |
 | **Evolution Menu / Postpone** | `T` / `Escape` | `B` Button |
 | **Field Journal & Ancestry** | `L` | Open from menus |
@@ -71,7 +73,7 @@ Open the local address printed by Vite (typically `http://localhost:5173`). Laun
 | **Continental World Map** | `M` | View / Select Button |
 | **3D Dinosaur Encyclopedia** | `Tab` | Open from menus |
 | **Mutation Builds** | `B` | — |
-| **Sprint** | Hold `Ctrl` | Left Stick Click |
+| **Sprint** | Hold `Shift` | Left Stick Click |
 | **Pause / Back** | `Escape` | Menu / Start Button |
 | **Toggle Fullscreen** | `F11` (or in Settings) | — |
 | **Ancient Relic Skills** | `F`, `G`, `Y`, `V`, `U`, `N` | — |
@@ -90,7 +92,7 @@ testing beyond the automated standard-mapping adapter checks.
 
 - **Begin as an Egg**: Hatch into a randomly selected starter species. Hunt vulnerable prey, scavenge carrion, forage edible flora, and avoid deadly predators.
 - **Dynamic Growth**: Consuming food matures your body in real time—increasing your scale by up to 28%, maximum health by 40%, and bite damage by 32%.
-- **Branching Evolution**: Reaching XP thresholds unlocks the evolution choice. Choose from over **102 distinct species** across 8 evolutionary tiers—from agile raptors and armored sauropods to titanic apex carnivores and mythical beasts (Wyrms, Phoenixes, and Dragons).
+- **Branching Evolution**: Reaching XP thresholds unlocks the evolution choice. Choose from over **108 distinct species** across 8 evolutionary tiers—from agile raptors and armored sauropods to titanic apex carnivores and mythical beasts (Wyrms, Phoenixes, and Dragons).
 - **Conditional Bloodlines**: Complete rare secret challenges during a single life (e.g., consuming sacred Sunheart/Moondrop fruits or felling territorial guardians) to unlock hidden legendary bloodlines like the *Verdant Iguanodon*, *Cinderfang Carnotaurus*, and *Stormcrown Dragon*.
 - **Permadeath with Permanent Lineage**: Death ends the current run, but rare genetic traits, discovered species, and banked DNA pass into your permanent profile to fund sanctuary island upgrades, companion pets, and cosmetic appearances.
 

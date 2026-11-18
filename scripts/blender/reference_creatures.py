@@ -1,11 +1,12 @@
-"""Primeval: rebuilt primary forms, UV-painted PBR surfaces and expressive six-clip rigs. +X forward, +Z up; six in-place clips.
-Writes only art-v4/models-v4, preserving every earlier source and export.
+"""Primeval: anatomical forms, fine relief, baked PBR surfaces and eight-clip rigs.
++X forward, +Z up. Writes art-v5/models-v5, preserving earlier source versions.
 """
 import bpy, bmesh, math, json, sys, copy
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from reference_forms import axial_sections,calibrate,leg_form,palette
 from reference_materials import bake
+from reference_detail import sculpt_planes,add_fine_anatomy
 from pathlib import Path
 from mathutils import Vector, Euler, Quaternion
 from mathutils.bvhtree import BVHTree
@@ -20,6 +21,8 @@ def material(name,color,vertex=False):
  m=bpy.data.materials.new(name)
  m.diffuse_color=(*rgb(color),1)
  p=next(n for n in m.node_tree.nodes if n.type=='BSDF_PRINCIPLED');p.inputs['Base Color'].default_value=(*rgb(color),1);p.inputs['Roughness'].default_value=.77
+ if name in ['Amber_iris','Pupils','Corneal_highlight']:p.inputs['Roughness'].default_value=.18
+ elif name in ['Keratin','Tongue']:p.inputs['Roughness'].default_value=.42
  if vertex:
   v=m.node_tree.nodes.new('ShaderNodeVertexColor');v.layer_name='Pigment';m.node_tree.links.new(v.outputs['Color'],p.inputs['Base Color'])
  return m
@@ -102,10 +105,10 @@ def feather_surface(name,root,tip,width,mat):
  if cross.length<.1:cross=Vector((0,1,0))
  # Overlapping vanes fan about their shafts instead of lying in one plane.
  cross=Quaternion(axis,math.sin(root.x*37+root.y*19)*.32)@cross
- vs=[];fs=[];n=8
+ vs=[];fs=[];n=12
  for sign in [-1,1]:
   for i in range(n):
-   t=i/(n-1);p=root.lerp(tip,t);w=width*math.sin(math.pi*t)**.65+.003
+   t=i/(n-1);p=root.lerp(tip,t);p.z+=math.sin(math.pi*t)*.014;w=width*math.sin(math.pi*t)**.65*(.95+.05*math.cos(t*math.pi*18))+.002
    for u in [-1,0,1]:vs.append(p+cross*w*u*(.65 if u<0 else 1)+Vector((0,0,sign*.006+(.016 if u==0 else 0)*math.sin(math.pi*t))))
  for layer in range(2):
   offset=layer*n*3
@@ -155,21 +158,33 @@ def produce(entry):
   hinge=Vector((hx-.14,0,hz-sd*.65))
   for vertex in jaw.data.vertices:vertex.co=hinge+Quaternion(Vector((0,1,0)),.08)@(vertex.co-hinge)
  part(jaw,'jaw')
+ if sid=='troodon':
+  feather_mat=material('Troodon_chestnut_flight_feathers',0x69452e)
+  cream=material('Troodon_cream_face',0xd9c9a0)
+  for side in [-1,1]:
+   part(ellipsoid('Troodon_orbital_mask',(hx+.06,side*sw*.93,hz+.055),(.13,.045,.095),dark),'head')
+   part(tube('Troodon_cream_cheek',[(hx-.12,side*sw*.94,hz-.045),(hx+.08,side*sw*1.05,hz-.05),(hx+.28,side*sw*.83,hz-.06)],[.025,.033,.014],cream),'head')
+   for i in range(10):
+    x=-.95+i*.12
+    part(feather_surface('Troodon_scapular_feather',(x,side*width*.65,hip+depth*.7),(x-.26,side*(width+.10),hip+depth*.3),.075,feather_mat),'spine')
+   for i in range(9):
+    x=-tail+.15+i*.12
+    part(feather_surface('Troodon_tail_fan',(x,0,hip),(x-.22,side*(.10+(.15*i/8)),hip-.025),.065,feather_mat),'tail4')
  # Mandible and tongue form the mouth cavity. A separate coplanar floor was
  # both hidden geometry and a source of flicker on narrow juvenile skulls.
  if sd>.19:part(ellipsoid('Tongue',(hx+length*.45,0,hz-sd*.78),(length*.28,sw*.36,.010),tongue),'jaw')
  for side in [-1,1]:
   eyepos=(hx+.08,side*(sw*.98+.008),hz+sd*.20)
-  part(ellipsoid('Iris',eyepos,(.047,.028,.038),eye),'head')
-  part(ellipsoid('Pupil',(eyepos[0]+.008,eyepos[1]+side*.021,eyepos[2]),(.015,.012,.029),pupil),'head')
+  part(ellipsoid('Iris',eyepos,((.074,.040,.061) if sid=='troodon' else (.047,.028,.038)),eye),'head')
+  part(ellipsoid('Pupil',(eyepos[0]+.008,eyepos[1]+side*(.035 if sid=='troodon' else .021),eyepos[2]),(.020,.014,.043) if sid=='troodon' else (.015,.012,.029),pupil),'head')
   part(tube('Brow',[(hx-.04,side*sw*.82,hz+sd*.38),(hx+.12,side*sw*.94,hz+sd*.38),(hx+.23,side*sw*.83,hz+sd*.23)],[.055,.066,.035],skin),organic=True)
-  part(ellipsoid('Nostril',(hx+length*.81,side*sw*.65,hz-sd*.01),(.047,.018,.026),dark),'head')
+  # The projected nasal fossa added after skin sculpting owns this opening.
   if a['family']!='pterosaur':part(tube('Lip_seam',[(hx+.05,side*sw*.84,hz-sd*.66),(hx+length*.52,side*sw*.72,hz-sd*.73),(hx+length*.86,side*sw*.61,hz-sd*.68)],[.015,.014,.008],dark),'head')
   if a['teeth']:
    count=11 if length>1 else 8
    for i in range(count):
     t=i/(count-1);x=hx+length*(.17+.68*t);y=side*sw*(.78-.22*t);z=hz-sd*.63
-    tooth=(.055+(1-t)*.045)*(1+.17*math.sin(i*2.1))
+    tooth=(.055+(1-t)*.045)*(1+.17*math.sin(i*2.1))*(1.45 if a['family'] in ['tyrannosaur','carnosaur','abelisaur','pliosaur','mosasaur'] else 1.2 if a['family']=='spinosaur' else 1)
     part(tube('Upper_tooth',[(x,y,z+.025),(x+.014,y,z-tooth*.55),(x+.022,y,z-tooth)],[.026,.018,.004],horn,sides=8,subdiv=1),'head')
     part(tube('Lower_tooth',[(x+.035,y,hz-sd*.74),(x+.045,y,hz-sd*.74+tooth*.7)],[.02,.004],horn,sides=8,subdiv=1),'jaw')
  if a.get('heads',1)>1:
@@ -298,7 +313,9 @@ def produce(entry):
   for side in [-1,1]:part(tube('Ear',[(hx-.02,side*.18,hz+.20),(hx-.12,side*.22,hz+.60)],[.12,.013],skin),organic=True)
  if a.get('feathered'):
   for i in range(12):
-   x=-1.35+i*.13;part(ellipsoid('Dorsal_feather',(x,0,hip+depth*.84),(.16,.12,.15),skin),'spine' if x>-.8 else 'tail0')
+   x=-1.35+i*.13
+   if sid=='troodon':part(feather_surface('Troodon_dorsal_plume',(x,0,hip+depth*.80),(x-.24,0,hip+depth*.94),.065,feather_mat),'spine' if x>-.8 else 'tail0')
+   else:part(feather_surface('Dorsal_feather',(x,0,hip+depth*.78),(x-.24,0,hip+depth*1.03),.075,skin),'spine' if x>-.8 else 'tail0')
   if a['base']=='sinosauropteryx':
    for side in [-1,1]:
     for i in range(18):
@@ -361,7 +378,7 @@ def produce(entry):
  # Fuse anatomical skin and limbs; accessories retain their own rigid influences.
  body=joined(flesh,'Connected_skin');remesh=body.modifiers.new('Fused_anatomy','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.021 if a['family'] in ['crocodilian','synapsid'] else .017;remesh.use_smooth_shade=True
  bpy.ops.object.modifier_apply(modifier=remesh.name)
- sm=body.modifiers.new('Organic_transitions','SMOOTH');sm.factor=.40;sm.iterations=4;bpy.ops.object.modifier_apply(modifier=sm.name)
+ sm=body.modifiers.new('Organic_transitions','SMOOTH');sm.factor=.30;sm.iterations=3;bpy.ops.object.modifier_apply(modifier=sm.name)
  tri=sum(len(p.vertices)-2 for p in body.data.polygons)
  if tri>19000:
   dec=body.modifiers.new('Web_budget','DECIMATE');dec.ratio=19000/tri;bpy.ops.object.modifier_apply(modifier=dec.name)
@@ -395,8 +412,27 @@ def produce(entry):
    orbit=math.exp(-((x-hx-.08)/.12)**2-((z-hz-sd*.20)/.085)**2)
    v.co.y*=1-.13*orbit
  body.data.update()
+ sculpt_planes(body,a)
+ detail_features=add_fine_anatomy(a,body,part,ellipsoid,tube,material,feather_surface,mesh)
  skin_tree=tree_for([body]);attachment_shifts=[]
+ if a['family'] in ['armored-fish','sauropod','plesiosaur']:
+  for iris in [ob for ob in extras if ob.name.startswith('Iris')]:
+   center=sum((v.co for v in iris.data.vertices),Vector())/len(iris.data.vertices)
+   side=1 if center.y>0 else -1;hit=skin_tree.find_nearest(center);shift=hit[0]+hit[1]*.012-center
+   for eye_part in [ob for ob in extras if ob.name.startswith(('Iris','Pupil','Corneal_glint'))]:
+    eye_center=sum((v.co for v in eye_part.data.vertices),Vector())/len(eye_part.data.vertices)
+    if eye_center.y*side>0:
+     for vertex in eye_part.data.vertices:vertex.co+=shift
  for ob in extras:
+  if a['family'] in ['sauropod','plesiosaur'] and ob.name.startswith('Orbital_'):continue
+  if ob.name.startswith(('Upper_tooth','Lower_tooth')):
+   # Teeth belong to their own jaw. Attaching an upper tooth to whichever
+   # nearby surface is closest fails as soon as the mandible opens.
+   root=sum((v.co for v in list(ob.data.vertices)[:8]),Vector())/8
+   target_tree=tree_for([jaw]) if ob.name.startswith('Lower_tooth') else skin_tree
+   hit=target_tree.find_nearest(root);shift=hit[0]-root-hit[1]*.010
+   for vertex in ob.data.vertices:vertex.co+=shift
+   continue
   if ob.name.startswith('Nostril') and a['family']=='pterosaur':
    center=sum((v.co for v in ob.data.vertices),Vector())/len(ob.data.vertices);side=1 if center.y>0 else -1
    origin=Vector((hx+length*.35,side*sw*2,hz-.08));hit=skin_tree.ray_cast(origin,Vector((0,-side,0)))
@@ -408,7 +444,7 @@ def produce(entry):
    center=sum((v.co for v in ob.data.vertices),Vector())/len(ob.data.vertices);hit=skin_tree.find_nearest(center);shift=hit[0]-center-hit[1]*.005
    for v in ob.data.vertices:v.co+=shift
    continue
-  if ob.name.startswith(('Iris','Pupil','Tongue','Oral_floor','Lip_seam','Nostril')):continue
+  if ob.name.startswith(('Iris','Pupil','Corneal_glint','Tongue','Oral_floor','Lip_seam','Nostril')):continue
   is_skin=ob.data.materials[0]==skin
   structural=[o for o in extras if o!=ob and o.name.startswith(('Wing_spar','Feather_vane','Wing_membrane','Hindwing_feather')) and forced.get(o.name)==forced.get(ob.name)]
   targets=([body]+structural) if is_skin else [body]+[o for o in extras if o.data.materials[0]==skin]
@@ -421,6 +457,11 @@ def produce(entry):
    for v in ob.data.vertices:v.co+=shift
    attachment_shifts.append({'part':ob.name,'distance':round(shift.length,4)})
  allparts=[body]+extras
+ if a['family'] in ['tyrannosaur','carnosaur','abelisaur','spinosaur','dragon','pliosaur','mosasaur']:
+  hinge=Vector((hx-.14,0,hz-sd*.65));rotation=Quaternion(Vector((0,1,0)),.10)
+  for ob in extras:
+   if forced.get(ob.name)=='jaw':
+    for vertex in ob.data.vertices:vertex.co=hinge+rotation@(vertex.co-hinge)
  # Ground contact is defined by the rest feet, not a clipped camera or armature.
  floor=min(v.co.z for ob in allparts for v in ob.data.vertices)
  for ob in allparts:
@@ -478,7 +519,7 @@ def produce(entry):
   for p in ob.data.polygons:p.use_smooth=True
   modifier=ob.modifiers.new('Skin','ARMATURE');modifier.object=rig;ob.parent=rig
  sys.path.insert(0,str(SKILLS/'blender-asset-qa/scripts'));import qa_check
- if sid in ['tyrannosaurus','velociraptor','carnotaurus','sarcosuchus','mosasaurus','ornithomimus','therizinosaurus','sinosauropteryx','oviraptor','elderroot-therizinosaurus'] or a['family']=='pterosaur':
+ if sid in ['tyrannosaurus','velociraptor','carnotaurus','sarcosuchus','mosasaurus','ornithomimus','therizinosaurus','sinosauropteryx','oviraptor','elderroot-therizinosaurus','elasmosaurus','primordial-titan'] or a['family']=='pterosaur':
   preqa=qa_check.run(objects=[o.name for o in allparts],profile='game',eps=.00025,tol=.015,max_tris=80000,uv=False)
   (BASE/('artifacts/reference-overhaul/'+sid+'-parts-qa.json')).write_text(json.dumps(preqa,indent=2))
  surface=joined(allparts,'Creature_surface')
@@ -548,7 +589,7 @@ def produce(entry):
  bpy.data.libraries.write(str(target/(sid+'.blend')),{scene},fake_user=True,compress=True)
  bpy.ops.object.select_all(action='DESELECT');surface.select_set(True);lod.select_set(True);rig.select_set(True);bpy.context.view_layer.objects.active=rig
  bpy.ops.export_scene.gltf(filepath=str(PUB/(sid+'.glb')),export_format='GLB',use_selection=True,use_active_scene=True,export_extras=True,export_animation_mode='NLA_TRACKS',export_force_sampling=True,export_nla_strips=True)
- report={'id':sid,'family':a['family'],'triangles':sum(len(p.vertices)-2 for p in surface.data.polygons),'bones':len(bones),'dimensions':list(surface.dimensions),'clips':['Idle','Walk','Run','Attack','Graze','Rest','Hit','Death'],'qa':qa,'attachmentShifts':attachment_shifts,'bytes':(PUB/(sid+'.glb')).stat().st_size,'textures':texture_report,'sourceVersion':5,'lodTriangles':sum(len(p.vertices)-2 for p in lod.data.polygons),'lodQA':lod_qa}
+ report={'id':sid,'family':a['family'],'triangles':sum(len(p.vertices)-2 for p in surface.data.polygons),'bones':len(bones),'dimensions':list(surface.dimensions),'clips':['Idle','Walk','Run','Attack','Graze','Rest','Hit','Death'],'qa':qa,'attachmentShifts':attachment_shifts,'bytes':(PUB/(sid+'.glb')).stat().st_size,'textures':texture_report,'sourceVersion':5,'detailVersion':2,'detailFeatures':detail_features,'lodTriangles':sum(len(p.vertices)-2 for p in lod.data.polygons),'lodQA':lod_qa}
  (target/'report.json').write_text(json.dumps(report,indent=2));print('JD_ANATOMY',json.dumps({k:v for k,v in report.items() if k!='qa'}),'QA',qa.get('pass'),flush=True)
  # Free only this freshly generated scene; the user's live scene is untouched.
  return report

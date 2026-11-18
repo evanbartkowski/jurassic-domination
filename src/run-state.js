@@ -4,18 +4,21 @@ import { WORLD_RADIUS, LAIRS, REGIONS } from "./world-data.js";
 import { SKINS, PERMANENT_MODIFIERS, RUN_SKILLS, POWERUPS } from "./content.js";
 import { BLOODLINES } from "./progression.js";
 import { CATALOG, COSMETICS, PETS } from "./collection-data.js";
+import {CRATE_TYPES,TREASURES} from './loot-data.js';
 import { validGenome, neutralGenome, geneticSeed, newAdaptationState } from "./genetics.js";
 import { initializeSenses, MAX_TRAILS } from "./senses.js";
 import { initializeLifeEntity } from "./life-cycle.js";
 import { initializeWorldState, isWorldStateValid } from "./world-events.js";
 import { initializeDiscoveryState, isExplorationStateValid } from "./discoveries.js";
 import { newSurvivalState, validSurvival } from "./survival.js";
+import { initializeQuests, validQuestState } from './quests.js';
 
 import {validIncidents} from './world-incidents.js';
 export const SNAPSHOT_VERSION = 2;
 export const CONTENT_VERSION = 1;
 export const MAX_SNAPSHOT_BYTES = 16 * 1024 * 1024;
 const scalarFields = [
+  'quests',
   "seed", "_randomState", "difficulty", "upgrades", "state", "time", "eggTime",
   "tier", "ascensions", "danger", "biome", "entities", "foods", "events",
   "mutations", "evolutionReady", "lineage", "formStarted", "evolutionChoices",
@@ -35,7 +38,7 @@ const mapFields = ["chunks", "marineState"];
 const states = new Set(["egg", "playing", "evolution", "dead", "mutation-choice"]);
 const idPattern = /^[a-zA-Z0-9:_-]{1,96}$/;
 const chunkPattern = /^-?\d{1,4},-?\d{1,4}$/;
-const foodTypes = new Set(["plant", "meat", "essence", "egg", "rareplant", "lineage-fruit", "relic", "fossil", "dna", "pet-egg", "decoration-cache", "cosmetic-cache", "mutation-catalyst"]);
+const foodTypes = new Set(["supply-crate", "treasure", "plant", "meat", "essence", "egg", "rareplant", "lineage-fruit", "relic", "fossil", "dna", "pet-egg", "decoration-cache", "cosmetic-cache", "mutation-catalyst"]);
 const featureTypes = new Set(["boulder", "fallen-log", "landmark", "water", "volcano", "mushrooms", "toxic-bloom", "carnivore",'frontier-rock','frontier-site','shelter']);
 const finite = (n, low = -1e12, high = 1e12) => typeof n === "number" && Number.isFinite(n) && n >= low && n <= high;
 const integer = (n, low = 0, high = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && n >= low && n <= high;
@@ -138,7 +141,9 @@ function actorValid(actor, player = false, version = SNAPSHOT_VERSION) {
 }
 function foodValid(food, version = SNAPSHOT_VERSION) {
   return object(food) && integer(food.id, 1) && finite(food.x, -1e6, 1e6) && finite(food.y, -1e6, 1e6) &&
-    foodTypes.has(food.type) && finite(food.age, 0) && finite(food.value, 0) && integer(food.tier, 0, 7) &&
+    (food.type!=='supply-crate'||Object.hasOwn(CRATE_TYPES,food.crateType)) &&
+    (food.type!=='treasure'||Object.hasOwn(TREASURES,food.findId)) &&
+    (food.eggRarity === undefined || ["common","rare","epic","legendary"].includes(food.eggRarity)) && foodTypes.has(food.type) && finite(food.age, 0) && finite(food.value, 0) && integer(food.tier, 0, 7) &&
     (food.homeChunk === undefined || chunkPattern.test(food.homeChunk)) && (!food.speciesId || !!SPECIES_BY_ID[food.speciesId]) &&
     (food.type !== "egg" || (!!SPECIES_BY_ID[food.speciesId] && finite(food.hatchAfter, 0))) &&
     (food.type !== "lineage-fruit" || ["sunheart", "moondrop"].includes(food.fruit)) &&
@@ -176,6 +181,7 @@ export function validateSnapshot(snapshot) {
       !integer(snapshot.tick) || !object(snapshot.game) || !plainTree(snapshot)) return false;
     if (JSON.stringify(snapshot).length > MAX_SNAPSHOT_BYTES) return false;
     const g = snapshot.game, version = snapshot.version;
+    if(g.quests !== undefined && !validQuestState(g.quests))return false;
     if (!integer(g.seed, 0, 0xffffffff) || !integer(g._randomState, 0, 0xffffffff) || !DIFFICULTIES[g.difficulty] ||
       !states.has(g.state) || !integer(g.tier, 0, 7) || !integer(g.ascensions, 0, 1000000) || !finite(g.time, 0) ||
       !finite(g.eggTime, 0) || !SPECIES_BY_ID[g.starterId] || !actorValid(g.player, true, version) || !integer(g.commandSequence) ||
@@ -336,6 +342,7 @@ export function restoreGame(snapshot) {
     game._recoveredMutationChoices = true;
   }
   game.rules = DIFFICULTIES[game.difficulty];
+  initializeQuests(game);
   game.worldRadius = WORLD_RADIUS;
   if (!game.survivalBehavior) {
     game.survivalBehavior = {

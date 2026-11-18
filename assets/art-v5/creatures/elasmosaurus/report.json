@@ -1,12 +1,12 @@
 {
   "id": "elasmosaurus",
   "family": "plesiosaur",
-  "triangles": 24484,
+  "triangles": 28924,
   "bones": 14,
   "dimensions": [
-    5.68547248840332,
-    3.2530174255371094,
-    1.3303251266479492
+    5.685883045196533,
+    1.3380763530731201,
+    3.174046277999878
   ],
   "clips": [
     "Idle",
@@ -22,17 +22,19 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
-    "ground_z": 0.0,
+    "warnings": [
+      "Surface_LOD0: duplicate verts=8 loose verts=0"
+    ],
+    "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12336,
-        "faces": 24484,
-        "tris": 24484,
+        "verts": 14774,
+        "faces": 28924,
+        "tris": 28924,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -41,8 +43,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 47,
+        "duplicate_verts": 8,
+        "islands": 156,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,12 +58,12 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 52.8
+        "uv_coverage_pct": 42.1
       }
     }
   },
   "attachmentShifts": [],
-  "bytes": 3341616,
+  "bytes": 4632104,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -80,22 +82,31 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8814,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10412,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": -0.0002,
+    "ground_z": -0.0004,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4501,
-        "faces": 8814,
-        "tris": 8814,
+        "verts": 5518,
+        "faces": 10412,
+        "tris": 10412,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -105,7 +116,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 47,
+        "islands": 156,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -119,7 +130,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 52.4
+        "uv_coverage_pct": 41.6
       }
     }
   }

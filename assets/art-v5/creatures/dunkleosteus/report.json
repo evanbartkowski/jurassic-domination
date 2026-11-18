@@ -1,12 +1,12 @@
 {
   "id": "dunkleosteus",
   "family": "armored-fish",
-  "triangles": 22788,
+  "triangles": 27732,
   "bones": 12,
   "dimensions": [
-    4.140891075134277,
-    1.8956773281097412,
-    2.0883326530456543
+    4.141033172607422,
+    2.0572328567504883,
+    1.8649705648422241
   ],
   "clips": [
     "Idle",
@@ -22,29 +22,17 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [
-      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD0']"
-    ],
+    "warnings": [],
     "ground_z": 0.0,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
-    "enclosed": [
-      {
-        "object": "Surface_LOD0",
-        "island_verts": 146,
-        "center": [
-          1.346,
-          0.0,
-          0.644
-        ]
-      }
-    ],
+    "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11432,
-        "faces": 22788,
-        "tris": 22788,
+        "verts": 14122,
+        "faces": 27732,
+        "tris": 27732,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -54,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 19,
+        "islands": 128,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -68,29 +56,45 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 50.6
+        "uv_coverage_pct": 38.6
       }
     }
   },
   "attachmentShifts": [
     {
       "part": "Dorsal_fin",
-      "distance": 0.1124
+      "distance": 0.1125
     },
     {
       "part": "Caudal_fluke",
-      "distance": 0.0357
+      "distance": 0.0341
     },
     {
       "part": "Swept_pectoral_fin",
-      "distance": 0.0043
+      "distance": 0.0042
     },
     {
       "part": "Swept_pectoral_fin.001",
       "distance": 0.0038
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0533
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0776
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0534
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0778
     }
   ],
-  "bytes": 2966200,
+  "bytes": 4251988,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -109,34 +113,31 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8202,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 9982,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [
-      "1 parts fully enclosed, not touching (eyes/internals?): ['Surface_LOD1']"
-    ],
+    "warnings": [],
     "ground_z": 0.0,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
-    "enclosed": [
-      {
-        "object": "Surface_LOD1",
-        "island_verts": 58,
-        "center": [
-          1.346,
-          0.0,
-          0.644
-        ]
-      }
-    ],
+    "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4139,
-        "faces": 8202,
-        "tris": 8202,
+        "verts": 5247,
+        "faces": 9982,
+        "tris": 9982,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -146,7 +147,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 19,
+        "islands": 128,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -160,7 +161,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 50.3
+        "uv_coverage_pct": 38.2
       }
     }
   }

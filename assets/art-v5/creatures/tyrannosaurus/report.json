@@ -1,12 +1,12 @@
 {
   "id": "tyrannosaurus",
   "family": "tyrannosaur",
-  "triangles": 25148,
+  "triangles": 30748,
   "bones": 20,
   "dimensions": [
-    5.557473659515381,
-    2.473400831222534,
-    1.8087167739868164
+    5.82858943939209,
+    2.5526950359344482,
+    1.7471036911010742
   ],
   "clips": [
     "Idle",
@@ -23,16 +23,16 @@
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": -0.0,
+    "ground_z": 0.0,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12712,
-        "faces": 25148,
-        "tris": 25148,
+        "verts": 15744,
+        "faces": 30748,
+        "tris": 30748,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 69,
+        "islands": 185,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,87 +56,72 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 32.3
+        "uv_coverage_pct": 20.9
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Lower_tooth.003",
-      "distance": 0.0283
+      "part": "Orbital_upper_lid",
+      "distance": 0.0582
     },
     {
-      "part": "Lower_tooth.004",
-      "distance": 0.0314
+      "part": "Orbital_lower_lid",
+      "distance": 0.0648
     },
     {
-      "part": "Lower_tooth.005",
-      "distance": 0.0354
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0585
     },
     {
-      "part": "Lower_tooth.006",
-      "distance": 0.0258
-    },
-    {
-      "part": "Lower_tooth.014",
-      "distance": 0.0287
-    },
-    {
-      "part": "Lower_tooth.015",
-      "distance": 0.0309
-    },
-    {
-      "part": "Lower_tooth.016",
-      "distance": 0.0355
-    },
-    {
-      "part": "Lower_tooth.017",
-      "distance": 0.0258
-    },
-    {
-      "part": "Claw",
-      "distance": 0.0234
-    },
-    {
-      "part": "Claw.005",
-      "distance": 0.0234
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0664
     }
   ],
-  "bytes": 3291896,
+  "bytes": 8070756,
   "textures": {
     "Albedo": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Albedo.jpg"
     },
     "Normal": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Normal.png"
     },
     "Roughness": {
-      "width": 512,
-      "height": 512,
+      "width": 1024,
+      "height": 1024,
       "file": "Roughness.png"
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 9052,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 4
+  },
+  "lodTriangles": 11068,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": -0.0005,
+    "ground_z": -0.0007,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4664,
-        "faces": 9052,
-        "tris": 9052,
+        "verts": 5904,
+        "faces": 11068,
+        "tris": 11068,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -146,7 +131,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 69,
+        "islands": 185,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -160,7 +145,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 31.6
+        "uv_coverage_pct": 20.4
       }
     }
   }

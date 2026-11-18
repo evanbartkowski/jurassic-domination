@@ -1,12 +1,12 @@
 {
   "id": "styracosaurus",
   "family": "ceratopsian",
-  "triangles": 24304,
+  "triangles": 29824,
   "bones": 22,
   "dimensions": [
-    4.0657806396484375,
-    1.7702628374099731,
-    2.1730027198791504
+    4.065967082977295,
+    2.348482131958008,
+    1.99174165725708
   ],
   "clips": [
     "Idle",
@@ -22,17 +22,24 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD0 (2 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 2
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12220,
-        "faces": 24304,
-        "tris": 24304,
+        "verts": 15202,
+        "faces": 29824,
+        "tris": 29824,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +49,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 34,
+        "islands": 145,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,63 +63,83 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 38.0
+        "uv_coverage_pct": 23.6
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw",
-      "distance": 0.023
-    },
-    {
-      "part": "Claw.007",
-      "distance": 0.023
-    },
-    {
-      "part": "Claw.008",
-      "distance": 0.0218
-    },
-    {
       "part": "Nasal_horn",
-      "distance": 0.0435
+      "distance": 0.0437
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0474
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0669
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0475
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0673
     }
   ],
-  "bytes": 3497280,
+  "bytes": 8864084,
   "textures": {
     "Albedo": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Albedo.jpg"
     },
     "Normal": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Normal.png"
     },
     "Roughness": {
-      "width": 512,
-      "height": 512,
+      "width": 1024,
+      "height": 1024,
       "file": "Roughness.png"
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8748,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10736,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
-    "ground_z": -0.0008,
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (2 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0011,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 2
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4442,
-        "faces": 8748,
-        "tris": 8748,
+        "verts": 5658,
+        "faces": 10736,
+        "tris": 10736,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -122,7 +149,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 34,
+        "islands": 145,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -136,7 +163,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 37.1
+        "uv_coverage_pct": 23.0
       }
     }
   }

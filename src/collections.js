@@ -1,10 +1,13 @@
 import {
   CATALOG,
+  dailyStock,
   PETS,
   COSMETICS,
   DECORATIONS,
   ACHIEVEMENTS,
 } from "./collection-data.js";
+import {accountStatus,featureAccess,requiredItemLevel,islandProgress,xpForLevel,MAX_ACCOUNT_LEVEL} from './account-progression.js';
+import {ISLAND_TRIALS} from './sanctuary.js';
 const integer = (n, max = 1e9) =>
   Number.isFinite(n) ? Math.max(0, Math.min(max, Math.floor(n))) : 0;
 const unique = (raw, valid) => [
@@ -61,7 +64,7 @@ export function normalizeCollection(raw = {}) {
       care: {},
       lastCare: {},
       trials: unique(raw.island?.trials, (id) =>
-        ["haven", "keeper"].includes(id),
+        ISLAND_TRIALS.some(trial=>trial.id===id),
       ),
     },
   };
@@ -98,7 +101,9 @@ export function normalizeCollection(raw = {}) {
       !Number.isFinite(a.rotation)
     )
       continue;
-    if (!placementValid(p, a.kind, a.itemId, a.x, a.y).ok) continue;
+    // Restored builds are validated against the full physical island; new
+    // placements use the account's current habitat limits below.
+    if (!placementValid({...p,account:{xp:xpForLevel(MAX_ACCOUNT_LEVEL)}}, a.kind, a.itemId, a.x, a.y).ok) continue;
     p.island.placements.push({
       id: a.id,
       kind: a.kind,
@@ -119,6 +124,10 @@ export function normalizeCollection(raw = {}) {
 export function purchaseItem(p, sku) {
   const item = CATALOG[sku];
   if (!item) return { ok: false, reason: "Unknown item." };
+  if(item.source==='crate')return {ok:false,reason:'Discover this exclusive appearance in expedition crates.'};
+  const required=requiredItemLevel(item);
+  if(!featureAccess(p,'shop').unlocked||accountStatus(p).level<required)return {ok:false,reason:`Unlock this purchase at account level ${required}.`};
+
   if (item.kind !== "decoration" && ownedCount(p, sku))
     return { ok: false, reason: "Already owned." };
   if (item.kind === "decoration" && ownedCount(p, sku) >= 99)
@@ -138,7 +147,7 @@ function addItem(p, item) {
   else if (item.kind === "pet") p.pets.push(item.id);
   else p.decorations[item.id] = (p.decorations[item.id] || 0) + 1;
 }
-function claim(p, receipt) {
+export function claimFindReceipt(p, receipt) {
   if (
     typeof receipt !== "string" ||
     !receipt ||
@@ -158,7 +167,7 @@ export function awardRareDNA(p, receipt, amount) {
     !Number.isInteger(amount) ||
     amount < 1 ||
     amount > 5 ||
-    !claim(p, receipt)
+    !claimFindReceipt(p, receipt)
   )
     return false;
   p.dna += amount;
@@ -166,13 +175,13 @@ export function awardRareDNA(p, receipt, amount) {
   return true;
 }
 export function recordGuardianKill(p, receipt) {
-  if (!claim(p, receipt)) return false;
+  if (!claimFindReceipt(p, receipt)) return false;
   p.bossKills++;
   return true;
 }
 export function grantFind(p, sku, receipt) {
   const item = CATALOG[sku];
-  if (!item || !claim(p, receipt))
+  if (!item || !claimFindReceipt(p, receipt))
     return { ok: false, reason: "This find was already collected." };
   if (
     (item.kind !== "decoration" && ownedCount(p, sku)) ||
@@ -212,17 +221,19 @@ function normalizeRotation(value) {
   return ((value % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
 }
 export function placementValid(p, kind, id, x, y, ignoreId = null) {
+  const habitat=islandProgress(p);
+  if(!habitat.unlocked)return {ok:false,reason:'Dinosaur Island unlocks at account level 3.'};
   const item = CATALOG[`${kind}:${id}`];
   if (!item || !["pet", "decoration"].includes(kind))
     return { ok: false, reason: "Select an owned pet or decoration." };
   if (
     !Number.isFinite(x) ||
     !Number.isFinite(y) ||
-    Math.hypot(x, y) > ISLAND_RADIUS - (item.footprint || 1)
+    Math.hypot(x, y) > habitat.radius - (item.footprint || 1)
   )
     return {
       ok: false,
-      reason: "Place items on the grassy island, away from the shoreline.",
+      reason: habitat.next?`Build inside your habitat boundary. More space opens at account level ${habitat.next.level}.`:"Place items on the grassy island, away from the shoreline.",
     };
   const existing = p.island.placements.find((a) => a.id === ignoreId);
   if (!existing && availableCount(p, kind, id) <= 0)
@@ -233,14 +244,12 @@ export function placementValid(p, kind, id, x, y, ignoreId = null) {
   if (
     !existing &&
     p.island.placements.filter((a) => a.kind === kind).length >=
-      (kind === "pet" ? 16 : 80)
+      (kind === "pet" ? habitat.pets : habitat.decorations)
   )
     return {
       ok: false,
       reason:
-        kind === "pet"
-          ? "Your island can host sixteen pets at once."
-          : "Your island can hold eighty decorations.",
+        `Your ${habitat.name} holds ${kind==='pet'?habitat.pets:habitat.decorations} ${kind==='pet'?'pets':'decorations'}.${habitat.next?` More slots open at account level ${habitat.next.level}.`:''}`,
     };
   for (const a of p.island.placements) {
     if (a.id === ignoreId) continue;

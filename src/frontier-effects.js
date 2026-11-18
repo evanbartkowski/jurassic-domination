@@ -39,6 +39,56 @@ export class IncidentPresentation{
 export function createAttackStroke(event){
  const group=new T.Group(),radius=Math.max(2,event.radius||3),enemy=event.type==='enemy-strike',color=enemy?0xf94328:event.ability==='venom'?0xa2e552:event.ability==='flame'?0xff671b:0xffdfad;
  group.position.set(event.x||0,groundHeight(event.x||0,event.y||0)+.3,event.y||0);group.rotation.y=-(event.angle||0);
+ const style=event.style;
+ if(['attack','enemy-strike'].includes(event.type)){
+  const kind=style||'claw';
+  const stroke=(points,width=.055)=>{
+   const curve=new T.CatmullRomCurve3(points.map(([x,z])=>new T.Vector3(x,.48,z)));
+   const mesh=new T.Mesh(new T.TubeGeometry(curve,20,width,5,false),new T.MeshBasicMaterial({color,transparent:true,opacity:1,depthWrite:false}));
+   mesh.name='Attack_'+kind;group.add(mesh);
+  };
+  if(kind==='bite'){
+   for(const sign of [-1,1]){
+    stroke([[radius*.35,sign*radius*.35],[radius*.7,sign*radius*.43],[radius*.95,sign*radius*.15]]);
+    for(let i=0;i<3;i++){const x=radius*(.45+i*.15);stroke([[x,sign*radius*.37],[x+.07,sign*radius*.22]],.045);}
+   }
+  }else if(kind==='stomp'){
+   for(let i=0;i<7;i++){const a=i*Math.PI*2/7;stroke([[Math.cos(a)*radius*.45,Math.sin(a)*radius*.45],[Math.cos(a+.08)*radius*.7,Math.sin(a+.08)*radius*.7],[Math.cos(a)*radius,Math.sin(a)*radius]],.065);}
+  }else if(kind==='ram'){
+   stroke([[radius*.25,0],[radius,0]],.085);stroke([[radius*.7,-radius*.25],[radius,0],[radius*.7,radius*.25]],.075);
+  }else{
+   for(let i=-1;i<=1;i++)stroke([[radius*.35,i*radius*.19-radius*.12],[radius*.65,i*radius*.19],[radius*.95,i*radius*.19+radius*.08]],.06);
+  }
+  return{group,life:.24,max:.24,update(dt,progress){for(const mesh of group.children)mesh.material.opacity=(1-progress)**.7;}};
+ }
+
+ if(['bite','ram','stomp'].includes(style)){
+  const height=Math.max(.35,(event.size||1)*.65);
+  for(let k=0;k<3;k++){
+   let geometry;
+   if(style==='stomp'){
+    geometry=new T.RingGeometry(radius*(.28+k*.18),radius*(.31+k*.18),48);
+    geometry.rotateX(-Math.PI/2);
+   }else{
+    const vertices=[],indices=[];
+    for(let i=0;i<=32;i++){
+     const u=i/32,a=(u-.5)*(style==='bite'?1.3:1.7),r=radius*(.65+k*.09),taper=Math.sin(u*Math.PI),y=height+(style==='bite'?(k-1)*.26*taper:0);
+     vertices.push(Math.cos(a)*r,y,Math.sin(a)*r,Math.cos(a)*r,y+(.05+radius*.025)*taper,Math.sin(a)*r);
+     if(i<32){const j=i*2;indices.push(j,j+1,j+2,j+1,j+3,j+2);}
+    }
+    geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);
+   }
+   const mesh=new T.Mesh(geometry,new T.MeshBasicMaterial({color:style==='stomp'?0xc8ad7d:color,side:T.DoubleSide,transparent:true,opacity:0,depthWrite:false}));mesh.name='Attack_'+style+'_'+k;group.add(mesh);
+  }
+  return{group,life:.34,max:.34,update(dt,progress){
+   const opacity=Math.max(0,Math.min(1,progress/.08))*(1-progress)**1.5;
+   group.scale.setScalar(style==='stomp'?.65+progress*.55:.9+Math.sin(Math.min(1,progress*2)*Math.PI/2)*.1);
+   for(const [k,mesh]of group.children.entries()){
+    mesh.material.opacity=opacity*(1-k*.17);
+    if(style==='bite')mesh.position.y=(1-progress)*(k-1)*.13;
+   }
+  }};
+ }
  const strokes=event.type==='attack'?3:2;
  for(let k=0;k<strokes;k++){
   const p=[],idx=[],r=radius*(.68+k*.12),width=.12+radius*.035;

@@ -1,12 +1,12 @@
 {
   "id": "parasaurolophus",
   "family": "hadrosaur",
-  "triangles": 23188,
+  "triangles": 28996,
   "bones": 22,
   "dimensions": [
-    5.921022415161133,
-    2.863006830215454,
-    1.7331750392913818
+    5.9223527908325195,
+    2.8646292686462402,
+    1.7314761877059937
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11642,
-        "faces": 23188,
-        "tris": 23188,
+        "verts": 14770,
+        "faces": 28996,
+        "tris": 28996,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 24,
+        "islands": 136,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,25 +56,29 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 32.3
+        "uv_coverage_pct": 25.3
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw",
-      "distance": 0.023
+      "part": "Orbital_upper_lid",
+      "distance": 0.0339
     },
     {
-      "part": "Claw.002",
-      "distance": 0.0201
+      "part": "Orbital_lower_lid",
+      "distance": 0.0463
     },
     {
-      "part": "Claw.008",
-      "distance": 0.023
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0338
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0464
     }
   ],
-  "bytes": 3141708,
+  "bytes": 4457492,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -93,22 +97,38 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8346,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10438,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
-    "ground_z": -0.0005,
+    "warnings": [
+      "hidden back-to-back faces: Surface_LOD1 (1 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0011,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 1
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4221,
-        "faces": 8346,
-        "tris": 8346,
+        "verts": 5491,
+        "faces": 10438,
+        "tris": 10438,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -118,7 +138,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 24,
+        "islands": 136,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -131,8 +151,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.02,
-        "uv_coverage_pct": 31.5
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 24.3
       }
     }
   }

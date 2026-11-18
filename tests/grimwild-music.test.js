@@ -16,3 +16,19 @@ test('muting affects an already-playing music track immediately and never create
  assert.equal(typeof music.MusicDirector,'function');const d=new music.MusicDirector({makeClip:src=>new Clip(src)});d.setScene('playing');d.update(.3,1);const clip=d.current;
  d.update(.01,0);assert.equal(clip.volume,0);for(let i=0;i<100;i++)d.setScene('playing');assert.equal(d.voices.length,1);d.dispose();
 });
+test('retiring a pending track does not blacklist it when the browser aborts playback',async()=>{
+ const pending=[];const d=new music.MusicDirector({makeClip:src=>{const c=new Clip(src);c.play=()=>new Promise((_,reject)=>pending.push({c,reject}));return c;}});
+ d.setScene('menu');d.setScene('playing');d.setScene('danger');
+ pending[0].reject(Object.assign(new Error('source replaced'),{name:'AbortError'}));await Promise.resolve();
+ assert.equal(d.failed.size,0);assert.equal(d.voices.length,2);d.dispose();
+});
+test('a blocked autoplay attempt can be retried by the next user gesture',async()=>{
+ let attempts=0;const d=new music.MusicDirector({makeClip:src=>{const c=new Clip(src);c.play=()=>{attempts++;if(attempts===1)return Promise.reject(Object.assign(new Error('gesture required'),{name:'NotAllowedError'}));c.paused=false;return Promise.resolve();};return c;}});
+ d.setScene('menu');await Promise.resolve();assert.equal(d.failed.size,0);
+ for(let i=0;i<100;i++)d.update(.016,1);assert.equal(attempts,1,'wait for a gesture instead of retrying each frame');
+ d.setScene('menu');await Promise.resolve();assert.equal(attempts,2);assert.ok(d.current);d.dispose();
+});
+test('resuming during a combat lull keeps the same combat track',()=>{
+ const a=new AudioEngine();a.recordedMusic=new music.MusicDirector({makeClip:src=>new Clip(src)});a.unlocked=true;a.setMode('danger');a.combatMusicHold=6;
+ const track=a.recordedMusic.current;a.setMode('paused');a.setMode('playing');assert.equal(a.mode,'danger');assert.equal(a.recordedMusic.current,track);a.dispose();
+});

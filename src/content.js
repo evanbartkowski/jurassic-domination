@@ -1,3 +1,4 @@
+import {EXPEDITION_SKINS,LEGACY_SKIN_DETAILS} from './skin-data.js';
 export const ABILITIES = {
   pounce: {
     name: "Pounce",
@@ -311,6 +312,15 @@ export const POWERUPS = [
   },
 ];
 export const SKINS = [
+  ...EXPEDITION_SKINS,
+  ...[
+    ['copperstorm','Copper Storm',0x99552f,0x65e1dd],
+    ['orchid','Orchid Hunter',0x643779,0xf5b5da],
+    ['glacier','Glacier Crown',0xabcbdc,0x346baf],
+    ['sunfire','Sunfire',0xd67a2b,0xffdf82],
+    ['mossbone','Mossbone',0x476047,0xd5d0a3],
+    ['deepsea','Abyssal Pearl',0x23394f,0x88eadb],
+  ].map(([id,name,color,accent])=>({id,name,color,accent,description:name+' scales with contrasting crests and markings.'})),
   {
     id: "natural",
     name: "Natural",
@@ -367,7 +377,7 @@ export const SKINS = [
     color: 0x414d87,
     accent: 0xaadbf0,
   },
-];
+].map(s=>({rarity:'rare',pattern:'mottled',collection:'Original',finish:'matte',source:'world',...s,...LEGACY_SKIN_DETAILS[s.id]}));
 export const PERMANENT_MODIFIERS = [
   {
     id: "ancient-heart",

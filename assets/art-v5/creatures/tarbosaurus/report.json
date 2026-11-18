@@ -1,12 +1,12 @@
 {
   "id": "tarbosaurus",
   "family": "tyrannosaur",
-  "triangles": 25146,
+  "triangles": 30748,
   "bones": 20,
   "dimensions": [
-    5.624013900756836,
-    2.451880931854248,
-    1.6421468257904053
+    5.83837366104126,
+    2.469609260559082,
+    1.6322177648544312
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12711,
-        "faces": 25146,
-        "tris": 25146,
+        "verts": 15744,
+        "faces": 30748,
+        "tris": 30748,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 69,
+        "islands": 185,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,92 +55,81 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.06,
-        "uv_coverage_pct": 30.3
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 23.1
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Lower_tooth.003",
-      "distance": 0.0243
-    },
-    {
-      "part": "Lower_tooth.004",
-      "distance": 0.0263
-    },
-    {
-      "part": "Lower_tooth.005",
-      "distance": 0.0308
-    },
-    {
-      "part": "Lower_tooth.014",
-      "distance": 0.0243
-    },
-    {
-      "part": "Lower_tooth.015",
-      "distance": 0.0264
-    },
-    {
-      "part": "Lower_tooth.016",
-      "distance": 0.0307
-    },
-    {
-      "part": "Claw.001",
-      "distance": 0.0226
-    },
-    {
-      "part": "Claw.002",
-      "distance": 0.023
-    },
-    {
       "part": "Finger.001",
-      "distance": 0.025
-    },
-    {
-      "part": "Claw.003",
-      "distance": 0.0228
+      "distance": 0.0241
     },
     {
       "part": "Finger.002",
-      "distance": 0.0259
+      "distance": 0.0247
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0536
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0615
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0538
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0621
     }
   ],
-  "bytes": 3521708,
+  "bytes": 8331184,
   "textures": {
     "Albedo": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Albedo.jpg"
     },
     "Normal": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Normal.png"
     },
     "Roughness": {
-      "width": 512,
-      "height": 512,
+      "width": 1024,
+      "height": 1024,
       "file": "Roughness.png"
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 13830,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 4
+  },
+  "lodTriangles": 11068,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": -0.0003,
+    "ground_z": -0.0007,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 7053,
-        "faces": 13830,
-        "tris": 13830,
+        "verts": 5904,
+        "faces": 11068,
+        "tris": 11068,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -150,7 +139,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 69,
+        "islands": 185,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -163,8 +152,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.04,
-        "uv_coverage_pct": 29.9
+        "uv_overlap_pct": 0.03,
+        "uv_coverage_pct": 22.3
       }
     }
   }

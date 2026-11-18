@@ -1,11 +1,11 @@
 {
   "id": "cerberus",
   "family": "wolf",
-  "triangles": 32716,
+  "triangles": 36676,
   "bones": 26,
   "dimensions": [
-    3.755683660507202,
-    2.0450117588043213,
+    3.756427049636841,
+    2.0509016513824463,
     2.055391788482666
   ],
   "clips": [
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 16636,
-        "faces": 32716,
-        "tris": 32716,
+        "verts": 18752,
+        "faces": 36676,
+        "tris": 36676,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 139,
+        "islands": 207,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,8 +55,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 21.1
+        "uv_overlap_pct": 0.04,
+        "uv_coverage_pct": 15.3
       }
     }
   },
@@ -71,7 +71,7 @@
     },
     {
       "part": "Secondary_Pupil",
-      "distance": 0.0497
+      "distance": 0.0522
     },
     {
       "part": "Secondary_Lower_tooth.007",
@@ -87,14 +87,14 @@
     },
     {
       "part": "Secondary_Pupil.003",
-      "distance": 0.0503
+      "distance": 0.0541
     },
     {
       "part": "Secondary_Lower_tooth.031",
       "distance": 0.0286
     }
   ],
-  "bytes": 4278616,
+  "bytes": 5112800,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -113,7 +113,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 11776,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 0,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 13202,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -126,9 +135,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 6166,
-        "faces": 11776,
-        "tris": 11776,
+        "verts": 7015,
+        "faces": 13202,
+        "tris": 13202,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -138,7 +147,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 139,
+        "islands": 207,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -151,8 +160,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 20.2
+        "uv_overlap_pct": 0.04,
+        "uv_coverage_pct": 14.8
       }
     }
   }

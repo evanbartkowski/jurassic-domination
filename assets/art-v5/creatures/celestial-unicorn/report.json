@@ -1,10 +1,10 @@
 {
   "id": "celestial-unicorn",
   "family": "equine",
-  "triangles": 29536,
+  "triangles": 33494,
   "bones": 24,
   "dimensions": [
-    3.462520122528076,
+    3.4643759727478027,
     3.338923215866089,
     5.695873260498047
   ],
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 14848,
-        "faces": 29536,
-        "tris": 29536,
+        "verts": 16963,
+        "faces": 33494,
+        "tris": 33494,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 40,
+        "islands": 108,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,12 +56,29 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 32.0
+        "uv_coverage_pct": 26.3
       }
     }
   },
-  "attachmentShifts": [],
-  "bytes": 4089384,
+  "attachmentShifts": [
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0246
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0399
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0246
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0397
+    }
+  ],
+  "bytes": 5229052,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -80,7 +97,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 16244,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 0,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 18420,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -93,9 +119,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 8202,
-        "faces": 16244,
-        "tris": 16244,
+        "verts": 9426,
+        "faces": 18420,
+        "tris": 18420,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -105,7 +131,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 40,
+        "islands": 108,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -119,7 +145,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 31.9
+        "uv_coverage_pct": 26.2
       }
     }
   }

@@ -1,12 +1,12 @@
 {
   "id": "solar-unicorn",
   "family": "equine",
-  "triangles": 23416,
+  "triangles": 27374,
   "bones": 22,
   "dimensions": [
-    3.462520122528076,
+    3.4643759727478027,
     3.338923215866089,
-    1.4535210132598877
+    1.446317195892334
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11740,
-        "faces": 23416,
-        "tris": 23416,
+        "verts": 13855,
+        "faces": 27374,
+        "tris": 27374,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 16,
+        "islands": 84,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,12 +56,29 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 37.5
+        "uv_coverage_pct": 31.2
       }
     }
   },
-  "attachmentShifts": [],
-  "bytes": 3202664,
+  "attachmentShifts": [
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0246
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0399
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0246
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0397
+    }
+  ],
+  "bytes": 4242076,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -80,7 +97,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8428,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 0,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 9854,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -93,9 +119,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4246,
-        "faces": 8428,
-        "tris": 8428,
+        "verts": 5095,
+        "faces": 9854,
+        "tris": 9854,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -105,7 +131,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 16,
+        "islands": 84,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -119,7 +145,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 36.5
+        "uv_coverage_pct": 30.3
       }
     }
   }

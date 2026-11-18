@@ -1,12 +1,12 @@
 {
   "id": "ichthyosaurus",
   "family": "ichthyosaur",
-  "triangles": 24948,
+  "triangles": 29892,
   "bones": 14,
   "dimensions": [
-    5.085999965667725,
-    2.303014039993286,
-    1.9773845672607422
+    5.084997177124023,
+    1.9504269361495972,
+    2.247105360031128
   ],
   "clips": [
     "Idle",
@@ -23,7 +23,8 @@
     "pass": true,
     "errors": [],
     "warnings": [
-      "hidden back-to-back faces: Surface_LOD0 (3 pairs) - delete to save tris"
+      "Surface_LOD0: duplicate verts=8 loose verts=0",
+      "hidden back-to-back faces: Surface_LOD0 (2 pairs) - delete to save tris"
     ],
     "ground_z": -0.0,
     "zfighting": [],
@@ -31,15 +32,15 @@
     "back_to_back": [
       {
         "where": "Surface_LOD0",
-        "tri_pairs": 3
+        "tri_pairs": 2
       }
     ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12596,
-        "faces": 24948,
-        "tris": 24948,
+        "verts": 15286,
+        "faces": 29892,
+        "tris": 29892,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -48,8 +49,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 61,
+        "duplicate_verts": 8,
+        "islands": 170,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -63,7 +64,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 46.2
+        "uv_coverage_pct": 34.0
       }
     }
   },
@@ -73,7 +74,7 @@
       "distance": 0.0881
     }
   ],
-  "bytes": 3354812,
+  "bytes": 4575928,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -92,29 +93,31 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8980,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10760,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [
-      "hidden back-to-back faces: Surface_LOD1 (1 pairs) - delete to save tris"
-    ],
+    "warnings": [],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [
-      {
-        "where": "Surface_LOD1",
-        "tri_pairs": 1
-      }
-    ],
+    "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4612,
-        "faces": 8980,
-        "tris": 8980,
+        "verts": 5720,
+        "faces": 10760,
+        "tris": 10760,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -124,7 +127,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 61,
+        "islands": 170,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -138,7 +141,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 45.8
+        "uv_coverage_pct": 33.7
       }
     }
   }

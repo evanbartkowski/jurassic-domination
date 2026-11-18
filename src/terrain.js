@@ -47,6 +47,9 @@ function canopyMaterial(kind='leaf') {
     roughness: 0.86,
   });
   foliageMaterial.onBeforeCompile = (shader) => {
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      float leafLuma=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));
+      diffuseColor.rgb=max(vec3(0.),mix(vec3(leafLuma),diffuseColor.rgb,1.32))*vec3(.95,1.07,.98);`);
     shader.uniforms.foliageFocus = { value: foliageFocus };
     shader.uniforms.foliageTime = foliageWind;
     shader.uniforms.foliageMenu = foliageMenu;
@@ -289,22 +292,37 @@ export function elevationAt(x, z) {
   return groundHeight(x,z);
 }
 
-export function createTerrainChunk(cx, cy, seed) {
+export function createTerrainChunk(cx,cy,seed){
+ const steps=createTerrainChunkSteps(cx,cy,seed);let result;
+ do{result=steps.next();}while(!result.done);
+ return result.value;
+}
+
+/** Yield between bounded geometry batches; a chunk becomes visible only when complete. */
+export function* createTerrainChunkSteps(cx, cy, seed) {
   const group = new THREE.Group(),
     owned = [],
     water = [],
     rand = seeded(chunkSeed(seed, cx, cy) ^ 0x9148),
     ox = cx * CHUNK_SIZE,
     oy = cy * CHUNK_SIZE;
+  const features=[];let terrainMat,completed=false;
+  const release=()=>{
+    features.forEach(f=>f.userData.dispose());owned.forEach(g=>g.dispose());terrainMat?.dispose();water.forEach(w=>w.material.dispose());
+    group.traverse(m=>{if(m.isInstancedMesh)m.dispose();if(m.isMesh&&!m.isInstancedMesh&&m.geometry.type==='TorusGeometry')m.material.dispose();});
+  };
+  try{
   const featureData = worldFeatures(seed, cx, cy),
     clearFeature = (x, z, margin = 0) =>
       featureData.some((f) => Math.hypot(f.x - x, f.y - z) < f.radius + margin);
   // Neighbor pools participate on both sides of a chunk boundary. This only
   // shapes rendered ground; obstacle and swimming coordinates remain intact.
   const pools=[];
-  for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)
+  for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){
+    yield 'neighbor-water';
     for(const f of (dx===0&&dz===0?featureData:worldFeatures(seed,cx+dx,cy+dz)))
       if(f.type==='water')pools.push({...f,surface:elevationAt(f.x,f.y)+.1});
+  }
   const region = biomeAt(ox + 80, oy + 80),
     geo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, 32, 32);
   geo.rotateX(-Math.PI / 2);
@@ -312,6 +330,7 @@ export function createTerrainChunk(cx, cy, seed) {
   const positions = geo.attributes.position,
     colors = [];
   for (let i = 0; i < positions.count; i++) {
+    if(i%64===0)yield 'ground';
     const x = positions.getX(i) + ox + 80,
       z = positions.getZ(i) + oy + 80,
       biome = biomeAt(x, z),
@@ -334,15 +353,16 @@ export function createTerrainChunk(cx, cy, seed) {
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   const terrainUV=geo.attributes.uv;for(let i=0;i<positions.count;i++)terrainUV.setXY(i,(positions.getX(i)+ox+80)/4,(positions.getZ(i)+oy+80)/4);
   geo.computeVertexNormals();
-  const terrainMat = naturalMaterial('soil',0xffffff,{
+  terrainMat = naturalMaterial('soil',0xffffff,{
       vertexColors: true,
       bumpScale: 0.022,
       roughness: 0.94,
-    }),
-    ground = new THREE.Mesh(geo, terrainMat);
+    });
+  const ground = new THREE.Mesh(geo, terrainMat);
   ground.position.set(ox + 80, 0, oy + 80);
   ground.receiveShadow = true;
   group.add(ground);
+  yield;
   const forest = ["fernwood", "redwood", "grove", "fen", "marsh"].includes(
       region.id,
     ),
@@ -363,6 +383,7 @@ export function createTerrainChunk(cx, cy, seed) {
     mushroomCaps = [],
     shrubs = [];
   for (let i = 0; i < treeCount; i++) {
+    if(i%24===0)yield;
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE;
     if (Math.hypot(x, z) < 17 || clearFeature(x, z, 4)||pathDistance(x,z)<9) continue;
@@ -407,6 +428,7 @@ export function createTerrainChunk(cx, cy, seed) {
     trunks.length,
     trunks,
   );
+  yield;
   instanced(
     group,
     BOTANY.conifer[0],
@@ -416,6 +438,7 @@ export function createTerrainChunk(cx, cy, seed) {
   );
   const broadCrowns=crowns.filter((p,i)=>['grove','fen'].includes(region.id)||(region.id==='fernwood'&&i%3!==0));instanced(group,BOTANY.ginkgo[0],canopyMaterial('broadleaf'),broadCrowns.length,broadCrowns);
   instanced(group, BOTANY.cycad[0], canopyMaterial(), palmLeaves.length, palmLeaves);
+  yield;
   for (let i = 0; i < 28; i++) {
     const x = ox + rand() * CHUNK_SIZE,
       z = oy + rand() * CHUNK_SIZE,
@@ -437,6 +460,7 @@ export function createTerrainChunk(cx, cy, seed) {
     z: oy + 14 + rand() * (CHUNK_SIZE - 28),
   }));
   for (let i = 0; i < cover; i++) {
+    if(i%32===0)yield;
     const patch = thickets[i % thickets.length], angle = rand() * Math.PI * 2,
       radius = Math.sqrt(rand()) * (forest ? 16 : 12),
       x = patch.x + Math.cos(angle) * radius,
@@ -452,6 +476,7 @@ export function createTerrainChunk(cx, cy, seed) {
     });
   }
   instanced(group, BOTANY.fern[0], canopyMaterial(), ferns.length, ferns, false);
+  yield;
   for (let i = 0; i < 45; i++) {
     const x = ox + rand() * 160,
       z = oy + rand() * 160;
@@ -497,6 +522,7 @@ export function createTerrainChunk(cx, cy, seed) {
   instanced(group,trunkGeo,material(0xd6c4a4),mushroomStems.length,mushroomStems,false);
   instanced(group,BOTANY.mushroom[0],canopyMaterial(),mushroomCaps.length,mushroomCaps,false);
   instanced(group,BOTANY.shrub[0],canopyMaterial(),shrubs.length,shrubs,false);
+  yield;
   for (const lair of LAIRS)
     if (
       lair.x >= ox &&
@@ -530,43 +556,32 @@ export function createTerrainChunk(cx, cy, seed) {
       ring.rotation.x = Math.PI / 2;
       group.add(ring);
     }
-  const features = featureData.map((f) => createWildFeature(f, elevationAt(f.x, f.y)));
+  for(const f of featureData){yield 'feature:'+f.type;features.push(createWildFeature(f,elevationAt(f.x,f.y)));}
   features.forEach((f) => group.add(f));
   group.userData = {
     ...group.userData,
     features,
     water,
-    dispose() {
-      features.forEach((f) => f.userData.dispose());
-      owned.forEach((g) => g.dispose());
-      terrainMat.dispose();
-      water.forEach((w) => w.material.dispose());
-      group.traverse((m) => {
-        if (m.isInstancedMesh) m.dispose();
-        if (
-          m.isMesh &&
-          !m.isInstancedMesh &&
-          m.geometry.type === "TorusGeometry"
-        )
-          m.material.dispose();
-      });
-    },
+    dispose:release,
   };
+  completed=true;
   return group;
+  }finally{if(!completed)release();}
 }
 
 export class Terrain {
-  constructor(scene, { quality = "high", createChunk = createTerrainChunk } = {}) {
+  constructor(scene, { quality = "high", createChunk = createTerrainChunk, buildBudgetMs=2 } = {}) {
     this.scene = scene;
     this.chunks = new Map();
     this.seed = null;
     this.positionKey = "";
     this.quality = ["low", "medium", "high"].includes(quality) ? quality : "high";
     this.createChunk = createChunk;
+    this.buildBudgetMs=buildBudgetMs;this.buildJob=null;
     this.pending = [];
     this.focusPosition = { x: 0, y: 0 };
     this.disposed = false;
-    this.metrics = { builds: 0, builtThisFrame: 0, lastBuildMs: 0, peakBuildMs: 0 };
+    this.metrics = { builds: 0, builtThisFrame: 0, lastBuildMs: 0, peakBuildMs: 0,lastBuildSliceMs:0,peakBuildSliceMs:0 };
   }
   update(x, y, seed = 7281) {
     if (this.disposed) return;
@@ -575,6 +590,7 @@ export class Terrain {
       key = `${cx},${cy}`;
     this.metrics.builtThisFrame = 0;
     if (this.seed !== seed) {
+      this.buildJob?.steps.return();this.buildJob=null;
       for (const g of this.chunks.values()) {
         this.scene.remove(g);
         g.userData.dispose();
@@ -586,7 +602,8 @@ export class Terrain {
       this.seed = seed;
       this.positionKey = key;
       const plan = terrainPlan(x, y), needed = new Set(plan.map((p) => p.id));
-      this.pending = plan.filter((p) => !this.chunks.has(p.id));
+      if(this.buildJob&&(!needed.has(this.buildJob.next.id)||(!this.chunks.has(key)&&this.buildJob.next.id!==key))){this.buildJob.steps.return();this.buildJob=null;}
+      this.pending = plan.filter((p) => !this.chunks.has(p.id)&&p.id!==this.buildJob?.next.id);
       for (const [id, g] of this.chunks)
         if (!needed.has(id)) {
           this.scene.remove(g);
@@ -594,21 +611,33 @@ export class Terrain {
           this.chunks.delete(id);
         }
     }
-    // The center is built first. A moving animal already has its surrounding
-    // chunks prepared; newly needed neighbors are spread over later frames.
-    // One build per call bounds the old nine-chunk main-thread stall.
-    const next = this.pending.shift();
+    // Center ground is immediate. Neighbor geometry is staged in short batches,
+    // preventing a whole background chunk from blocking a travel frame.
+    const next = this.buildJob?.next||this.pending.shift();
     if (next) {
-      const start = performance.now(), g = this.createChunk(next.cx, next.cy, seed);
+      const start = performance.now();let g;
+      if(this.createChunk!==createTerrainChunk||next.id===key){
+        if(this.buildJob){let result;do{result=this.buildJob.steps.next();}while(!result.done);g=result.value;}else g=this.createChunk(next.cx,next.cy,seed);
+      }else{
+        this.buildJob||={next,steps:createTerrainChunkSteps(next.cx,next.cy,seed),ms:0,stage:'begin'};
+        let result;
+        do{const stageStart=performance.now();result=this.buildJob.steps.next();const stageMs=performance.now()-stageStart;if(stageMs>(this.metrics.peakStageMs||0)){this.metrics.peakStageMs=stageMs;this.metrics.peakStage=this.buildJob.stage;}this.buildJob.stage=result.value||'decoration';}while(!result.done&&performance.now()-start<this.buildBudgetMs);
+        if(result.done)g=result.value;
+      }
+      const slice=performance.now()-start;
+      this.metrics.lastBuildSliceMs=slice;this.metrics.peakBuildSliceMs=Math.max(this.metrics.peakBuildSliceMs,slice);
+      if(this.buildJob)this.buildJob.ms+=slice;
+      if(g){
       g.userData.chunkX = next.cx;
       g.userData.chunkY = next.cy;
       this.scene.add(g);
       this.chunks.set(next.id, g);
-      const duration = performance.now() - start;
+      const duration = this.buildJob?.ms||slice;this.buildJob=null;
       this.metrics.builds++;
       this.metrics.builtThisFrame = 1;
       this.metrics.lastBuildMs = duration;
       this.metrics.peakBuildMs = Math.max(this.metrics.peakBuildMs, duration);
+      }
     }
     this.applyDetail(x, y);
   }
@@ -622,7 +651,7 @@ export class Terrain {
       const dx = Math.max(group.userData.chunkX * CHUNK_SIZE - x, 0, x - (group.userData.chunkX + 1) * CHUNK_SIZE),
         dy = Math.max(group.userData.chunkY * CHUNK_SIZE - y, 0, y - (group.userData.chunkY + 1) * CHUNK_SIZE),
         distance = Math.hypot(dx, dy),
-        level = Math.min(3, base + (distance > 210 ? 2 : distance > 105 ? 1 : 0)),
+        level = Math.min(3, base + (distance > 110 ? 2 : distance > 45 ? 1 : 0)),
         density = (this.quality === "low" ? 0.5 : this.quality === "medium" ? 0.78 : 1) * (distance > 210 ? 0.5 : distance > 105 ? 0.8 : 1);
       for (const mesh of group.userData.detailMeshes || []) {
         const detail = mesh.userData.detail;
@@ -668,6 +697,7 @@ export class Terrain {
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
+    this.buildJob?.steps.return();this.buildJob=null;
     for (const group of this.chunks.values()) {
       this.scene.remove(group);
       group.userData.dispose();

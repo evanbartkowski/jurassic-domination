@@ -1,11 +1,11 @@
 {
   "id": "dryosaurus",
   "family": "ornithopod",
-  "triangles": 24076,
+  "triangles": 29884,
   "bones": 20,
   "dimensions": [
-    4.999818325042725,
-    2.0809569358825684,
+    5.000886917114258,
+    2.0900559425354004,
     1.244124174118042
   ],
   "clips": [
@@ -22,7 +22,9 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "Surface_LOD0: duplicate verts=8 loose verts=0"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
@@ -30,9 +32,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12096,
-        "faces": 24076,
-        "tris": 24076,
+        "verts": 15224,
+        "faces": 29884,
+        "tris": 29884,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -41,8 +43,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 29,
+        "duplicate_verts": 8,
+        "islands": 141,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,22 +57,13 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 31.4
+        "uv_overlap_pct": 0.02,
+        "uv_coverage_pct": 24.8
       }
     }
   },
-  "attachmentShifts": [
-    {
-      "part": "Claw.002",
-      "distance": 0.0229
-    },
-    {
-      "part": "Claw.003",
-      "distance": 0.0229
-    }
-  ],
-  "bytes": 3160072,
+  "attachmentShifts": [],
+  "bytes": 4512216,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -89,7 +82,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8666,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10758,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -102,9 +104,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4391,
-        "faces": 8666,
-        "tris": 8666,
+        "verts": 5661,
+        "faces": 10758,
+        "tris": 10758,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -114,7 +116,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 29,
+        "islands": 141,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -128,7 +130,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 30.6
+        "uv_coverage_pct": 23.9
       }
     }
   }

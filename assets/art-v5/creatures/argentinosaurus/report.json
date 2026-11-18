@@ -1,12 +1,12 @@
 {
   "id": "argentinosaurus",
   "family": "sauropod",
-  "triangles": 22898,
+  "triangles": 28706,
   "bones": 22,
   "dimensions": [
-    8.279919624328613,
-    4.071967124938965,
-    2.638552665710449
+    8.280795097351074,
+    4.083152770996094,
+    2.6211581230163574
   ],
   "clips": [
     "Idle",
@@ -23,16 +23,16 @@
     "pass": true,
     "errors": [],
     "warnings": [],
-    "ground_z": 0.0,
+    "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 11495,
-        "faces": 22898,
-        "tris": 22898,
+        "verts": 14623,
+        "faces": 28706,
+        "tris": 28706,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 23,
+        "islands": 135,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,46 +55,38 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.02,
-        "uv_coverage_pct": 37.9
+        "uv_overlap_pct": 0.04,
+        "uv_coverage_pct": 29.1
       }
     }
   },
   "attachmentShifts": [
     {
       "part": "Claw.001",
-      "distance": 0.0241
-    },
-    {
-      "part": "Claw.003",
-      "distance": 0.023
-    },
-    {
-      "part": "Claw.004",
-      "distance": 0.0235
-    },
-    {
-      "part": "Claw.005",
-      "distance": 0.0232
-    },
-    {
-      "part": "Claw.006",
-      "distance": 0.023
+      "distance": 0.0234
     },
     {
       "part": "Claw.007",
-      "distance": 0.0247
-    },
-    {
-      "part": "Claw.009",
       "distance": 0.0233
     },
     {
-      "part": "Claw.011",
-      "distance": 0.023
+      "part": "Orbital_upper_lid",
+      "distance": 0.0262
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0388
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0263
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0388
     }
   ],
-  "bytes": 3242396,
+  "bytes": 4562712,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -113,7 +105,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8242,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 10334,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -126,9 +127,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4167,
-        "faces": 8242,
-        "tris": 8242,
+        "verts": 5437,
+        "faces": 10334,
+        "tris": 10334,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -138,7 +139,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 23,
+        "islands": 135,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -151,8 +152,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 37.2
+        "uv_overlap_pct": 0.04,
+        "uv_coverage_pct": 28.3
       }
     }
   }

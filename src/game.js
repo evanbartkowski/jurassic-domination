@@ -1,3 +1,6 @@
+import {prepareEgg,EGG_RARITIES} from './eggs.js';
+import { initializeQuests, recordQuestEvent } from './quests.js';
+import {plantHealth} from './plant-health.js';
 import { SPECIES, SPECIES_BY_ID, MUTATIONS, DIFFICULTIES, STARTER_SPECIES } from "./data.js";
 import {
   BUILD_CATEGORIES,
@@ -11,6 +14,7 @@ import {
   renderStars,
 } from "./build-system.js";
 import { rollCollectionItem } from "./collection-data.js";
+import {dropHuntLoot} from './loot-world.js';
 import { Ecosystem, initializeEcosystem } from "./ecosystem.js";
 import {
   newLineage,
@@ -82,6 +86,7 @@ export class Game {
     this.difficulty = DIFFICULTIES[difficulty] ? difficulty : "survival";
     this.rules = DIFFICULTIES[this.difficulty];
     this.upgrades = {
+      stride: clamp(Number(upgrades.stride) || 0, 0, 5),
       vitality: clamp(Number(upgrades.vitality) || 0, 0, 5),
       instinct: clamp(Number(upgrades.instinct) || 0, 0, 5),
       metabolism: clamp(Number(upgrades.metabolism) || 0, 0, 5),
@@ -184,6 +189,7 @@ export class Game {
     this.excavatedLandmarks = new Set();
     initializeWorldState(this);
     initializeDiscoveryState(this);
+    initializeQuests(this);
     initializeEcosystem(this, { modifiers, skinId, knownUnlocks });
     this.refreshStats(true);
     this._populate();
@@ -265,7 +271,7 @@ export class Game {
     );
     p.hp = heal ? p.maxHp : Math.min(p.maxHp, p.maxHp * ratio);
     p.damage =
-      s.damage * identity.damageMultiplier *
+      s.damage * (this.quests?.ending==='crown'?1.05:1) * identity.damageMultiplier *
       (1 + (p.growth || 0) * 0.32) *
       (1 +
         this.upgrades.instinct * 0.04 +
@@ -276,7 +282,7 @@ export class Game {
       (this.hasBuff("damage") ? 1.5 : 1) *
       (berserkActive ? 2.0 : 1);
     p.speed =
-      s.speed * identity.speedBonus * this.geneticTraits.speed *
+      s.speed * (1 + this.upgrades.stride * 0.025) * identity.speedBonus * this.geneticTraits.speed *
       (1 - (p.growth || 0) * 0.04) *
       (1 + (m.swift || 0) * 0.1 + hasteSpeed + (this.modifiers.has("wanderer") ? 0.07 : 0)) *
       (this.hasBuff("speed") ? 1.4 : 1) *
@@ -461,6 +467,7 @@ export class Game {
       ...(plant ? { plantKind: plant.id, name: plant.name, color: plant.color } : {}),
       ...options,
     };
+    if(type==="egg"){let eggSeed=(this.seed ^ Math.imul(food.id,2654435761))>>>0;prepareEgg(food,()=>{eggSeed=(Math.imul(eggSeed,1664525)+1013904223)>>>0;return eggSeed/4294967296;});}
     this.foods.push(food);
     return food;
   }
@@ -484,6 +491,7 @@ export class Game {
   }
 
   emit(type, data = {}) {
+    recordQuestEvent(this, {type,...data});
     this.events.push({ type, x: this.player.x, y: this.player.y, ...data });
     if (this.events.length > 160) this.events.shift();
   }
@@ -586,7 +594,7 @@ export class Game {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.stamina = clamp(
-      p.stamina + (sprint ? -20 * this.geneticTraits.staminaCost * (this.kit.archetype.staminaCost||1) : (24 + (m.swift || 0) * 5) * this.geneticTraits.staminaRecovery * (this.kit.archetype.staminaRecovery||1) * (1 - this.survival.fatigue * .001)) * dt,
+      p.stamina + (sprint ? -20 * this.geneticTraits.staminaCost * (this.kit.archetype.staminaCost||1) : (24 + (m.swift || 0) * 5) * this.geneticTraits.staminaRecovery * (this.quests?.ending==='chorus'?1.05:1) * (this.kit.archetype.staminaRecovery||1) * (1 - this.survival.fatigue * .001)) * dt,
       0,
       100,
     );
@@ -785,6 +793,11 @@ export class Game {
     });
     if (fish.hp <= 0) {
       fish.dead = true;
+      fish.hp = 0;
+      fish.deadAt = this.time;
+      fish.hunting = false;
+      fish.attackWindup = 0;
+      fish.biteReadyUntil = 0;
       fish.respawnAt = this.time + 35;
       this.gainXP(35 + tier * 25);
       p.kills++;
@@ -840,7 +853,15 @@ export class Game {
     const baseReach = 2.8 + this.effectiveSize * 1.45 + (this.effectiveSize >= 3.0 ? (this.effectiveSize - 2.8) * 1.6 : 0);
     const reach = baseReach * reachMult;
     const maxArc = wideCleaveLvl >= 5 ? 3.14 : (wideCleaveLvl > 0 ? 1.25 + wideCleaveLvl * 0.2 : 1.25);
-    this.emit("attack", { x: p.x, y: p.y, angle: p.angle, radius: reach, size: this.effectiveSize });
+    this.emit("attack", { x: p.x, y: p.y, angle: p.angle, radius: reach, size: this.effectiveSize, style:this.species.body==='longneck'?'stomp':this.species.body==='quad'?'ram':'bite' });
+    for (const plant of [...this.foods]) {
+      const health=plantHealth(plant);
+      if(!health||distance(plant,p)>reach||Math.abs(angleDifference(Math.atan2(plant.y-p.y,plant.x-p.x),p.angle))>maxArc)continue;
+      if(!attackLineClear(p,plant,this.worldFeatures||[],this.effectiveSize*.2))continue;
+      plant.maxHp=health.maxHp;plant.hp=Math.max(0,health.hp-p.damage);
+      this.emit('hit',{x:plant.x,y:plant.y,target:'plant',amount:p.damage});
+      if(plant.hp===0){this.foods=this.foods.filter(f=>f!==plant);this.onFoodConsumed(plant);this.emit('plant-destroyed',{x:plant.x,y:plant.y});}
+    }
 
     const apexCritLvl = this.build?.passive?.apexCrit || 0;
     const apexCritChance = apexCritLvl > 0 ? (0.12 + (apexCritLvl - 1) * 0.07) : 0;
@@ -939,7 +960,8 @@ export class Game {
       if (f.type !== "carnivore" || f.dead) continue;
       const dPlant = Math.hypot(f.x - p.x, f.y - p.y);
       if (dPlant < reach + f.radius + 1.2 && Math.abs(angleDifference(Math.atan2(f.y - p.y, f.x - p.x), p.angle)) < 1.6) {
-        f.hp = (Number.isFinite(f.hp) ? f.hp : (45 + (f.tier || 0) * 35)) - p.damage;
+        f.maxHp = plantHealth(f).maxHp;
+        f.hp = plantHealth(f).hp - p.damage;
         f.hitFlash = 0.3;
         this.emit("hit", { x: f.x, y: f.y, target: "plant" });
         if (f.hp <= 0) {
@@ -1350,7 +1372,7 @@ export class Game {
       return true;
     }
     if (
-      ["dna", "pet-egg", "decoration-cache", "cosmetic-cache"].includes(
+      ["supply-crate", "treasure", "dna", "pet-egg", "decoration-cache", "cosmetic-cache"].includes(
         food.type,
       )
     ) {
@@ -1399,7 +1421,7 @@ export class Game {
     this.player.growth = growthFromFood(this.player.nutrients, this.tier);
     this.refreshStats();
     this.collectSpecial(food);
-    this.gainXP(food.value * quality);
+    this.gainXP(food.value * quality * (food.type === "egg" ? (EGG_RARITIES[food.eggRarity]?.xp || 1) : 1));
     this.emit("eat", {
       x: food.x,
       y: food.y,
@@ -2047,6 +2069,7 @@ export class Game {
     }
     this.entities = this.entities.filter((other) => other !== e);
     this.player.kills++;
+    dropHuntLoot(this,e,s.tier);
     this.player.score +=
       (30 + s.tier * 35) * (e.boss ? 5 : 1) * this.rules.score;
     const count = e.boss ? 5 : 1;
@@ -2216,6 +2239,9 @@ export class Game {
     const s = SPECIES_BY_ID[victim.speciesId];
     this.entities = this.entities.filter((other) => other !== victim);
     this.emit("kill", { speciesId: s.id, x: victim.x, y: victim.y, wild: true });
+    if (attacker && SPECIES_BY_ID[attacker.speciesId]?.diet !== 'herbivore') {
+      feedEntity(this, attacker, {type:'meat', value:14+s.tier*12});
+    }
     const count = victim.boss ? 4 : Math.min(3, Math.max(1, Math.round(s.size * 0.75)));
     for (let i = 0; i < count; i++) {
       this.spawnFood(

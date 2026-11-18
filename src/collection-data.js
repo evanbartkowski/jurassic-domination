@@ -1,11 +1,11 @@
 import { SKINS } from "./content.js";
 
 export const RARITIES = {
-  common: { name: "Common", color: "#b8c7ac", weight: 56 },
-  uncommon: { name: "Uncommon", color: "#8bcca4", weight: 28 },
-  rare: { name: "Rare", color: "#87bdec", weight: 12 },
-  epic: { name: "Epic", color: "#c79cec", weight: 3.5 },
-  legendary: { name: "Legendary", color: "#ecc577", weight: 0.5 },
+  common: { name: "Common", color: "#cad6e6", weight: 56 },
+  uncommon: { name: "Uncommon", color: "#69e6a0", weight: 28 },
+  rare: { name: "Rare", color: "#58b8ff", weight: 12 },
+  epic: { name: "Epic", color: "#c88aff", weight: 3.5 },
+  legendary: { name: "Legendary", color: "#ffd16b", weight: 0.5 },
 };
 export const PETS = [
   ["compy", "Pip the Compy", "compsognathus", "common", 6, 0x9dbf63],
@@ -300,8 +300,8 @@ export const SHOP_SKINS = SKINS.filter((s) => s.id !== "natural").map(
     ...s,
     kind: "skin",
     sku: `skin:${s.id}`,
-    rarity: i < 2 ? "rare" : i < 5 ? "epic" : "legendary",
-    price: [10, 10, 16, 18, 18, 26, 30][i],
+    rarity: s.rarity,
+    price: s.price ?? ({common:5,uncommon:9,rare:16,epic:24,legendary:32}[s.rarity]),
   }),
 );
 export const SHOP_ITEMS = [
@@ -429,4 +429,9 @@ export function rollCollectionItem(kind, random = Math.random) {
     if (choice < 0) return item;
   }
   return pool.at(-1);
+}
+
+export function dailyStock(date = new Date()) {
+ const day=Math.floor(date.getTime()/86400000);
+ return SHOP_ITEMS.filter((item,index)=>item.source!=='crate'&&((index + day) % 3 + 3) % 3 !== 0).map(i=>i.sku);
 }

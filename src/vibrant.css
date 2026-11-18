@@ -1,0 +1,32 @@
+/* Semantic color layer. Resource meaning remains consistent across the game. */
+:root{--health:#ff556c;--stamina:#39ddff;--nourishment:#b2f35d;--evolution:#bb85ff;--account-xp:#5bbaff;--positive:#46e6ac;--warning:#ffb14f;--brass:#f0bd62;--brass-light:#ffe09a;--gold:#f0bd62;--gold-bright:#ffe09a;--blood:#eb4260;--text:#f0f4f5;--text-soft:#c5d6de;--text-muted:#9fb7c3;--muted:#9fb7c3;--line:#80bbd13d;--line-strong:#93d4ec75;--surface:#14212a;--surface-deep:#0a131c;--surface-raised:#213443}
+#overlay[hidden]{display:none!important}
+#hud .hud-top-center-vitals .meter{height:16px!important;border-radius:3px!important;padding:2px;background:#09121bef!important;border-color:#9bb1c780!important;box-shadow:0 2px 9px #0008,inset 0 1px 4px #0007!important}
+#hud .hud-top-center-vitals .meter>span{height:10px!important;border-radius:2px!important;box-shadow:inset 0 1px #ffffff70,0 0 10px color-mix(in srgb,var(--meter-color) 40%,transparent)!important}
+#hud .hud-top-center-vitals .health{--meter-color:var(--health);border-color:#ff718fa8!important;background:#371722de!important}
+#hud .hud-top-center-vitals .health>span{background:linear-gradient(90deg,#dc294b,#ff6578)!important}
+#hud .hud-top-center-vitals .stamina{--meter-color:var(--stamina);border-color:#56d8ffc2!important;background:#102a3bde!important}
+#hud .hud-top-center-vitals .stamina>span{background:linear-gradient(90deg,#128cd8,#4de7ff)!important}
+#hud .hud-top-center-vitals .meter:before,#hud .hud-top-center-vitals .meter:after{background:var(--meter-color);border-color:color-mix(in srgb,var(--meter-color) 50%,white);height:8px;top:3px}
+#hud .health-vital .vital-label>span{color:#ff8d9d!important}#hud .stamina-vital .vital-label>span{color:#7ee9ff!important}#hud .hud-top-center-vitals .vital-label b{color:#f4fbff!important;font-size:11px!important}
+#hud.critical .hud-top-center-vitals .health{outline:1px solid #ffa3ac;outline-offset:2px}#hud.critical .hud-top-center-vitals .health>span{background:linear-gradient(90deg,#ff274b,#ff956b)!important}
+#hud .nourishment>span{background:linear-gradient(90deg,#62c94a,#c1fa69)!important;box-shadow:0 0 8px #8bed4c33!important}#hud .nourishment-vital .vital-label{color:#b9ed88!important}
+#hud .evolution-meter>span{background:linear-gradient(90deg,#8050e6,#cf93ff)!important;box-shadow:0 0 9px #bd7aff44!important}#hud .evolution-meter{height:6px!important;background:#352347a6!important}#hud .evolution-bar-title{color:#d8afff!important}
+#hud .objective-meter>span{background:linear-gradient(90deg,#d9a02f,#ffe58d)!important}#hud .account-meter i,.account-widget .account-meter i{background:linear-gradient(90deg,#3687f4,#60ddff)!important}.account-widget strong{color:#81d2ff}.account-widget .account-next{color:#b3d3e5}
+#hud .ability-key kbd{color:#b6edff!important;background:#163c55!important;border-color:#62cfff66!important}#hud .ability-key b{color:#6cebc5!important}#hud .ability-key:not(.unavailable):hover{background:#47bbed15!important}
+#hud .hud-top-left-cluster .species-card,#hud .hud-top-left-cluster .hud-evolution-bar-container,#hud .hud-top-left-cluster .hud-objective-panel,#hud .hud-top-left-cluster .environment-panel,#hud .nourishment-vital{background:#0b1823eb!important;border-color:#679aae55!important}
+#hud .hud-top-right-cluster .hud-status-bar,#hud .hud-top-right-cluster .minimap-wrap{border-color:#78b9cf66!important}#hud #hud-dna{color:#ffda7b!important}#hud .environment-panel strong{color:#78e7c0!important}#hud .objective-badge{color:#ffd67a!important}
+.account-widget{background:#102439ee;border-color:#5099d64d}.account-level-notice{background:#10283aF5;border-color:#60c8ff;color:#bcefff}.account-level-notice strong{color:#92dcff}.account-level-notice p{color:#d5e7ed}
+#overlay .wide-panel,#overlay .modal-panel{background-color:#111d28f7!important;border-color:#79a5c066!important}
+#overlay .button.primary{background:linear-gradient(115deg,#1caf98,#61e6be)!important;color:#06251f!important;border-color:#7bf5d6!important;box-shadow:inset 0 1px #c6ffe866,0 5px 20px #13a68724!important}
+#overlay .button.primary:hover{background:linear-gradient(115deg,#32c7ad,#8ef3ce)!important;border-color:#b6ffe7!important}
+#overlay .button.secondary{background:#162636ee!important;color:#d7edf6!important;border-color:#638ba36b!important}#overlay .button.secondary:hover{background:#213e50!important;border-color:#8bdded!important}
+#overlay .menu-feature-tile{border-left-color:#45dbb6!important;background:#101f2bef!important;border-color:#638caa80!important;border-left-width:3px!important}#overlay .menu-feature-tile:hover{background:#193a45!important;border-color:#70ebd1!important}
+#overlay .tile-icon{color:#72e7c6!important}#overlay .tile-text strong{color:#edfbff!important}#overlay .tile-text span{color:#b4d1dc!important}#overlay .menu-sub-btn{background:#10212cde!important;border-color:#527a9c80!important;color:#c9e5f0!important}
+#overlay .menu-hero-card{background:#112634f5!important;border-color:#6999b3!important;border-top-color:#48debd!important}#overlay .game-title>span:last-child{color:#81e6cd!important}
+#overlay .menu-feature-tile[data-action=wardrobe]{border-left-color:#d698ff!important}#overlay .menu-feature-tile[data-action=wardrobe] .tile-icon{color:#d698ff!important}#overlay .menu-feature-tile[data-action=shop]{border-left-color:#ffcd70!important}#overlay .menu-feature-tile[data-action=shop] .tile-icon{color:#ffcd70!important}#overlay .menu-feature-tile[data-action=legacy]{border-left-color:#6bbaff!important}#overlay .menu-feature-tile[data-action=legacy] .tile-icon{color:#6bbaff!important}
+#overlay .difficulty-picker button.selected{background:#1e6687!important;border-color:#78dbff!important;color:#f0fdff!important;box-shadow:inset 0 -2px #71ddff!important}
+.creature-label.threat-prey>b>i{background:#69ed8e!important}.creature-label.threat-fair>b>i{background:#ffd564!important}.creature-label.threat-danger>b>i,.creature-label.threat-lethal>b>i{background:#ff657f!important}.creature-label.plant-health-label>b>i{background:#91eb61!important}.creature-label.plant-health-label.hostile>b>i{background:#ff8a63!important}
+.loot-item-card,.loot-skin-card{border-bottom-color:var(--loot-color)!important}.loot-rarity,.rarity-label{filter:saturate(1.15)}
+@media(max-width:700px){#hud .hud-top-center-vitals .meter{height:14px!important}#hud .hud-top-center-vitals .meter>span{height:8px!important}#hud .hud-top-center-vitals .meter:before,#hud .hud-top-center-vitals .meter:after{height:6px}}
+body.high-contrast #hud .vital-label b{color:#fff!important}

@@ -1,12 +1,12 @@
 {
   "id": "gallimimus",
   "family": "ornithomimid",
-  "triangles": 29292,
+  "triangles": 43996,
   "bones": 20,
   "dimensions": [
-    4.760843276977539,
-    1.6041185855865479,
-    2.3936026096343994
+    5.420809745788574,
+    2.4470813274383545,
+    1.5660929679870605
   ],
   "clips": [
     "Idle",
@@ -22,17 +22,25 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "Surface_LOD0: duplicate verts=8 loose verts=0",
+      "hidden back-to-back faces: Surface_LOD0 (4 pairs) - delete to save tris"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD0",
+        "tri_pairs": 4
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 14762,
-        "faces": 29292,
-        "tris": 29292,
+        "verts": 22420,
+        "faces": 43996,
+        "tris": 43996,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -41,8 +49,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 58,
+        "duplicate_verts": 8,
+        "islands": 211,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -56,61 +64,65 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 28.1
+        "uv_coverage_pct": 11.9
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw.002",
-      "distance": 0.0226
+      "part": "Dorsal_feather",
+      "distance": 0.0395
     },
     {
-      "part": "Claw.003",
-      "distance": 0.023
+      "part": "Dorsal_feather.001",
+      "distance": 0.0295
     },
     {
       "part": "Forearm_primary",
-      "distance": 0.0393
+      "distance": 0.0579
     },
     {
       "part": "Forearm_primary.001",
-      "distance": 0.0309
+      "distance": 0.0507
     },
     {
       "part": "Forearm_primary.002",
-      "distance": 0.0282
+      "distance": 0.0452
     },
     {
       "part": "Forearm_primary.003",
-      "distance": 0.0314
+      "distance": 0.0463
     },
     {
       "part": "Forearm_primary.004",
-      "distance": 0.0305
+      "distance": 0.0603
     },
     {
       "part": "Forearm_primary.008",
-      "distance": 0.0517
+      "distance": 0.0643
     },
     {
       "part": "Forearm_primary.009",
-      "distance": 0.0478
+      "distance": 0.0639
     },
     {
       "part": "Forearm_primary.010",
-      "distance": 0.0479
+      "distance": 0.0617
     },
     {
       "part": "Forearm_primary.011",
-      "distance": 0.0535
+      "distance": 0.0651
     },
     {
       "part": "Forearm_primary.012",
-      "distance": 0.0425
+      "distance": 0.0697
+    },
+    {
+      "part": "Forearm_primary.013",
+      "distance": 0.0253
     }
   ],
-  "bytes": 3808808,
+  "bytes": 5747880,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -129,7 +141,16 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 10544,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 0,
+    "individualFeathers": 86,
+    "predatorScars": 0
+  },
+  "lodTriangles": 15838,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -142,9 +163,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 5388,
-        "faces": 10544,
-        "tris": 10544,
+        "verts": 8341,
+        "faces": 15838,
+        "tris": 15838,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -154,7 +175,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 58,
+        "islands": 211,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -168,7 +189,7 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 27.1
+        "uv_coverage_pct": 11.4
       }
     }
   }

@@ -2,6 +2,8 @@ import { loadData, normalizeProfile, normalizeSettings, PROFILE_KEY, SETTINGS_KE
 import { migrateSnapshot, SNAPSHOT_VERSION, CONTENT_VERSION } from "./run-state.js";
 import { PROFILE_VERSION } from "./profile.js";
 import { mergeAncestry } from "./ancestry.js";
+import {mergeAccountProgress,ACCOUNT_MILESTONES} from './account-progression.js';
+import {mergeLootProgress} from './loot.js';
 
 /** Offline journal. Checksums detect damage, not malicious save editing. */
 export const SAVE_KEYS = Object.freeze({
@@ -282,6 +284,17 @@ export class SaveStore {
       data.profile.claimedFinds = unique([...data.profile.claimedFinds, ...this.data.profile.claimedFinds]).slice(-2048);
       data.profile.claimedAchievements = unique([...data.profile.claimedAchievements, ...this.data.profile.claimedAchievements]);
       data.profile.ancestry = mergeAncestry(data.profile.ancestry, this.data.profile.ancestry);
+      data.profile.account=mergeAccountProgress(data.profile.account,this.data.profile.account);
+      data.profile.loot=mergeLootProgress(data.profile.loot,this.data.profile.loot);
+      for(const field of ['skins','pets','cosmetics'])data.profile[field]=unique([...data.profile[field],...this.data.profile[field]]);
+      // Keep earned milestone collectibles when restoring an earlier life.
+      for(const milestone of ACCOUNT_MILESTONES.filter(m=>m.level<=data.profile.account.rewardedLevel)){
+        for(const sku of milestone.items){
+          const [kind,id]=sku.split(':'),field={skin:'skins',cosmetic:'cosmetics',pet:'pets'}[kind];
+          if(field&&this.data.profile[field].includes(id)&&!data.profile[field].includes(id))data.profile[field].push(id);
+          if(kind==='decoration')data.profile.decorations[id]=Math.max(data.profile.decorations[id]||0,this.data.profile.decorations[id]||0);
+        }
+      }
       data.profile.completedRuns = unique([...data.profile.completedRuns, ...this.data.profile.completedRuns, ...terminalIds]).slice(-8192);
       return { ok: true, data, terminalRuns: [...terminalIds], warnings, repairLedger, error: "" };
     } catch (error) { return { ok: false, error: error.message || "The backup could not be read." }; }

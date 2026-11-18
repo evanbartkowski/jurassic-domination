@@ -1,4 +1,5 @@
 /** Original anatomical authoring profiles. Coordinates: forward X, Blender up Z. */
+import {naturalPaletteForSpecies} from './creature-palettes.js';
 const variants={'verdant-psittacosaurus':'psittacosaurus','verdant-iguanodon':'iguanodon','elderroot-therizinosaurus':'therizinosaurus','cinderfang-carnotaurus':'carnotaurus','ashborn-tyrannosaurus':'tyrannosaurus','eclipse-wyrm':'wyvern','stormcrown-dragon':'elder-dragon'};
 const includes=(id,words)=>words.split(' ').includes(id);
 export function anatomyForSpecies(s){
@@ -41,8 +42,8 @@ export function anatomyForSpecies(s){
  if(a.family==='gryphon')a.beak=true;
  if(id==='hydra')Object.assign(a,{heads:9,horns:0});
  const hash=[...id].reduce((n,c)=>(n*31+c.charCodeAt(0))>>>0,0);
- a.color=s.body==='marine'||a.family==='dragon'||a.family==='phoenix'||a.family==='serpent'?s.color:[0x75634c,0x59634e,0x4c5655,0x805f48,0x61605c][hash%5];
- a.accent=s.accent;a.pattern=hash%3;a.danger=s.tier>=4&&s.diet!=='herbivore';
+ const palette=naturalPaletteForSpecies(s);a.color=palette?.color??s.color;
+ a.accent=palette?.accent??s.accent;a.pattern=hash%3;a.danger=s.tier>=4&&s.diet!=='herbivore';
  a.length=a.tail+a.head[0]+a.skull[0]*1.12;
  return a;
 }

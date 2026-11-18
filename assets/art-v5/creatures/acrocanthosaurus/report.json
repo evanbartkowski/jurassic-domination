@@ -1,12 +1,12 @@
 {
   "id": "acrocanthosaurus",
   "family": "carnosaur",
-  "triangles": 26868,
+  "triangles": 32756,
   "bones": 20,
   "dimensions": [
-    5.81517219543457,
-    1.7200000286102295,
-    2.250924825668335
+    5.808159351348877,
+    2.3338770866394043,
+    1.6938987970352173
   ],
   "clips": [
     "Idle",
@@ -30,9 +30,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 13602,
-        "faces": 26868,
-        "tris": 26868,
+        "verts": 16780,
+        "faces": 32756,
+        "tris": 32756,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -42,7 +42,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 84,
+        "islands": 201,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,59 +55,43 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.07,
-        "uv_coverage_pct": 33.1
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 20.4
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Lower_tooth.004",
-      "distance": 0.0243
+      "part": "Lower_tooth.010",
+      "distance": 0.0065
     },
     {
-      "part": "Lower_tooth.005",
-      "distance": 0.0278
-    },
-    {
-      "part": "Lower_tooth.015",
-      "distance": 0.0243
-    },
-    {
-      "part": "Lower_tooth.016",
-      "distance": 0.028
-    },
-    {
-      "part": "Claw.002",
-      "distance": 0.0228
-    },
-    {
-      "part": "Claw.003",
-      "distance": 0.0228
+      "part": "Lower_tooth.021",
+      "distance": 0.0063
     },
     {
       "part": "Neural_spine",
-      "distance": 0.011
+      "distance": 0.0108
     },
     {
       "part": "Neural_spine.001",
-      "distance": 0.039
+      "distance": 0.0387
     },
     {
       "part": "Neural_spine.002",
-      "distance": 0.0281
+      "distance": 0.028
     },
     {
       "part": "Neural_spine.004",
-      "distance": 0.0273
+      "distance": 0.0272
     },
     {
       "part": "Neural_spine.005",
-      "distance": 0.0378
+      "distance": 0.0377
     },
     {
       "part": "Neural_spine.006",
-      "distance": 0.034
+      "distance": 0.0339
     },
     {
       "part": "Neural_spine.008",
@@ -116,28 +100,53 @@
     {
       "part": "Neural_spine.009",
       "distance": 0.0161
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0484
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.059
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0495
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0587
     }
   ],
-  "bytes": 3543480,
+  "bytes": 8860384,
   "textures": {
     "Albedo": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Albedo.jpg"
     },
     "Normal": {
-      "width": 1024,
-      "height": 1024,
+      "width": 2048,
+      "height": 2048,
       "file": "Normal.png"
     },
     "Roughness": {
-      "width": 512,
-      "height": 512,
+      "width": 1024,
+      "height": 1024,
       "file": "Roughness.png"
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 9672,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 4
+  },
+  "lodTriangles": 21290,
   "lodQA": {
     "ok": true,
     "pass": true,
@@ -150,9 +159,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 5004,
-        "faces": 9672,
-        "tris": 9672,
+        "verts": 11047,
+        "faces": 21290,
+        "tris": 21290,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -162,7 +171,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 84,
+        "islands": 201,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -175,8 +184,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.09,
-        "uv_coverage_pct": 32.4
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 20.3
       }
     }
   }

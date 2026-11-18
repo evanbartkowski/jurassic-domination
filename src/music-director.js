@@ -14,18 +14,35 @@ export class MusicDirector{
  setScene(scene){
   this.paused=scene==='paused';if(this.paused)return;
   if(!MUSIC_PLAYLISTS[scene])scene='playing';
-  if(this.scene===scene&&this.current&&!this.current.ended)return;
+  if(this.scene===scene&&this.current&&!this.current.ended){
+   const voice=this.voices.find(v=>v.clip===this.current);
+   if(voice?.blocked){voice.blocked=false;this.start(voice);}
+   return;
+  }
   this.scene=scene;
   const available=MUSIC_PLAYLISTS[scene].filter(s=>!this.failed.has(s));
   const choices=available.filter(s=>s!==this.last.get(scene));if(!choices.length)choices.push(...available);if(!choices.length)return;
   const file=choices[Math.min(choices.length-1,Math.floor(this.random()*choices.length))],clip=this.makeClip(root+file);if(!clip)return;
   for(const v of this.voices)v.target=0;
-  while(this.voices.length>=2){const v=this.voices.shift();v.clip.pause();v.clip.src='';}
+  while(this.voices.length>=2)this.retire(this.voices.shift());
   clip.volume=0;clip.preload='auto';clip.loop=false;
-  this.current=clip;this.last.set(scene,file);this.voices.push({clip,level:0,target:1,scene,trim:levels[file]?.gain||1});
-  const fail=()=>{this.failed.add(file);if(this.current===clip)this.current=null;clip.pause();};
-  clip.onerror=fail;try{clip.play()?.catch(fail);}catch{fail();}
+  const voice={clip,file,level:0,target:1,scene,trim:levels[file]?.gain||1,retired:false,blocked:false,pending:false};
+  this.current=clip;this.last.set(scene,file);this.voices.push(voice);this.start(voice);
  }
+ start(voice){
+  if(voice.retired||voice.pending)return;
+  const {clip,file}=voice;voice.pending=true;
+  const fail=error=>{
+   voice.pending=false;if(voice.retired)return;
+   // Source changes abort pending play promises. Autoplay denial needs a new
+   // gesture, not a new clip on every animation frame or a permanent blacklist.
+   if(['AbortError','NotAllowedError'].includes(error?.name)){voice.blocked=true;return;}
+   this.failed.add(file);voice.target=0;if(this.current===clip)this.current=null;clip.pause();
+  };
+  clip.onerror=fail;
+  try{Promise.resolve(clip.play()).then(()=>{voice.pending=false;},fail);}catch(error){fail(error);}
+ }
+ retire(voice){voice.retired=true;voice.clip.onerror=null;voice.clip.pause();voice.clip.removeAttribute?.('src');if(!voice.clip.removeAttribute)voice.clip.src='';}
  applyGain(gain){this.gain=Math.max(0,Math.min(1,gain||0));for(const v of this.voices)v.clip.volume=this.volume(v);}
  volume(v){return Math.min(.28,({menu:.21,playing:.17,danger:.24,dead:.22}[v.scene]||.17)*this.gain*v.level*v.trim*(this.paused?.28:1));}
  update(dt,gain=this.gain){
@@ -33,7 +50,7 @@ export class MusicDirector{
   const blend=1-Math.exp(-Math.min(.5,Math.max(0,dt))*2.6);
   for(const v of this.voices)v.level+=(v.target-v.level)*blend;
   this.applyGain(gain);
-  this.voices=this.voices.filter(v=>{if(v.target===0&&v.level<.005){v.clip.pause();v.clip.src='';return false;}return true;});
+  this.voices=this.voices.filter(v=>{if(v.target===0&&v.level<.005){this.retire(v);return false;}return true;});
  }
- dispose(){for(const v of this.voices){v.clip.pause();v.clip.src='';}this.voices=[];this.current=null;}
+ dispose(){for(const v of this.voices)this.retire(v);this.voices=[];this.current=null;}
 }

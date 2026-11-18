@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { SKINS } from "./content.js";
+import {naturalPaletteForSpecies} from './creature-palettes.js';
 import { phenotype } from './genetics.js';
 import { creatureArtDirection } from './creature-art-direction.js';
 import { tryAttachFlagshipGLB, animateFlagshipGLB } from './flagship-models.js';
@@ -390,13 +391,14 @@ export function createDinosaur(
   skinId = "natural",
   genome = null,
   eventLook = null,
+  presentation = {},
 ) {
   const root = new THREE.Group(),
     body = new THREE.Group();
   root.add(body);
-  const skin = SKINS.find((s) => s.id === skinId) || SKINS[0], pigment = Number(genomeAppearanceKey(genome).split(':')[0]) * .0225,
-    c = skinId === 'natural' ? new THREE.Color(species.color).offsetHSL(pigment, 0, 0).getHex() : skin.color ?? species.color,
-    accent = skin.accent ?? species.accent;
+  const skin = SKINS.find((s) => s.id === skinId) || SKINS[0], pigment = Number(genomeAppearanceKey(genome).split(':')[0]) * .0225,natural=naturalPaletteForSpecies(species),
+    c = skinId === 'natural' ? new THREE.Color(natural?.color??species.color).offsetHSL(pigment, 0, 0).getHex() : skin.color ?? species.color,
+    accent = skin.accent ?? natural?.accent ?? species.accent;
   const dark = new THREE.Color(c).multiplyScalar(0.62).getHex(),
     light = new THREE.Color(c).lerp(new THREE.Color(0xd8cdb3), 0.42).getHex();
   const bone = 0xe4d8bb,
@@ -1200,6 +1202,8 @@ export function createDinosaur(
     lastX: null,
     lastY: null,
     attackBlend: 0,
+    prepareAsset:presentation.prepareAsset,
+    assetPriority:!!presentation.active,
     dispose() {
       owned.forEach((g) => g.dispose());
     },

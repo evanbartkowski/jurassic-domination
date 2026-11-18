@@ -1,12 +1,12 @@
 {
   "id": "utahraptor",
   "family": "dromaeosaur",
-  "triangles": 30772,
+  "triangles": 45476,
   "bones": 20,
   "dimensions": [
-    5.1449995040893555,
-    1.7641185522079468,
-    1.9041496515274048
+    5.144418239593506,
+    1.9935963153839111,
+    1.7222371101379395
   ],
   "clips": [
     "Idle",
@@ -23,7 +23,7 @@
     "pass": true,
     "errors": [],
     "warnings": [
-      "hidden back-to-back faces: Surface_LOD0 (1 pairs) - delete to save tris"
+      "hidden back-to-back faces: Surface_LOD0 (5 pairs) - delete to save tris"
     ],
     "ground_z": -0.0,
     "zfighting": [],
@@ -31,15 +31,15 @@
     "back_to_back": [
       {
         "where": "Surface_LOD0",
-        "tri_pairs": 1
+        "tri_pairs": 5
       }
     ],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 15570,
-        "faces": 30772,
-        "tris": 30772,
+        "verts": 23228,
+        "faces": 45476,
+        "tris": 45476,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -49,7 +49,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 92,
+        "islands": 245,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -63,65 +63,85 @@
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
         "uv_overlap_pct": 0.0,
-        "uv_coverage_pct": 24.1
+        "uv_coverage_pct": 9.8
       }
     }
   },
   "attachmentShifts": [
     {
-      "part": "Claw.002",
-      "distance": 0.0234
-    },
-    {
       "part": "Sickle_claw",
-      "distance": 0.0361
-    },
-    {
-      "part": "Claw.003",
-      "distance": 0.0233
+      "distance": 0.0355
     },
     {
       "part": "Sickle_claw.001",
-      "distance": 0.036
+      "distance": 0.0355
+    },
+    {
+      "part": "Dorsal_feather",
+      "distance": 0.0494
+    },
+    {
+      "part": "Dorsal_feather.001",
+      "distance": 0.0362
     },
     {
       "part": "Forearm_primary",
-      "distance": 0.052
+      "distance": 0.0616
     },
     {
       "part": "Forearm_primary.001",
-      "distance": 0.0407
+      "distance": 0.0505
     },
     {
       "part": "Forearm_primary.002",
-      "distance": 0.0312
+      "distance": 0.0424
     },
     {
       "part": "Forearm_primary.003",
-      "distance": 0.0272
+      "distance": 0.037
+    },
+    {
+      "part": "Forearm_primary.004",
+      "distance": 0.0336
     },
     {
       "part": "Forearm_primary.008",
-      "distance": 0.065
+      "distance": 0.0746
     },
     {
       "part": "Forearm_primary.009",
-      "distance": 0.0563
+      "distance": 0.0592
     },
     {
       "part": "Forearm_primary.010",
-      "distance": 0.0489
+      "distance": 0.0444
     },
     {
       "part": "Forearm_primary.011",
-      "distance": 0.049
+      "distance": 0.0456
     },
     {
       "part": "Forearm_primary.012",
-      "distance": 0.027
+      "distance": 0.0284
+    },
+    {
+      "part": "Orbital_upper_lid",
+      "distance": 0.0294
+    },
+    {
+      "part": "Orbital_lower_lid",
+      "distance": 0.0427
+    },
+    {
+      "part": "Orbital_upper_lid.001",
+      "distance": 0.0294
+    },
+    {
+      "part": "Orbital_lower_lid.001",
+      "distance": 0.0427
     }
   ],
-  "bytes": 3875104,
+  "bytes": 5926288,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -140,29 +160,31 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 11076,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 0,
+    "individualFeathers": 86,
+    "predatorScars": 0
+  },
+  "lodTriangles": 16370,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [
-      "hidden back-to-back faces: Surface_LOD1 (4 pairs) - delete to save tris"
-    ],
+    "warnings": [],
     "ground_z": -0.0007,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [
-      {
-        "where": "Surface_LOD1",
-        "tri_pairs": 4
-      }
-    ],
+    "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 5722,
-        "faces": 11076,
-        "tris": 11076,
+        "verts": 8675,
+        "faces": 16370,
+        "tris": 16370,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -172,7 +194,7 @@
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
         "duplicate_verts": 0,
-        "islands": 92,
+        "islands": 245,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -185,8 +207,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.03,
-        "uv_coverage_pct": 23.4
+        "uv_overlap_pct": 0.0,
+        "uv_coverage_pct": 9.4
       }
     }
   }

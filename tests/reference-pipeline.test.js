@@ -6,6 +6,10 @@ import {updateFlagshipAnimation} from '../src/flagship-models.js';
 test('reviewed replacement loads first, followed by the working previous asset',()=>{
  assert.deepEqual(creatureAssetCandidates('tyrannosaurus','/game/',{tyrannosaurus:{file:'models-v5/tyrannosaurus.glb',enabled:true}}),['/game/assets/models-v5/tyrannosaurus.glb','/game/assets/models-v4/tyrannosaurus.glb']);
 });
+test('the web edition only requests its reviewed current asset without redundant legacy downloads',()=>{
+ assert.deepEqual(creatureAssetCandidates('tyrannosaurus','/game/',{tyrannosaurus:{file:'models-v5/tyrannosaurus.glb',enabled:true}},{legacy:false}),['/game/assets/models-v5/tyrannosaurus.glb']);
+ assert.deepEqual(creatureAssetCandidates('tyrannosaurus','./',{}, {legacy:false}),[]);
+});
 test('hit reaction plays out after the damage pulse, and death remains clamped',()=>{
  const root=new T.Group(),mixer=new T.AnimationMixer(root),actions={};
  for(const name of ['Idle','Walk','Run','Attack','Graze','Rest','Hit','Death']){

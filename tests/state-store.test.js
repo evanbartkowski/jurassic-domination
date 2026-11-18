@@ -5,6 +5,7 @@ import { snapshotGame, restoreGame } from "../src/run-state.js";
 import { SaveStore, SAVE_KEYS, MAX_ACTIVE_CLAIMS, saveChecksum } from "../src/state-store.js";
 import { newProfile, normalizeSettings, PROFILE_KEY, SETTINGS_KEY, recordRun } from "../src/profile.js";
 import { awardRareDNA } from "../src/collections.js";
+import {grantCrate,openCrate} from '../src/loot.js';
 
 function memoryStorage() {
   const values = new Map();
@@ -21,6 +22,14 @@ function checkpoint(id = "test-life-1") {
   return snapshotGame(game);
 }
 const fresh = () => ({ profile: newProfile(), settings: normalizeSettings(), run: null });
+test('backup restoration preserves crate discoveries and never reopens a spent seal',()=>{
+ const storage=memoryStorage(),store=new SaveStore(storage),data=fresh();store.load();
+ grantCrate(data.profile,'primeval','backup-crate');assert.ok(store.commit(data).ok);const backup=store.exportBackup();
+ const result=openCrate(data.profile,data.profile.loot.crates[0].id);assert.ok(result.ok);assert.ok(store.commit(data).ok);
+ const restored=store.importBackup(backup);assert.ok(restored.ok);assert.equal(restored.data.profile.loot.crates.length,0);assert.equal(restored.data.profile.loot.opened,1);
+ const [kind,id]=result.reward.sku.split(':');assert.ok(restored.data.profile[{skin:'skins',pet:'pets',cosmetic:'cosmetics'}[kind]].includes(id));
+ assert.equal(openCrate(restored.data.profile,result.reward.id).ok,false);
+});
 
 test("legacy progress migrates to a verified journal without losing currency, ownership or controls", () => {
   const storage = memoryStorage(), p = newProfile();

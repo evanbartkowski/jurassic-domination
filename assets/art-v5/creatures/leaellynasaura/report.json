@@ -1,12 +1,12 @@
 {
   "id": "leaellynasaura",
   "family": "ornithopod",
-  "triangles": 24076,
+  "triangles": 29884,
   "bones": 20,
   "dimensions": [
-    5.523228168487549,
-    1.8527244329452515,
-    1.1664769649505615
+    5.524327278137207,
+    1.8761695623397827,
+    1.1740972995758057
   ],
   "clips": [
     "Idle",
@@ -23,23 +23,18 @@
     "pass": true,
     "errors": [],
     "warnings": [
-      "hidden back-to-back faces: Surface_LOD0 (3 pairs) - delete to save tris"
+      "Surface_LOD0: duplicate verts=8 loose verts=0"
     ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [
-      {
-        "where": "Surface_LOD0",
-        "tri_pairs": 3
-      }
-    ],
+    "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12096,
-        "faces": 24076,
-        "tris": 24076,
+        "verts": 15224,
+        "faces": 29884,
+        "tris": 29884,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -48,8 +43,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 29,
+        "duplicate_verts": 8,
+        "islands": 141,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -62,30 +57,13 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.05,
-        "uv_coverage_pct": 25.7
+        "uv_overlap_pct": 0.36,
+        "uv_coverage_pct": 22.0
       }
     }
   },
-  "attachmentShifts": [
-    {
-      "part": "Claw",
-      "distance": 0.0232
-    },
-    {
-      "part": "Claw.001",
-      "distance": 0.0226
-    },
-    {
-      "part": "Claw.004",
-      "distance": 0.0226
-    },
-    {
-      "part": "Claw.005",
-      "distance": 0.023
-    }
-  ],
-  "bytes": 2982068,
+  "attachmentShifts": [],
+  "bytes": 4654712,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -104,22 +82,39 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8666,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 13446,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
-    "ground_z": 0.0003,
+    "warnings": [
+      "Surface_LOD1: duplicate verts=4 loose verts=0",
+      "hidden back-to-back faces: Surface_LOD1 (2 pairs) - delete to save tris"
+    ],
+    "ground_z": -0.0007,
     "zfighting": [],
     "floating": [],
-    "back_to_back": [],
+    "back_to_back": [
+      {
+        "where": "Surface_LOD1",
+        "tri_pairs": 2
+      }
+    ],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4391,
-        "faces": 8666,
-        "tris": 8666,
+        "verts": 7005,
+        "faces": 13446,
+        "tris": 13446,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -128,8 +123,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 29,
+        "duplicate_verts": 4,
+        "islands": 141,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -142,8 +137,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.07,
-        "uv_coverage_pct": 24.9
+        "uv_overlap_pct": 0.37,
+        "uv_coverage_pct": 21.4
       }
     }
   }

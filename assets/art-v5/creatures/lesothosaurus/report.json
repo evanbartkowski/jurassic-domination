@@ -1,12 +1,12 @@
 {
   "id": "lesothosaurus",
   "family": "ornithopod",
-  "triangles": 24074,
+  "triangles": 29882,
   "bones": 20,
   "dimensions": [
-    5.060606956481934,
-    1.8472234010696411,
-    1.1127207279205322
+    5.06160831451416,
+    1.8689652681350708,
+    1.1195118427276611
   ],
   "clips": [
     "Idle",
@@ -22,7 +22,9 @@
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
+    "warnings": [
+      "Surface_LOD0: duplicate verts=8 loose verts=0"
+    ],
     "ground_z": -0.0,
     "zfighting": [],
     "floating": [],
@@ -30,9 +32,9 @@
     "enclosed": [],
     "objects": {
       "Surface_LOD0": {
-        "verts": 12095,
-        "faces": 24074,
-        "tris": 24074,
+        "verts": 15223,
+        "faces": 29882,
+        "tris": 29882,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -41,8 +43,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 29,
+        "duplicate_verts": 8,
+        "islands": 141,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -55,30 +57,13 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.04,
-        "uv_coverage_pct": 28.0
+        "uv_overlap_pct": 0.03,
+        "uv_coverage_pct": 22.5
       }
     }
   },
-  "attachmentShifts": [
-    {
-      "part": "Claw",
-      "distance": 0.023
-    },
-    {
-      "part": "Claw.001",
-      "distance": 0.0224
-    },
-    {
-      "part": "Claw.004",
-      "distance": 0.0225
-    },
-    {
-      "part": "Claw.005",
-      "distance": 0.0232
-    }
-  ],
-  "bytes": 3058796,
+  "attachmentShifts": [],
+  "bytes": 4644108,
   "textures": {
     "Albedo": {
       "width": 1024,
@@ -97,22 +82,33 @@
     }
   },
   "sourceVersion": 5,
-  "lodTriangles": 8666,
+  "detailVersion": 2,
+  "detailFeatures": {
+    "orbitalRims": 4,
+    "facialScales": 42,
+    "skinFolds": 8,
+    "bodyScutes": 44,
+    "individualFeathers": 0,
+    "predatorScars": 0
+  },
+  "lodTriangles": 13446,
   "lodQA": {
     "ok": true,
     "pass": true,
     "errors": [],
-    "warnings": [],
-    "ground_z": -0.0007,
+    "warnings": [
+      "Surface_LOD1: duplicate verts=4 loose verts=0"
+    ],
+    "ground_z": -0.0008,
     "zfighting": [],
     "floating": [],
     "back_to_back": [],
     "enclosed": [],
     "objects": {
       "Surface_LOD1": {
-        "verts": 4391,
-        "faces": 8666,
-        "tris": 8666,
+        "verts": 7005,
+        "faces": 13446,
+        "tris": 13446,
         "ngons": 0,
         "boundary_edges": 0,
         "nonmanifold_edges": 0,
@@ -121,8 +117,8 @@
         "degenerate_faces": 0,
         "zero_length_edges": 0,
         "inconsistent_normals_edges": 0,
-        "duplicate_verts": 0,
-        "islands": 29,
+        "duplicate_verts": 4,
+        "islands": 141,
         "inside_out_islands": 0,
         "scale": [
           1.0,
@@ -135,8 +131,8 @@
         "uv_maps": 1,
         "uv_oob_pct": 0.0,
         "uv_zero_area_faces": 0,
-        "uv_overlap_pct": 0.04,
-        "uv_coverage_pct": 27.2
+        "uv_overlap_pct": 0.03,
+        "uv_coverage_pct": 22.1
       }
     }
   }

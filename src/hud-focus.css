@@ -1,0 +1,40 @@
+/* Keep the living world central; full records live in the journal. */
+#hud .hud-top-left-cluster{gap:6px!important}
+#hud .hud-top-left-cluster .species-card{padding:9px 12px!important;min-height:0!important}
+#hud .species-card h2{font-size:23px!important;margin:3px 0!important}
+#hud .species-card .species-emblem{width:32px!important;height:32px!important}
+#hud .nourishment-vital{padding:7px 12px!important}
+#hud .hud-evolution-bar-container{padding:8px 12px!important}
+#hud .account-hud{margin:0!important;padding:7px 12px!important}
+#hud .account-hud .account-meter{margin-top:5px}
+#hud .hud-objective-panel{padding:12px!important}
+#hud .objective-title{font-size:14px!important}
+#hud .objective-hint{font-size:11px!important;line-height:1.5!important;margin:8px 0!important}
+#hud .objective-header-row{gap:6px}
+#hud .objective-badge{font-size:8px!important;letter-spacing:.04em!important}
+#hud .objective-step{font-size:8px!important}
+#hud .quest-hud-button{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0 0!important;margin-top:7px!important}
+#hud .quest-hud-button small{display:none}
+#hud .quest-hud-button strong{font-size:11px!important}
+#hud .quest-hud-button span{font-size:8px!important;text-align:right}
+#hud .environment-panel{padding:7px 12px!important;gap:4px!important}
+#hud .environment-panel #environment-body:not(.exposed),#hud #environment-discovery{display:none}
+#hud #environment-weather{font-size:9px!important}
+#hud .map-footer{display:none!important}
+#hud .hud-danger-panel{padding-top:8px!important;margin-top:6px!important}
+#hud .danger-header-row>span{display:none}
+#hud .danger-header-row{justify-content:center}
+#hud .danger-meter{height:3px!important}
+#hud .ability-key{min-height:66px!important;padding-block:8px!important;gap:5px!important}
+#hud .ability-key:not(.cooling)>b{display:none!important}
+#hud .ability-key.unavailable{display:none!important}
+#hud .hud-controls{display:none!important}
+#hud #region-route[hidden],#hud .ability-key[hidden]{display:none!important}
+.creature-label .behavior-pill{display:none}
+.creature-label .behavior-pill:is(.behavior-charge,.behavior-strike,.behavior-cast,.behavior-hunt,.behavior-fight,.behavior-sleep){display:inline-flex}
+.creature-label .creature-badges{gap:3px}
+.creature-label .creature-name{font-size:10px}
+.account-level-notice{top:110px!important;left:auto!important;right:24px!important;transform:none!important;max-width:240px!important;padding:12px!important;text-align:left!important}
+.account-level-notice strong{font-size:20px!important}
+@media(max-width:850px){#hud .objective-hint{font-size:10px!important}.account-level-notice{top:90px!important;right:12px!important;max-width:190px!important}}
+@media(max-height:650px){#hud .hud-top-left-cluster{gap:4px!important}#hud .hud-top-left-cluster .species-card{padding-block:5px!important}#hud .objective-hint{margin-block:5px!important}#hud .environment-panel #environment-weather{display:none}}

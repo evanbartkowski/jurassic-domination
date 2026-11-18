@@ -14,6 +14,7 @@ import { conditionsAt } from "./world-events.js";
 import {encounterTier,populateFrontierSite} from './frontier-ecology.js';
 import {blockedFrontierPoint,routeWaypoint} from './frontier-map.js';
 import { rollCollectionItem } from "./collection-data.js";
+import {spawnMapLoot} from './loot-world.js';
 import {
   ABILITIES,
   TECHNIQUES,
@@ -340,6 +341,7 @@ export const Ecosystem = {
         sku: kind ? rollCollectionItem(kind, random).sku : null,
       });
     }
+    spawnMapLoot(this,key);
     if (chunkKey(this.secretSite.x, this.secretSite.y) === key)
       this.spawnFood("fossil", this.secretSite.x, this.secretSite.y, 120, {
         tier: 6,
@@ -481,11 +483,7 @@ export const Ecosystem = {
         if (this.entities.length < 230) {
           hatchEgg(this, food);
         }
-        this.emit("egg-hatch", {
-          x: food.x,
-          y: food.y,
-          text: "An uneaten egg has hatched.",
-        });
+
       }
       if (this.hasBuff("magnet") && dist(food, p) < 19) {
         const a = Math.atan2(p.y - food.y, p.x - food.x),
@@ -499,6 +497,8 @@ export const Ecosystem = {
     updateLifeCycle(this);
   },
   collectSpecial(food) {
+    if(food.type==='supply-crate')this.emit('crate-find',{crateType:food.crateType,receipt:`loot:${this.runId}:${food.id}`,x:food.x,y:food.y});
+    if(food.type==='treasure')this.emit('treasure-find',{findId:food.findId,receipt:`loot:${this.runId}:${food.id}`,x:food.x,y:food.y});
     if (food.type === "dna")
       this.emit("dna-find", {
         amount: food.amount || 2,
@@ -546,7 +546,7 @@ export const Ecosystem = {
       const type = food.rewardType === "modifier" ? "modifier" : "skin",
         pool =
           type === "skin"
-            ? SKINS.filter((s) => s.id !== "natural")
+            ? SKINS.filter((s) => s.id !== "natural"&&s.source!=='crate')
             : PERMANENT_MODIFIERS;
       const unseen = pool.filter(
         (item) =>
@@ -1368,7 +1368,7 @@ export const Ecosystem = {
     } else if (e.rivalId && this.entities.some((rival) => rival.id === e.rivalId)) {
       const rival = this.entities.find((rival) => rival.id === e.rivalId);
       const rDist = dist(e, rival);
-      if (rDist > 32 || rival.hp <= 0) {
+      if (rDist > 52 || rival.hp <= 0) {
         e.rivalId = null;
       } else {
         const rivalSpecies = SPECIES_BY_ID[rival.speciesId];
@@ -1427,13 +1427,13 @@ export const Ecosystem = {
       e.telegraph = 0;
       e.wanderTime -= dt;
       if (e.wanderTime <= 0) {
-        e.wanderTime = 2 + this.random() * 5;
+        e.wanderTime = 0.8 + this.random() * 2;
         targetAngle = e.angle + (this.random() - 0.5) * 2;
         if (!e.rivalId && !e.juvenile && (e.behavior === "hunter" || e.behavior === "pack" || e.behavior === "territorial" || s.diet === "carnivore")) {
           const preyCandidates = this.entities.filter((other) =>
             other.id !== e.id &&
             other.hp > 0 &&
-            dist(e, other) < 18 + s.size &&
+            dist(e, other) < 32 + s.size &&
             !(e.packId && other.packId === e.packId) &&
             !(e.nestId && other.nestId === e.nestId) &&
             !other.boss &&

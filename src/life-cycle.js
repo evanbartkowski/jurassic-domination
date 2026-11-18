@@ -1,3 +1,4 @@
+import {EGG_RARITIES} from './eggs.js';
 import { SPECIES_BY_ID } from "./data.js";
 import { makeGenome, phenotype } from "./genetics.js";
 import { seeded } from "./world-data.js";
@@ -89,6 +90,8 @@ export function hatchEgg(game, food) {
       nestId: food.nestId, parentIds: food.parentIds || [],
       genome: food.genome,
     });
+  const power=EGG_RARITIES[food.eggRarity]?.power || 1;
+  if(power>1){juvenile.maxHp*=power;juvenile.adultMaxHp*=power;juvenile.baseMaxHp*=power;juvenile.hp=juvenile.maxHp;juvenile.damage*=power;juvenile.eggRarity=food.eggRarity;juvenile.name=`${EGG_RARITIES[food.eggRarity].name} ${juvenile.name}`;juvenile.passive=false;juvenile.behavior="hunter";}
   initializeLifeEntity(game, juvenile, { nestId: food.nestId, parentIds: food.parentIds });
   juvenile.age = Math.max(0, food.age - food.hatchAfter);
   if (parent) {

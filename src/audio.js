@@ -115,19 +115,22 @@ export class AudioEngine {
         seaMonster: 3500,
       };
       const minGap = cooldowns[key] ?? 200;
-      const last = this.sampleCooldowns.get(key) || 0;
+      const last = this.sampleCooldowns.get(key) ?? -Infinity;
       if (now - last < minGap) return;
-      this.sampleCooldowns.set(key, now);
 
       let snd = this.samplePool.get(key);
+      // These recordings can outlast their trigger cooldown. Let a current
+      // phrase finish; rewinding it on each step/hit produces audible stutter.
+      if(snd&&!snd.paused&&!snd.ended)return;
       if (!snd) {
         snd = new Audio(path);
         this.samplePool.set(key, snd);
       }
       snd.volume = finalVol;
       this.sampleLevels.set(key,{base:volume,bus});
+      this.sampleCooldowns.set(key,now);
       snd.currentTime = 0;
-      snd.play().catch(() => {});
+      Promise.resolve(snd.play()).catch(() => {this.sampleCooldowns.delete(key);});
     } catch {
       // Graceful fallback
     }
@@ -190,7 +193,7 @@ export class AudioEngine {
     this.combatMusicHold=0;
     for(const [key,sample] of this.samplePool)if(!sample.loop){sample.pause();sample.currentTime=0;this.sampleLevels.delete(key);}
     for(const source of [...this.nodes])if(this.voiceDestinations.get(source)!==this.music){try{source.stop();}catch{}this.cleanups.get(source)?.();}
-    this.motionSamples?.clear();this.sampleCooldowns.clear();this.nextSoundscape=0;
+    this.motionSamples?.clear();this.sampleCooldowns.clear();this.nextSoundscape=0;this.stepClock=0;this.callClock=0;this.nextHeartbeat=0;
   }
 
   async unlock() {
@@ -257,6 +260,7 @@ export class AudioEngine {
   }
 
   setMode(mode) {
+    if(mode==='playing'&&this.combatMusicHold>0)mode='danger';
     if (this.mode === mode) return;
     this.mode = mode;
     if(this.unlocked)this.recordedMusic.setScene(mode);
@@ -393,6 +397,7 @@ export class AudioEngine {
       }
       this.nextSoundscape = now + 0.09;
     }
+    if(this.recordedMusic.current){this.nextBeat=now+.05;return;}
     if (this.nextBeat < now - 0.5) this.nextBeat = now + 0.05;
     // A short clock lookahead avoids timer drift and pauses cleanly in background tabs.
     while (this.nextBeat < now + 0.18) {
@@ -445,13 +450,8 @@ export class AudioEngine {
         (heavy ? 0.06 : 0.035) * volume,
         heavy ? 550 : 1600,
       );
-      if (species.size >= 3.2) {
-        this.playSample("giantStep", (1 - distance / 70) * 0.22);
-      } else if (heavy) {
-        this.playSample("dinoStep", (1 - distance / 60) * 0.16);
-      } else {
-        this.playSample("gravelStep", (1 - distance / 50) * 0.12);
-      }
+      // Recorded walking sequences last 2-22 seconds and continue after the
+      // creature stops. Finite anatomical impacts keep each step synchronized.
       return;
     }
     if (action === "dash") {

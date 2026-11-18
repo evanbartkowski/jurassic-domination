@@ -1,0 +1,5 @@
+.specimen-inspection-controls{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:9px 10px;background:#10201a;border-block:1px solid #a4b17d44}
+.specimen-inspection-controls button{min-height:32px;padding:7px 10px;border:1px solid #9daa7855;border-radius:3px;background:#15251d;color:#d6d9b7;font:600 10px system-ui;cursor:pointer}
+.specimen-inspection-controls button:hover,.specimen-inspection-controls button[aria-pressed="true"]{border-color:#d1c48a;background:#293a27}.specimen-inspection-controls button:focus-visible{outline:2px solid #e7d49d;outline-offset:2px}
+#specimen-canvas{touch-action:none}
+.specimen-panel .specimen-hint{margin-top:0;padding:7px 10px}

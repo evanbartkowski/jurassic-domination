@@ -112,7 +112,7 @@ try {
         ["ControlLeft", "hud-technique-cooldown"],
         ["KeyR", "hud-dash-cooldown"],
       ]) {
-        if (code !== "KeyR" && !(await page.locator(`#${id}`).isVisible())) {
+        if (code !== "KeyR" && !(await page.locator(`#${id}`).locator('..').isVisible())) {
           await page.keyboard.press(code);
           assert.equal(await page.locator(`#${id}`).textContent(), "READY");
           continue;

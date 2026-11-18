@@ -28,6 +28,7 @@ Verified locally on Windows with isolated test profiles, without overwriting exi
 
 - 394 Node tests pass, including regressions for recording restarts, aborted music, denied autoplay, combat resumption, reward cue duplication and HUD priority.
 - 19 Electron desktop integration checks pass, including offline PBR decoding, purchases, island saves, actual controls, native fullscreen, clean exit and continuation after application restart.
+- Seven checks pass against the actual 715 MiB Windows portable executable, including a second extraction that resumes the same saved life. Run portable QA sequentially: simultaneous launches of one self-extracting artifact share its extraction directory.
 - 19 player journey checks pass, including remaps, controller navigation, voluntary evolution and exactly-once recovery of an unclaimed mutation reward.
 - 10 stability checks cover seven restarts, five desktop sizes at 125% UI scale, focus loss, graphics recovery, corrupt data and unavailable storage.
 - Six focused audio/HUD browser checks pass with actual decoded MP3 playback; five production smoke checks pass under `/jurassic-domination/`, with current GLBs and music downloaded successfully.

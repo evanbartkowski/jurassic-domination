@@ -18,7 +18,7 @@ let browser,
   page,
   exitCode = null,
   launchError = null;
-function spawnPortable() {
+function spawnPortable(trackPrimary=true) {
   const process = spawn(
   exe,
   [
@@ -30,8 +30,7 @@ function spawnPortable() {
   ],
   { env, stdio: "ignore", windowsHide: true },
   );
-  process.on("error", (e) => (launchError = e));
-  process.on("exit", (code) => (exitCode = code));
+  if(trackPrimary){process.on("error", (e) => (launchError = e));process.on("exit", (code) => (exitCode = code));}
   return process;
 }
 let child = spawnPortable();
@@ -99,6 +98,19 @@ try {
     await page.locator('[data-action="license"]').click();
     await page.waitForFunction(() => document.getElementById('license-text')?.textContent.includes('Permission is hereby granted'));
     await page.keyboard.press('Escape');
+  });
+  await check('opening the portable twice preserves its running renderer and profile',async()=>{
+    const existingURL=page.url(),existingTitle=await page.title();
+    assert.match(existingURL,/\/ns[^/]*\.tmp\/app\//i,'the launcher must use a per-launch plugin directory');
+    const duplicate=spawnPortable(false);let duplicateExit=null,duplicateError=null;duplicate.on('exit',code=>duplicateExit=code);duplicate.on('error',error=>duplicateError=error);
+    const deadline=Date.now()+60000;while(duplicateExit===null&&!duplicateError&&Date.now()<deadline)await sleep(250);
+    if(duplicateExit===null)spawnSync('taskkill',['/PID',String(duplicate.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});
+    if(duplicateError)throw duplicateError;
+    assert.equal(duplicateExit,0,'a second launch should exit cleanly after focusing the existing game');
+    assert.equal(page.isClosed(),false);assert.equal(page.url(),existingURL);assert.equal(await page.title(),existingTitle);
+    // The primary renderer can still fetch an asset after the duplicate has
+    // cleaned up its own files; shared extraction would delete this file.
+    assert.ok(await page.evaluate(async()=>{const response=await fetch('./assets/boot.css');return response.ok;}));
   });
   await check(
     "portable hatch and Q/Ctrl/R controls execute real abilities",

@@ -64,6 +64,7 @@
       "icon": "public/assets/icon.ico"
     },
     "portable": {
+      "unpackDirName": true,
       "artifactName": "Jurassic Domination-${version}-portable.${ext}"
     }
   },

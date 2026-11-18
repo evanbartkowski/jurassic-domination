@@ -8,6 +8,14 @@ if (process.env.JD_TEST_USER_DATA && path.isAbsolute(process.env.JD_TEST_USER_DA
   app.setPath('userData', process.env.JD_TEST_USER_DATA);
 }
 let window;
+const primaryInstance = app.requestSingleInstanceLock();
+if (!primaryInstance) app.quit();
+app.on('second-instance', () => {
+  if (!window) return;
+  if (window.isMinimized()) window.restore();
+  window.show();
+  window.focus();
+});
 const entry = path.join(__dirname, '..', 'dist', 'index.html');
 const entryURL = pathToFileURL(entry).href;
 const trusted = (event) => event.sender === window?.webContents && event.senderFrame === window.webContents.mainFrame && event.senderFrame.url.split('#')[0] === entryURL;
@@ -52,6 +60,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  if (!primaryInstance) return;
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   session.defaultSession.setPermissionCheckHandler(() => false);
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
